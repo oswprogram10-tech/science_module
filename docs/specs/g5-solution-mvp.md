@@ -89,6 +89,7 @@ apps/student               # Vite + React 19 앱
         { "when": "before-run",  "text": "{iv}을(를) 바꾸면 녹는 양이 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?" },
         { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?" },
         { "when": "confounded",  "text": "{changed}이(가) 함께 바뀌었어요. 녹은 양이 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
+        { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },
         { "when": "repeat",      "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
         { "when": "fair-test",   "text": "{iv}만 바꾸었을 때 녹은 양과 걸린 시간은 각각 어떻게 달라졌나요? 표에서 두 줄을 비교해 볼까요?" },
         { "when": "fair-test-stir", "text": "젓는 빠르기를 바꾸었을 때 달라진 것은 녹은 양인가요, 걸린 시간인가요? 그래프의 기울기도 살펴볼까요?" },
@@ -161,9 +162,10 @@ UI 프레임워크에 의존하지 않는 상태 저장소. `subscribe/getSnapsh
   - prev 없음 → `{ kind: 'first-trial', changed: [] }`
   - 바뀐 변인 없음 → `{ kind: 'repeat', changed: [] }`
   - 바뀐 변인이 정확히 [ivKey] → `{ kind: 'fair-test', changed: [ivKey] }`
-  - 그 밖 → `{ kind: 'confounded', changed: [...] }`
+  - 바뀐 변인이 있고 ivKey가 null이 아니며 바뀐 변인에 ivKey가 없음 → `{ kind: 'iv-unchanged', changed: [...] }` (고른 조작변인은 그대로인데 다른 변인이 바뀜)
+  - 그 밖(ivKey를 포함해 다른 변인도 바뀜, 또는 ivKey가 null인데 바뀜) → `{ kind: 'confounded', changed: [...] }`
   - 비교 기준은 **바로 앞 시행**이다.
-- `structuralFeedback(analysis, labels) → string | null`. confounded일 때만 문장을 만든다. 예: "물의 온도와 물의 양이 함께 바뀌어서, 녹은 양이 무엇 때문에 달라졌는지 알 수 없어요." 낱말 목록은 조사를 맞춰 잇는다(받침 있으면 "과", 없으면 "와", 마지막 낱말 뒤 주격 조사 "이/가").
+- `structuralFeedback(analysis, labels, ivKey?) → string | null`. confounded와 iv-unchanged일 때만 문장을 만든다. iv-unchanged 예: "바꿀 조건으로 고른 물의 온도는 그대로이고, 젓기가 바뀌었어요." confounded: 예: "물의 온도와 물의 양이 함께 바뀌어서, 녹은 양이 무엇 때문에 달라졌는지 알 수 없어요." 낱말 목록은 조사를 맞춰 잇는다(받침 있으면 "과", 없으면 "와", 마지막 낱말 뒤 주격 조사 "이/가").
 - `josa(word, pair)`: '을/를', '이/가', '와/과', '은/는'. 마지막 글자가 한글이 아니면 괄호형(예: "을(를)")을 돌려준다.
 
 ### 6.2 예측 비교
@@ -173,14 +175,16 @@ UI 프레임워크에 의존하지 않는 상태 저장소. `subscribe/getSnapsh
 
 ### 6.3 `@sci/tutor` (규칙 기반)
 
-- `selectProbe(context, probes) → string`. 우선순위:
+- `selectProbe(context, probes, guard) → string`. 우선순위:
   1. 실행 전 → `before-run`
   2. 마지막 시행이 confounded → `confounded`
-  3. repeat → `repeat`
-  4. fair-test이고 예측과 결과가 다름 → `prediction-mismatch`
-  5. fair-test이고 ivKey가 `stir` → `fair-test-stir`
-  6. fair-test → `fair-test`
-  7. first-trial → `first-trial`
+  3. iv-unchanged → `iv-unchanged`
+  4. repeat → `repeat`
+  5. fair-test이고 예측과 결과가 다름 → `prediction-mismatch`
+  6. fair-test이고 ivKey가 `stir` → `fair-test-stir`
+  7. fair-test → `fair-test`
+  8. first-trial → `first-trial`
+  - 고른 키의 probe가 매니페스트에 없으면 고정 문구(FALLBACK_PROBE)를 돌려준다. `guard`는 필수 인자다.
 - `{iv}`, `{changed}`를 라벨로 치환하고 `을(를)`·`이(가)`를 앞 낱말 받침에 맞게 바꾼다.
 - `guardOutput(text, { forbiddenAnswers, limits }) → { ok, hits }`. 공백을 무시한 부분 문자열로 비교한다. selectProbe 결과가 가드에 걸리면 고정 문구 "지금까지의 결과표를 다시 살펴볼까요? 무엇이 달라졌나요?"로 바꾼다.
 - 테스트: 매니페스트의 모든 probe를 모든 변인 조합으로 치환해도 guardOutput이 ok여야 한다.

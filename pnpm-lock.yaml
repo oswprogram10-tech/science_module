@@ -61,7 +61,11 @@ importers:
         specifier: ^8.3.5
         version: 8.3.5
 
-  packages/engines/matter: {}
+  packages/engines/matter:
+    dependencies:
+      '@sci/schema':
+        specifier: workspace:*
+        version: link:../../schema
 
   packages/gateway: {}
 

@@ -2,6 +2,8 @@ import type { DissolutionOutput, DissolutionResult, DissolutionSample } from '@s
 import type { Prediction, TrialAnalysis, TrialLike, Values } from '@sci/gateway';
 
 export const PLAYBACK_SECONDS = 8;
+/** tickNow 한 번에 진행할 수 있는 최대 실제 경과 시간(ms). 백그라운드 탭에서 돌아와도 재생이 한 번에 끝나지 않게 한다. */
+export const MAX_TICK_MS = 100;
 
 export interface Trial {
   id: string;
@@ -34,6 +36,8 @@ export interface RuntimeOptions {
   playbackSeconds?: number;
   /** 주입 가능한 시계(ms). tickNow가 사용한다. */
   clock?: () => number;
+  /** 실행 가능 여부. false를 돌려주면 run()은 아무것도 하지 않는다. */
+  canRun?: (state: RuntimeState) => boolean;
 }
 
 /** 시행의 전체 sim 시간(초). */
@@ -116,6 +120,7 @@ export function createRuntime(options: RuntimeOptions) {
 
     run(simulateFn: SimulateFn, analyzeFn: AnalyzeFn): Trial | null {
       if (state.playing) return null;
+      if (options.canRun && !options.canRun(state)) return null;
       const values = { ...state.values };
       const { samples, result } = simulateFn(values);
       const prev = state.trials[state.trials.length - 1];
@@ -157,13 +162,13 @@ export function createRuntime(options: RuntimeOptions) {
     /** 주입된 시계로 경과 시간을 재서 tick을 호출한다. */
     tickNow() {
       const now = clock();
-      if (lastClock !== null) this.tick(now - lastClock);
+      if (lastClock !== null) this.tick(Math.min(Math.max(now - lastClock, 0), MAX_TICK_MS));
       lastClock = state.playing ? now : null;
     },
 
     /** 재생이 끝난 뒤(또는 멈춘 상태)에만 플레이헤드를 옮길 수 있다. */
     setPlayhead(t: number) {
-      if (state.playing) return;
+      if (state.playing || !Number.isFinite(t)) return;
       const trial = activeTrial();
       if (!trial) return;
       const clamped = Math.min(Math.max(t, 0), trialDuration(trial));

@@ -11,7 +11,7 @@ export interface TrialLike {
   ivKey: string | null;
 }
 
-export type AnalysisKind = 'first-trial' | 'repeat' | 'fair-test' | 'confounded';
+export type AnalysisKind = 'first-trial' | 'repeat' | 'fair-test' | 'confounded' | 'iv-unchanged';
 
 export interface TrialAnalysis {
   kind: AnalysisKind;
@@ -54,6 +54,9 @@ export function analyzeTrial(
   if (changed.length === 1 && changed[0] === current.ivKey) {
     return { kind: 'fair-test', changed };
   }
+  if (current.ivKey !== null && !changed.includes(current.ivKey)) {
+    return { kind: 'iv-unchanged', changed };
+  }
   return { kind: 'confounded', changed };
 }
 
@@ -67,10 +70,16 @@ export function joinLabels(words: string[]): string {
 export function structuralFeedback(
   analysis: TrialAnalysis,
   labels: Record<string, string>,
+  ivKey?: string | null,
 ): string | null {
-  if (analysis.kind !== 'confounded') return null;
   const words = analysis.changed.map((k) => labels[k] ?? k);
   if (words.length === 0) return null;
+  if (analysis.kind === 'iv-unchanged') {
+    if (!ivKey) return null;
+    const iv = labels[ivKey] ?? ivKey;
+    return `바꿀 조건으로 고른 ${iv}${josa(iv, '은/는')} 그대로이고, ${joinLabels(words)}${josa(words[words.length - 1]!, '이/가')} 바뀌었어요.`;
+  }
+  if (analysis.kind !== 'confounded') return null;
   const list = joinLabels(words);
   const last = words[words.length - 1]!;
   return `${list}${josa(last, '이/가')} 함께 바뀌어서, 녹은 양이 무엇 때문에 달라졌는지 알 수 없어요.`;

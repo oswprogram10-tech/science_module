@@ -1,5 +1,35 @@
 export const HOME_PAGE = 'https://sci-bridge.local';
 
+export const EXT_BASE = 'https://sci-bridge.local/xapi/ext/';
+
+/** xAPI result.extensions 키는 IRI여야 한다. */
+export const ext = (name: string): string => EXT_BASE + name;
+
+export function toExtensions(obj: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(obj).map(([k, v]) => [ext(k), v]));
+}
+
+const RESULT_KEYS = ['score', 'success', 'completion', 'response', 'duration', 'extensions'];
+const IRI = /^[a-z][a-z0-9+.-]*:\/\/\S+$/i;
+
+function validateResult(result: Record<string, unknown>): void {
+  for (const k of Object.keys(result)) {
+    if (!RESULT_KEYS.includes(k)) throw new TypeError(`xAPI result에 허용되지 않는 키: ${k}`);
+  }
+  if (result.response !== undefined && typeof result.response !== 'string') {
+    throw new TypeError('xAPI result.response는 문자열이어야 합니다.');
+  }
+  const extensions = result.extensions;
+  if (extensions !== undefined) {
+    if (typeof extensions !== 'object' || extensions === null || Array.isArray(extensions)) {
+      throw new TypeError('xAPI result.extensions는 객체여야 합니다.');
+    }
+    for (const k of Object.keys(extensions)) {
+      if (!IRI.test(k)) throw new TypeError(`xAPI extensions 키는 IRI여야 합니다: ${k}`);
+    }
+  }
+}
+
 export interface Statement {
   id: string;
   actor: { objectType: 'Agent'; account: { homePage: string; name: string } };
@@ -36,6 +66,7 @@ export function buildStatement(input: StatementInput): Statement {
     object: { objectType: 'Activity', id: input.objectId },
     timestamp: input.timestamp ?? new Date().toISOString(),
   };
+  if (input.result) validateResult(input.result);
   if (input.result) stmt.result = input.result;
   return stmt;
 }

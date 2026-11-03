@@ -1,6 +1,6 @@
-import { useRef } from 'react';
+import { useRef, type KeyboardEvent } from 'react';
 import type { Trial } from '@sci/runtime';
-import { trialDuration } from '@sci/runtime';
+import { sampleAt, trialDuration } from '@sci/runtime';
 import { formatTick, niceScale } from '../axis';
 
 interface Props {
@@ -46,14 +46,64 @@ export function GraphView({ trial, prev, playhead, playing, onPlayhead, describe
     onPlayhead(((x - M.l) / (W - M.l - M.r)) * xMax);
   };
 
+  const duration = trial ? trialDuration(trial) : 0;
+  const r1 = (x: number) => Math.round(x * 10) / 10;
+  const onKeyDown = (e: KeyboardEvent<SVGSVGElement>) => {
+    if (!trial || playing) return;
+    const small = duration / 50;
+    const large = duration / 10;
+    let next: number;
+    switch (e.key) {
+      case 'ArrowLeft':
+      case 'ArrowDown':
+        next = playhead - small;
+        break;
+      case 'ArrowRight':
+      case 'ArrowUp':
+        next = playhead + small;
+        break;
+      case 'PageDown':
+        next = playhead - large;
+        break;
+      case 'PageUp':
+        next = playhead + large;
+        break;
+      case 'Home':
+        next = 0;
+        break;
+      case 'End':
+        next = duration;
+        break;
+      default:
+        return;
+    }
+    e.preventDefault();
+    onPlayhead(next);
+  };
+  const sliderProps = trial
+    ? {
+        role: 'slider' as const,
+        tabIndex: 0,
+        'aria-label': '그래프 시각 옮기기',
+        'aria-valuemin': 0,
+        'aria-valuemax': r1(duration),
+        'aria-valuenow': r1(playhead),
+        'aria-valuetext': `${r1(playhead)}초, 녹은 양 ${r1(sampleAt(trial, playhead).dissolvedG)} g`,
+        'aria-disabled': playing ? true : undefined,
+        onKeyDown,
+      }
+    : {
+        role: 'img' as const,
+        'aria-label': '시간에 따른 녹은 양 그래프. 자세한 값은 결과표를 보세요.',
+      };
+
   return (
     <figure className="view graph" aria-label="그래프로 보기">
       <figcaption>그래프로 보기</figcaption>
       <svg
         ref={svgRef}
         viewBox={`0 0 ${W} ${H}`}
-        role="img"
-        aria-label="시간에 따른 녹은 양 그래프. 자세한 값은 결과표를 보세요."
+        {...sliderProps}
         aria-describedby={describedBy}
         className={trial && !playing ? 'scrubbable' : undefined}
         onPointerDown={(e) => {
@@ -97,7 +147,7 @@ export function GraphView({ trial, prev, playhead, playing, onPlayhead, describe
       </svg>
       <p className="view-note">
         {trial ? <><span className="legend line-now">━</span> 이번 시행 {prev && <><span className="legend line-prev">╌</span> 앞 시행</>}</> : ''}
-        {trial && !playing ? ' · 그래프를 눌러 시각을 옮겨 보세요.' : ''}
+        {trial && !playing ? ' · 그래프를 누르거나 ← → 키로 시각을 옮겨 보세요.' : ''}
       </p>
     </figure>
   );

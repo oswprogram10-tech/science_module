@@ -52,6 +52,12 @@ export function simulateDissolution(
   opts: DissolutionOptions = {},
 ): DissolutionOutput {
   const { spoonGrams = 2, dt = 0.1, sampleEvery = 1, maxTimeS = 20000 } = opts;
+  if (![0, 1, 2].includes(params.stir)) {
+    throw new RangeError(`젓기 값 ${String(params.stir)}은(는) 0, 1, 2 중 하나여야 합니다.`);
+  }
+  if (typeof params.waterMl !== 'number' || !Number.isFinite(params.waterMl) || !(params.waterMl > 0)) {
+    throw new RangeError(`물의 양 ${String(params.waterMl)}은(는) 0보다 큰 유한한 수여야 합니다.`);
+  }
   const capacity = capacityG(params.solute, params.waterTempC, params.waterMl);
   const rate = dissolveRate(params.stir, params.waterTempC);
   const sampleSteps = Math.max(1, Math.round(sampleEvery / dt));

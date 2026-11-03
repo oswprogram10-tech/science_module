@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { simulateDissolution, type DissolutionParams } from '@sci/engine-matter';
 import {
   analyzeTrial,
@@ -10,7 +10,7 @@ import {
 import { createRuntime, sampleAt, type Trial } from '@sci/runtime';
 import { MockScaleDriver, MockTemperatureDriver } from '@sci/sensors';
 import { selectProbe } from '@sci/tutor';
-import { MemoryRecorder, buildStatement } from '@sci/xapi';
+import { MemoryRecorder, buildStatement, toExtensions } from '@sci/xapi';
 import type { Experiment } from '@sci/schema';
 import { loadManifest } from './manifest';
 import { DesignPanel } from './components/DesignPanel';
@@ -46,7 +46,16 @@ function Lab({ title, experiment }: { title: string; experiment: Experiment }) {
     () => Object.fromEntries(experiment.variables.map((v) => [v.key, v.default])),
     [experiment],
   );
-  const runtime = useMemo(() => createRuntime({ defaults, clock: () => performance.now() }), [defaults]);
+  const runtime = useMemo(
+    () =>
+      createRuntime({
+        defaults,
+        clock: () => performance.now(),
+        canRun: (s) => canRun(s, experiment.gateway).ok,
+      }),
+    [defaults, experiment],
+  );
+  const [runError, setRunError] = useState<string | null>(null);
   const recorder = useMemo(() => new MemoryRecorder(), []);
   const state = useSyncExternalStore(runtime.subscribe, runtime.getSnapshot);
 
@@ -73,27 +82,40 @@ function Lab({ title, experiment }: { title: string; experiment: Experiment }) {
 
   const onRun = () => {
     if (!gate.ok || state.playing) return;
-    const snap = runtime.getSnapshot();
-    const emit = (verb: string, result?: Record<string, unknown>) => {
-      const stmt = buildStatement({ actorId: ACTOR_ID, verb, objectId: activityId(experiment.id), result });
-      recorder.record(stmt);
-      console.debug('[xAPI]', stmt);
-    };
-    for (const v of experiment.variables) {
-      if (v.key !== snap.ivKey) emit('controlled-variable', { extensions: { variable: v.key, value: snap.values[v.key] } });
-    }
-    emit('predicted', { response: snap.prediction, extensions: { iv: snap.ivKey } });
-    const trial = runtime.run(
-      (values) =>
-        simulateDissolution(values as unknown as DissolutionParams, {
-          spoonGrams: experiment.spoonGrams,
-        }),
-      (prev, cur) => analyzeTrial(prev, cur, labels),
-    );
-    if (trial) {
-      emit('experimented', {
-        extensions: { trial: trial.index, kind: trial.analysis.kind, ...trial.result },
-      });
+    try {
+      const snap = runtime.getSnapshot();
+      const emit = (verb: string, result?: Record<string, unknown>) => {
+        const stmt = buildStatement({ actorId: ACTOR_ID, verb, objectId: activityId(experiment.id), result });
+        recorder.record(stmt);
+        console.debug('[xAPI]', stmt);
+      };
+      const trial = runtime.run(
+        (values) =>
+          simulateDissolution(values as unknown as DissolutionParams, {
+            spoonGrams: experiment.spoonGrams,
+          }),
+        (prev, cur) => analyzeTrial(prev, cur, labels),
+      );
+      if (trial) {
+        for (const v of experiment.variables) {
+          if (v.key !== snap.ivKey) {
+            emit('controlled-variable', {
+              extensions: toExtensions({ variable: v.key, value: snap.values[v.key] }),
+            });
+          }
+        }
+        emit('predicted', {
+          ...(snap.prediction ? { response: snap.prediction } : {}),
+          extensions: toExtensions({ iv: snap.ivKey }),
+        });
+        emit('experimented', {
+          extensions: toExtensions({ trial: trial.index, kind: trial.analysis.kind, ...trial.result }),
+        });
+        setRunError(null);
+      }
+    } catch (e) {
+      console.error(e);
+      setRunError('실험을 실행하지 못했어요. 선생님께 알려 주세요.');
     }
   };
 
@@ -116,7 +138,7 @@ function Lab({ title, experiment }: { title: string; experiment: Experiment }) {
   const shown = state.playing ? state.trials.slice(0, -1) : state.trials;
   const last = shown[shown.length - 1];
   const lastPrev = last ? shown[last.index - 2] : undefined;
-  const feedback = last ? structuralFeedback(last.analysis, labels) : null;
+  const feedback = last ? structuralFeedback(last.analysis, labels, last.ivKey) : null;
   let observed: Prediction | null = null;
   if (last && lastPrev && last.analysis.kind === 'fair-test') {
     observed = observedOutcome(lastPrev.result.dissolvedG, last.result.dissolvedG, experiment.spoonGrams);
@@ -175,7 +197,7 @@ function Lab({ title, experiment }: { title: string; experiment: Experiment }) {
           <div className="boxes">
             <div className="box feedback" aria-live="polite">
               <h2>피드백</h2>
-              <p>{feedback ?? '비교할 내용이 생기면 여기에 알려 줄게요.'}</p>
+              <p>{runError ?? feedback ?? '비교할 내용이 생기면 여기에 알려 줄게요.'}</p>
             </div>
             <div className="box tutor" aria-live="polite">
               <h2>생각해 볼까요?</h2>

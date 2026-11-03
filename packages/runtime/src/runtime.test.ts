@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { simulateDissolution, type DissolutionParams } from '@sci/engine-matter';
 import { analyzeTrial } from '@sci/gateway';
-import { createRuntime, sampleAt, trialDuration, type Trial } from './index';
+import { createRuntime, MAX_TICK_MS, sampleAt, trialDuration, type Trial } from './index';
 
 const defaults = { solute: 'salt', waterMl: 50, waterTempC: 20, stir: 1 };
 const sim = (v: Record<string, string | number>) => simulateDissolution(v as unknown as DissolutionParams);
@@ -46,9 +46,40 @@ describe('runtime', () => {
     const { rt, advance } = makeRuntime();
     const trial = rt.run(sim, analyze)!;
     rt.tickNow(); // 기준 시각 기록
-    advance(2000);
+    advance(50);
     rt.tickNow();
-    expect(rt.getSnapshot().playhead).toBeCloseTo(trialDuration(trial) * 0.25, 6);
+    expect(rt.getSnapshot().playhead).toBeCloseTo(trialDuration(trial) * (50 / 8000), 6);
+  });
+
+  it('tickNow는 한 번에 MAX_TICK_MS까지만 진행한다', () => {
+    const { rt, advance } = makeRuntime();
+    const trial = rt.run(sim, analyze)!;
+    rt.tickNow();
+    advance(60_000); // 백그라운드 탭에서 돌아온 경우
+    rt.tickNow();
+    expect(rt.getSnapshot().playing).toBe(true);
+    expect(rt.getSnapshot().playhead).toBeCloseTo(trialDuration(trial) * (MAX_TICK_MS / 8000), 6);
+  });
+
+  it('setPlayhead는 유한하지 않은 값을 무시한다', () => {
+    const { rt } = makeRuntime();
+    rt.run(sim, analyze);
+    rt.tick(8000);
+    rt.setPlayhead(5);
+    for (const bad of [NaN, Infinity, -Infinity]) {
+      rt.setPlayhead(bad);
+      expect(rt.getSnapshot().playhead).toBe(5);
+    }
+  });
+
+  it('canRun이 false면 run은 아무것도 하지 않는다', () => {
+    let ok = false;
+    const rt = createRuntime({ defaults, canRun: () => ok });
+    expect(rt.run(sim, analyze)).toBeNull();
+    expect(rt.getSnapshot().trials).toHaveLength(0);
+    ok = true;
+    expect(rt.run(sim, analyze)).not.toBeNull();
+    expect(rt.getSnapshot().trials).toHaveLength(1);
   });
 
   it('재생 중에는 입력과 플레이헤드 이동이 잠긴다', () => {

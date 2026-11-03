@@ -34,12 +34,12 @@ export interface GuardResult {
   hits: string[];
 }
 
-const stripSpaces = (s: string) => s.replace(/\s+/g, '');
+const normalize = (s: string) => s.normalize('NFC').replace(/[\s\p{P}\p{S}\p{Cf}]/gu, '');
 
 export function guardOutput(text: string, config: GuardConfig): GuardResult {
-  const haystack = stripSpaces(text);
+  const haystack = normalize(text);
   const hits = [...config.forbiddenAnswers, ...config.limits].filter((phrase) => {
-    const needle = stripSpaces(phrase);
+    const needle = normalize(phrase);
     return needle.length > 0 && haystack.includes(needle);
   });
   return { ok: hits.length === 0, hits };
@@ -65,6 +65,7 @@ export function pickProbeKey(context: ProbeContext): string {
   const a = context.lastAnalysis;
   if (!a) return 'before-run';
   if (a.kind === 'confounded') return 'confounded';
+  if (a.kind === 'iv-unchanged') return 'iv-unchanged';
   if (a.kind === 'repeat') return 'repeat';
   if (a.kind === 'fair-test') {
     if (context.prediction && context.observed && context.prediction !== context.observed) {
@@ -79,7 +80,7 @@ export function pickProbeKey(context: ProbeContext): string {
 export function selectProbe(
   context: ProbeContext,
   probes: ProbeTemplate[],
-  guard?: GuardConfig,
+  guard: GuardConfig,
 ): string {
   const key = pickProbeKey(context);
   const probe = probes.find((p) => p.when === key);
@@ -87,6 +88,6 @@ export function selectProbe(
   const ivLabel = context.ivKey ? (context.labels[context.ivKey] ?? context.ivKey) : '조건';
   const changed = (context.lastAnalysis?.changed ?? []).map((k) => context.labels[k] ?? k);
   const text = renderProbe(probe.text, { iv: ivLabel, changed });
-  if (guard && !guardOutput(text, guard).ok) return FALLBACK_PROBE;
+  if (!guardOutput(text, guard).ok) return FALLBACK_PROBE;
   return text;
 }

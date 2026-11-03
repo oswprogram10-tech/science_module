@@ -49,11 +49,22 @@ describe('analyzeTrial', () => {
     expect(a.kind).toBe('confounded');
     expect(a.changed.sort()).toEqual(['waterMl', 'waterTempC']);
   });
-  it('confounded: IV가 아닌 변인 하나만 바뀜', () => {
+  it('iv-unchanged: IV가 아닌 변인 하나만 바뀜', () => {
+    const prev = { values: v(), ivKey: 'waterTempC' };
+    expect(analyzeTrial(prev, { values: v({ stir: 2 }), ivKey: 'waterTempC' }, labels)).toEqual({
+      kind: 'iv-unchanged',
+      changed: ['stir'],
+    });
+  });
+  it('iv-unchanged: IV가 아닌 변인 여러 개', () => {
     const prev = { values: v(), ivKey: 'waterTempC' };
     expect(
-      analyzeTrial(prev, { values: v({ stir: 2 }), ivKey: 'waterTempC' }, labels).kind,
-    ).toBe('confounded');
+      analyzeTrial(prev, { values: v({ stir: 2, waterMl: 100 }), ivKey: 'waterTempC' }, labels).kind,
+    ).toBe('iv-unchanged');
+  });
+  it('confounded: IV가 null이면 변화가 있을 때 confounded', () => {
+    const prev = { values: v(), ivKey: null };
+    expect(analyzeTrial(prev, { values: v({ stir: 2 }), ivKey: null }, labels).kind).toBe('confounded');
   });
 });
 
@@ -101,6 +112,17 @@ describe('structuralFeedback', () => {
     expect(
       structuralFeedback({ kind: 'confounded', changed: ['waterMl', 'stir', 'waterTempC'] }, labels),
     ).toBe('물의 양과 젓기와 물의 온도가 함께 바뀌어서, 녹은 양이 무엇 때문에 달라졌는지 알 수 없어요.');
+  });
+  it('iv-unchanged 문장', () => {
+    expect(structuralFeedback({ kind: 'iv-unchanged', changed: ['stir'] }, labels, 'waterTempC')).toBe(
+      '바꿀 조건으로 고른 물의 온도는 그대로이고, 젓기가 바뀌었어요.',
+    );
+    expect(
+      structuralFeedback({ kind: 'iv-unchanged', changed: ['waterMl', 'stir'] }, labels, 'waterTempC'),
+    ).toBe('바꿀 조건으로 고른 물의 온도는 그대로이고, 물의 양과 젓기가 바뀌었어요.');
+    expect(structuralFeedback({ kind: 'iv-unchanged', changed: ['stir'] }, labels, 'waterMl')).toBe(
+      '바꿀 조건으로 고른 물의 양은 그대로이고, 젓기가 바뀌었어요.',
+    );
   });
   it('confounded가 아니면 null', () => {
     for (const kind of ['first-trial', 'repeat', 'fair-test'] as const) {

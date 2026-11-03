@@ -7,7 +7,8 @@ describe('manifest schema', () => {
     const m = parseManifest(manifestJson);
     expect(m.id).toBe('g5-solution');
     expect(m.experiments[0]!.variables).toHaveLength(4);
-    expect(m.experiments[0]!.tutor.probes).toHaveLength(7);
+    expect(m.experiments[0]!.tutor.probes).toHaveLength(8);
+    expect(m.experiments[0]!.tutor.probes.map((p) => p.when)).toContain('iv-unchanged');
   });
 
   it('필수 필드가 없으면 거부한다', () => {

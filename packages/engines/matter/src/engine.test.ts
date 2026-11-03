@@ -4,8 +4,11 @@ import {
   simulateDissolution,
   solubilityPer100g,
   type DissolutionParams,
+  validateDissolutionExperiment,
   type Solute,
 } from './index';
+import { parseManifest, type Experiment } from '@sci/schema';
+import manifestJson from '../../../../content/units/g5-solution/manifest.json';
 
 const SPOON = 2;
 const base: DissolutionParams = { solute: 'salt', waterMl: 100, waterTempC: 20, stir: 1 };
@@ -106,5 +109,59 @@ describe('결과값', () => {
     const r = run({ waterMl: 50 }).result;
     expect(r.dissolvedG).toBe(17.9);
     expect(r.spoonsFullyDissolved).toBe(8);
+  });
+});
+
+describe('입력 범위', () => {
+  it('stir가 0/1/2가 아니면 RangeError', () => {
+    expect(() => run({ stir: 3 as never })).toThrow(RangeError);
+    expect(() => run({ stir: -1 as never })).toThrow(RangeError);
+    expect(() => run({ stir: NaN as never })).toThrow(RangeError);
+  });
+  it('waterMl이 유한한 양수가 아니면 RangeError', () => {
+    for (const waterMl of [NaN, 0, -5, Infinity]) {
+      expect(() => run({ waterMl })).toThrow(RangeError);
+    }
+  });
+});
+
+describe('validateDissolutionExperiment', () => {
+  const exp = parseManifest(manifestJson).experiments[0]!;
+  const withOptions = (key: string, values: Array<string | number>): Experiment => ({
+    ...exp,
+    variables: exp.variables.map((v) =>
+      v.key === key
+        ? { ...v, options: values.map((value) => ({ value, label: String(value) })), default: values[0]! }
+        : v,
+    ),
+  });
+  it('현재 매니페스트는 통과', () => {
+    expect(validateDissolutionExperiment(exp)).toEqual([]);
+  });
+  it('알 수 없는 용질', () => {
+    const e = validateDissolutionExperiment(withOptions('solute', ['salt', 'pepper']));
+    expect(e).toHaveLength(1);
+    expect(e[0]).toContain('solute');
+    expect(e[0]).toContain('pepper');
+  });
+  it('온도 범위·형식', () => {
+    expect(validateDissolutionExperiment(withOptions('waterTempC', [20, 90]))).toHaveLength(1);
+    expect(validateDissolutionExperiment(withOptions('waterTempC', [5, '20']))).toHaveLength(2);
+  });
+  it('물의 양은 양수', () => {
+    expect(validateDissolutionExperiment(withOptions('waterMl', [50, 0, -1, 'x']))).toHaveLength(3);
+  });
+  it('젓기는 0,1,2', () => {
+    const e = validateDissolutionExperiment(withOptions('stir', [0, 1, 3]));
+    expect(e).toHaveLength(1);
+    expect(e[0]).toContain('stir');
+  });
+  it('필수 변인 누락', () => {
+    const e = validateDissolutionExperiment({
+      ...exp,
+      variables: exp.variables.filter((v) => v.key !== 'stir'),
+    });
+    expect(e).toHaveLength(1);
+    expect(e[0]).toContain('stir');
   });
 });

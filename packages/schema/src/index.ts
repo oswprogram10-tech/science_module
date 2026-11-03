@@ -37,6 +37,7 @@ export const probeWhenSchema = z.enum([
   'before-run',
   'first-trial',
   'confounded',
+  'iv-unchanged',
   'repeat',
   'fair-test',
   'fair-test-stir',

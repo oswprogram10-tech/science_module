@@ -31,6 +31,22 @@ describe('selectProbe 우선순위', () => {
       '물의 온도와 물의 양이 함께 바뀌었어요. 녹은 양이 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?',
     );
   });
+  it('iv-unchanged', () => {
+    const t = selectProbe(
+      ctx({ lastAnalysis: { kind: 'iv-unchanged', changed: ['stir'] } }),
+      probes,
+      guard,
+    );
+    expect(t).toBe(
+      '물의 온도는 그대로인데 젓기가 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?',
+    );
+  });
+  it('probe가 매니페스트에 없으면 FALLBACK_PROBE', () => {
+    const without = probes.filter((p) => p.when !== 'iv-unchanged');
+    expect(
+      selectProbe(ctx({ lastAnalysis: { kind: 'iv-unchanged', changed: ['stir'] } }), without, guard),
+    ).toBe(FALLBACK_PROBE);
+  });
   it('repeat', () => {
     expect(selectProbe(ctx({ lastAnalysis: { kind: 'repeat', changed: [] } }), probes, guard)).toContain(
       '앞 시행과 조건이 같아요',
@@ -95,6 +111,15 @@ describe('guardOutput', () => {
     const r = guardOutput('온도가  높을수록 더 많이 녹아요', guard);
     expect(r.ok).toBe(false);
     expect(r.hits).toContain('온도가 높을수록 더 많이 녹');
+  });
+  it('우회 시도를 잡는다', () => {
+    const cases = [
+      '온도가 높을수록, 더 많이 녹아요',
+      '분\u200b자',
+      '분자'.normalize('NFD'),
+      '온도가 높을수록 ... 더 많이 녹',
+    ];
+    for (const c of cases) expect(guardOutput(c, guard).ok, c).toBe(false);
   });
   it('limits도 걸러낸다', () => {
     expect(guardOutput('이온이 퍼져요', guard).ok).toBe(false);
