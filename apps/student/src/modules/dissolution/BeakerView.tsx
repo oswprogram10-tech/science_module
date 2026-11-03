@@ -1,14 +1,8 @@
-import type { Trial } from '@sci/runtime';
 import { trialDuration } from '@sci/runtime';
 import type { DissolutionSample } from '@sci/engine-matter';
+import type { ViewProps } from '../types';
 
-interface Props {
-  trial: Trial | undefined;
-  snapshot: DissolutionSample | null;
-  waterMl: number;
-  spoonGrams: number;
-  playhead: number;
-}
+type Trial = NonNullable<ViewProps<DissolutionSample>['trial']>;
 
 const BOTTOM = 200;
 const LEFT = 40;
@@ -28,7 +22,9 @@ function lastSpoonTime(trial: Trial, playhead: number): { t: number; n: number }
   return found ?? { t: 0, n: 1 };
 }
 
-export function BeakerView({ trial, snapshot, waterMl, spoonGrams, playhead }: Props) {
+export function BeakerView({ experiment, trial, snapshot, values, playhead }: ViewProps<DissolutionSample>) {
+  const waterMl = Number(values.waterMl);
+  const spoonGrams = experiment.spoonGrams ?? 2;
   const dissolved = snapshot?.dissolvedG ?? 0;
   const undissolved = snapshot?.undissolvedG ?? 0;
   const added = snapshot?.addedG ?? 0;

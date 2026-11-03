@@ -111,3 +111,19 @@ export function simulateDissolution(
     },
   };
 }
+
+/**
+ * 두 샘플 사이를 보간한다. 넣은 양은 계단식이다:
+ * 앞 숟가락이 다 녹는 순간 다음 숟가락이 들어간다.
+ */
+export function interpolateDissolution(
+  a: DissolutionSample,
+  b: DissolutionSample,
+  k: number,
+): DissolutionSample {
+  const lerp = (x: number, y: number) => x + (y - x) * k;
+  const dissolvedRaw = lerp(a.dissolvedG, b.dissolvedG);
+  const addedG = dissolvedRaw >= a.addedG - 1e-9 ? b.addedG : a.addedG;
+  const dissolvedG = Math.min(dissolvedRaw, addedG);
+  return { t: lerp(a.t, b.t), addedG, dissolvedG, undissolvedG: addedG - dissolvedG };
+}

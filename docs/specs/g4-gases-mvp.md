@@ -176,7 +176,7 @@ interface ExperimentModule<S extends { t: number }, R> {
   - "분자" 낱말은 쓰지 않는다. `prefers-reduced-motion`이면 움직임을 멈추고 위치만 갱신한다.
 - **그래프**: y = volumeMl, 라벨 `기체의 부피(mL)`.
 - **센서**: 가상 온도계(기체 온도 gasTempC, 잡음 ±0.2), 가상 압력 센서(pressureAtm × 101.3 kPa, 소수 첫째 자리, 잡음 ±0.1). `@sci/sensors`에 `MockPressureDriver`(kind `'pressure'`, 단위 kPa)를 추가한다.
-- **결과 열**: 기체의 부피(mL), 부피 변화(mL, + 기호 포함), 안정되기까지 걸린 시간(초).
+- **결과 열**: 기체의 부피(mL), 부피 변화(mL, + 기호 포함), 안정 시간(초, 안정되기까지 걸린 시간).
 - **예측 비교**: `sameThreshold` = 1 mL.
 
 ## C. 검증

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import type { DissolutionSample } from '@sci/engine-matter';
+import type { ViewProps } from '../types';
 
 const W = 240;
 const H = 240;
@@ -31,7 +32,7 @@ function makeDots(n: number, seed: number, place: (r: () => number) => [number, 
 const prefersReduced = () =>
   typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-export function ParticleView({ snapshot }: { snapshot: DissolutionSample | null }) {
+export function ParticleView({ snapshot }: ViewProps<DissolutionSample>) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dissolved = snapshot?.dissolvedG ?? 0;
   const undissolved = snapshot?.undissolvedG ?? 0;

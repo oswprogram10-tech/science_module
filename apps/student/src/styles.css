@@ -69,3 +69,22 @@ td.changed { background:var(--changed); font-weight:700; }
   .view svg, .view canvas { max-width: 420px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+
+/* 단원 목록·이동 */
+.back { display:inline-flex; align-items:center; min-height:44px; padding:0 4px; color:var(--accent); font-weight:700; }
+.back:focus-visible { outline:3px solid var(--accent); outline-offset:2px; border-radius:4px; }
+.unit-list { display:flex; flex-direction:column; gap:16px; }
+.cards { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:12px; }
+.unit-card { display:flex; flex-direction:column; gap:4px; align-items:flex-start; text-align:left; width:100%; min-height:44px; padding:12px; border:2px solid var(--line); border-radius:10px; background:var(--card); color:var(--fg); }
+button.unit-card { cursor:pointer; }
+button.unit-card:hover { border-color:var(--accent); }
+.unit-title { font-size:1.15rem; font-weight:700; }
+.unit-standards { font-size:.85rem; opacity:.85; }
+.unit-card.error { border-color:var(--warn); cursor:default; }
+.unit-card.error ul { margin:0; padding-left:1.2rem; }
+
+/* 기체 단원 */
+.pressure-bar { width:100%; max-width:320px; display:flex; flex-direction:column; gap:4px; margin-top:8px; font-size:.85rem; }
+.bar-track { height:14px; border:2px solid var(--line); border-radius:99px; overflow:hidden; background:var(--card); }
+.bar-fill { height:100%; background:var(--accent); transition:width .1s; }
+.gas-now { font-weight:700; text-decoration:underline; }

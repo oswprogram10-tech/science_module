@@ -10,6 +10,8 @@ export const FALLBACK_PROBE = '지금까지의 결과표를 다시 살펴볼까�
 
 export interface ProbeTemplate {
   when: string;
+  /** 이 조작변인일 때만 쓰는 질문. */
+  iv?: string;
   text: string;
 }
 
@@ -71,7 +73,6 @@ export function pickProbeKey(context: ProbeContext): string {
     if (context.prediction && context.observed && context.prediction !== context.observed) {
       return 'prediction-mismatch';
     }
-    if (context.ivKey === 'stir') return 'fair-test-stir';
     return 'fair-test';
   }
   return 'first-trial';
@@ -83,7 +84,11 @@ export function selectProbe(
   guard: GuardConfig,
 ): string {
   const key = pickProbeKey(context);
-  const probe = probes.find((p) => p.when === key);
+  // 같은 시점 안에서 현재 조작변인과 iv가 일치하는 probe를 먼저, 없으면 iv가 없는 probe를 고른다.
+  const sameWhen = probes.filter((p) => p.when === key);
+  const probe =
+    (context.ivKey ? sameWhen.find((p) => p.iv === context.ivKey) : undefined) ??
+    sameWhen.find((p) => p.iv === undefined);
   if (!probe) return FALLBACK_PROBE;
   const ivLabel = context.ivKey ? (context.labels[context.ivKey] ?? context.ivKey) : '조건';
   const changed = (context.lastAnalysis?.changed ?? []).map((k) => context.labels[k] ?? k);

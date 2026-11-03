@@ -1,16 +1,24 @@
 import { describe, expect, it } from 'vitest';
-import { simulateDissolution, type DissolutionParams } from '@sci/engine-matter';
+import {
+  interpolateDissolution,
+  simulateDissolution,
+  type DissolutionParams,
+  type DissolutionResult,
+  type DissolutionSample,
+} from '@sci/engine-matter';
 import { analyzeTrial } from '@sci/gateway';
-import { createRuntime, MAX_TICK_MS, sampleAt, trialDuration, type Trial } from './index';
+import { createRuntime, lerpSample, MAX_TICK_MS, sampleAt, trialDuration, type Trial } from './index';
+
+type DTrial = Trial<DissolutionSample, DissolutionResult>;
 
 const defaults = { solute: 'salt', waterMl: 50, waterTempC: 20, stir: 1 };
 const sim = (v: Record<string, string | number>) => simulateDissolution(v as unknown as DissolutionParams);
-const analyze = (prev: Trial | undefined, cur: { values: Record<string, string | number>; ivKey: string | null }) =>
+const analyze = (prev: DTrial | undefined, cur: { values: Record<string, string | number>; ivKey: string | null }) =>
   analyzeTrial(prev, cur);
 
 function makeRuntime() {
   let now = 0;
-  const rt = createRuntime({ defaults, clock: () => now });
+  const rt = createRuntime<DissolutionSample, DissolutionResult>({ defaults, clock: () => now });
   return { rt, advance: (ms: number) => (now += ms) };
 }
 
@@ -74,7 +82,7 @@ describe('runtime', () => {
 
   it('canRun이 false면 run은 아무것도 하지 않는다', () => {
     let ok = false;
-    const rt = createRuntime({ defaults, canRun: () => ok });
+    const rt = createRuntime<DissolutionSample, DissolutionResult>({ defaults, canRun: () => ok });
     expect(rt.run(sim, analyze)).toBeNull();
     expect(rt.getSnapshot().trials).toHaveLength(0);
     ok = true;
@@ -131,27 +139,35 @@ describe('sampleAt', () => {
       { t: 10, addedG: 2, dissolvedG: 2, undissolvedG: 0 },
       { t: 20, addedG: 4, dissolvedG: 3, undissolvedG: 1 },
     ],
-  } as unknown as Trial;
+  } as unknown as DTrial;
 
   it('샘플 사이를 선형 보간한다', () => {
-    expect(sampleAt(trial, 5)).toEqual({ t: 5, addedG: 2, dissolvedG: 1, undissolvedG: 1 });
-    expect(sampleAt(trial, 15)).toEqual({ t: 15, addedG: 4, dissolvedG: 2.5, undissolvedG: 1.5 });
+    expect(sampleAt(trial, 5, interpolateDissolution)).toEqual({ t: 5, addedG: 2, dissolvedG: 1, undissolvedG: 1 });
+    expect(sampleAt(trial, 15, interpolateDissolution)).toEqual({ t: 15, addedG: 4, dissolvedG: 2.5, undissolvedG: 1.5 });
   });
   it('넣은 양은 보간하지 않고 계단식으로 바뀐다', () => {
-    const real = { samples: simulateDissolution({ solute: 'salt', waterMl: 50, waterTempC: 20, stir: 0 }).samples } as unknown as Trial;
+    const real = { samples: simulateDissolution({ solute: 'salt', waterMl: 50, waterTempC: 20, stir: 0 }).samples } as unknown as DTrial;
     const end = real.samples[real.samples.length - 1]!.t;
     for (let t = 0; t <= end; t += 0.37) {
-      const s = sampleAt(real, t);
+      const s = sampleAt(real, t, interpolateDissolution);
       expect(s.addedG % 2).toBeCloseTo(0, 9);
       expect(s.undissolvedG).toBeGreaterThanOrEqual(-1e-9);
       expect(s.addedG - s.dissolvedG - s.undissolvedG).toBeCloseTo(0, 9);
     }
   });
   it('범위 밖은 양 끝 값으로 고정', () => {
-    expect(sampleAt(trial, -3).dissolvedG).toBe(0);
-    expect(sampleAt(trial, 99)).toEqual({ t: 20, addedG: 4, dissolvedG: 3, undissolvedG: 1 });
+    expect(sampleAt(trial, -3, interpolateDissolution).dissolvedG).toBe(0);
+    expect(sampleAt(trial, 99, interpolateDissolution)).toEqual({ t: 20, addedG: 4, dissolvedG: 3, undissolvedG: 1 });
   });
   it('정확히 샘플 시각이면 그 값', () => {
-    expect(sampleAt(trial, 10).dissolvedG).toBe(2);
+    expect(sampleAt(trial, 10, interpolateDissolution).dissolvedG).toBe(2);
+  });
+});
+
+describe('sampleAt 기본 보간', () => {
+  it('interpolate를 생략하면 숫자 필드를 모두 선형 보간한다', () => {
+    const trial = { samples: [{ t: 0, x: 0, y: 10 }, { t: 10, x: 5, y: 0 }] };
+    expect(sampleAt(trial, 4)).toEqual({ t: 4, x: 2, y: 6 });
+    expect(lerpSample(trial.samples[0]!, trial.samples[1]!, 0.5)).toEqual({ t: 5, x: 2.5, y: 5 });
   });
 });

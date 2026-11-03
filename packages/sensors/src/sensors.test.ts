@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { simulateDissolution } from '@sci/engine-matter';
-import { MockScaleDriver, MockTemperatureDriver, mulberry32 } from './index';
+import { MockPressureDriver, MockScaleDriver, MockTemperatureDriver, mulberry32 } from './index';
 
 describe('mulberry32', () => {
   it('같은 시드면 같은 수열', () => {
@@ -72,5 +72,28 @@ describe('MockScaleDriver', () => {
     expect(n).toBeGreaterThan(0);
     await new Promise((r) => setTimeout(r, 20));
     expect(got.length).toBe(n);
+  });
+});
+
+describe('MockPressureDriver', () => {
+  it('±0.1 kPa 안, 소수 첫째 자리, 시드 재현, 단위 kPa', () => {
+    const a = new MockPressureDriver(() => 126.6, 9);
+    const b = new MockPressureDriver(() => 126.6, 9);
+    const ra = Array.from({ length: 50 }, () => a.read().value);
+    const rb = Array.from({ length: 50 }, () => b.read().value);
+    expect(ra).toEqual(rb);
+    for (const v of ra) {
+      expect(Math.abs(v - 126.6)).toBeLessThanOrEqual(0.1 + 1e-9);
+      expect(Math.round(v * 10) / 10).toBe(v);
+    }
+    expect(a.kind).toBe('pressure');
+    expect(a.read().unit).toBe('kPa');
+  });
+  it('원천값이 바뀌면 읽는 값도 따라간다', () => {
+    let src = 101.3;
+    const d = new MockPressureDriver(() => src, 1);
+    expect(Math.abs(d.read().value - 101.3)).toBeLessThanOrEqual(0.1 + 1e-9);
+    src = 202.6;
+    expect(Math.abs(d.read().value - 202.6)).toBeLessThanOrEqual(0.1 + 1e-9);
   });
 });

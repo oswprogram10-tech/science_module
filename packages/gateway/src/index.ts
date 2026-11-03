@@ -70,7 +70,8 @@ export function joinLabels(words: string[]): string {
 export function structuralFeedback(
   analysis: TrialAnalysis,
   labels: Record<string, string>,
-  ivKey?: string | null,
+  ivKey: string | null | undefined,
+  dependentLabel: string,
 ): string | null {
   const words = analysis.changed.map((k) => labels[k] ?? k);
   if (words.length === 0) return null;
@@ -82,13 +83,13 @@ export function structuralFeedback(
   if (analysis.kind !== 'confounded') return null;
   const list = joinLabels(words);
   const last = words[words.length - 1]!;
-  return `${list}${josa(last, '이/가')} 함께 바뀌어서, 녹은 양이 무엇 때문에 달라졌는지 알 수 없어요.`;
+  return `${list}${josa(last, '이/가')} 함께 바뀌어서, ${dependentLabel}${josa(dependentLabel, '이/가')} 무엇 때문에 달라졌는지 알 수 없어요.`;
 }
 
-/** 두 시행의 녹은 양을 비교한다. 차이가 숟가락 1개 이하이면 'same'. */
-export function observedOutcome(prevG: number, currentG: number, spoonGrams: number): Prediction {
-  const diff = currentG - prevG;
-  if (Math.abs(diff) <= spoonGrams + 1e-9) return 'same';
+/** 두 시행의 주 측정값을 비교한다. 차이가 sameThreshold 이하이면 'same'. */
+export function observedOutcome(prev: number, current: number, sameThreshold: number): Prediction {
+  const diff = current - prev;
+  if (Math.abs(diff) <= sameThreshold + 1e-9) return 'same';
   return diff > 0 ? 'increase' : 'decrease';
 }
 

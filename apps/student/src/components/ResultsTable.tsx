@@ -1,16 +1,23 @@
 import type { Experiment } from '@sci/schema';
 import type { Trial } from '@sci/runtime';
+import type { AnyModule } from '../modules/types';
 import { OBSERVED_LABEL, PREDICTION_LABEL, observedOutcome } from '@sci/gateway';
 
 export function ResultsTable({
   experiment,
+  module: mod,
   trials,
   playingId,
 }: {
   experiment: Experiment;
-  trials: Trial[];
+  module: AnyModule;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  trials: Trial<any, any>[];
   playingId: string | null;
 }) {
+  const columns = mod.resultColumns(experiment);
+  const metricOf = (t: Trial<any, any>) => t.result[mod.metric.resultKey] as number; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const threshold = mod.metric.sameThreshold(experiment);
   const optionLabel = (key: string, value: string | number) =>
     experiment.variables.find((v) => v.key === key)?.options.find((o) => o.value === value)?.label ?? String(value);
 
@@ -26,15 +33,15 @@ export function ResultsTable({
               {experiment.variables.map((v) => (
                 <th scope="col" key={v.key}>{v.label}</th>
               ))}
-              <th scope="col">녹은 양(g)</th>
-              <th scope="col">숟가락 수</th>
-              <th scope="col">걸린 시간(초)</th>
+              {columns.map((c) => (
+                <th scope="col" key={c.label}>{c.label}</th>
+              ))}
               <th scope="col">예측·결과</th>
             </tr>
           </thead>
           <tbody>
             {trials.length === 0 && (
-              <tr><td colSpan={experiment.variables.length + 5}>아직 실험한 결과가 없어요.</td></tr>
+              <tr><td colSpan={experiment.variables.length + columns.length + 2}>아직 실험한 결과가 없어요.</td></tr>
             )}
             {trials.map((t) => {
               const running = t.id === playingId;
@@ -42,7 +49,7 @@ export function ResultsTable({
               let outcome = '';
               if (t.prediction) outcome = `예측: ${PREDICTION_LABEL[t.prediction]}`;
               if (!running && t.prediction && prev && t.analysis.kind === 'fair-test') {
-                outcome += ` / 결과: ${OBSERVED_LABEL[observedOutcome(prev.result.dissolvedG, t.result.dissolvedG, experiment.spoonGrams)]}`;
+                outcome += ` / 결과: ${OBSERVED_LABEL[observedOutcome(metricOf(prev), metricOf(t), threshold)]}`;
               }
               return (
                 <tr key={t.id}>
@@ -57,12 +64,12 @@ export function ResultsTable({
                     );
                   })}
                   {running ? (
-                    <td colSpan={3}>실험 중…</td>
+                    <td colSpan={columns.length}>실험 중…</td>
                   ) : (
                     <>
-                      <td>{t.result.dissolvedG.toFixed(1)}</td>
-                      <td>{t.result.spoonsFullyDissolved}</td>
-                      <td>{t.result.timeS.toFixed(1)}</td>
+                      {columns.map((c) => (
+                        <td key={c.label}>{c.value(t.result)}</td>
+                      ))}
                     </>
                   )}
                   <td>{running ? '' : outcome || '-'}</td>

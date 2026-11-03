@@ -52,7 +52,7 @@ describe('selectProbe 우선순위', () => {
       '앞 시행과 조건이 같아요',
     );
   });
-  it('prediction-mismatch가 fair-test-stir보다 앞선다', () => {
+  it('prediction-mismatch가 iv별 fair-test보다 앞선다', () => {
     const t = selectProbe(
       ctx({
         ivKey: 'stir',
@@ -65,7 +65,7 @@ describe('selectProbe 우선순위', () => {
     );
     expect(t).toContain('예측과 결과가 달랐네요');
   });
-  it('fair-test + stir -> fair-test-stir', () => {
+  it('fair-test + stir -> iv가 stir인 fair-test', () => {
     const t = selectProbe(
       ctx({
         ivKey: 'stir',
@@ -85,6 +85,22 @@ describe('selectProbe 우선순위', () => {
       guard,
     );
     expect(t).toBe('물의 온도만 바꾸었을 때 녹은 양과 걸린 시간은 각각 어떻게 달라졌나요? 표에서 두 줄을 비교해 볼까요?');
+  });
+  it('iv가 일치하는 probe를 먼저, 없으면 iv 없는 probe를 고른다', () => {
+    const list = [
+      { when: 'fair-test', text: '일반' },
+      { when: 'fair-test', iv: 'a', text: 'A용' },
+      { when: 'fair-test', iv: 'b', text: 'B용' },
+    ];
+    const c = (iv: string) =>
+      ctx({ ivKey: iv, lastAnalysis: { kind: 'fair-test', changed: [iv] }, prediction: 'same', observed: 'same' });
+    expect(selectProbe(c('a'), list, guard)).toBe('A용');
+    expect(selectProbe(c('b'), list, guard)).toBe('B용');
+    expect(selectProbe(c('z'), list, guard)).toBe('일반');
+    // iv가 없는 probe가 없고 일치하는 것도 없으면 고정 문구
+    expect(selectProbe(c('z'), list.slice(1), guard)).toBe(FALLBACK_PROBE);
+    // 순서와 무관하게 iv 일치가 우선
+    expect(selectProbe(c('a'), [list[1]!, list[0]!], guard)).toBe('A용');
   });
   it('first-trial', () => {
     expect(selectProbe(ctx({ lastAnalysis: { kind: 'first-trial', changed: [] } }), probes, guard)).toContain(
@@ -152,5 +168,45 @@ describe('매니페스트 probe 전수 검사', () => {
       }
     }
     expect(count).toBe(probes.length * keys.length * 15);
+  });
+});
+
+// ---------- 여러 가지 기체 매니페스트 ----------
+import gasesJson from '../../../content/units/g4-gases/manifest.json';
+
+describe('g4-gases 매니페스트 probe', () => {
+  const g = parseManifest(gasesJson).experiments[0]!;
+  const gLabels = Object.fromEntries(g.variables.map((v) => [v.key, v.label]));
+  const gKeys = g.variables.map((v) => v.key);
+  const gGuard = { forbiddenAnswers: g.tutor.forbiddenAnswers, limits: g.limits };
+  const gCtx = (c: Partial<ProbeContext>): ProbeContext => ({ labels: gLabels, ivKey: 'push', ...c });
+  const fair = (iv: string): Partial<ProbeContext> => ({
+    ivKey: iv,
+    lastAnalysis: { kind: 'fair-test', changed: [iv] },
+    prediction: 'same',
+    observed: 'same',
+  });
+
+  it('iv별 fair-test 질문을 고른다', () => {
+    expect(selectProbe(gCtx(fair('bathTempC')), g.tutor.probes, gGuard)).toContain('알갱이의 움직임');
+    expect(selectProbe(gCtx(fair('gasType')), g.tutor.probes, gGuard)).toContain('기체의 종류만 바꾸었을 때');
+    expect(selectProbe(gCtx(fair('push')), g.tutor.probes, gGuard)).toBe(
+      '피스톤을 누르는 힘만 바꾸었을 때 주사기 눈금은 어떻게 달라졌나요? 알갱이 화면에서 알갱이 사이의 거리도 살펴볼까요?',
+    );
+  });
+
+  it('모든 변인 조합으로 치환해도 가드를 통과한다 ("몰"이 일반 낱말에 걸리지 않는다)', () => {
+    for (const probe of g.tutor.probes) {
+      for (const iv of gKeys) {
+        for (const changed of [...gKeys.map((k) => [k]), gKeys]) {
+          const text = renderProbe(probe.text, { iv: gLabels[iv]!, changed: changed.map((k) => gLabels[k]!) });
+          expect(guardOutput(text, gGuard).ok, text).toBe(true);
+          expect(text).not.toMatch(/[{}]|\(를\)|\(가\)|\(과\)/);
+        }
+      }
+    }
+    for (const t of ['몰라요', '잘 몰랐어요', '물을 몰래 넣었어요']) {
+      expect(guardOutput(t, gGuard).ok, t).toBe(false); // 참고: 낱말 단위가 아니라 부분 문자열 비교
+    }
   });
 });

@@ -40,12 +40,13 @@ export const probeWhenSchema = z.enum([
   'iv-unchanged',
   'repeat',
   'fair-test',
-  'fair-test-stir',
   'prediction-mismatch',
 ]);
 
 export const probeSchema = z.object({
   when: probeWhenSchema,
+  /** 이 조작변인일 때만 쓰는 질문. */
+  iv: z.string().min(1).optional(),
   text: z.string().min(1),
 });
 
@@ -54,15 +55,29 @@ export const tutorConfigSchema = z.object({
   probes: z.array(probeSchema).min(1),
 });
 
+export const moduleKindSchema = z.enum(['dissolution', 'gas-syringe']);
+
+export const safetyNoticeSchema = z.object({
+  key: z.string().min(1),
+  value: optionValue,
+  text: z.string().min(1),
+});
+
 export const experimentSchema = z.object({
   id: z.string().min(1),
+  module: moduleKindSchema,
   title: z.string().min(1),
   question: z.string().min(1),
-  spoonGrams: z.number().positive(),
+  /** 모듈별 설정. 모듈의 validate가 검사한다. */
+  params: z.record(z.string(), z.unknown()).optional(),
+  /** dissolution 모듈의 validate가 필수로 검사한다. */
+  spoonGrams: z.number().positive().optional(),
+  predictionPrompt: z.string().min(1),
   variables: z.array(variableSchema).min(1),
   dependent: z.array(dependentSchema).min(1),
   gateway: gatewaySchema,
   safety: z.array(z.string()).default([]),
+  safetyNotices: z.array(safetyNoticeSchema).optional(),
   limits: z.array(z.string()).default([]),
   tutor: tutorConfigSchema,
 });
@@ -78,6 +93,8 @@ export const manifestSchema = z.object({
 
 export type OptionValue = string | number;
 export type Variable = z.infer<typeof variableSchema>;
+export type ModuleKind = z.infer<typeof moduleKindSchema>;
+export type SafetyNotice = z.infer<typeof safetyNoticeSchema>;
 export type Probe = z.infer<typeof probeSchema>;
 export type ProbeWhen = z.infer<typeof probeWhenSchema>;
 export type GatewayConfig = z.infer<typeof gatewaySchema>;

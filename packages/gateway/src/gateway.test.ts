@@ -105,28 +105,36 @@ describe('josa', () => {
 describe('structuralFeedback', () => {
   it('confounded 문장', () => {
     expect(
-      structuralFeedback({ kind: 'confounded', changed: ['waterTempC', 'waterMl'] }, labels),
+      structuralFeedback({ kind: 'confounded', changed: ['waterTempC', 'waterMl'] }, labels, null, '녹은 양'),
     ).toBe('물의 온도와 물의 양이 함께 바뀌어서, 녹은 양이 무엇 때문에 달라졌는지 알 수 없어요.');
   });
   it('세 개: 조사를 맞춰 잇는다', () => {
     expect(
-      structuralFeedback({ kind: 'confounded', changed: ['waterMl', 'stir', 'waterTempC'] }, labels),
+      structuralFeedback({ kind: 'confounded', changed: ['waterMl', 'stir', 'waterTempC'] }, labels, null, '녹은 양'),
     ).toBe('물의 양과 젓기와 물의 온도가 함께 바뀌어서, 녹은 양이 무엇 때문에 달라졌는지 알 수 없어요.');
   });
   it('iv-unchanged 문장', () => {
-    expect(structuralFeedback({ kind: 'iv-unchanged', changed: ['stir'] }, labels, 'waterTempC')).toBe(
+    expect(structuralFeedback({ kind: 'iv-unchanged', changed: ['stir'] }, labels, 'waterTempC', '녹은 양')).toBe(
       '바꿀 조건으로 고른 물의 온도는 그대로이고, 젓기가 바뀌었어요.',
     );
     expect(
-      structuralFeedback({ kind: 'iv-unchanged', changed: ['waterMl', 'stir'] }, labels, 'waterTempC'),
+      structuralFeedback({ kind: 'iv-unchanged', changed: ['waterMl', 'stir'] }, labels, 'waterTempC', '녹은 양'),
     ).toBe('바꿀 조건으로 고른 물의 온도는 그대로이고, 물의 양과 젓기가 바뀌었어요.');
-    expect(structuralFeedback({ kind: 'iv-unchanged', changed: ['stir'] }, labels, 'waterMl')).toBe(
+    expect(structuralFeedback({ kind: 'iv-unchanged', changed: ['stir'] }, labels, 'waterMl', '녹은 양')).toBe(
       '바꿀 조건으로 고른 물의 양은 그대로이고, 젓기가 바뀌었어요.',
     );
   });
+  it('종속변인 이름과 조사를 바꿔 끼운다', () => {
+    expect(
+      structuralFeedback({ kind: 'confounded', changed: ['waterMl', 'stir'] }, labels, null, '기체의 부피'),
+    ).toBe('물의 양과 젓기가 함께 바뀌어서, 기체의 부피가 무엇 때문에 달라졌는지 알 수 없어요.');
+    expect(
+      structuralFeedback({ kind: 'confounded', changed: ['waterMl', 'stir'] }, labels, null, '부피 변화'),
+    ).toBe('물의 양과 젓기가 함께 바뀌어서, 부피 변화가 무엇 때문에 달라졌는지 알 수 없어요.');
+  });
   it('confounded가 아니면 null', () => {
     for (const kind of ['first-trial', 'repeat', 'fair-test'] as const) {
-      expect(structuralFeedback({ kind, changed: [] }, labels)).toBeNull();
+      expect(structuralFeedback({ kind, changed: [] }, labels, null, '녹은 양')).toBeNull();
     }
   });
 });

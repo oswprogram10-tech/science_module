@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { simulateDissolution, type DissolutionParams } from '@sci/engine-matter';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import {
   analyzeTrial,
   canRun,
@@ -8,47 +7,63 @@ import {
   type Prediction,
 } from '@sci/gateway';
 import { createRuntime, sampleAt, type Trial } from '@sci/runtime';
-import { MockScaleDriver, MockTemperatureDriver } from '@sci/sensors';
 import { selectProbe } from '@sci/tutor';
 import { MemoryRecorder, buildStatement, toExtensions } from '@sci/xapi';
 import type { Experiment } from '@sci/schema';
-import { loadManifest } from './manifest';
+import { UNITS, parseRoute, unitHash, type UnitEntry } from './units';
+import type { AnyModule } from './modules/types';
 import { DesignPanel } from './components/DesignPanel';
-import { BeakerView } from './components/BeakerView';
-import { ParticleView } from './components/ParticleView';
 import { GraphView } from './components/GraphView';
 import { SensorBar } from './components/SensorBar';
 import { ResultsTable } from './components/ResultsTable';
+import { UnitList } from './components/UnitList';
+
+const subscribeHash = (cb: () => void) => {
+  window.addEventListener('hashchange', cb);
+  return () => window.removeEventListener('hashchange', cb);
+};
+const getHash = () => window.location.hash;
 
 export function App() {
-  const loaded = useMemo(loadManifest, []);
-  if (!loaded.ok) {
-    return (
-      <main className="error-screen" role="alert">
-        <h1>콘텐츠를 불러오지 못했어요</h1>
-        <p>매니페스트 검증에 실패했습니다.</p>
-        <ul>
-          {loaded.issues.map((i) => (
-            <li key={i}>{i}</li>
-          ))}
-        </ul>
-      </main>
-    );
+  const hash = useSyncExternalStore(subscribeHash, getHash);
+  const route = parseRoute(hash);
+  const unit =
+    route.page === 'unit' ? UNITS.find((u): u is Extract<UnitEntry, { ok: true }> => u.ok && u.id === route.unitId) : undefined;
+
+  // 알 수 없는(또는 불러오지 못한) 단원 id면 목록으로 돌아간다.
+  useEffect(() => {
+    if (route.page === 'unit' && !unit) window.location.replace('#/');
+  }, [route.page, unit]);
+
+  if (unit) {
+    // key: 단원을 바꾸면 런타임 상태를 새로 만든다.
+    return <Lab key={unit.id} unitId={unit.id} title={unit.manifest.title} experiment={unit.experiment} module={unit.module} />;
   }
-  return <Lab title={loaded.manifest.title} experiment={loaded.experiment} />;
+  return <UnitList units={UNITS} hrefOf={unitHash} />;
 }
 
 const ACTOR_ID = 'anon-student-001';
-const activityId = (expId: string) => `https://sci-bridge.local/activities/g5-solution/${expId}`;
+const activityId = (unitId: string, expId: string) => `https://sci-bridge.local/activities/${unitId}/${expId}`;
 
-function Lab({ title, experiment }: { title: string; experiment: Experiment }) {
+function Lab({
+  unitId,
+  title,
+  experiment,
+  module: mod,
+}: {
+  unitId: string;
+  title: string;
+  experiment: Experiment;
+  module: AnyModule;
+}) {
   const defaults = useMemo(
     () => Object.fromEntries(experiment.variables.map((v) => [v.key, v.default])),
     [experiment],
   );
   const runtime = useMemo(
     () =>
-      createRuntime({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      createRuntime<any, any>({
         defaults,
         clock: () => performance.now(),
         canRun: (s) => canRun(s, experiment.gateway).ok,
@@ -74,9 +89,19 @@ function Lab({ title, experiment }: { title: string; experiment: Experiment }) {
     return () => cancelAnimationFrame(id);
   }, [state.playing, runtime]);
 
-  const active: Trial | undefined = state.trials.find((t) => t.id === state.active);
-  const snapshot = active ? sampleAt(active, state.playhead) : null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const active: Trial<any, any> | undefined = state.trials.find((t) => t.id === state.active);
+  const snapshot = active ? sampleAt(active, state.playhead, mod.interpolate) : null;
   const prevOfActive = active ? state.trials[active.index - 2] : undefined;
+
+  const shownValues = active ? active.values : state.values;
+  const viewProps = {
+    experiment,
+    trial: active,
+    snapshot,
+    values: shownValues,
+    playhead: state.playhead,
+  };
 
   const gate = canRun({ ivKey: state.ivKey, prediction: state.prediction }, experiment.gateway);
 
@@ -85,15 +110,12 @@ function Lab({ title, experiment }: { title: string; experiment: Experiment }) {
     try {
       const snap = runtime.getSnapshot();
       const emit = (verb: string, result?: Record<string, unknown>) => {
-        const stmt = buildStatement({ actorId: ACTOR_ID, verb, objectId: activityId(experiment.id), result });
+        const stmt = buildStatement({ actorId: ACTOR_ID, verb, objectId: activityId(unitId, experiment.id), result });
         recorder.record(stmt);
         console.debug('[xAPI]', stmt);
       };
       const trial = runtime.run(
-        (values) =>
-          simulateDissolution(values as unknown as DissolutionParams, {
-            spoonGrams: experiment.spoonGrams,
-          }),
+        (values) => mod.simulate(values, experiment),
         (prev, cur) => analyzeTrial(prev, cur, labels),
       );
       if (trial) {
@@ -119,29 +141,21 @@ function Lab({ title, experiment }: { title: string; experiment: Experiment }) {
     }
   };
 
-  // 센서: 모든 값은 sampleAt 스냅샷에서만 읽는다.
-  const tempSource = Number(state.trials.length ? (active?.values.waterTempC ?? 20) : state.values.waterTempC);
-  const waterMl = Number(active ? active.values.waterMl : state.values.waterMl);
-  const scaleSource = waterMl + (snapshot?.addedG ?? 0);
-  const sourceRef = useRef({ tempSource, scaleSource });
-  sourceRef.current = { tempSource, scaleSource };
-  const tempDriver = useMemo(() => new MockTemperatureDriver(() => sourceRef.current.tempSource, 20250101), []);
-  const scaleDriver = useMemo(() => new MockScaleDriver(() => sourceRef.current.scaleSource, 20250102), []);
-  const scaleKey = Math.round(scaleSource * 100);
-  // 원천 값이 바뀔 때만 다시 읽어 숫자가 매 프레임 깜빡이지 않게 한다.
-  /* eslint-disable react-hooks/exhaustive-deps */
-  const tempReading = useMemo(() => tempDriver.read(), [tempDriver, tempSource]);
-  const scaleReading = useMemo(() => scaleDriver.read(), [scaleDriver, scaleKey]);
-  /* eslint-enable react-hooks/exhaustive-deps */
+  // 센서: 모든 값은 sampleAt 스냅샷(과 화면에 보이는 시행의 조건)에서만 읽는다.
+  const sensorSpecs = mod.sensors(snapshot, shownValues);
 
   // 피드백·튜터: 재생이 끝난 뒤에 보여 준다.
   const shown = state.playing ? state.trials.slice(0, -1) : state.trials;
   const last = shown[shown.length - 1];
   const lastPrev = last ? shown[last.index - 2] : undefined;
-  const feedback = last ? structuralFeedback(last.analysis, labels, last.ivKey) : null;
+  const feedback = last ? structuralFeedback(last.analysis, labels, last.ivKey, experiment.dependent[0]!.label) : null;
   let observed: Prediction | null = null;
   if (last && lastPrev && last.analysis.kind === 'fair-test') {
-    observed = observedOutcome(lastPrev.result.dissolvedG, last.result.dissolvedG, experiment.spoonGrams);
+    observed = observedOutcome(
+      lastPrev.result[mod.metric.resultKey],
+      last.result[mod.metric.resultKey],
+      mod.metric.sameThreshold(experiment),
+    );
   }
   const probe = selectProbe(
     {
@@ -158,6 +172,7 @@ function Lab({ title, experiment }: { title: string; experiment: Experiment }) {
   return (
     <div className="app">
       <header className="top">
+        <a className="back" href="#/">← 단원 목록</a>
         <h1>{title}</h1>
         <p className="question">탐구 질문: {experiment.question}</p>
       </header>
@@ -176,15 +191,10 @@ function Lab({ title, experiment }: { title: string; experiment: Experiment }) {
 
         <section className="center" aria-label="실험 화면">
           <div className="views">
-            <BeakerView
-              trial={active}
-              snapshot={snapshot}
-              waterMl={waterMl}
-              spoonGrams={experiment.spoonGrams}
-              playhead={state.playhead}
-            />
-            <ParticleView snapshot={snapshot} />
+            <mod.MacroView {...viewProps} />
+            <mod.MicroView {...viewProps} />
             <GraphView
+              module={mod}
               trial={active}
               prev={prevOfActive}
               playhead={state.playhead}
@@ -193,7 +203,7 @@ function Lab({ title, experiment }: { title: string; experiment: Experiment }) {
               describedBy="results-table"
             />
           </div>
-          <SensorBar temperature={tempReading} scale={scaleReading} />
+          <SensorBar specs={sensorSpecs} />
           <div className="boxes">
             <div className="box feedback" aria-live="polite">
               <h2>피드백</h2>
@@ -204,7 +214,7 @@ function Lab({ title, experiment }: { title: string; experiment: Experiment }) {
               <p>{probe}</p>
             </div>
           </div>
-          <ResultsTable experiment={experiment} trials={state.trials} playingId={state.playing ? state.active : null} />
+          <ResultsTable experiment={experiment} module={mod} trials={state.trials} playingId={state.playing ? state.active : null} />
         </section>
       </main>
     </div>

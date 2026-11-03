@@ -4,7 +4,8 @@ import { PREDICTION_LABEL, josa, type Prediction } from '@sci/gateway';
 
 interface Props {
   experiment: Experiment;
-  state: RuntimeState;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  state: RuntimeState<any, any>;
   gate: { ok: boolean; reasons: string[] };
   onValue: (key: string, value: string | number) => void;
   onIV: (key: string | null) => void;
@@ -55,14 +56,16 @@ export function DesignPanel({ experiment, state, gate, onValue, onIV, onPredicti
           );
         })}
 
-        {state.values.waterTempC === 60 && (
-          <p className="warning" role="note">
-            ⚠ 뜨거운 물 주의: 60 °C의 물은 화상을 입을 수 있어요. 실제 실험에서는 선생님과 함께 조심해서 다뤄요.
-          </p>
-        )}
+        {(experiment.safetyNotices ?? [])
+          .filter((n) => state.values[n.key] === n.value)
+          .map((n) => (
+            <p className="warning" role="note" key={`${n.key}:${String(n.value)}`}>
+              {n.text}
+            </p>
+          ))}
 
         <div className="predict">
-          <span id="predict-label" className="variable-label">예측: 녹는 양은?</span>
+          <span id="predict-label" className="variable-label">{experiment.predictionPrompt}</span>
           <div role="group" aria-labelledby="predict-label" className="choices">
             {(['increase', 'decrease', 'same'] as const).map((p) => {
               const selected = state.prediction === p;

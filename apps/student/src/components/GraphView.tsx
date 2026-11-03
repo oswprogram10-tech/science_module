@@ -1,11 +1,16 @@
 import { useRef, type KeyboardEvent } from 'react';
 import type { Trial } from '@sci/runtime';
 import { sampleAt, trialDuration } from '@sci/runtime';
+import type { AnyModule } from '../modules/types';
 import { formatTick, niceScale } from '../axis';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyTrial = Trial<any, any>;
+
 interface Props {
-  trial: Trial | undefined;
-  prev: Trial | undefined;
+  module: AnyModule;
+  trial: AnyTrial | undefined;
+  prev: AnyTrial | undefined;
   playhead: number;
   playing: boolean;
   onPlayhead: (t: number) => void;
@@ -17,22 +22,38 @@ const H = 240;
 const M = { l: 44, r: 12, t: 14, b: 38 };
 const MAX_POINTS = 160;
 
-function toPoints(trial: Trial, sx: (t: number) => number, sy: (g: number) => number) {
-  const s = trial.samples;
+/** 'name(unit)' 형태의 y축 라벨을 이름과 단위로 나눈다. */
+function splitLabel(label: string): { name: string; unit: string } {
+  const m = /^(.*?)\s*\((.*)\)\s*$/.exec(label);
+  return m ? { name: m[1]!, unit: m[2]! } : { name: label, unit: '' };
+}
+
+function toPoints(
+  trial: AnyTrial,
+  key: string,
+  sx: (t: number) => number,
+  sy: (g: number) => number,
+) {
+  const s = trial.samples as Record<string, number>[];
   const step = Math.max(1, Math.ceil(s.length / MAX_POINTS));
   const pts: string[] = [];
-  for (let i = 0; i < s.length; i += step) pts.push(`${sx(s[i]!.t).toFixed(1)},${sy(s[i]!.dissolvedG).toFixed(1)}`);
+  for (let i = 0; i < s.length; i += step) pts.push(`${sx(s[i]!.t!).toFixed(1)},${sy(s[i]![key]!).toFixed(1)}`);
   const last = s[s.length - 1]!;
-  pts.push(`${sx(last.t).toFixed(1)},${sy(last.dissolvedG).toFixed(1)}`);
+  pts.push(`${sx(last.t!).toFixed(1)},${sy(last[key]!).toFixed(1)}`);
   return pts.join(' ');
 }
 
-export function GraphView({ trial, prev, playhead, playing, onPlayhead, describedBy }: Props) {
+export function GraphView({ module: mod, trial, prev, playhead, playing, onPlayhead, describedBy }: Props) {
+  const sampleKey = String(mod.metric.sampleKey);
+  const { name: yName, unit: yUnit } = splitLabel(mod.graph.yLabel);
+  /** y축 범위용 최댓값: 처음 값과 마지막 값 중 큰 쪽(둘 사이에서 이보다 커지는 일은 없다). */
+  const yDataMax = (t: AnyTrial | undefined) =>
+    t ? Math.max(Number(t.result[mod.metric.resultKey]), Number((t.samples[0] as Record<string, number>)[sampleKey])) : 0;
   const svgRef = useRef<SVGSVGElement>(null);
   const dragging = useRef(false);
 
   const xScale = niceScale(Math.max(trial ? trialDuration(trial) : 0, prev ? trialDuration(prev) : 0));
-  const yScale = niceScale(Math.max(trial?.result.dissolvedG ?? 0, prev?.result.dissolvedG ?? 0) * 1.05);
+  const yScale = niceScale(Math.max(yDataMax(trial), yDataMax(prev)) * 1.05);
   const xMax = xScale.max;
   const yMax = yScale.max;
   const sx = (t: number) => M.l + (t / xMax) * (W - M.l - M.r);
@@ -88,13 +109,13 @@ export function GraphView({ trial, prev, playhead, playing, onPlayhead, describe
         'aria-valuemin': 0,
         'aria-valuemax': r1(duration),
         'aria-valuenow': r1(playhead),
-        'aria-valuetext': `${r1(playhead)}초, 녹은 양 ${r1(sampleAt(trial, playhead).dissolvedG)} g`,
+        'aria-valuetext': `${r1(playhead)}초, ${yName} ${r1(sampleAt(trial, playhead, mod.interpolate)[sampleKey])}${yUnit ? ` ${yUnit}` : ''}`,
         'aria-disabled': playing ? true : undefined,
         onKeyDown,
       }
     : {
         role: 'img' as const,
-        'aria-label': '시간에 따른 녹은 양 그래프. 자세한 값은 결과표를 보세요.',
+        'aria-label': `시간에 따른 ${yName} 그래프. 자세한 값은 결과표를 보세요.`,
       };
 
   return (
@@ -134,9 +155,9 @@ export function GraphView({ trial, prev, playhead, playing, onPlayhead, describe
           </g>
         )}
         <text x={(M.l + W - M.r) / 2} y={H - 6} textAnchor="middle" fontSize="11" fill="currentColor">시간(초)</text>
-        <text transform={`translate(11 ${(M.t + H - M.b) / 2}) rotate(-90)`} textAnchor="middle" fontSize="11" fill="currentColor">녹은 양(g)</text>
-        {prev && <polyline points={toPoints(prev, sx, sy)} fill="none" stroke="#7a8794" strokeWidth="2" strokeDasharray="5 4" opacity="0.6" />}
-        {trial && <polyline points={toPoints(trial, sx, sy)} fill="none" stroke="#1f6fb5" strokeWidth="2.5" />}
+        <text transform={`translate(11 ${(M.t + H - M.b) / 2}) rotate(-90)`} textAnchor="middle" fontSize="11" fill="currentColor">{mod.graph.yLabel}</text>
+        {prev && <polyline points={toPoints(prev, sampleKey, sx, sy)} fill="none" stroke="#7a8794" strokeWidth="2" strokeDasharray="5 4" opacity="0.6" />}
+        {trial && <polyline points={toPoints(trial, sampleKey, sx, sy)} fill="none" stroke="#1f6fb5" strokeWidth="2.5" />}
         {trial && (
           <g>
             <line x1={sx(playhead)} x2={sx(playhead)} y1={M.t} y2={H - M.b} stroke="#c0392b" strokeWidth="2" />

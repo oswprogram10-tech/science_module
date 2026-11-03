@@ -92,7 +92,7 @@ apps/student               # Vite + React 19 앱
         { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },
         { "when": "repeat",      "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
         { "when": "fair-test",   "text": "{iv}만 바꾸었을 때 녹은 양과 걸린 시간은 각각 어떻게 달라졌나요? 표에서 두 줄을 비교해 볼까요?" },
-        { "when": "fair-test-stir", "text": "젓는 빠르기를 바꾸었을 때 달라진 것은 녹은 양인가요, 걸린 시간인가요? 그래프의 기울기도 살펴볼까요?" },
+        { "when": "fair-test-stir", "text": "젓는 빠르기를 바꾸었을 때 달라진 것은 녹은 양인가요, 걸린 시간인가요? 그래프의 기울기도 살펴볼까요?" },  // → g4-gases-mvp.md A절로 변경: `{ "when": "fair-test", "iv": "stir", ... }`로 옮기고 `fair-test-stir`는 삭제
         { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 결과표의 어느 숫자를 보면 그 까닭을 찾을 수 있을까요?" }
       ]
     }
@@ -165,7 +165,7 @@ UI 프레임워크에 의존하지 않는 상태 저장소. `subscribe/getSnapsh
   - 바뀐 변인이 있고 ivKey가 null이 아니며 바뀐 변인에 ivKey가 없음 → `{ kind: 'iv-unchanged', changed: [...] }` (고른 조작변인은 그대로인데 다른 변인이 바뀜)
   - 그 밖(ivKey를 포함해 다른 변인도 바뀜, 또는 ivKey가 null인데 바뀜) → `{ kind: 'confounded', changed: [...] }`
   - 비교 기준은 **바로 앞 시행**이다.
-- `structuralFeedback(analysis, labels, ivKey?) → string | null`. confounded와 iv-unchanged일 때만 문장을 만든다. iv-unchanged 예: "바꿀 조건으로 고른 물의 온도는 그대로이고, 젓기가 바뀌었어요." confounded: 예: "물의 온도와 물의 양이 함께 바뀌어서, 녹은 양이 무엇 때문에 달라졌는지 알 수 없어요." 낱말 목록은 조사를 맞춰 잇는다(받침 있으면 "과", 없으면 "와", 마지막 낱말 뒤 주격 조사 "이/가").
+- `structuralFeedback(analysis, labels, ivKey?) → string | null`. confounded와 iv-unchanged일 때만 문장을 만든다. iv-unchanged 예: "바꿀 조건으로 고른 물의 온도는 그대로이고, 젓기가 바뀌었어요." confounded: 예: "물의 온도와 물의 양이 함께 바뀌어서, 녹은 양이 무엇 때문에 달라졌는지 알 수 없어요." 낱말 목록은 조사를 맞춰 잇는다(받침 있으면 "과", 없으면 "와", 마지막 낱말 뒤 주격 조사 "이/가"). **→ g4-gases-mvp.md A절로 변경**: 시그니처는 `structuralFeedback(analysis, labels, ivKey, dependentLabel)`이고 confounded 문장의 "녹은 양"은 `{dependentLabel}{이/가}`로 일반화(출력 문장은 그대로).
 - `josa(word, pair)`: '을/를', '이/가', '와/과', '은/는'. 마지막 글자가 한글이 아니면 괄호형(예: "을(를)")을 돌려준다.
 
 ### 6.2 예측 비교
@@ -181,7 +181,7 @@ UI 프레임워크에 의존하지 않는 상태 저장소. `subscribe/getSnapsh
   3. iv-unchanged → `iv-unchanged`
   4. repeat → `repeat`
   5. fair-test이고 예측과 결과가 다름 → `prediction-mismatch`
-  6. fair-test이고 ivKey가 `stir` → `fair-test-stir`
+  6. fair-test이고 ivKey가 `stir` → `fair-test-stir` **→ g4-gases-mvp.md A절로 변경**: 이 단계는 삭제하고, `selectProbe`가 같은 `when` 안에서 `iv`가 현재 조작변인과 일치하는 probe를 먼저 고른다.
   7. fair-test → `fair-test`
   8. first-trial → `first-trial`
   - 고른 키의 probe가 매니페스트에 없으면 고정 문구(FALLBACK_PROBE)를 돌려준다. `guard`는 필수 인자다.
@@ -227,7 +227,7 @@ UI 프레임워크에 의존하지 않는 상태 저장소. `subscribe/getSnapsh
     - 결과표: 시행 번호, 네 변인, 녹은 양, 숟가락 수, 걸린 시간, 예측·결과. 바뀐 변인 칸을 강조한다.
     - 피드백 상자(구조적 피드백).
     - 튜터 상자(탐침 질문).
-- 60 °C를 고르면 "뜨거운 물 주의" 안내를 띄운다.
+- 60 °C를 고르면 "뜨거운 물 주의" 안내를 띄운다. **→ g4-gases-mvp.md A절로 변경**: 매니페스트의 `safetyNotices`(`{key, value, text}`)로 옮겼다.
 - 접근성:
   - 버튼 최소 44×44 px.
   - 색 외에 아이콘이나 글자로도 상태를 구분한다.

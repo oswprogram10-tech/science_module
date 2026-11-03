@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import manifestJson from '../../../content/units/g5-solution/manifest.json';
+import gasesJson from '../../../content/units/g4-gases/manifest.json';
 import { ManifestError, parseManifest } from './index';
 
 describe('manifest schema', () => {
@@ -31,3 +32,70 @@ describe('manifest schema', () => {
     expect(() => parseManifest(null)).toThrow(ManifestError);
   });
 });
+
+describe('다단원 필드', () => {
+  const clone = (j: unknown = manifestJson) => JSON.parse(JSON.stringify(j));
+
+  it('두 매니페스트가 모두 검증을 통과한다', () => {
+    const solution = parseManifest(manifestJson);
+    const gases = parseManifest(gasesJson);
+    expect(solution.experiments[0]!.module).toBe('dissolution');
+    expect(gases.id).toBe('g4-gases');
+    expect(gases.grade).toBe(4);
+    const e = gases.experiments[0]!;
+    expect(e.module).toBe('gas-syringe');
+    expect(e.params).toEqual({ syringeMaxMl: 60 });
+    expect(e.predictionPrompt).toBe('예측: 기체의 부피는?');
+    expect(e.spoonGrams).toBeUndefined();
+    expect(e.safetyNotices).toHaveLength(1);
+    expect(e.tutor.probes.filter((p) => p.iv)).toHaveLength(2);
+  });
+
+  it('용해 매니페스트로 옮긴 safetyNotices와 iv probe', () => {
+    const e = parseManifest(manifestJson).experiments[0]!;
+    expect(e.predictionPrompt).toBe('예측: 녹는 양은?');
+    expect(e.safetyNotices).toEqual([
+      { key: 'waterTempC', value: 60, text: '⚠ 뜨거운 물 주의: 60 °C의 물은 화상을 입을 수 있어요. 실제 실험에서는 선생님과 함께 조심해서 다뤄요.' },
+    ]);
+    const stir = e.tutor.probes.find((p) => p.iv === 'stir')!;
+    expect(stir.when).toBe('fair-test');
+    expect(stir.text).toContain('젓는 빠르기');
+  });
+
+  it('fair-test-stir는 더 이상 허용하지 않는다', () => {
+    const bad = clone();
+    bad.experiments[0].tutor.probes[0].when = 'fair-test-stir';
+    expect(() => parseManifest(bad)).toThrow(ManifestError);
+  });
+
+  it('module은 필수이고 알 수 없는 값은 거부한다', () => {
+    const none = clone();
+    delete none.experiments[0].module;
+    expect(() => parseManifest(none)).toThrow(ManifestError);
+    const bad = clone();
+    bad.experiments[0].module = 'nope';
+    expect(() => parseManifest(bad)).toThrow(ManifestError);
+  });
+
+  it('predictionPrompt는 필수', () => {
+    const bad = clone();
+    delete bad.experiments[0].predictionPrompt;
+    expect(() => parseManifest(bad)).toThrow(ManifestError);
+  });
+
+  it('spoonGrams는 선택이고 standards는 빈 배열을 허용한다', () => {
+    const ok = clone(gasesJson);
+    ok.standards = [];
+    expect(parseManifest(ok).standards).toEqual([]);
+    const solution = clone();
+    delete solution.experiments[0].spoonGrams;
+    expect(() => parseManifest(solution)).not.toThrow();
+  });
+
+  it('safetyNotices 항목 형식을 검사한다', () => {
+    const bad = clone();
+    bad.experiments[0].safetyNotices = [{ key: 'waterTempC', value: 60 }];
+    expect(() => parseManifest(bad)).toThrow(ManifestError);
+  });
+});
+

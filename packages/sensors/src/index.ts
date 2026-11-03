@@ -4,9 +4,11 @@ export interface SensorReading {
   ts: number;
 }
 
+export type SensorKind = 'temperature' | 'scale' | 'pressure';
+
 export interface SensorDriver {
   id: string;
-  kind: 'temperature' | 'scale';
+  kind: SensorKind;
   unit: string;
   connect(): Promise<void>;
   disconnect(): Promise<void>;
@@ -28,7 +30,7 @@ export function mulberry32(seed: number): () => number {
 
 abstract class MockDriver implements SensorDriver {
   abstract id: string;
-  abstract kind: 'temperature' | 'scale';
+  abstract kind: SensorKind;
   abstract unit: string;
   protected rng: () => number;
   private listeners = new Set<(r: SensorReading) => void>();
@@ -76,6 +78,7 @@ const roundTo = (x: number, digits: number) => {
 
 export const TEMPERATURE_NOISE_C = 0.2;
 export const SCALE_NOISE_G = 0.01;
+export const PRESSURE_NOISE_KPA = 0.1;
 export const BEAKER_G = 100;
 
 /** 값 = source() + 시드 고정 잡음(±0.2 °C), 소수 첫째 자리. */
@@ -99,5 +102,15 @@ export class MockScaleDriver extends MockDriver {
   unit = 'g';
   protected measure() {
     return roundTo(BEAKER_G + this.source() + (this.rng() * 2 - 1) * SCALE_NOISE_G, 2);
+  }
+}
+
+/** 값 = source()(kPa) + 시드 고정 잡음(±0.1 kPa), 소수 첫째 자리. */
+export class MockPressureDriver extends MockDriver {
+  id = 'mock-pressure';
+  kind = 'pressure' as const;
+  unit = 'kPa';
+  protected measure() {
+    return roundTo(this.source() + (this.rng() * 2 - 1) * PRESSURE_NOISE_KPA, 1);
   }
 }

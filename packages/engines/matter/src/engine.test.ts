@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   capacityG,
+  interpolateDissolution,
   simulateDissolution,
   solubilityPer100g,
   type DissolutionParams,
@@ -163,5 +164,140 @@ describe('validateDissolutionExperiment', () => {
     });
     expect(e).toHaveLength(1);
     expect(e[0]).toContain('stir');
+  });
+});
+
+// ---------- 기체 모델 ----------
+import gasManifestJson from '../../../../content/units/g4-gases/manifest.json';
+import { GAS_TYPES, interpolateGas, simulateGas, validateGasExperiment, type GasParams } from './index';
+
+const gasBase: GasParams = { push: 0, bathTempC: 20, gasType: 'air', startMl: 30 };
+const gas = (p: Partial<GasParams> = {}, o = {}) => simulateGas({ ...gasBase, ...p }, o);
+
+describe('simulateGas', () => {
+  it('누르는 힘 0→1→2: 부피가 줄어든다 (30 / 24 / 15 mL)', () => {
+    const v = ([0, 1, 2] as const).map((push) => gas({ push }).result.volumeMl);
+    expect(v[0]).toBeCloseTo(30.0, 1);
+    expect(v[1]).toBeCloseTo(24.0, 1);
+    expect(v[2]).toBeCloseTo(15.0, 1);
+    expect(v[0]!).toBeGreaterThan(v[1]!);
+    expect(v[1]!).toBeGreaterThan(v[2]!);
+  });
+  it('물의 온도 0→20→60: 부피가 늘어난다 (60 °C에서 약 34.1 mL)', () => {
+    const v = [0, 20, 60].map((bathTempC) => gas({ bathTempC }).result.volumeMl);
+    expect(v[0]!).toBeLessThan(v[1]!);
+    expect(v[1]!).toBeLessThan(v[2]!);
+    expect(v[2]!).toBeCloseTo((30 * 333.15) / 293.15, 0);
+    expect(Math.abs(v[2]! - 34.1)).toBeLessThanOrEqual(0.1);
+  });
+  it('기체 종류만 바꾸면 결과가 똑같다', () => {
+    const ref = gas({ push: 1, bathTempC: 60 });
+    for (const gasType of GAS_TYPES) expect(gas({ push: 1, bathTempC: 60, gasType })).toEqual(ref);
+  });
+  it('처음 부피가 2배면 결과 부피도 비례한다', () => {
+    for (const push of [0, 1, 2] as const) {
+      for (const bathTempC of [0, 20, 60]) {
+        const a = gas({ push, bathTempC, startMl: 25 }).result.volumeMl;
+        const b = gas({ push, bathTempC, startMl: 50 }).result.volumeMl;
+        expect(Math.abs(b - 2 * a)).toBeLessThanOrEqual(0.1);
+      }
+    }
+  });
+  it('모든 샘플에서 P×V/(T+273.15)가 일정하다 (압력·온도 동시 변화 포함)', () => {
+    for (const p of [gasBase, { push: 2 as const, bathTempC: 60 }, { push: 1 as const, bathTempC: 0, startMl: 50 }]) {
+      const { samples } = gas(p);
+      const k = (s: (typeof samples)[number]) => (s.pressureAtm * s.volumeMl) / (s.gasTempC + 273.15);
+      const k0 = k(samples[0]!);
+      for (const s of samples) expect(Math.abs(k(s) - k0) / k0).toBeLessThan(1e-9);
+    }
+  });
+  it('처음 상태와 샘플 간격', () => {
+    const { samples } = gas({ push: 2, bathTempC: 60, startMl: 50 });
+    expect(samples[0]).toEqual({ t: 0, volumeMl: 50, pressureAtm: 1, gasTempC: 20 });
+    expect(samples[1]!.t).toBe(0.25);
+    expect(samples[samples.length - 1]!.t).toBe(30);
+  });
+  it('결과: 변화량과 안정 시각', () => {
+    const r = gas({ push: 1 }).result;
+    expect(r.changeMl).toBeCloseTo(-6.0, 1);
+    expect(r.settleS).toBeGreaterThan(0);
+    expect(r.settleS).toBeLessThan(10);
+    const slow = gas({ bathTempC: 60 }).result;
+    expect(slow.settleS).toBeGreaterThan(r.settleS); // 온도 변화가 더 느리다
+    expect(gas().result.settleS).toBe(0);
+    expect(gas().result.changeMl).toBe(0);
+  });
+  it('결정적이다 (난수 없음)', () => {
+    expect(gas({ push: 2, bathTempC: 0 })).toEqual(gas({ push: 2, bathTempC: 0 }));
+  });
+  it('주사기 눈금을 넘으면 RangeError', () => {
+    expect(() => gas({ bathTempC: 80, startMl: 50 }, { syringeMaxMl: 55 })).toThrow(RangeError);
+    expect(() => gas({ push: 3 as unknown as 0 })).toThrow(RangeError);
+    expect(() => gas({ startMl: 0 })).toThrow(RangeError);
+  });
+  it('매니페스트의 모든 조합(3×3×3×2)에서 V ≤ 60', () => {
+    const exp = parseManifest(gasManifestJson).experiments[0]!;
+    const o = (k: string) => exp.variables.find((v) => v.key === k)!.options.map((x) => x.value);
+    let n = 0;
+    let max = 0;
+    for (const push of o('push'))
+      for (const bathTempC of o('bathTempC'))
+        for (const gasType of o('gasType'))
+          for (const startMl of o('startMl')) {
+            const { samples } = simulateGas({ push, bathTempC, gasType, startMl } as GasParams);
+            for (const s of samples) max = Math.max(max, s.volumeMl);
+            n++;
+          }
+    expect(n).toBe(54);
+    expect(max).toBeLessThanOrEqual(60);
+    expect(max).toBeCloseTo((50 * 333.15) / 293.15, 0);
+  });
+});
+
+describe('interpolateGas', () => {
+  it('선형 보간', () => {
+    const a = { t: 0, volumeMl: 10, pressureAtm: 1, gasTempC: 20 };
+    const b = { t: 2, volumeMl: 20, pressureAtm: 2, gasTempC: 40 };
+    expect(interpolateGas(a, b, 0.5)).toEqual({ t: 1, volumeMl: 15, pressureAtm: 1.5, gasTempC: 30 });
+  });
+});
+
+describe('validateGasExperiment', () => {
+  const clone = () => parseManifest(JSON.parse(JSON.stringify(gasManifestJson))).experiments[0]!;
+  it('실제 매니페스트는 통과', () => {
+    expect(validateGasExperiment(clone())).toEqual([]);
+  });
+  it('변인이 없거나 값이 범위 밖이면 오류', () => {
+    const noKey = clone();
+    noKey.variables = noKey.variables.filter((v) => v.key !== 'gasType');
+    expect(validateGasExperiment(noKey).join()).toContain('gasType');
+    const badTemp = clone();
+    badTemp.variables.find((v) => v.key === 'bathTempC')!.options.push({ value: 99, label: '99' });
+    expect(validateGasExperiment(badTemp).join()).toContain('0~80');
+    const badGas = clone();
+    badGas.variables.find((v) => v.key === 'gasType')!.options.push({ value: 'neon', label: '네온' });
+    expect(validateGasExperiment(badGas).length).toBeGreaterThan(0);
+    const badPush = clone();
+    badPush.variables.find((v) => v.key === 'push')!.options.push({ value: 3, label: '3' });
+    expect(validateGasExperiment(badPush).length).toBeGreaterThan(0);
+    const badStart = clone();
+    badStart.variables.find((v) => v.key === 'startMl')!.options.push({ value: 0, label: '0' });
+    expect(validateGasExperiment(badStart).length).toBeGreaterThan(0);
+  });
+  it('최대 조합 부피가 syringeMaxMl을 넘으면 오류', () => {
+    const e = clone();
+    e.params = { syringeMaxMl: 50 };
+    expect(validateGasExperiment(e).join()).toContain('주사기 눈금');
+    e.params = {};
+    expect(validateGasExperiment(e).join()).toContain('syringeMaxMl');
+  });
+});
+
+describe('interpolateDissolution', () => {
+  it('넣은 양은 계단식이다', () => {
+    const a = { t: 0, addedG: 2, dissolvedG: 0, undissolvedG: 2 };
+    const b = { t: 10, addedG: 4, dissolvedG: 3, undissolvedG: 1 };
+    expect(interpolateDissolution(a, b, 0.5).addedG).toBe(2);
+    expect(interpolateDissolution(a, b, 1).addedG).toBe(4);
   });
 });

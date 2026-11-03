@@ -19,6 +19,9 @@ function tempRange(): [number, number] {
  */
 export function validateDissolutionExperiment(exp: Experiment): string[] {
   const errors: string[] = [];
+  if (typeof exp.spoonGrams !== 'number' || !(exp.spoonGrams > 0)) {
+    errors.push('spoonGrams는 0보다 큰 숫자여야 합니다.');
+  }
   const [tMin, tMax] = tempRange();
   for (const key of REQUIRED_KEYS) {
     const v = exp.variables.find((x) => x.key === key);
