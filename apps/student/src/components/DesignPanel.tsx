@@ -1,4 +1,4 @@
-import type { Experiment } from '@sci/schema';
+import type { VariableExperiment as Experiment } from '@sci/schema';
 import type { RuntimeState } from '@sci/runtime';
 import { PREDICTION_LABEL, josa, type Prediction } from '@sci/gateway';
 

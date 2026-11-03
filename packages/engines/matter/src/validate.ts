@@ -1,4 +1,4 @@
-import type { Experiment } from '@sci/schema';
+import type { VariableExperiment as Experiment } from '@sci/schema';
 import { SOLUBILITY_TABLE, SOLUTES } from './solubility';
 
 const REQUIRED_KEYS = ['solute', 'waterTempC', 'waterMl', 'stir'] as const;

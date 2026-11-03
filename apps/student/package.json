@@ -16,6 +16,7 @@
     "@sci/schema": "workspace:*",
     "@sci/sensors": "workspace:*",
     "@sci/tutor": "workspace:*",
+    "@sci/vision": "workspace:*",
     "@sci/xapi": "workspace:*",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"

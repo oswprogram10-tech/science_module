@@ -1,0 +1,114 @@
+{
+  "id": "g6-acid-base",
+  "title": "산과 염기",
+  "grade": 6,
+  "standards": ["6과09-04"],
+  "engine": "matter",
+  "experiments": [
+    {
+      "id": "indicator-classify",
+      "module": "indicator-classify",
+      "title": "지시약으로 여러 가지 용액 분류하기",
+      "question": "지시약을 이용하면 여러 가지 용액을 어떻게 분류할 수 있을까?",
+      "groups": [
+        { "key": "acid", "label": "산성 용액" },
+        { "key": "base", "label": "염기성 용액" }
+      ],
+      "solutions": [
+        { "key": "hcl", "label": "묽은 염산", "level": 1.0, "hazard": true },
+        { "key": "lemon", "label": "레몬즙", "level": 2.3 },
+        { "key": "vinegar", "label": "식초", "level": 2.8 },
+        { "key": "soda", "label": "탄산수", "level": 4.5 },
+        { "key": "soap", "label": "빨랫비누 물", "level": 10.0 },
+        { "key": "cleaner", "label": "유리 세정제", "level": 11.0 },
+        { "key": "limewater", "label": "석회수", "level": 12.4 },
+        { "key": "naoh", "label": "묽은 수산화 나트륨 용액", "level": 13.0, "hazard": true }
+      ],
+      "indicators": [
+        {
+          "key": "blueLitmus",
+          "label": "푸른색 리트머스 종이",
+          "kind": "paper",
+          "colors": [
+            { "max": 7, "color": "red" },
+            { "max": 99, "color": "blue" }
+          ],
+          "initial": "blue"
+        },
+        {
+          "key": "redLitmus",
+          "label": "붉은색 리트머스 종이",
+          "kind": "paper",
+          "colors": [
+            { "max": 7, "color": "red" },
+            { "max": 99, "color": "blue" }
+          ],
+          "initial": "red"
+        },
+        {
+          "key": "phenol",
+          "label": "페놀프탈레인 용액",
+          "kind": "drop",
+          "colors": [
+            { "max": 8.2, "color": "clear" },
+            { "max": 99, "color": "magenta" }
+          ],
+          "initial": "clear"
+        },
+        {
+          "key": "cabbage",
+          "label": "붉은 양배추 지시약",
+          "kind": "drop",
+          "colors": [
+            { "max": 2.5, "color": "cabRed" },
+            { "max": 6, "color": "cabPink" },
+            { "max": 8, "color": "cabPurple" },
+            { "max": 10.5, "color": "cabBlue" },
+            { "max": 12, "color": "cabGreen" },
+            { "max": 99, "color": "cabYellow" }
+          ],
+          "initial": "cabPurple"
+        }
+      ],
+      "colors": {
+        "red": { "label": "붉은색", "hex": "#d0605e", "pattern": "diagonal" },
+        "blue": { "label": "푸른색", "hex": "#5b7fc7", "pattern": "dots" },
+        "clear": { "label": "색 변화 없음", "hex": "#f1f1ee", "pattern": "none" },
+        "magenta": { "label": "붉은색", "hex": "#e0479e", "pattern": "diagonal" },
+        "cabRed": { "label": "붉은색", "hex": "#d6336c", "pattern": "diagonal" },
+        "cabPink": { "label": "연한 붉은색", "hex": "#c86fa8", "pattern": "diagonal-sparse" },
+        "cabPurple": { "label": "보라색", "hex": "#7b4e9b", "pattern": "cross" },
+        "cabBlue": { "label": "푸른색", "hex": "#3a8fb7", "pattern": "dots" },
+        "cabGreen": { "label": "초록색", "hex": "#3fa36b", "pattern": "horizontal" },
+        "cabYellow": { "label": "노란색", "hex": "#c9c23a", "pattern": "vertical" }
+      },
+      "safety": ["goggles", "gloves", "corrosive"],
+      "safetyChecklist": [
+        "보안경을 썼어요.",
+        "실험용 장갑을 꼈어요.",
+        "용액을 맛보거나 코를 대고 냄새를 맡지 않아요."
+      ],
+      "safetyNotices": [],
+      "limits": ["pH", "수소 이온", "수산화 이온", "이온", "분자", "중화"],
+      "tutor": {
+        "forbiddenAnswers": [
+          "산성 용액은 푸른색 리트머스 종이를 붉게",
+          "염기성 용액은 붉은색 리트머스 종이를 푸르게",
+          "염기성 용액에서 페놀프탈레인",
+          "식초는 산성 용액",
+          "레몬즙은 산성 용액",
+          "석회수는 염기성 용액",
+          "빨랫비누 물은 염기성 용액"
+        ],
+        "probes": [
+          { "when": "before-test", "text": "{solution}은(는) 산성일까요, 염기성일까요? 왜 그렇게 생각했나요?" },
+          { "when": "testing", "text": "{solution}에 지시약을 넣었을 때 색이 어떻게 변했나요? 다른 지시약으로도 확인해 볼까요?" },
+          { "when": "prediction-mismatch", "text": "{solution}에 대한 예측과 관찰 결과가 달랐네요. 어느 지시약의 색 변화를 보고 생각이 바뀌었나요?" },
+          { "when": "check-untested", "text": "아직 지시약으로 확인하지 않은 용액이 있어요. 무엇을 보고 분류할 수 있을까요?" },
+          { "when": "check-inconsistent", "text": "{solution}의 지시약 색 변화를 결과표에서 다시 살펴볼까요? 같은 무리에 넣은 다른 용액들과 비교해 보세요." },
+          { "when": "check-complete", "text": "같은 무리에 넣은 용액들은 지시약 색 변화에서 어떤 공통점이 있나요?" }
+        ]
+      }
+    }
+  ]
+}

@@ -8,7 +8,7 @@ import {
   validateDissolutionExperiment,
   type Solute,
 } from './index';
-import { parseManifest, type Experiment } from '@sci/schema';
+import { parseManifest, type VariableExperiment, type VariableExperiment as Experiment } from '@sci/schema';
 import manifestJson from '../../../../content/units/g5-solution/manifest.json';
 
 const SPOON = 2;
@@ -127,7 +127,7 @@ describe('입력 범위', () => {
 });
 
 describe('validateDissolutionExperiment', () => {
-  const exp = parseManifest(manifestJson).experiments[0]!;
+  const exp = parseManifest(manifestJson).experiments[0]! as VariableExperiment;
   const withOptions = (key: string, values: Array<string | number>): Experiment => ({
     ...exp,
     variables: exp.variables.map((v) =>
@@ -236,7 +236,7 @@ describe('simulateGas', () => {
     expect(() => gas({ startMl: 0 })).toThrow(RangeError);
   });
   it('매니페스트의 모든 조합(3×3×3×2)에서 V ≤ 60', () => {
-    const exp = parseManifest(gasManifestJson).experiments[0]!;
+    const exp = parseManifest(gasManifestJson).experiments[0]! as VariableExperiment;
     const o = (k: string) => exp.variables.find((v) => v.key === k)!.options.map((x) => x.value);
     let n = 0;
     let max = 0;
@@ -263,7 +263,7 @@ describe('interpolateGas', () => {
 });
 
 describe('validateGasExperiment', () => {
-  const clone = () => parseManifest(JSON.parse(JSON.stringify(gasManifestJson))).experiments[0]!;
+  const clone = () => parseManifest(JSON.parse(JSON.stringify(gasManifestJson))).experiments[0]! as VariableExperiment;
   it('실제 매니페스트는 통과', () => {
     expect(validateGasExperiment(clone())).toEqual([]);
   });

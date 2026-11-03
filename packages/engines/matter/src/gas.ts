@@ -1,4 +1,4 @@
-import type { Experiment } from '@sci/schema';
+import type { VariableExperiment as Experiment } from '@sci/schema';
 
 export const GAS_TYPES = ['air', 'oxygen', 'carbonDioxide'] as const;
 export type GasType = (typeof GAS_TYPES)[number];

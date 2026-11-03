@@ -9,7 +9,8 @@ import {
 import { createRuntime, sampleAt, type Trial } from '@sci/runtime';
 import { selectProbe } from '@sci/tutor';
 import { MemoryRecorder, buildStatement, toExtensions } from '@sci/xapi';
-import type { Experiment } from '@sci/schema';
+import type { VariableExperiment } from '@sci/schema';
+import { ClassifyLab } from './modules/indicator-classify/ClassifyLab';
 import { UNITS, parseRoute, unitHash, type UnitEntry } from './units';
 import type { AnyModule } from './modules/types';
 import { DesignPanel } from './components/DesignPanel';
@@ -37,6 +38,9 @@ export function App() {
 
   if (unit) {
     // key: 단원을 바꾸면 런타임 상태를 새로 만든다.
+    if (unit.activity === 'classify') {
+      return <ClassifyLab key={unit.id} unitId={unit.id} title={unit.manifest.title} experiment={unit.experiment} />;
+    }
     return <Lab key={unit.id} unitId={unit.id} title={unit.manifest.title} experiment={unit.experiment} module={unit.module} />;
   }
   return <UnitList units={UNITS} hrefOf={unitHash} />;
@@ -53,7 +57,7 @@ function Lab({
 }: {
   unitId: string;
   title: string;
-  experiment: Experiment;
+  experiment: VariableExperiment;
   module: AnyModule;
 }) {
   const defaults = useMemo(

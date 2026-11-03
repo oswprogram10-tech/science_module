@@ -1,15 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import manifestJson from '../../../content/units/g5-solution/manifest.json';
-import { parseManifest } from '@sci/schema';
+import { parseManifest, type ClassificationExperiment, type VariableExperiment } from '@sci/schema';
 import {
   FALLBACK_PROBE,
   guardOutput,
+  renderAndGuard,
   renderProbe,
   selectProbe,
   type ProbeContext,
 } from './index';
 
-const exp = parseManifest(manifestJson).experiments[0]!;
+const exp = parseManifest(manifestJson).experiments[0]! as VariableExperiment;
 const labels = Object.fromEntries(exp.variables.map((v) => [v.key, v.label]));
 const keys = exp.variables.map((v) => v.key);
 const guard = { forbiddenAnswers: exp.tutor.forbiddenAnswers, limits: exp.limits };
@@ -173,9 +174,10 @@ describe('매니페스트 probe 전수 검사', () => {
 
 // ---------- 여러 가지 기체 매니페스트 ----------
 import gasesJson from '../../../content/units/g4-gases/manifest.json';
+import acidBaseJson from '../../../content/units/g6-acid-base/manifest.json';
 
 describe('g4-gases 매니페스트 probe', () => {
-  const g = parseManifest(gasesJson).experiments[0]!;
+  const g = parseManifest(gasesJson).experiments[0]! as VariableExperiment;
   const gLabels = Object.fromEntries(g.variables.map((v) => [v.key, v.label]));
   const gKeys = g.variables.map((v) => v.key);
   const gGuard = { forbiddenAnswers: g.tutor.forbiddenAnswers, limits: g.limits };
@@ -208,5 +210,39 @@ describe('g4-gases 매니페스트 probe', () => {
     for (const t of ['몰라요', '잘 몰랐어요', '물을 몰래 넣었어요']) {
       expect(guardOutput(t, gGuard).ok, t).toBe(false); // 참고: 낱말 단위가 아니라 부분 문자열 비교
     }
+  });
+});
+
+describe('renderAndGuard (활동 유형과 무관한 탐침)', () => {
+  const ab = parseManifest(acidBaseJson).experiments[0]! as ClassificationExperiment;
+  const abGuard = { forbiddenAnswers: ab.tutor.forbiddenAnswers, limits: ab.limits };
+
+  it('{solution}을 바꾸고 조사를 맞춘다', () => {
+    expect(renderAndGuard('before-test', { solution: '식초' }, ab.tutor.probes, abGuard)).toBe(
+      '식초는 산성일까요, 염기성일까요? 왜 그렇게 생각했나요?',
+    );
+    expect(renderAndGuard('before-test', { solution: '레몬즙' }, ab.tutor.probes, abGuard)).toContain('레몬즙은 산성일까요');
+    expect(renderAndGuard('before-test', { solution: '탄산수' }, ab.tutor.probes, abGuard)).toContain('탄산수는 ');
+    expect(renderAndGuard('check-inconsistent', { solution: '석회수' }, ab.tutor.probes, abGuard)).toContain('석회수의 지시약');
+  });
+  it('맞는 probe가 없으면 FALLBACK_PROBE', () => {
+    expect(renderAndGuard('nope', {}, ab.tutor.probes, abGuard)).toBe(FALLBACK_PROBE);
+  });
+  it('가드에 걸리면 FALLBACK_PROBE', () => {
+    const probes = [{ when: 'x', text: '{solution}은(는) 산성 용액이에요.' }];
+    expect(renderAndGuard('x', { solution: '식초' }, probes, abGuard)).toBe(FALLBACK_PROBE);
+  });
+  it('전수 가드: 모든 probe × 모든 용액 이름이 가드를 통과하고 폴백이 아니다', () => {
+    for (const probe of ab.tutor.probes) {
+      for (const s of ab.solutions) {
+        const out = renderAndGuard(probe.when, { solution: s.label }, ab.tutor.probes, abGuard);
+        expect(out, `${probe.when}/${s.label}`).not.toBe(FALLBACK_PROBE);
+        expect(guardOutput(out, abGuard).ok, `${probe.when}/${s.label}: ${out}`).toBe(true);
+        expect(out).not.toMatch(/\{|\}|\(를\)|\(는\)|\(가\)|pH/);
+      }
+    }
+  });
+  it('금지 문장은 실제로 가드에 걸린다', () => {
+    for (const phrase of ab.tutor.forbiddenAnswers) expect(guardOutput(phrase, abGuard).ok).toBe(false);
   });
 });

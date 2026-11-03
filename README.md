@@ -1,7 +1,7 @@
-# 과학 실험 학습 도구 (수직 슬라이스 v0): 4학년 「여러 가지 기체」, 5학년 「용해와 용액」
+# 과학 실험 학습 도구 (수직 슬라이스 v0): 4학년 「여러 가지 기체」, 5학년 「용해와 용액」, 6학년 「산과 염기」
 
 실물 센서 없이 모의(Mock) 센서로 끝까지 동작하는 웹 실험 앱입니다.
-사양은 `docs/specs/g5-solution-mvp.md`(용해와 용액), `docs/specs/g4-gases-mvp.md`(다단원 구조와 여러 가지 기체), 전체 계획은 `docs/DEVELOPMENT_PLAN.md`를 보세요.
+사양은 `docs/specs/g6-acid-base-mvp.md`(산과 염기, 분류 활동·색 판독·안전 감시), `docs/specs/g5-solution-mvp.md`(용해와 용액), `docs/specs/g4-gases-mvp.md`(다단원 구조와 여러 가지 기체), 전체 계획은 `docs/DEVELOPMENT_PLAN.md`를 보세요.
 
 ## 준비물
 - Node.js 22 이상
@@ -25,6 +25,9 @@ pnpm build          # 학생 앱 프로덕션 빌드 (apps/student/dist)
 | `#/` | 단원 목록 |
 | `#/unit/g4-gases` | 4학년 여러 가지 기체 (주사기 속 기체의 부피) |
 | `#/unit/g5-solution` | 5학년 용해와 용액 |
+| `#/unit/g6-acid-base` | 6학년 산과 염기 (지시약으로 용액 분류하기) |
+
+산과 염기: 보안경 실제 감지는 모의 감지기로 대체, 모델은 스파이크 S2 이후. 주소 앞에 `?dev=1`을 붙이면(`/?dev=1#/unit/g6-acid-base`) 모의 안전 상황 버튼이 나타납니다.
 
 알 수 없는 단원 id는 목록으로 돌아갑니다. 매니페스트가 잘못된 단원은 목록에 오류로 표시되고, 다른 단원은 계속 쓸 수 있습니다. 단원을 바꾸면 시행 기록은 새로 시작합니다.
 
@@ -33,11 +36,12 @@ pnpm build          # 학생 앱 프로덕션 빌드 (apps/student/dist)
 ## 구조
 | 경로 | 설명 |
 |---|---|
-| `content/units/g4-gases/manifest.json`, `content/units/g5-solution/manifest.json` | 단원 매니페스트 (변인, 게이트웨이, 튜터 탐침 질문) |
+| `content/units/g4-gases/manifest.json`, `content/units/g5-solution/manifest.json`, `content/units/g6-acid-base/manifest.json` | 단원 매니페스트 (변인, 게이트웨이, 튜터 탐침 질문) |
 | `packages/schema` | `@sci/schema` zod 스키마 |
 | `packages/runtime` | `@sci/runtime` 시행 관리, 타임라인, 플레이헤드 |
 | `packages/gateway` | `@sci/gateway` 실행 조건, 시행 비교, 구조적 피드백, 조사 |
-| `packages/engines/matter` | `@sci/engine-matter` 용해 모델, 기체 모델 |
+| `packages/engines/matter` | `@sci/engine-matter` 용해 모델, 기체 모델, 지시약 분류 |
+| `packages/vision` | `@sci/vision` 색 변환·평균색·색표 매칭, 안전 감지기 인터페이스와 모의 감지기 |
 | `packages/sensors` | `@sci/sensors` 센서 인터페이스와 Mock 드라이버 |
 | `packages/tutor` | `@sci/tutor` 규칙 기반 탐침 질문과 출력 가드 |
 | `packages/xapi` | `@sci/xapi` xAPI 문장 생성과 메모리 큐 |

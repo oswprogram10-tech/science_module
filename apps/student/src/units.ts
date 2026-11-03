@@ -1,11 +1,22 @@
-import { ManifestError, parseManifest, type Experiment, type Manifest, type ModuleKind } from '@sci/schema';
+import {
+  ManifestError,
+  isVariableExperiment,
+  parseManifest,
+  type ClassificationExperiment,
+  type Manifest,
+  type ModuleKind,
+  type VariableExperiment,
+} from '@sci/schema';
 import gasesJson from '../../../content/units/g4-gases/manifest.json';
 import solutionJson from '../../../content/units/g5-solution/manifest.json';
+import acidBaseJson from '../../../content/units/g6-acid-base/manifest.json';
 import { MODULES } from './modules';
-import type { AnyModule } from './modules/types';
+import { classifyModule } from './modules/indicator-classify';
+import type { AnyModule, ClassifyModule } from './modules/types';
 
 export type UnitEntry =
-  | { ok: true; id: string; manifest: Manifest; experiment: Experiment; module: AnyModule }
+  | { ok: true; activity: 'variable'; id: string; manifest: Manifest; experiment: VariableExperiment; module: AnyModule }
+  | { ok: true; activity: 'classify'; id: string; manifest: Manifest; experiment: ClassificationExperiment; module: ClassifyModule }
   | { ok: false; id: string; title: string; issues: string[] };
 
 /** 매니페스트 하나를 schema 검증과 모듈 validate에 통과시킨다. 실패하면 오류 항목을 돌려준다. */
@@ -21,11 +32,15 @@ export function loadUnit(
     const manifest = parseManifest(raw);
     const issues: string[] = [];
     for (const exp of manifest.experiments) {
-      for (const msg of modules[exp.module].validate(exp)) issues.push(`${exp.id}: ${msg}`);
+      const msgs = isVariableExperiment(exp) ? modules[exp.module].validate(exp) : classifyModule.validate(exp);
+      for (const msg of msgs) issues.push(`${exp.id}: ${msg}`);
     }
     if (issues.length > 0) return { ok: false, id: manifest.id, title: manifest.title, issues };
     const experiment = manifest.experiments[0]!;
-    return { ok: true, id: manifest.id, manifest, experiment, module: modules[experiment.module] };
+    if (!isVariableExperiment(experiment)) {
+      return { ok: true, activity: 'classify', id: manifest.id, manifest, experiment, module: classifyModule };
+    }
+    return { ok: true, activity: 'variable', id: manifest.id, manifest, experiment, module: modules[experiment.module] };
   } catch (e) {
     return {
       ok: false,
@@ -44,7 +59,7 @@ export function buildRegistry(
   return raws.map((raw, i) => loadUnit(raw, i, modules));
 }
 
-export const UNITS: UnitEntry[] = buildRegistry([gasesJson, solutionJson]);
+export const UNITS: UnitEntry[] = buildRegistry([gasesJson, solutionJson, acidBaseJson]);
 
 export type Route = { page: 'list' } | { page: 'unit'; unitId: string };
 

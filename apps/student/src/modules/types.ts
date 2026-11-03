@@ -2,7 +2,7 @@ import type { ComponentType } from 'react';
 import type { Values } from '@sci/gateway';
 import type { Trial } from '@sci/runtime';
 import type { SensorKind } from '@sci/sensors';
-import type { Experiment, ModuleKind } from '@sci/schema';
+import type { ClassificationExperiment, VariableExperiment as Experiment, ModuleKind } from '@sci/schema';
 
 /** 화면이 그리는 데 필요한 값. values는 화면에 보이는 시행(없으면 현재 선택)의 조건이다. */
 export interface ViewProps<S extends { t: number }> {
@@ -44,3 +44,9 @@ export interface ExperimentModule<S extends { t: number }, R> {
 /** 레지스트리와 App처럼 모듈 종류를 가리지 않는 곳에서 쓰는 형태. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnyModule = ExperimentModule<any, any>;
+
+/** 분류 활동 모듈. 화면은 ClassifyLab이 그리고, 모듈은 매니페스트 검증만 맡는다. */
+export interface ClassifyModule {
+  kind: 'indicator-classify';
+  validate(exp: ClassificationExperiment): string[];
+}

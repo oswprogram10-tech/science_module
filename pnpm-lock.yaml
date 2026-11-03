@@ -35,6 +35,9 @@ importers:
       '@sci/tutor':
         specifier: workspace:*
         version: link:../../packages/tutor
+      '@sci/vision':
+        specifier: workspace:*
+        version: link:../../packages/vision
       '@sci/xapi':
         specifier: workspace:*
         version: link:../../packages/xapi
@@ -99,6 +102,8 @@ importers:
       '@sci/schema':
         specifier: workspace:*
         version: link:../schema
+
+  packages/vision: {}
 
   packages/xapi: {}
 

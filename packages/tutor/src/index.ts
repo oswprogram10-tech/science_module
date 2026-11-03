@@ -49,18 +49,39 @@ export function guardOutput(text: string, config: GuardConfig): GuardResult {
 
 const JOSA_PATTERN = /(\S)(을\(를\)|이\(가\)|와\(과\)|은\(는\))/g;
 
+function fixJosa(text: string): string {
+  return text.replace(JOSA_PATTERN, (_m, prev: string, pair: string) => {
+    const p = `${pair[0]}/${pair[2]}` as JosaPair;
+    return prev + josa(prev, p);
+  });
+}
+
 /** 템플릿의 {iv}, {changed}를 라벨로 바꾸고, 괄호형 조사를 앞 낱말 받침에 맞춘다. */
 export function renderProbe(
   template: string,
   vars: { iv: string; changed: string[] },
 ): string {
-  const text = template
-    .replaceAll('{iv}', vars.iv)
-    .replaceAll('{changed}', joinLabels(vars.changed));
-  return text.replace(JOSA_PATTERN, (_m, prev: string, pair: string) => {
-    const p = `${pair[0]}/${pair[2]}` as JosaPair;
-    return prev + josa(prev, p);
-  });
+  return fixJosa(
+    template.replaceAll('{iv}', vars.iv).replaceAll('{changed}', joinLabels(vars.changed)),
+  );
+}
+
+/**
+ * 활동 유형과 무관한 탐침 선택: when이 같은 첫 probe의 {이름}을 vars로 바꾸고 조사를 맞춘 뒤 출력 가드를 건다.
+ * 맞는 probe가 없거나 가드에 걸리면 FALLBACK_PROBE.
+ */
+export function renderAndGuard(
+  when: string,
+  vars: Record<string, string>,
+  probes: ProbeTemplate[],
+  guard: GuardConfig,
+): string {
+  const probe = probes.find((p) => p.when === when);
+  if (!probe) return FALLBACK_PROBE;
+  let text = probe.text;
+  for (const [k, v] of Object.entries(vars)) text = text.replaceAll(`{${k}}`, v);
+  text = fixJosa(text);
+  return guardOutput(text, guard).ok ? text : FALLBACK_PROBE;
 }
 
 export function pickProbeKey(context: ProbeContext): string {

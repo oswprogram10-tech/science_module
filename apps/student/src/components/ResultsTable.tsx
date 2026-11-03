@@ -1,4 +1,4 @@
-import type { Experiment } from '@sci/schema';
+import type { VariableExperiment as Experiment } from '@sci/schema';
 import type { Trial } from '@sci/runtime';
 import type { AnyModule } from '../modules/types';
 import { OBSERVED_LABEL, PREDICTION_LABEL, observedOutcome } from '@sci/gateway';

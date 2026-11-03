@@ -55,6 +55,7 @@ export const tutorConfigSchema = z.object({
   probes: z.array(probeSchema).min(1),
 });
 
+/** 변인 실험(조작변인을 바꿔 수치를 비교하는 활동)의 모듈 종류. */
 export const moduleKindSchema = z.enum(['dissolution', 'gas-syringe']);
 
 export const safetyNoticeSchema = z.object({
@@ -63,24 +64,104 @@ export const safetyNoticeSchema = z.object({
   text: z.string().min(1),
 });
 
-export const experimentSchema = z.object({
+const commonShape = {
   id: z.string().min(1),
-  module: moduleKindSchema,
   title: z.string().min(1),
   question: z.string().min(1),
   /** 모듈별 설정. 모듈의 validate가 검사한다. */
   params: z.record(z.string(), z.unknown()).optional(),
+  safety: z.array(z.string()).default([]),
+  safetyNotices: z.array(safetyNoticeSchema).optional(),
+  limits: z.array(z.string()).default([]),
+};
+
+export const variableExperimentSchema = z.object({
+  ...commonShape,
+  module: moduleKindSchema,
   /** dissolution 모듈의 validate가 필수로 검사한다. */
   spoonGrams: z.number().positive().optional(),
   predictionPrompt: z.string().min(1),
   variables: z.array(variableSchema).min(1),
   dependent: z.array(dependentSchema).min(1),
   gateway: gatewaySchema,
-  safety: z.array(z.string()).default([]),
-  safetyNotices: z.array(safetyNoticeSchema).optional(),
-  limits: z.array(z.string()).default([]),
   tutor: tutorConfigSchema,
 });
+
+// ---- 분류 활동 ----
+
+export const CLASSIFY_MODULE = 'indicator-classify' as const;
+
+export const classifyProbeWhenSchema = z.enum([
+  'before-test',
+  'testing',
+  'check-inconsistent',
+  'check-untested',
+  'check-complete',
+  'prediction-mismatch',
+]);
+
+export const classifyProbeSchema = z.object({
+  when: classifyProbeWhenSchema,
+  text: z.string().min(1),
+});
+
+export const classifyTutorConfigSchema = z.object({
+  forbiddenAnswers: z.array(z.string().min(1)),
+  probes: z.array(classifyProbeSchema).min(1),
+});
+
+export const colorPatternSchema = z.enum([
+  'none',
+  'diagonal',
+  'diagonal-sparse',
+  'dots',
+  'cross',
+  'horizontal',
+  'vertical',
+]);
+
+export const colorDefSchema = z.object({
+  label: z.string().min(1),
+  hex: z.string().regex(/^#[0-9a-fA-F]{6}$/, '#rrggbb 형식이어야 합니다.'),
+  pattern: colorPatternSchema,
+});
+
+export const groupSchema = z.object({
+  key: z.string().min(1),
+  label: z.string().min(1),
+});
+
+export const solutionSchema = z.object({
+  key: z.string().min(1),
+  label: z.string().min(1),
+  /** 내부 값. 화면, 튜터, xAPI에 드러내지 않는다. */
+  level: z.number(),
+  hazard: z.boolean().optional(),
+});
+
+export const indicatorSchema = z.object({
+  key: z.string().min(1),
+  label: z.string().min(1),
+  kind: z.enum(['paper', 'drop']),
+  colors: z.array(z.object({ max: z.number(), color: z.string().min(1) })).min(1),
+  initial: z.string().min(1),
+});
+
+export const classificationExperimentSchema = z.object({
+  ...commonShape,
+  module: z.literal(CLASSIFY_MODULE),
+  groups: z.array(groupSchema).min(1),
+  solutions: z.array(solutionSchema).min(1),
+  indicators: z.array(indicatorSchema).min(1),
+  colors: z.record(z.string(), colorDefSchema),
+  safetyChecklist: z.array(z.string().min(1)).default([]),
+  tutor: classifyTutorConfigSchema,
+});
+
+export const experimentSchema = z.discriminatedUnion('module', [
+  variableExperimentSchema,
+  classificationExperimentSchema,
+]);
 
 export const manifestSchema = z.object({
   id: z.string().min(1),
@@ -99,8 +180,20 @@ export type Probe = z.infer<typeof probeSchema>;
 export type ProbeWhen = z.infer<typeof probeWhenSchema>;
 export type GatewayConfig = z.infer<typeof gatewaySchema>;
 export type TutorConfig = z.infer<typeof tutorConfigSchema>;
-export type Experiment = z.infer<typeof experimentSchema>;
+export type VariableExperiment = z.infer<typeof variableExperimentSchema>;
+export type ClassificationExperiment = z.infer<typeof classificationExperimentSchema>;
+export type Experiment = VariableExperiment | ClassificationExperiment;
+export type ClassifyProbe = z.infer<typeof classifyProbeSchema>;
+export type ClassifyProbeWhen = z.infer<typeof classifyProbeWhenSchema>;
+export type ColorDef = z.infer<typeof colorDefSchema>;
+export type ColorPattern = z.infer<typeof colorPatternSchema>;
+export type ClassifySolution = z.infer<typeof solutionSchema>;
+export type ClassifyIndicator = z.infer<typeof indicatorSchema>;
 export type Manifest = z.infer<typeof manifestSchema>;
+
+export const isVariableExperiment = (e: Experiment): e is VariableExperiment => e.module !== CLASSIFY_MODULE;
+export const isClassificationExperiment = (e: Experiment): e is ClassificationExperiment =>
+  e.module === CLASSIFY_MODULE;
 
 export class ManifestError extends Error {
   readonly issues: string[];

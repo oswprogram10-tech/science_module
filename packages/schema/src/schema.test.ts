@@ -1,15 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import manifestJson from '../../../content/units/g5-solution/manifest.json';
 import gasesJson from '../../../content/units/g4-gases/manifest.json';
-import { ManifestError, parseManifest } from './index';
+import acidBaseJson from '../../../content/units/g6-acid-base/manifest.json';
+import {
+  ManifestError,
+  isVariableExperiment,
+  parseManifest,
+  type ClassificationExperiment,
+  type VariableExperiment,
+} from './index';
 
 describe('manifest schema', () => {
   it('실제 매니페스트가 검증을 통과한다', () => {
     const m = parseManifest(manifestJson);
     expect(m.id).toBe('g5-solution');
-    expect(m.experiments[0]!.variables).toHaveLength(4);
-    expect(m.experiments[0]!.tutor.probes).toHaveLength(8);
-    expect(m.experiments[0]!.tutor.probes.map((p) => p.when)).toContain('iv-unchanged');
+    expect((m.experiments[0] as VariableExperiment).variables).toHaveLength(4);
+    expect((m.experiments[0] as VariableExperiment).tutor.probes).toHaveLength(8);
+    expect((m.experiments[0] as VariableExperiment).tutor.probes.map((p) => p.when)).toContain('iv-unchanged');
   });
 
   it('필수 필드가 없으면 거부한다', () => {
@@ -42,7 +49,7 @@ describe('다단원 필드', () => {
     expect(solution.experiments[0]!.module).toBe('dissolution');
     expect(gases.id).toBe('g4-gases');
     expect(gases.grade).toBe(4);
-    const e = gases.experiments[0]!;
+    const e = gases.experiments[0]! as VariableExperiment;
     expect(e.module).toBe('gas-syringe');
     expect(e.params).toEqual({ syringeMaxMl: 60 });
     expect(e.predictionPrompt).toBe('예측: 기체의 부피는?');
@@ -52,7 +59,7 @@ describe('다단원 필드', () => {
   });
 
   it('용해 매니페스트로 옮긴 safetyNotices와 iv probe', () => {
-    const e = parseManifest(manifestJson).experiments[0]!;
+    const e = parseManifest(manifestJson).experiments[0]! as VariableExperiment;
     expect(e.predictionPrompt).toBe('예측: 녹는 양은?');
     expect(e.safetyNotices).toEqual([
       { key: 'waterTempC', value: 60, text: '⚠ 뜨거운 물 주의: 60 °C의 물은 화상을 입을 수 있어요. 실제 실험에서는 선생님과 함께 조심해서 다뤄요.' },
@@ -99,3 +106,43 @@ describe('다단원 필드', () => {
   });
 });
 
+
+describe('활동 유형 union (module 기준)', () => {
+  const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
+
+  it('세 매니페스트가 모두 검증을 통과한다', () => {
+    for (const j of [manifestJson, gasesJson, acidBaseJson]) expect(() => parseManifest(j)).not.toThrow();
+    const e = parseManifest(acidBaseJson).experiments[0]!;
+    expect(e.module).toBe('indicator-classify');
+    expect(isVariableExperiment(e)).toBe(false);
+    const c = e as ClassificationExperiment;
+    expect(c.solutions).toHaveLength(8);
+    expect(c.indicators).toHaveLength(4);
+    expect(c.safetyChecklist).toHaveLength(3);
+    expect(c.tutor.probes.map((p) => p.when)).toEqual([
+      'before-test', 'testing', 'prediction-mismatch', 'check-untested', 'check-inconsistent', 'check-complete',
+    ]);
+    expect(isVariableExperiment(parseManifest(manifestJson).experiments[0]!)).toBe(true);
+  });
+
+  it('잘못된 module을 거부한다', () => {
+    const bad = clone(acidBaseJson);
+    bad.experiments[0].module = 'nope';
+    expect(() => parseManifest(bad)).toThrow(ManifestError);
+  });
+
+  it('활동 유형끼리 필드를 섞으면 거부한다', () => {
+    const noSolutions = clone(acidBaseJson);
+    delete noSolutions.experiments[0].solutions;
+    expect(() => parseManifest(noSolutions)).toThrow(ManifestError);
+    const asVariable = clone(acidBaseJson);
+    asVariable.experiments[0].module = 'dissolution';
+    expect(() => parseManifest(asVariable)).toThrow(ManifestError);
+    const wrongProbe = clone(acidBaseJson);
+    wrongProbe.experiments[0].tutor.probes[0].when = 'before-run';
+    expect(() => parseManifest(wrongProbe)).toThrow(ManifestError);
+    const wrongHex = clone(acidBaseJson);
+    wrongHex.experiments[0].colors.red.hex = 'red';
+    expect(() => parseManifest(wrongHex)).toThrow(ManifestError);
+  });
+});
