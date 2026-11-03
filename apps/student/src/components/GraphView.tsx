@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import type { Trial } from '@sci/runtime';
 import { trialDuration } from '@sci/runtime';
+import { formatTick, niceScale } from '../axis';
 
 interface Props {
   trial: Trial | undefined;
@@ -16,13 +17,6 @@ const H = 240;
 const M = { l: 44, r: 12, t: 14, b: 38 };
 const MAX_POINTS = 160;
 
-function niceMax(x: number) {
-  if (x <= 0) return 1;
-  const pow = 10 ** Math.floor(Math.log10(x));
-  const n = x / pow;
-  return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * pow;
-}
-
 function toPoints(trial: Trial, sx: (t: number) => number, sy: (g: number) => number) {
   const s = trial.samples;
   const step = Math.max(1, Math.ceil(s.length / MAX_POINTS));
@@ -37,10 +31,10 @@ export function GraphView({ trial, prev, playhead, playing, onPlayhead, describe
   const svgRef = useRef<SVGSVGElement>(null);
   const dragging = useRef(false);
 
-  const xMax = niceMax(Math.max(trial ? trialDuration(trial) : 0, prev ? trialDuration(prev) : 0));
-  const yMax = niceMax(
-    Math.max(trial?.result.dissolvedG ?? 0, prev?.result.dissolvedG ?? 0, 1) * 1.05,
-  );
+  const xScale = niceScale(Math.max(trial ? trialDuration(trial) : 0, prev ? trialDuration(prev) : 0));
+  const yScale = niceScale(Math.max(trial?.result.dissolvedG ?? 0, prev?.result.dissolvedG ?? 0) * 1.05);
+  const xMax = xScale.max;
+  const yMax = yScale.max;
   const sx = (t: number) => M.l + (t / xMax) * (W - M.l - M.r);
   const sy = (g: number) => H - M.b - (g / yMax) * (H - M.t - M.b);
 
@@ -52,7 +46,6 @@ export function GraphView({ trial, prev, playhead, playing, onPlayhead, describe
     onPlayhead(((x - M.l) / (W - M.l - M.r)) * xMax);
   };
 
-  const ticks = [0, 0.25, 0.5, 0.75, 1];
   return (
     <figure className="view graph" aria-label="그래프로 보기">
       <figcaption>그래프로 보기</figcaption>
@@ -73,14 +66,23 @@ export function GraphView({ trial, prev, playhead, playing, onPlayhead, describe
         onPointerCancel={() => (dragging.current = false)}
       >
         <rect x={M.l} y={M.t} width={W - M.l - M.r} height={H - M.t - M.b} fill="none" stroke="#999" />
-        {ticks.map((f) => (
-          <g key={f} fontSize="10" fill="currentColor">
-            <line x1={sx(f * xMax)} x2={sx(f * xMax)} y1={H - M.b} y2={H - M.b + 4} stroke="#666" />
-            <text x={sx(f * xMax)} y={H - M.b + 15} textAnchor="middle">{Math.round(f * xMax)}</text>
-            <line x1={M.l - 4} x2={M.l} y1={sy(f * yMax)} y2={sy(f * yMax)} stroke="#666" />
-            <text x={M.l - 7} y={sy(f * yMax) + 3} textAnchor="end">{+(f * yMax).toFixed(1)}</text>
+        {trial && (
+          <g fontSize="10" fill="currentColor">
+            {xScale.ticks.map((t) => (
+              <g key={`x${t}`}>
+                <line x1={sx(t)} x2={sx(t)} y1={H - M.b} y2={H - M.b + 4} stroke="#666" />
+                <text x={sx(t)} y={H - M.b + 15} textAnchor="middle">{formatTick(t, xScale.decimals)}</text>
+              </g>
+            ))}
+            {yScale.ticks.map((g) => (
+              <g key={`y${g}`}>
+                <line x1={M.l} x2={W - M.r} y1={sy(g)} y2={sy(g)} stroke="currentColor" opacity="0.12" />
+                <line x1={M.l - 4} x2={M.l} y1={sy(g)} y2={sy(g)} stroke="#666" />
+                <text x={M.l - 7} y={sy(g) + 3} textAnchor="end">{formatTick(g, yScale.decimals)}</text>
+              </g>
+            ))}
           </g>
-        ))}
+        )}
         <text x={(M.l + W - M.r) / 2} y={H - 6} textAnchor="middle" fontSize="11" fill="currentColor">시간(초)</text>
         <text transform={`translate(11 ${(M.t + H - M.b) / 2}) rotate(-90)`} textAnchor="middle" fontSize="11" fill="currentColor">녹은 양(g)</text>
         {prev && <polyline points={toPoints(prev, sx, sy)} fill="none" stroke="#7a8794" strokeWidth="2" strokeDasharray="5 4" opacity="0.6" />}

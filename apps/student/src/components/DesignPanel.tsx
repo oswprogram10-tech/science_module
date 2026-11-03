@@ -27,8 +27,13 @@ export function DesignPanel({ experiment, state, gate, onValue, onIV, onPredicti
             <div className={`variable${isIV ? ' is-iv' : ''}`} key={v.key}>
               <div className="variable-head">
                 <span id={`var-${v.key}`} className="variable-label">{v.label}</span>
-                {state.ivKey && !isIV && <span className="tag control">같게 할 조건</span>}
-                {isIV && <span className="tag iv">바꿀 조건</span>}
+                <span className="variable-tools">
+                  {state.ivKey && !isIV && <span className="tag control">같게 할 조건</span>}
+                  <label className={`iv-radio${isIV ? ' checked' : ''}`}>
+                    <input type="radio" name="iv" checked={isIV} onChange={() => onIV(v.key)} />
+                    <span>바꿀 조건</span>
+                  </label>
+                </span>
               </div>
               <div role="group" aria-labelledby={`var-${v.key}`} className="choices">
                 {v.options.map((o) => {
@@ -46,10 +51,6 @@ export function DesignPanel({ experiment, state, gate, onValue, onIV, onPredicti
                   );
                 })}
               </div>
-              <label className="iv-radio">
-                <input type="radio" name="iv" checked={isIV} onChange={() => onIV(v.key)} />
-                <span>바꿀 조건으로 고르기</span>
-              </label>
             </div>
           );
         })}

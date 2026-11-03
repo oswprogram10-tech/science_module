@@ -13,7 +13,7 @@ h1 { font-size: 1.4rem; } h2 { font-size: 1.05rem; }
 fieldset.plain { border:0; padding:0; margin:0; min-width:0; }
 .variable { padding:8px 0; border-bottom:1px solid var(--line); }
 .variable.is-iv { border-left:4px solid var(--accent); padding-left:8px; }
-.variable-head { display:flex; gap:8px; align-items:center; justify-content:space-between; }
+.variable-head { display:flex; gap:4px 8px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
 .variable-label { font-weight:700; }
 .choices { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
 button, .iv-radio { font: inherit; }
@@ -21,10 +21,12 @@ button { min-width:44px; min-height:44px; padding:6px 12px; border:2px solid var
 button.selected { border-color:var(--accent); background:color-mix(in srgb, var(--accent) 18%, var(--card)); font-weight:700; }
 button:disabled { opacity:.5; cursor:not-allowed; }
 button:focus-visible, input:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
-.iv-radio { display:flex; align-items:center; gap:8px; min-height:44px; }
-.iv-radio input { width:24px; height:24px; }
+.variable-tools { display:flex; align-items:center; gap:6px; margin-left:auto; }
+.variable-label, .tag, .iv-radio { white-space:nowrap; }
+.iv-radio { display:flex; align-items:center; gap:6px; min-height:44px; padding:0 10px 0 6px; border:2px solid var(--line); border-radius:99px; cursor:pointer; }
+.iv-radio.checked { border-color:var(--accent); color:var(--accent); font-weight:700; }
+.iv-radio input { width:22px; height:22px; margin:0; }
 .tag { font-size:.8rem; padding:2px 8px; border-radius:99px; border:1px solid var(--line); }
-.tag.iv { border-color:var(--accent); color:var(--accent); font-weight:700; }
 .warning { background:var(--changed); border:2px solid var(--warn); border-radius:8px; padding:8px; margin:8px 0; }
 .predict { padding:8px 0; }
 .run { width:100%; margin-top:8px; background:var(--accent); color:#fff; border-color:var(--accent); font-weight:700; }
@@ -32,10 +34,11 @@ button:focus-visible, input:focus-visible { outline:3px solid var(--accent); out
 .reasons { margin:6px 0; padding-left:1.2rem; color:var(--warn); min-height:1.2em; }
 .secondary { width:100%; }
 .center { display:flex; flex-direction:column; gap:12px; min-width:0; }
-.views { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:12px; }
+.views { display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr); gap:12px; align-items:stretch; }
 .view { margin:0; display:flex; flex-direction:column; align-items:center; min-width:0; }
 .view figcaption { font-weight:700; margin-bottom:6px; align-self:flex-start; }
 .view svg, .view canvas { width:100%; height:auto; max-width:320px; }
+.view.graph svg { max-width:560px; }
 .view svg { color: var(--fg); }
 .view canvas { border-radius:6px; }
 .scrubbable { cursor:ew-resize; touch-action:none; }
@@ -46,17 +49,21 @@ button:focus-visible, input:focus-visible { outline:3px solid var(--accent); out
 .badge { background:var(--changed); border:1px solid var(--warn); border-radius:6px; padding:2px 8px; font-size:.85rem; font-weight:700; }
 .sensor { display:flex; gap:8px; align-items:baseline; }
 .sensor-value { font-size:1.4rem; font-variant-numeric: tabular-nums; font-weight:700; }
-.bottom { display:grid; grid-template-columns: 1fr 340px; gap:12px; align-items:start; }
 .table-wrap { overflow-x:auto; }
-table { border-collapse:collapse; width:100%; font-size:.9rem; }
+table { border-collapse:collapse; width:100%; min-width:640px; font-size:.9rem; }
+th { white-space:nowrap; }
 th, td { border:1px solid var(--line); padding:6px 8px; text-align:left; }
 td.changed { background:var(--changed); font-weight:700; }
-.boxes { display:flex; flex-direction:column; gap:12px; }
-.box p { margin:0; min-height:3em; }
+.boxes { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
+.box p { margin:0; min-height:2.6em; }
 .feedback { border-left:6px solid var(--warn); } .tutor { border-left:6px solid var(--accent); }
 .error-screen { max-width:640px; margin:48px auto; padding:16px; }
+@media (max-width: 1180px) and (min-width: 1001px) {
+  .views { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .view.graph { grid-column: 1 / -1; }
+}
 @media (max-width: 1000px) {
-  .layout, .bottom { grid-template-columns: 1fr; }
+  .layout, .boxes { grid-template-columns: 1fr; }
   .views { grid-template-columns: 1fr; }
   .view svg, .view canvas { max-width: 420px; }
 }

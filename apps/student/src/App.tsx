@@ -172,22 +172,19 @@ function Lab({ title, experiment }: { title: string; experiment: Experiment }) {
             />
           </div>
           <SensorBar temperature={tempReading} scale={scaleReading} />
+          <div className="boxes">
+            <div className="box feedback" aria-live="polite">
+              <h2>피드백</h2>
+              <p>{feedback ?? '비교할 내용이 생기면 여기에 알려 줄게요.'}</p>
+            </div>
+            <div className="box tutor" aria-live="polite">
+              <h2>생각해 볼까요?</h2>
+              <p>{probe}</p>
+            </div>
+          </div>
+          <ResultsTable experiment={experiment} trials={state.trials} playingId={state.playing ? state.active : null} />
         </section>
       </main>
-
-      <section className="bottom">
-        <ResultsTable experiment={experiment} trials={state.trials} playingId={state.playing ? state.active : null} />
-        <div className="boxes">
-          <div className="box feedback" aria-live="polite">
-            <h2>피드백</h2>
-            <p>{feedback ?? '비교할 내용이 생기면 여기에 알려 줄게요.'}</p>
-          </div>
-          <div className="box tutor" aria-live="polite">
-            <h2>생각해 볼까요?</h2>
-            <p>{probe}</p>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
