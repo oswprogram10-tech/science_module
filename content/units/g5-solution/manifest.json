@@ -1,0 +1,89 @@
+{
+  "id": "g5-solution",
+  "title": "용해와 용액",
+  "grade": 5,
+  "standards": ["6과03-01"],
+  "engine": "matter",
+  "experiments": [
+    {
+      "id": "dissolve-amount",
+      "title": "물에 녹는 용질의 양 비교하기",
+      "question": "어떤 조건에서 용질이 더 많이 녹을까?",
+      "spoonGrams": 2,
+      "variables": [
+        {
+          "key": "solute",
+          "label": "용질의 종류",
+          "type": "choice",
+          "options": [
+            { "value": "salt", "label": "소금" },
+            { "value": "sugar", "label": "설탕" },
+            { "value": "alum", "label": "백반" },
+            { "value": "bakingSoda", "label": "베이킹 소다" }
+          ],
+          "default": "salt"
+        },
+        {
+          "key": "waterMl",
+          "label": "물의 양",
+          "type": "choice",
+          "unit": "mL",
+          "options": [
+            { "value": 50, "label": "50 mL" },
+            { "value": 100, "label": "100 mL" },
+            { "value": 150, "label": "150 mL" }
+          ],
+          "default": 50
+        },
+        {
+          "key": "waterTempC",
+          "label": "물의 온도",
+          "type": "choice",
+          "unit": "°C",
+          "options": [
+            { "value": 10, "label": "10 °C" },
+            { "value": 20, "label": "20 °C" },
+            { "value": 40, "label": "40 °C" },
+            { "value": 60, "label": "60 °C" }
+          ],
+          "default": 20
+        },
+        {
+          "key": "stir",
+          "label": "젓기",
+          "type": "choice",
+          "options": [
+            { "value": 0, "label": "젓지 않음" },
+            { "value": 1, "label": "천천히" },
+            { "value": 2, "label": "빠르게" }
+          ],
+          "default": 1
+        }
+      ],
+      "dependent": [
+        { "key": "dissolvedG", "label": "녹은 양", "unit": "g" },
+        { "key": "timeS", "label": "걸린 시간", "unit": "초" }
+      ],
+      "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
+      "safety": ["hot-water"],
+      "limits": ["분자", "이온", "몰농도"],
+      "tutor": {
+        "forbiddenAnswers": [
+          "온도가 높을수록 더 많이 녹",
+          "물의 양이 많을수록 더 많이 녹",
+          "저어도 녹는 양은 같",
+          "용질마다 녹는 양이 다르"
+        ],
+        "probes": [
+          { "when": "before-run", "text": "{iv}을(를) 바꾸면 녹는 양이 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?" },
+          { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?" },
+          { "when": "confounded", "text": "{changed}이(가) 함께 바뀌었어요. 녹은 양이 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
+          { "when": "repeat", "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
+          { "when": "fair-test", "text": "{iv}만 바꾸었을 때 녹은 양과 걸린 시간은 각각 어떻게 달라졌나요? 표에서 두 줄을 비교해 볼까요?" },
+          { "when": "fair-test-stir", "text": "젓는 빠르기를 바꾸었을 때 달라진 것은 녹은 양인가요, 걸린 시간인가요? 그래프의 기울기도 살펴볼까요?" },
+          { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 결과표의 어느 숫자를 보면 그 까닭을 찾을 수 있을까요?" }
+        ]
+      }
+    }
+  ]
+}

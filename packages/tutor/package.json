@@ -1,0 +1,19 @@
+{
+  "name": "@sci/tutor",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sci/gateway": "workspace:*"
+  },
+  "devDependencies": {
+    "@sci/schema": "workspace:*"
+  }
+}
