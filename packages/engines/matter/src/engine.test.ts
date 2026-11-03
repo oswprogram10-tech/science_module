@@ -88,3 +88,23 @@ describe('simulateDissolution', () => {
     expect(run({ stir: 2 })).toEqual(run({ stir: 2 }));
   });
 });
+
+describe('결과값', () => {
+  it('녹은 양 표시값은 최대량을 넘지 않고, 바닥에 남은 숟가락은 세지 않는다', () => {
+    for (const solute of ['salt', 'sugar', 'alum', 'bakingSoda'] as Solute[]) {
+      for (const waterMl of [50, 100, 150]) {
+        for (const waterTempC of [10, 20, 40, 60]) {
+          const out = run({ solute, waterMl, waterTempC, stir: 2 });
+          const cap = capacityG(solute, waterTempC, waterMl);
+          expect(out.result.dissolvedG).toBeLessThanOrEqual(cap + 1e-9);
+          expect(out.result.spoonsFullyDissolved).toBe(Math.floor(cap / SPOON + 1e-9));
+        }
+      }
+    }
+  });
+  it('소금 50 mL 20 °C: 17.9 g, 8숟가락', () => {
+    const r = run({ waterMl: 50 }).result;
+    expect(r.dissolvedG).toBe(17.9);
+    expect(r.spoonsFullyDissolved).toBe(8);
+  });
+});

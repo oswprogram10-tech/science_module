@@ -1,6 +1,6 @@
 import type { Experiment } from '@sci/schema';
 import type { RuntimeState } from '@sci/runtime';
-import { PREDICTION_LABEL, type Prediction } from '@sci/gateway';
+import { PREDICTION_LABEL, josa, type Prediction } from '@sci/gateway';
 
 interface Props {
   experiment: Experiment;
@@ -30,7 +30,7 @@ export function DesignPanel({ experiment, state, gate, onValue, onIV, onPredicti
                 <span className="variable-tools">
                   {state.ivKey && !isIV && <span className="tag control">같게 할 조건</span>}
                   <label className={`iv-radio${isIV ? ' checked' : ''}`}>
-                    <input type="radio" name="iv" checked={isIV} onChange={() => onIV(v.key)} />
+                    <input type="radio" name="iv" checked={isIV} onChange={() => onIV(v.key)} aria-label={`${v.label}${josa(v.label, "을/를")} 바꿀 조건으로 고르기`} />
                     <span>바꿀 조건</span>
                   </label>
                 </span>

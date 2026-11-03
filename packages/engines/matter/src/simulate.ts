@@ -91,12 +91,14 @@ export function simulateDissolution(
   }
 
   const timeS = round(step * dt, 6);
-  const dissolvedG = round(dissolved, 1);
+  // 표시값은 소수 첫째 자리에서 내림한다(반올림하면 녹을 수 있는 최대량을 넘을 수 있다).
+  const dissolvedG = Math.floor(dissolved * 10 + EPS) / 10;
   return {
     samples,
     result: {
       dissolvedG,
-      spoonsFullyDissolved: Math.floor(dissolvedG / spoonGrams + EPS),
+      // 숟가락 수는 반올림 전 값으로 센다. 바닥에 남은 숟가락은 세지 않는다.
+      spoonsFullyDissolved: Math.floor(dissolved / spoonGrams + EPS),
       timeS,
       saturated,
       truncated,

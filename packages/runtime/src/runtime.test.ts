@@ -104,7 +104,17 @@ describe('sampleAt', () => {
 
   it('샘플 사이를 선형 보간한다', () => {
     expect(sampleAt(trial, 5)).toEqual({ t: 5, addedG: 2, dissolvedG: 1, undissolvedG: 1 });
-    expect(sampleAt(trial, 15)).toEqual({ t: 15, addedG: 3, dissolvedG: 2.5, undissolvedG: 0.5 });
+    expect(sampleAt(trial, 15)).toEqual({ t: 15, addedG: 4, dissolvedG: 2.5, undissolvedG: 1.5 });
+  });
+  it('넣은 양은 보간하지 않고 계단식으로 바뀐다', () => {
+    const real = { samples: simulateDissolution({ solute: 'salt', waterMl: 50, waterTempC: 20, stir: 0 }).samples } as unknown as Trial;
+    const end = real.samples[real.samples.length - 1]!.t;
+    for (let t = 0; t <= end; t += 0.37) {
+      const s = sampleAt(real, t);
+      expect(s.addedG % 2).toBeCloseTo(0, 9);
+      expect(s.undissolvedG).toBeGreaterThanOrEqual(-1e-9);
+      expect(s.addedG - s.dissolvedG - s.undissolvedG).toBeCloseTo(0, 9);
+    }
   });
   it('범위 밖은 양 끝 값으로 고정', () => {
     expect(sampleAt(trial, -3).dissolvedG).toBe(0);

@@ -62,12 +62,11 @@ export function sampleAt(trial: Trial, t: number): DissolutionSample {
   const b = s[hi]!;
   const k = (t - a.t) / (b.t - a.t);
   const lerp = (x: number, y: number) => x + (y - x) * k;
-  return {
-    t,
-    addedG: lerp(a.addedG, b.addedG),
-    dissolvedG: lerp(a.dissolvedG, b.dissolvedG),
-    undissolvedG: lerp(a.undissolvedG, b.undissolvedG),
-  };
+  // 넣은 양은 계단식이다: 앞 숟가락이 다 녹는 순간 다음 숟가락이 들어간다.
+  const dissolvedRaw = lerp(a.dissolvedG, b.dissolvedG);
+  const addedG = dissolvedRaw >= a.addedG - 1e-9 ? b.addedG : a.addedG;
+  const dissolvedG = Math.min(dissolvedRaw, addedG);
+  return { t, addedG, dissolvedG, undissolvedG: addedG - dissolvedG };
 }
 
 export function createRuntime(options: RuntimeOptions) {
