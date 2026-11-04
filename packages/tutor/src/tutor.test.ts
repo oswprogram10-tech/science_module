@@ -481,3 +481,63 @@ describe('g6-electricity 매니페스트 probe', () => {
     }
   });
 });
+
+// ---------- 땅의 변화(마그마 냉각) 매니페스트 ----------
+import landJson from '../../../content/units/g4-land/manifest.json';
+
+describe('g4-land 매니페스트 probe', () => {
+  const e = parseManifest(landJson).experiments[0]! as VariableExperiment;
+  const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+  const eKeys = e.variables.map((v) => v.key);
+  const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+  const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: 'place', ...x });
+  const fair = (iv: string): Partial<ProbeContext> => ({
+    ivKey: iv,
+    lastAnalysis: { kind: 'fair-test', changed: [iv] },
+    prediction: 'same',
+    observed: 'same',
+  });
+
+  it('iv별 fair-test 질문을 고른다', () => {
+    expect(selectProbe(eCtx(fair('place')), e.tutor.probes, eGuard)).toContain('온도가 내려가는 빠르기를 비교해 볼까요');
+    expect(selectProbe(eCtx(fair('color')), e.tutor.probes, eGuard)).toContain('색깔만 바꾸었을 때 알갱이 크기가 달라졌나요');
+    expect(selectProbe(eCtx(fair('grams')), e.tutor.probes, eGuard)).toContain('알갱이 크기와 굳는 데 걸린 시간');
+  });
+
+  it('모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+    let n = 0;
+    for (const probe of e.tutor.probes) {
+      for (const iv of eKeys) {
+        for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+          const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+          expect(text).not.toMatch(/[{}]|\(를\)|\(가\)|\(과\)/);
+          n++;
+        }
+      }
+    }
+    expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+  });
+
+  it('금지 구절을 담은 문장은 실제로 막는다', () => {
+    for (const f of e.tutor.forbiddenAnswers) expect(guardOutput(`${f}요`, eGuard).ok, f).toBe(false);
+    for (const l of e.limits) expect(guardOutput(`${l}이에요`, eGuard).ok, l).toBe(false);
+  });
+
+  it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+    const situations: Partial<ProbeContext>[] = [
+      {},
+      { lastAnalysis: { kind: 'first-trial', changed: [] } },
+      { lastAnalysis: { kind: 'confounded', changed: ['place', 'dish'] } },
+      { lastAnalysis: { kind: 'iv-unchanged', changed: ['dish'] } },
+      { lastAnalysis: { kind: 'repeat', changed: [] } },
+      { ...fair('place'), prediction: 'increase', observed: 'same' },
+      { ...fair('color'), prediction: 'increase', observed: 'same' },
+    ];
+    for (const s of situations) {
+      const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+      expect(text).not.toBe(FALLBACK_PROBE);
+      expect(guardOutput(text, eGuard).ok, text).toBe(true);
+    }
+  });
+});

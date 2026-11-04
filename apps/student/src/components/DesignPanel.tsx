@@ -18,6 +18,8 @@ interface Props {
 const ALWAYS_NOTICE: Record<string, string> = {
   sunlight: '⚠ 렌즈로 해를 직접 보면 눈을 크게 다칠 수 있어요.',
   electric: '⚠ 가정용 콘센트 전기로는 절대 실험하지 않아요.',
+  // `hot`은 연소·전기 단원도 쓰는데 그 화면은 그대로 두려고, 단원 모듈 이름을 붙인 키로 이 단원에만 보여 준다.
+  'magma-cooling:hot': '⚠ 녹인 물질과 접시는 굳은 뒤에도 한동안 뜨거워요.',
 };
 
 const PREDICTION_ICON: Record<Prediction, string> = { increase: '▲', decrease: '▼', same: '＝' };
@@ -98,9 +100,10 @@ export function DesignPanel({ experiment, state, gate, onValue, onIV, onPredicti
         {!gate.ok && !locked && gate.reasons.map((r) => <li key={r}>{r}</li>)}
       </ul>
       {experiment.safety
-        .filter((k) => ALWAYS_NOTICE[k])
-        .map((k) => (
-          <p className="warning" role="note" key={k}>{ALWAYS_NOTICE[k]}</p>
+        .map((k) => ({ k, text: ALWAYS_NOTICE[`${experiment.module}:${k}`] ?? ALWAYS_NOTICE[k] }))
+        .filter((n) => n.text)
+        .map(({ k, text }) => (
+          <p className="warning" role="note" key={k}>{text}</p>
         ))}
       <button type="button" className="secondary" onClick={onReset} disabled={locked}>처음부터 다시</button>
     </aside>

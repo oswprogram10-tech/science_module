@@ -48,7 +48,7 @@ const render = (unit: (typeof variableUnits)[number], mod: AnyModule, trial: Any
   );
 
 describe('GraphView', () => {
-  const existing = variableUnits.filter((u) => u.module.kind !== 'electromagnet');
+  const existing = variableUnits.filter((u) => u.module.kind !== 'electromagnet' && u.module.kind !== 'magma-cooling');
 
   it('기존 단원은 모든 조건에서 최댓값이 처음 값 또는 마지막 값이다 (y축 범위를 모든 표본의 최댓값으로 잡아도 달라지지 않는다)', () => {
     expect(existing.length).toBeGreaterThanOrEqual(5);
@@ -105,5 +105,67 @@ describe('정수 눈금(integerTicks)', () => {
     const ticks = [...html.matchAll(/text-anchor="end"[^>]*>([^<]+)</g)].map((m) => m[1]!);
     expect(ticks.length).toBeGreaterThan(1);
     for (const t of ticks) expect(t).toMatch(/^\d+$/);
+  });
+});
+
+describe('markers: 시행에서 계산하는 함수 형태', () => {
+  const land = () => variableUnits.find((u) => u.id === 'g4-land')!;
+  const markerXs = (html: string) =>
+    (html.match(/<g data-testid="graph-marker">.*?<\/g>/g) ?? []).map((g) => Number(/x1="([\d.]+)"/.exec(g)![1]));
+  const withValues = (values: Record<string, string | number>) => render(land(), land().module, trialOf(land(), values));
+  const base = { place: 'room', grams: 5, dish: 'glass', color: 'white' };
+
+  it('땅의 변화는 시행의 조건에 따라 표식 위치가 다르다 (같은 시행이 아니면 시각이 다르다)', () => {
+    const room = markerXs(withValues(base));
+    const warm = markerXs(withValues({ ...base, place: 'warm' }));
+    expect(room).toHaveLength(2);
+    expect(warm).toHaveLength(2);
+    expect(room[1]!).toBeGreaterThan(room[0]!);
+    expect(warm[1]!).toBeGreaterThan(warm[0]!);
+    expect(warm).not.toEqual(room);
+  });
+
+  it('색깔만 바꾸면 표식도 그대로다', () => {
+    expect(withValues({ ...base, color: 'black' })).toBe(withValues(base));
+  });
+
+  it('첫 라벨이 다음 표식 선을 가로지르게 되면 선의 왼쪽에 쓰고, 전자석처럼 멀면 둘 다 오른쪽 같은 줄이다', () => {
+    const rows = (html: string) =>
+      [...html.matchAll(/<g data-testid="graph-marker">.*?<text x="[\d.]+" y="([\d.]+)"/g)].map((m) => Number(m[1]));
+    const closeHtml = withValues({ ...base, place: 'ice', dish: 'aluminum' });
+    const groups = closeHtml.match(/<g data-testid="graph-marker">.*?<\/g>/g)!;
+    expect(groups[0]).toContain('text-anchor="end"');
+    expect(groups[1]).not.toContain('text-anchor');
+    const el = variableUnits.find((u) => u.module.kind === 'electromagnet')!;
+    const far = rows(render(el, el.module, trialOf(el, { turns: 100, battery: 'one', core: 'nail', direction: 'forward' })));
+    expect(far).toHaveLength(2);
+    expect(far[1]!).toBe(far[0]!);
+  });
+
+  it('고정 배열도 지원한다', () => {
+    const unit = land();
+    const fixed: AnyModule = { ...unit.module, graph: { ...unit.module.graph, markers: [{ t: 5, label: '고정 표식' }] } };
+    const html = render(unit, fixed, trialOf(unit, base));
+    expect(html).toContain('고정 표식');
+    expect(markerXs(html)).toHaveLength(1);
+  });
+
+  it('함수는 실험과 시행을 받는다', () => {
+    const unit = land();
+    let seen: unknown[] = [];
+    const spy: AnyModule = {
+      ...unit.module,
+      graph: {
+        ...unit.module.graph,
+        markers: (exp: unknown, trial: unknown) => {
+          seen = [exp, trial];
+          return [];
+        },
+      },
+    };
+    const trial = trialOf(unit, base);
+    render(unit, spy, trial);
+    expect(seen[0]).toBe(unit.experiment);
+    expect(seen[1]).toBe(trial);
   });
 });

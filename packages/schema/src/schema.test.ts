@@ -6,6 +6,7 @@ import combustionJson from '../../../content/units/g6-combustion/manifest.json';
 import heatJson from '../../../content/units/g5-heat/manifest.json';
 import lightJson from '../../../content/units/g5-light/manifest.json';
 import electricityJson from '../../../content/units/g6-electricity/manifest.json';
+import landJson from '../../../content/units/g4-land/manifest.json';
 import {
   ManifestError,
   isVariableExperiment,
@@ -154,8 +155,8 @@ describe('활동 유형 union (module 기준)', () => {
 describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
   const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
-  it('일곱 매니페스트가 모두 검증을 통과한다', () => {
-    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson]) expect(() => parseManifest(j)).not.toThrow();
+  it('여덟 매니페스트가 모두 검증을 통과한다', () => {
+    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson]) expect(() => parseManifest(j)).not.toThrow();
   });
 
   it('연소 매니페스트의 점검표와 경고 문구를 읽는다', () => {
@@ -188,6 +189,19 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     expect(e.variables.map((v) => v.key)).toEqual(['turns', 'battery', 'core', 'direction']);
     expect(e.dependent.map((d) => d.key)).toEqual(['clipsMax', 'headPole']);
     expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['battery', 'direction', 'core']);
+  });
+
+  it('땅의 변화 매니페스트의 점검표, 경고 문구, 안전 종류, 변인을 읽는다', () => {
+    const m = parseManifest(landJson);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-land', 4, 'earth', ['4과11-01']]);
+    const e = m.experiments[0] as VariableExperiment;
+    expect(e.module).toBe('magma-cooling');
+    expect(e.safetyChecklist).toHaveLength(3);
+    expect(Object.keys(e.safetyMessages ?? {}).sort()).toEqual(['FOOD', 'NO_GLOVES', 'NO_GOGGLES', 'SPILL']);
+    expect(e.safety).toEqual(['hot']);
+    expect(e.variables.map((v) => v.key)).toEqual(['place', 'grams', 'dish', 'color']);
+    expect(e.dependent.map((d) => d.key)).toEqual(['sizeMm', 'solidS']);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['place', 'color']);
   });
 
   it('두 필드는 없어도 된다', () => {

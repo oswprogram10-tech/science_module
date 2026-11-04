@@ -212,3 +212,55 @@ test('g6-electricity 빨대, 병렬, 반대 방향으로 바꾼 뒤', async ({ p
   await setValue(page, '전지 방향', '반대 방향');
   await expectNoSeriousViolations(page);
 });
+
+test('g4-land 처음 화면', async ({ page }) => {
+  await gotoUnit(page, 'g4-land', { dev: true });
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g4-land 안전 점검표가 열린 상태', async ({ page }) => {
+  await gotoUnit(page, 'g4-land');
+  await selectIV(page, '식히는 곳');
+  await predict(page, '늘어난다');
+  await runButton(page).click();
+  await expect(page.getByRole('dialog', { name: '안전 점검표' })).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g4-land 다 굳은 뒤(비교 카드와 그래프 표식)와 중간에 멈춘 상태', async ({ page }) => {
+  await gotoUnit(page, 'g4-land');
+  await selectIV(page, '식히는 곳');
+  await predict(page, '늘어난다');
+  await runButton(page).click();
+  await confirmSafetyDialog(page);
+  await expect(runButton(page)).toHaveText('▶ 실험 실행');
+  await expect(page.getByText('중간 크기예요')).toBeVisible();
+  await expectNoSeriousViolations(page);
+  const slider = page.getByRole('slider', { name: '그래프 시각 옮기기' });
+  await slider.focus();
+  await slider.press('Home');
+  for (let i = 0; i < 4; i++) await slider.press('PageUp');
+  await expect(page.getByText(/°C · 굳는 중$/)).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g4-land 검은색 색소, 알루미늄 접시, 얼음물 위로 바꾼 뒤', async ({ page }) => {
+  await gotoUnit(page, 'g4-land');
+  await setValue(page, '물질의 색깔', '검은색 색소를 넣음');
+  await setValue(page, '담은 접시', '알루미늄 접시');
+  await setValue(page, '식히는 곳', '얼음물 위');
+  await expectNoSeriousViolations(page);
+});
+
+test('g4-land 어두운 화면에서 다 굳은 뒤', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await gotoUnit(page, 'g4-land');
+  await setValue(page, '식히는 곳', '따뜻한 물 위');
+  await selectIV(page, '식히는 곳');
+  await predict(page, '늘어난다');
+  await runButton(page).click();
+  await confirmSafetyDialog(page);
+  await expect(runButton(page)).toHaveText('▶ 실험 실행');
+  await expectNoSeriousViolations(page);
+});

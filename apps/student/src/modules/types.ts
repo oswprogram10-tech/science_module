@@ -48,7 +48,8 @@ export interface ExperimentModule<S extends { t: number }, R> {
     yMin?: number;
     /** 개수처럼 정수만 의미 있는 값이면 true: 눈금 간격을 1 이상으로 둔다. */
     integerTicks?: boolean;
-    markers?(exp: Experiment): GraphMarker[];
+    /** 고정 배열, 또는 실험(과 그래프에 보이는 시행)에서 계산하는 함수. 시행마다 시각이 다르면 trial의 조건·결과로 계산한다. */
+    markers?: GraphMarker[] | ((exp: Experiment, trial: Trial<S, R>) => GraphMarker[]);
   };
   resultColumns(exp: Experiment): ResultColumn<R>[];
   /** 가장 최근에 끝난 시행의 결과에 따라 결과표 아래에 보여 줄 경고(없으면 null). 없는 모듈은 아무것도 보이지 않는다. */

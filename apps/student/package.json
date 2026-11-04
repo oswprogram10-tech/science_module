@@ -11,6 +11,7 @@
     "e2e": "playwright test"
   },
   "dependencies": {
+    "@sci/engine-earth": "workspace:*",
     "@sci/engine-matter": "workspace:*",
     "@sci/engine-physics": "workspace:*",
     "@sci/gateway": "workspace:*",

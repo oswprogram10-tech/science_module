@@ -2,7 +2,7 @@ import { useRef, type KeyboardEvent } from 'react';
 import type { VariableExperiment as Experiment } from '@sci/schema';
 import type { Trial } from '@sci/runtime';
 import { sampleAt, trialDuration } from '@sci/runtime';
-import type { AnyModule } from '../modules/types';
+import type { AnyModule, GraphMarker } from '../modules/types';
 import { formatTick, niceScale, yAxis } from '../axis';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -62,9 +62,26 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
   // 정수 눈금 단원은 최댓값을 4 이상으로 잡아 눈금 간격이 1 아래로 내려가지 않게 한다.
   const yScale = yAxis(Math.max(yDataMax(trial), yDataMax(prev), mod.graph.integerTicks ? yMin + 4 : 0), yMin);
   const xMax = xScale.max;
-  const markers = trial && mod.graph.markers ? mod.graph.markers(experiment).filter((m) => m.t >= 0 && m.t <= xMax) : [];
+  const markerSpec = mod.graph.markers;
+  const markers =
+    trial && markerSpec
+      ? (typeof markerSpec === 'function' ? markerSpec(experiment, trial) : markerSpec).filter((m) => m.t >= 0 && m.t <= xMax)
+      : [];
   const yMax = yScale.max;
   const sx = (t: number) => M.l + (t / xMax) * (W - M.l - M.r);
+  // 라벨 자리: 다음 표식의 선을 가로지르거나 오른쪽 끝을 넘으면 선의 왼쪽에 쓰고, 앞 라벨과 겹치면 한 줄 아래로 내린다(글자 폭은 한글 12, 공백 4로 넉넉히 어림).
+  const labelW = (label: string) => [...label].reduce((w, ch) => w + (ch === ' ' ? 4 : 12), 0);
+  const placedMarkers = markers.reduce<{ m: GraphMarker; row: number; flip: boolean; right: number }[]>((acc, m, i) => {
+    const x = sx(m.t);
+    const w = labelW(m.label);
+    const nextX = i + 1 < markers.length ? sx(markers[i + 1]!.t) : Infinity;
+    const flip = x + 3 + w > W - M.r || x + 3 + w > nextX - 2;
+    const left = flip ? x - 3 - w : x + 3;
+    const prev = acc[acc.length - 1];
+    const row = prev && left < prev.right ? prev.row + 1 : 0;
+    acc.push({ m, row, flip, right: flip ? x - 3 : x + 3 + w });
+    return acc;
+  }, []);
   const sy = (g: number) => H - M.b - ((g - yMin) / (yMax - yMin)) * (H - M.t - M.b);
 
   const move = (clientX: number) => {
@@ -164,10 +181,14 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
         )}
         <text x={(M.l + W - M.r) / 2} y={H - 6} textAnchor="middle" fontSize="11" fill="currentColor">시간(초)</text>
         <text transform={`translate(11 ${(M.t + H - M.b) / 2}) rotate(-90)`} textAnchor="middle" fontSize="11" fill="currentColor">{mod.graph.yLabel}</text>
-        {markers.map((m) => (
+        {placedMarkers.map(({ m, row, flip }) => (
           <g key={`${m.t}:${m.label}`} data-testid="graph-marker">
             <line x1={sx(m.t)} x2={sx(m.t)} y1={M.t} y2={H - M.b} stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" opacity="0.6" />
-            <text x={sx(m.t) + 3} y={M.t + 11} fontSize="12" fill="currentColor">{m.label}</text>
+            {flip ? (
+              <text x={sx(m.t) - 3} y={M.t + 11 + 16 * row} textAnchor="end" fontSize="12" fill="currentColor">{m.label}</text>
+            ) : (
+              <text x={sx(m.t) + 3} y={M.t + 11 + 16 * row} fontSize="12" fill="currentColor">{m.label}</text>
+            )}
           </g>
         ))}
         {prev && <polyline points={toPoints(prev, sampleKey, sx, sy)} fill="none" stroke="#7a8794" strokeWidth="2" strokeDasharray="5 4" opacity="0.6" />}

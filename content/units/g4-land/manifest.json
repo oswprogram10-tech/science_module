@@ -1,0 +1,100 @@
+{
+  "id": "g4-land",
+  "title": "땅의 변화",
+  "grade": 4,
+  "standards": ["4과11-01"],
+  "engine": "earth",
+  "experiments": [
+    {
+      "id": "magma-cooling",
+      "module": "magma-cooling",
+      "title": "식는 빠르기에 따른 알갱이 크기 비교하기",
+      "question": "녹은 물질이 식어서 굳을 때, 생기는 알갱이의 크기는 어떤 조건에 따라 달라질까?",
+      "predictionPrompt": "예측: 생기는 알갱이의 크기는?",
+      "variables": [
+        {
+          "key": "place",
+          "label": "식히는 곳",
+          "type": "choice",
+          "options": [
+            { "value": "ice", "label": "얼음물 위" },
+            { "value": "room", "label": "실온" },
+            { "value": "warm", "label": "따뜻한 물 위" }
+          ],
+          "default": "room"
+        },
+        {
+          "key": "grams",
+          "label": "녹인 양",
+          "type": "choice",
+          "unit": "g",
+          "options": [
+            { "value": 5, "label": "5 g" },
+            { "value": 10, "label": "10 g" }
+          ],
+          "default": 5
+        },
+        {
+          "key": "dish",
+          "label": "담은 접시",
+          "type": "choice",
+          "options": [
+            { "value": "glass", "label": "유리 접시" },
+            { "value": "aluminum", "label": "알루미늄 접시" }
+          ],
+          "default": "glass"
+        },
+        {
+          "key": "color",
+          "label": "물질의 색깔",
+          "type": "choice",
+          "options": [
+            { "value": "white", "label": "흰색" },
+            { "value": "black", "label": "검은색 색소를 넣음" }
+          ],
+          "default": "white"
+        }
+      ],
+      "dependent": [
+        { "key": "sizeMm", "label": "알갱이의 크기", "unit": "mm" },
+        { "key": "solidS", "label": "다 굳을 때까지 걸린 시간", "unit": "초" }
+      ],
+      "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
+      "safety": ["hot"],
+      "safetyChecklist": [
+        "녹인 물질은 뜨거우니 선생님이 따라 주세요.",
+        "굳기 전에는 손으로 만지지 않아요.",
+        "가열 기구 주변을 깨끗이 정리했어요."
+      ],
+      "safetyMessages": {
+        "NO_GOGGLES": "뜨거운 물질을 다룰 때는 보안경을 먼저 착용해 주세요!",
+        "NO_GLOVES": "뜨거운 접시는 장갑을 끼고 옮겨 주세요!",
+        "SPILL": "녹은 물질이 쏟아졌어요! 손대지 말고 선생님께 알려 주세요.",
+        "FOOD": "실험 중에는 음식을 먹지 않아요!"
+      },
+      "safetyNotices": [],
+      "limits": ["결정질", "광물 이름", "냉각 속도", "규산염", "분자"],
+      "params": { "startC": 90 },
+      "tutor": {
+        "forbiddenAnswers": [
+          "천천히 식을수록 알갱이가 크",
+          "빨리 식을수록 알갱이가 작",
+          "화강암은 천천히 식",
+          "현무암은 빨리 식",
+          "색깔은 관계없"
+        ],
+        "probes": [
+          { "when": "before-run", "text": "{iv}을(를) 바꾸면 생기는 알갱이의 크기가 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?" },
+          { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?" },
+          { "when": "confounded", "text": "{changed}이(가) 함께 바뀌었어요. 알갱이 크기가 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
+          { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },
+          { "when": "repeat", "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
+          { "when": "fair-test", "text": "{iv}만 바꾸었을 때 알갱이 크기와 굳는 데 걸린 시간은 각각 어떻게 달라졌나요? 두 값 사이에 어떤 관계가 있을까요?" },
+          { "when": "fair-test", "iv": "place", "text": "식히는 곳만 바꾸었어요. 그래프에서 온도가 내려가는 빠르기를 비교해 볼까요? 땅속 깊은 곳과 땅 위는 어떤 곳과 비슷할까요?" },
+          { "when": "fair-test", "iv": "color", "text": "색깔만 바꾸었을 때 알갱이 크기가 달라졌나요? 이 결과로 무엇을 알 수 있을까요?" },
+          { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 그래프와 알갱이 화면의 어느 부분을 보면 그 까닭을 찾을 수 있을까요?" }
+        ]
+      }
+    }
+  ]
+}
