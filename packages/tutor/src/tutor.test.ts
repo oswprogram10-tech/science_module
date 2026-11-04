@@ -363,3 +363,61 @@ describe('g5-heat 매니페스트 probe', () => {
     }
   });
 });
+
+// ---------- 빛의 성질(볼록 렌즈) 매니페스트 ----------
+import lightJson from '../../../content/units/g5-light/manifest.json';
+
+describe('g5-light 매니페스트 probe', () => {
+  const l = parseManifest(lightJson).experiments[0]! as VariableExperiment;
+  const lLabels = Object.fromEntries(l.variables.map((v) => [v.key, v.label]));
+  const lKeys = l.variables.map((v) => v.key);
+  const lGuard = { forbiddenAnswers: l.tutor.forbiddenAnswers, limits: l.limits };
+  const lCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: lLabels, ivKey: 'distanceCm', ...x });
+  const fair = (iv: string): Partial<ProbeContext> => ({
+    ivKey: iv,
+    lastAnalysis: { kind: 'fair-test', changed: [iv] },
+    prediction: 'same',
+    observed: 'same',
+  });
+
+  it('iv별 fair-test 질문을 고른다', () => {
+    expect(selectProbe(lCtx(fair('distanceCm')), l.tutor.probes, lGuard)).toContain('빛이 한곳에 모이는 곳과 종이의 위치를 비교해');
+    expect(selectProbe(lCtx(fair('diameterCm')), l.tutor.probes, lGuard)).toContain('렌즈의 크기만 바꾸었을 때 빛 원의 크기와 밝기');
+    expect(selectProbe(lCtx(fair('curve')), l.tutor.probes, lGuard)).toContain('렌즈가 볼록한 정도만 바꾸었을 때 빛 원의 크기와 온도');
+  });
+
+  it('모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+    let n = 0;
+    for (const probe of l.tutor.probes) {
+      for (const iv of lKeys) {
+        for (const changed of [...lKeys.map((k) => [k]), lKeys]) {
+          const text = renderProbe(probe.text, { iv: lLabels[iv]!, changed: changed.map((k) => lLabels[k]!) });
+          expect(guardOutput(text, lGuard).ok, text).toBe(true);
+          expect(text).not.toMatch(/[{}]|\(를\)|\(가\)|\(과\)/);
+          n++;
+        }
+      }
+    }
+    expect(n).toBe(l.tutor.probes.length * lKeys.length * (lKeys.length + 1));
+  });
+
+  it('금지 구절을 담은 문장은 실제로 막는다', () => {
+    for (const f of l.tutor.forbiddenAnswers) expect(guardOutput(`${f}요`, lGuard).ok, f).toBe(false);
+  });
+
+  it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+    const situations: Partial<ProbeContext>[] = [
+      {},
+      { lastAnalysis: { kind: 'first-trial', changed: [] } },
+      { lastAnalysis: { kind: 'confounded', changed: ['distanceCm', 'curve'] } },
+      { lastAnalysis: { kind: 'iv-unchanged', changed: ['curve'] } },
+      { lastAnalysis: { kind: 'repeat', changed: [] } },
+      { ...fair('distanceCm'), prediction: 'increase', observed: 'decrease' },
+    ];
+    for (const s of situations) {
+      const text = selectProbe(lCtx(s), l.tutor.probes, lGuard);
+      expect(text).not.toBe(FALLBACK_PROBE);
+      expect(guardOutput(text, lGuard).ok, text).toBe(true);
+    }
+  });
+});

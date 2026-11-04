@@ -133,3 +133,40 @@ test('g5-heat 솜으로 감싸고 뚜껑을 덮은 뒤', async ({ page }) => {
   await setValue(page, '뚜껑', '뚜껑 덮음');
   await expectNoSeriousViolations(page);
 });
+
+test('g5-light 처음 화면', async ({ page }) => {
+  await gotoUnit(page, 'g5-light', { dev: true });
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g5-light 안전 점검표가 열린 상태', async ({ page }) => {
+  await gotoUnit(page, 'g5-light');
+  await selectIV(page, '렌즈와 종이 사이 거리');
+  await predict(page, '늘어난다');
+  await runButton(page).click();
+  await expect(page.getByRole('dialog', { name: '안전 점검표' })).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g5-light 종이가 그을린 상태', async ({ page }) => {
+  await gotoUnit(page, 'g5-light');
+  await selectIV(page, '렌즈와 종이 사이 거리');
+  await predict(page, '늘어난다');
+  await runButton(page).click();
+  await confirmSafetyDialog(page);
+  await expect(runButton(page)).toHaveText('▶ 실험 실행');
+  await setValue(page, '렌즈와 종이 사이 거리', '10 cm');
+  await predict(page, '늘어난다');
+  await runTrial(page);
+  await expect(page.getByText('⚠ 종이가 그을리고 있어요. 실제 실험에서는 바로 렌즈를 치워요.')).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g5-light 조금 볼록한 큰 렌즈로 바꾼 뒤', async ({ page }) => {
+  await gotoUnit(page, 'g5-light');
+  await setValue(page, '렌즈가 볼록한 정도', '조금 볼록한 렌즈');
+  await setValue(page, '렌즈의 크기', '큰 렌즈 (지름 8 cm)');
+  await setValue(page, '렌즈와 종이 사이 거리', '20 cm');
+  await expectNoSeriousViolations(page);
+});

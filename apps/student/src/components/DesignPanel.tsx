@@ -14,6 +14,11 @@ interface Props {
   onReset: () => void;
 }
 
+/** 매니페스트 safety 종류 중, 조건과 상관없이 실행 버튼 아래에 항상 보여 주는 경고. */
+const ALWAYS_NOTICE: Record<string, string> = {
+  sunlight: '⚠ 렌즈로 해를 직접 보면 눈을 크게 다칠 수 있어요.',
+};
+
 const PREDICTION_ICON: Record<Prediction, string> = { increase: '▲', decrease: '▼', same: '＝' };
 
 export function DesignPanel({ experiment, state, gate, onValue, onIV, onPrediction, onRun, onReset }: Props) {
@@ -91,6 +96,11 @@ export function DesignPanel({ experiment, state, gate, onValue, onIV, onPredicti
       <ul id="run-reasons" className="reasons" aria-live="polite">
         {!gate.ok && !locked && gate.reasons.map((r) => <li key={r}>{r}</li>)}
       </ul>
+      {experiment.safety
+        .filter((k) => ALWAYS_NOTICE[k])
+        .map((k) => (
+          <p className="warning" role="note" key={k}>{ALWAYS_NOTICE[k]}</p>
+        ))}
       <button type="button" className="secondary" onClick={onReset} disabled={locked}>처음부터 다시</button>
     </aside>
   );

@@ -4,13 +4,14 @@ import solutionJson from '../../../content/units/g5-solution/manifest.json';
 import acidBaseJson from '../../../content/units/g6-acid-base/manifest.json';
 import combustionJson from '../../../content/units/g6-combustion/manifest.json';
 import heatJson from '../../../content/units/g5-heat/manifest.json';
+import lightJson from '../../../content/units/g5-light/manifest.json';
 import { UNITS, buildRegistry, parseRoute, unitHash } from './units';
 
 const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
 describe('단원 레지스트리', () => {
-  it('다섯 단원이 모두 로드된다', () => {
-    expect(UNITS.map((u) => u.id)).toEqual(['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat']);
+  it('여섯 단원이 모두 로드된다', () => {
+    expect(UNITS.map((u) => u.id)).toEqual(['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat', 'g5-light']);
     expect(UNITS.every((u) => u.ok)).toBe(true);
     const gases = UNITS[0]!;
     if (gases.ok) expect(gases.module.kind).toBe('gas-syringe');
@@ -25,6 +26,9 @@ describe('단원 레지스트리', () => {
     const heat = UNITS[4]!;
     expect(heat.ok && heat.activity).toBe('variable');
     if (heat.ok) expect(heat.module.kind).toBe('insulated-cup');
+    const light = UNITS[5]!;
+    expect(light.ok && light.activity).toBe('variable');
+    if (light.ok) expect(light.module.kind).toBe('convex-lens');
   });
 
   it('schema 검증에 실패한 단원이 있어도 다른 단원은 로드된다', () => {
@@ -88,6 +92,16 @@ describe('보온 컵 단원 로드', () => {
     const units = buildRegistry([gasesJson, broken]);
     expect(units.map((u) => u.ok)).toEqual([true, false]);
     if (!units[1]!.ok) expect(units[1]!.issues.join()).toContain('waterMl');
+  });
+});
+
+describe('볼록 렌즈 단원 로드', () => {
+  it('모듈 validate에 실패하면 오류 항목이 되고 다른 단원은 계속 쓸 수 있다', () => {
+    const broken = clone(lightJson);
+    broken.experiments[0].variables.find((v: { key: string }) => v.key === 'distanceCm').options[3].value = 100;
+    const units = buildRegistry([gasesJson, broken]);
+    expect(units.map((u) => u.ok)).toEqual([true, false]);
+    if (!units[1]!.ok) expect(units[1]!.issues.join()).toContain('distanceCm');
   });
 });
 

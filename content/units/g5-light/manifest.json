@@ -1,0 +1,167 @@
+{
+  "id": "g5-light",
+  "title": "빛의 성질",
+  "grade": 5,
+  "standards": [
+    "6과02-01"
+  ],
+  "engine": "physics",
+  "experiments": [
+    {
+      "id": "convex-lens",
+      "module": "convex-lens",
+      "title": "볼록 렌즈로 햇빛 모으기",
+      "question": "볼록 렌즈로 햇빛을 모을 때, 빛이 모인 곳의 온도는 어떤 조건에 따라 달라질까?",
+      "predictionPrompt": "예측: 빛이 모인 곳의 온도는?",
+      "variables": [
+        {
+          "key": "distanceCm",
+          "label": "렌즈와 종이 사이 거리",
+          "type": "choice",
+          "unit": "cm",
+          "options": [
+            {
+              "value": 5,
+              "label": "5 cm"
+            },
+            {
+              "value": 10,
+              "label": "10 cm"
+            },
+            {
+              "value": 15,
+              "label": "15 cm"
+            },
+            {
+              "value": 20,
+              "label": "20 cm"
+            }
+          ],
+          "default": 5
+        },
+        {
+          "key": "curve",
+          "label": "렌즈가 볼록한 정도",
+          "type": "choice",
+          "options": [
+            {
+              "value": "low",
+              "label": "조금 볼록한 렌즈"
+            },
+            {
+              "value": "high",
+              "label": "많이 볼록한 렌즈"
+            }
+          ],
+          "default": "high"
+        },
+        {
+          "key": "diameterCm",
+          "label": "렌즈의 크기",
+          "type": "choice",
+          "unit": "cm",
+          "options": [
+            {
+              "value": 4,
+              "label": "작은 렌즈 (지름 4 cm)"
+            },
+            {
+              "value": 8,
+              "label": "큰 렌즈 (지름 8 cm)"
+            }
+          ],
+          "default": 4
+        }
+      ],
+      "dependent": [
+        {
+          "key": "endC",
+          "label": "빛이 모인 곳의 온도",
+          "unit": "°C"
+        },
+        {
+          "key": "spotMm",
+          "label": "빛 원의 지름",
+          "unit": "mm"
+        }
+      ],
+      "gateway": {
+        "mode": "open",
+        "requirePrediction": true,
+        "requireSingleIV": true
+      },
+      "safety": [
+        "sunlight",
+        "fire"
+      ],
+      "safetyChecklist": [
+        "렌즈로 해를 직접 보지 않아요.",
+        "모은 빛을 사람이나 옷, 머리카락에 비추지 않아요.",
+        "종이에서 연기가 나면 바로 렌즈를 치워요."
+      ],
+      "safetyNotices": [],
+      "limits": [
+        "초점 거리",
+        "굴절률",
+        "광자",
+        "파장",
+        "렌즈 공식"
+      ],
+      "params": {
+        "roomC": 20,
+        "durationS": 60
+      },
+      "tutor": {
+        "forbiddenAnswers": [
+          "가까울수록 뜨거",
+          "멀수록 뜨거",
+          "빛 원이 작을수록 뜨거",
+          "볼록할수록 가까운 곳에 모",
+          "큰 렌즈가 더 뜨거",
+          "10 cm에서 가장 뜨거",
+          "15 cm에서 가장 뜨거"
+        ],
+        "probes": [
+          {
+            "when": "before-run",
+            "text": "{iv}을(를) 바꾸면 빛이 모인 곳의 온도가 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?"
+          },
+          {
+            "when": "first-trial",
+            "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?"
+          },
+          {
+            "when": "confounded",
+            "text": "{changed}이(가) 함께 바뀌었어요. 온도가 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?"
+          },
+          {
+            "when": "iv-unchanged",
+            "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?"
+          },
+          {
+            "when": "repeat",
+            "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?"
+          },
+          {
+            "when": "fair-test",
+            "text": "{iv}만 바꾸었을 때 빛 원의 크기와 온도는 각각 어떻게 달라졌나요? 결과표에서 두 줄을 비교해 볼까요?"
+          },
+          {
+            "when": "fair-test",
+            "iv": "distanceCm",
+            "text": "거리만 바꾸었어요. 빛의 길 화면에서 빛이 한곳에 모이는 곳과 종이의 위치를 비교해 볼까요? 거리를 더 바꾸면 어떻게 될까요?"
+          },
+          {
+            "when": "fair-test",
+            "iv": "diameterCm",
+            "text": "렌즈의 크기만 바꾸었을 때 빛 원의 크기와 밝기는 각각 어떻게 달라졌나요? 다른 거리에서도 같을까요?"
+          },
+          {
+            "when": "prediction-mismatch",
+            "text": "예측과 결과가 달랐네요. 빛의 길 화면에서 종이에 닿는 빛의 폭을 보면 그 까닭을 찾을 수 있을까요?"
+          }
+        ]
+      }
+    }
+  ]
+}
