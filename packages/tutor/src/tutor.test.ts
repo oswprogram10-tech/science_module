@@ -981,3 +981,92 @@ describe('g4-microbe 매니페스트 probe', () => {
     }
   });
 });
+
+// ---------- 우리 몸의 구조와 기능(운동과 맥박·호흡) 매니페스트 ----------
+import bodyJson from '../../../content/units/g5-body/manifest.json';
+
+describe('g5-body 매니페스트 probe', () => {
+  const e = parseManifest(bodyJson).experiments[0]! as VariableExperiment;
+  const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+  const eKeys = e.variables.map((v) => v.key);
+  const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+  const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: 'kind', ...x });
+  const fair = (iv: string): Partial<ProbeContext> => ({
+    ivKey: iv,
+    lastAnalysis: { kind: 'fair-test', changed: [iv] },
+    prediction: 'same',
+    observed: 'same',
+  });
+
+  it('iv별 fair-test 질문을 고른다', () => {
+    expect(selectProbe(eCtx(fair('kind')), e.tutor.probes, eGuard)).toContain('몸속 기관 그림에서 심장과 폐는 어떻게 달라 보였나요?');
+    expect(selectProbe(eCtx(fair('wrist')), e.tutor.probes, eGuard)).toContain('손목만 바꾸었을 때 결과가 달라졌나요?');
+    // 전용 질문이 없는 변인은 공통 fair-test 질문
+    expect(selectProbe(eCtx(fair('minutes')), e.tutor.probes, eGuard)).toContain('운동 시간만 바꾸었을 때 맥박과 호흡은 각각 어떻게 달라졌나요');
+  });
+
+  it('모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+    let n = 0;
+    for (const probe of e.tutor.probes) {
+      for (const iv of eKeys) {
+        for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+          const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+          expect(text).not.toMatch(/[{}]/);
+          expect(text).not.toMatch(/(을\(를\)|이\(가\)|와\(과\)|은\(는\))/);
+          n++;
+        }
+      }
+    }
+    expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+  });
+
+  it('질문 문장은 금지 구절·limits 용어와 겹치지 않는다', () => {
+    for (const probe of e.tutor.probes) {
+      for (const f of e.tutor.forbiddenAnswers) expect(probe.text, probe.text).not.toContain(f);
+      for (const l of e.limits) expect(probe.text, probe.text).not.toContain(l);
+    }
+  });
+
+  it('오검출 없음: 종류 전용 질문의 "몸이 무엇을 더 필요로 했을까요?"는 금지 구절 "산소가 더 필요하기 때문"에 걸리지 않고, 금지 구절 문장은 막는다', () => {
+    const kindProbe = e.tutor.probes.find((p) => p.iv === 'kind')!;
+    expect(kindProbe.text).toContain('몸이 무엇을 더 필요로 했을까요?');
+    expect(guardOutput(kindProbe.text, eGuard).ok).toBe(true);
+    expect(guardOutput('산소가 더 필요하기 때문이에요', eGuard).ok).toBe(false);
+  });
+
+  it('금지 구절을 담은 문장과 limits 용어를 담은 문장은 실제로 막는다', () => {
+    for (const f of e.tutor.forbiddenAnswers) expect(guardOutput(`${f}요`, eGuard).ok, f).toBe(false);
+    for (const l of e.limits) expect(guardOutput(`${l}이에요`, eGuard).ok, l).toBe(false);
+  });
+
+  it('화면에 보이는 매니페스트 글(질문, 변인·선택지 이름, 점검표, 경고 문구)에는 limits 용어가 없다', () => {
+    const shown = [
+      e.title,
+      e.question,
+      e.predictionPrompt,
+      ...e.variables.flatMap((v) => [v.label, ...v.options.map((o) => o.label)]),
+      ...e.dependent.map((d) => d.label),
+      ...e.tutor.probes.map((p) => p.text),
+      ...(e.safetyChecklist ?? []),
+      ...Object.values(e.safetyMessages ?? {}),
+    ];
+    for (const text of shown) for (const l of e.limits) expect(text, text).not.toContain(l);
+  });
+
+  it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+    const situations: Partial<ProbeContext>[] = [
+      {},
+      { lastAnalysis: { kind: 'first-trial', changed: [] } },
+      { lastAnalysis: { kind: 'confounded', changed: ['kind', 'minutes'] } },
+      { lastAnalysis: { kind: 'iv-unchanged', changed: ['wrist'] } },
+      { lastAnalysis: { kind: 'repeat', changed: [] } },
+      ...eKeys.flatMap((k) => [fair(k), { ...fair(k), prediction: 'increase' as const, observed: 'same' as const }]),
+    ];
+    for (const s of situations) {
+      const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+      expect(text).not.toBe(FALLBACK_PROBE);
+      expect(guardOutput(text, eGuard).ok, text).toBe(true);
+    }
+  });
+});

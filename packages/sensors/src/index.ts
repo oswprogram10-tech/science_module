@@ -6,7 +6,7 @@ export interface SensorReading {
   stale?: boolean;
 }
 
-export type SensorKind = 'temperature' | 'scale' | 'pressure' | 'oxygen' | 'carbonDioxide' | 'light' | 'humidity';
+export type SensorKind = 'temperature' | 'scale' | 'pressure' | 'oxygen' | 'carbonDioxide' | 'light' | 'humidity' | 'pulse';
 
 export interface SensorDriver {
   id: string;
@@ -84,6 +84,7 @@ export const PRESSURE_NOISE_KPA = 0.1;
 export const GAS_NOISE_PCT = 0.05;
 export const LIGHT_NOISE_PCT = 0.5;
 export const HUMIDITY_NOISE_PCT = 0.5;
+export const PULSE_NOISE_BPM = 1;
 export const BEAKER_G = 100;
 
 /** 값 = source() + 시드 고정 잡음(±0.2 °C), 소수 첫째 자리. */
@@ -157,6 +158,16 @@ export class MockHumidityDriver extends MockDriver {
   protected measure() {
     const v = this.source() + (this.rng() * 2 - 1) * HUMIDITY_NOISE_PCT;
     return roundTo(Math.min(100, Math.max(0, v)), 1);
+  }
+}
+
+/** 가상 맥박계: 값 = source()(회/분) + 시드 고정 잡음(±1회/분), 정수. 가상 친구의 값을 보여 주며 실제 학생의 측정이 아니다. */
+export class MockPulseDriver extends MockDriver {
+  id = 'mock-pulse';
+  kind = 'pulse' as const;
+  unit = '회/분';
+  protected measure() {
+    return Math.max(0, Math.round(this.source() + (this.rng() * 2 - 1) * PULSE_NOISE_BPM));
   }
 }
 

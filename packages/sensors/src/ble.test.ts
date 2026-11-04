@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   BleError,
+  BleHeartRateDriver,
   BleTemperatureDriver,
+  HEART_RATE_MEASUREMENT,
+  HEART_RATE_SERVICE,
+  heartRateProfile,
   ESS_SERVICE,
   ESS_TEMPERATURE,
   MICROBIT_TEMPERATURE,
@@ -167,5 +171,54 @@ describe('pickTransport', () => {
   });
   it('둘 다 없으면 null', () => {
     expect(make(false, undefined)).toBeNull();
+  });
+});
+
+describe('Heart Rate 프로필(0x180D / 0x2A37)', () => {
+  const bytes = (...b: number[]) => new DataView(new Uint8Array(b).buffer);
+
+  it('UUID와 기기 선택 조건', () => {
+    expect(HEART_RATE_SERVICE).toBe('0000180d-0000-1000-8000-00805f9b34fb');
+    expect(HEART_RATE_MEASUREMENT).toBe('00002a37-0000-1000-8000-00805f9b34fb');
+    expect(heartRateProfile.service).toBe(HEART_RATE_SERVICE);
+    expect(heartRateProfile.characteristic).toBe(HEART_RATE_MEASUREMENT);
+    expect(heartRateProfile.filters).toEqual({ services: [HEART_RATE_SERVICE] });
+  });
+
+  it('flags bit0 = 0이면 uint8', () => {
+    expect(heartRateProfile.parse(bytes(0x00, 72))).toBe(72);
+    expect(heartRateProfile.parse(bytes(0x00, 255))).toBe(255);
+    // 다른 flags 비트(센서 접촉 등)가 켜져 있어도 bit0만 본다
+    expect(heartRateProfile.parse(bytes(0x16, 90, 0x10, 0x03))).toBe(90);
+  });
+
+  it('flags bit0 = 1이면 uint16 little-endian', () => {
+    expect(heartRateProfile.parse(bytes(0x01, 0x2c, 0x01))).toBe(300); // 0x012C
+    expect(heartRateProfile.parse(bytes(0x01, 0x48, 0x00))).toBe(72);
+    expect(heartRateProfile.parse(bytes(0x17, 0x00, 0x01))).toBe(256);
+  });
+
+  it('짧은 데이터와 0회/분은 null', () => {
+    expect(heartRateProfile.parse(bytes())).toBeNull();
+    expect(heartRateProfile.parse(bytes(0x00))).toBeNull();
+    expect(heartRateProfile.parse(bytes(0x01, 0x48))).toBeNull();
+    expect(heartRateProfile.parse(bytes(0x00, 0))).toBeNull();
+    expect(heartRateProfile.parse(bytes(0x01, 0, 0))).toBeNull();
+  });
+
+  it('BleHeartRateDriver: 연결 순서, 정수 회/분, kind pulse', async () => {
+    const t = new FakeTransport();
+    const d = new BleHeartRateDriver(t);
+    expect([d.kind, d.unit]).toEqual(['pulse', '회/분']);
+    await d.connect();
+    expect(t.calls).toEqual(['request', 'connect', 'notify']);
+    expect(t.filters).toEqual(heartRateProfile.filters);
+    const seen: number[] = [];
+    d.subscribe((r) => seen.push(r.value));
+    t.push!(bytes(0x00, 80));
+    t.push!(bytes(0x01, 0x6e, 0x00));
+    t.push!(bytes(0x00, 0)); // 접촉 없음은 무시한다
+    expect(seen).toEqual([80, 110]);
+    expect(d.read()).toMatchObject({ value: 110, unit: '회/분' });
   });
 });

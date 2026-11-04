@@ -1,12 +1,12 @@
 import { useMemo, useRef } from 'react';
-import { MockGasDriver, MockHumidityDriver, MockLightDriver, MockPressureDriver, MockScaleDriver, MockTemperatureDriver, type SensorDriver, type SensorKind, type SensorReading } from '@sci/sensors';
+import { MockGasDriver, MockHumidityDriver, MockLightDriver, MockPressureDriver, MockPulseDriver, MockScaleDriver, MockTemperatureDriver, type SensorDriver, type SensorKind, type SensorReading } from '@sci/sensors';
 import type { SensorSpec } from '../modules/types';
 import { devMode } from './safety/devMode';
 import { RealTemperatureControls, useRealTemperature } from './RealTemperature';
 
-const SEEDS: Record<SensorKind, number> = { temperature: 20250101, scale: 20250102, pressure: 20250103, oxygen: 20250104, carbonDioxide: 20250105, light: 20250106, humidity: 20250107 };
-const DECIMALS: Record<SensorKind, number> = { temperature: 1, scale: 2, pressure: 1, oxygen: 1, carbonDioxide: 1, light: 1, humidity: 1 };
-const ARIA: Record<SensorKind, string> = { temperature: '온도', scale: '무게', pressure: '압력', oxygen: '산소', carbonDioxide: '이산화 탄소', light: '빛 세기', humidity: '습도' };
+const SEEDS: Record<SensorKind, number> = { temperature: 20250101, scale: 20250102, pressure: 20250103, oxygen: 20250104, carbonDioxide: 20250105, light: 20250106, humidity: 20250107, pulse: 20250108 };
+const DECIMALS: Record<SensorKind, number> = { temperature: 1, scale: 2, pressure: 1, oxygen: 1, carbonDioxide: 1, light: 1, humidity: 1, pulse: 0 };
+const ARIA: Record<SensorKind, string> = { temperature: '온도', scale: '무게', pressure: '압력', oxygen: '산소', carbonDioxide: '이산화 탄소', light: '빛 세기', humidity: '습도', pulse: '맥박' };
 
 function makeDriver(kind: SensorKind, source: () => number): SensorDriver {
   switch (kind) {
@@ -20,6 +20,8 @@ function makeDriver(kind: SensorKind, source: () => number): SensorDriver {
       return new MockLightDriver(source, SEEDS.light);
     case 'humidity':
       return new MockHumidityDriver(source, SEEDS.humidity);
+    case 'pulse':
+      return new MockPulseDriver(source, SEEDS.pulse);
     case 'oxygen':
     case 'carbonDioxide':
       return new MockGasDriver(kind, source, SEEDS[kind]);

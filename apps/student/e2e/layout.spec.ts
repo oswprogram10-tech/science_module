@@ -5,7 +5,7 @@ const VIEWPORTS = [
   { width: 1100, height: 800 },
   { width: 1280, height: 800 },
 ];
-const UNITS = ['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat', 'g5-light', 'g6-electricity', 'g4-land', 'g6-earth-motion', 'g6-seasons', 'g3-lifecycle', 'g6-plant', 'g4-ecosystem', 'g4-microbe'];
+const UNITS = ['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat', 'g5-light', 'g6-electricity', 'g4-land', 'g6-earth-motion', 'g6-seasons', 'g3-lifecycle', 'g6-plant', 'g4-ecosystem', 'g4-microbe', 'g5-body'];
 
 for (const vp of VIEWPORTS) {
   test.describe(`${vp.width}x${vp.height}`, () => {

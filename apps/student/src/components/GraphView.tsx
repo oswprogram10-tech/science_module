@@ -84,7 +84,7 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
   const sx = (t: number) => M.l + (t / xMax) * (W - M.l - M.r);
   // 라벨 자리: 다음 표식의 선을 가로지르거나 오른쪽 끝을 넘으면 선의 왼쪽에 쓰고, 앞 라벨과 겹치면 한 줄 아래로 내린다(글자 폭은 한글 12, 공백 4로 넉넉히 어림).
   const labelW = (label: string) => [...label].reduce((w, ch) => w + (ch === ' ' ? 4 : 12), 0);
-  const placedMarkers = markers.reduce<{ m: GraphMarker; row: number; flip: boolean; right: number }[]>((acc, m, i) => {
+  const placedMarkers = markers.reduce<{ m: GraphMarker; row: number; flip: boolean; spill: boolean; right: number }[]>((acc, m, i) => {
     const x = sx(m.t);
     const w = labelW(m.label);
     const nextX = i + 1 < markers.length ? sx(markers[i + 1]!.t) : Infinity;
@@ -92,7 +92,9 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
     const left = flip ? x - 3 - w : x + 3;
     const prev = acc[acc.length - 1];
     const row = prev && left < prev.right ? prev.row + 1 : 0;
-    acc.push({ m, row, flip, right: flip ? x - 3 : x + 3 + w });
+    // 왼쪽으로 쓰는 라벨이 그래프 틀 밖(y축 눈금 글자 자리)까지 나가면 눈금 글자 사이로 8만큼 내려 겹치지 않게 한다.
+    const spill = flip && left < M.l;
+    acc.push({ m, row, flip, spill, right: flip ? x - 3 : x + 3 + w });
     return acc;
   }, []);
   const sy = (g: number) => H - M.b - ((g - yMin) / (yMax - yMin)) * (H - M.t - M.b);
@@ -196,11 +198,11 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
         )}
         <text x={(M.l + W - M.r) / 2} y={H - 6} textAnchor="middle" fontSize="11" fill="currentColor">{xLabel}</text>
         <text transform={`translate(11 ${(M.t + H - M.b) / 2}) rotate(-90)`} textAnchor="middle" fontSize="11" fill="currentColor">{mod.graph.yLabel}</text>
-        {placedMarkers.map(({ m, row, flip }) => (
+        {placedMarkers.map(({ m, row, flip, spill }) => (
           <g key={`${m.t}:${m.label}`} data-testid="graph-marker">
             <line x1={sx(m.t)} x2={sx(m.t)} y1={M.t} y2={H - M.b} stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" opacity="0.6" />
             {flip ? (
-              <text x={sx(m.t) - 3} y={M.t + 11 + 16 * row} textAnchor="end" fontSize="12" fill="currentColor">{m.label}</text>
+              <text x={sx(m.t) - 3} y={M.t + 11 + 16 * row + (spill ? 8 : 0)} textAnchor="end" fontSize="12" fill="currentColor">{m.label}</text>
             ) : (
               <text x={sx(m.t) + 3} y={M.t + 11 + 16 * row} fontSize="12" fill="currentColor">{m.label}</text>
             )}

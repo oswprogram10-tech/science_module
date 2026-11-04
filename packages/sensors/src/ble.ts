@@ -1,4 +1,4 @@
-import type { SensorDriver, SensorReading } from './index';
+import type { SensorDriver, SensorKind, SensorReading } from './index';
 
 /** 블루투스 연결 오류. code로 화면이 안내 문구를 고른다. */
 export type BleErrorCode = 'unsupported' | 'denied' | 'cancelled' | 'failed';
@@ -79,18 +79,57 @@ export const microbitTemperatureProfile: BleTemperatureProfile = {
 
 export const BLE_TEMPERATURE_PROFILES = [essTemperatureProfile, microbitTemperatureProfile] as const;
 
+export const HEART_RATE_SERVICE = uuid16(0x180d);
+export const HEART_RATE_MEASUREMENT = uuid16(0x2a37);
+
+export interface BleHeartRateProfile {
+  id: 'heart-rate';
+  label: string;
+  service: string;
+  characteristic: string;
+  filters: BleFilters;
+  /** 알림 값을 회/분으로. 알 수 없는 값이면 null. */
+  parse(v: DataView): number | null;
+}
+
+/**
+ * 표준 Heart Rate Measurement(0x2A37): 첫 바이트 flags의 bit0이 0이면 심박이 uint8, 1이면 uint16 little-endian이다.
+ * 심박은 flags 바로 다음에 온다. 0회/분(접촉 없음)과 짧은 데이터는 null.
+ */
+export const heartRateProfile: BleHeartRateProfile = {
+  id: 'heart-rate',
+  label: '표준(Heart Rate)',
+  service: HEART_RATE_SERVICE,
+  characteristic: HEART_RATE_MEASUREMENT,
+  filters: { services: [HEART_RATE_SERVICE] },
+  parse(v) {
+    if (v.byteLength < 2) return null;
+    const wide = (v.getUint8(0) & 0x01) === 1;
+    if (wide && v.byteLength < 3) return null;
+    const bpm = wide ? v.getUint16(1, true) : v.getUint8(1);
+    return bpm > 0 ? bpm : null;
+  },
+};
+
 // ---- 드라이버 ------------------------------------------------------------
 
 const round1 = (x: number) => Math.round(x * 10) / 10;
 
+/** 알림으로 값을 받는 BLE 프로필이 갖춰야 하는 것 */
+export interface BleNotifyProfile {
+  id: string;
+  service: string;
+  characteristic: string;
+  filters: BleFilters;
+  parse(v: DataView): number | null;
+}
+
 /**
- * 실물 BLE 온도 센서(°C, 소수 첫째 자리).
+ * 알림으로 값을 받는 실물 BLE 센서의 공통 동작.
  * 연결이 끊기면 read()가 마지막 값에 stale: true를 붙이고, connect() 한 번당 자동 재연결은 1회만 시도한다.
  */
-export class BleTemperatureDriver implements SensorDriver {
+export class BleNotifyDriver<K extends SensorKind = SensorKind> implements SensorDriver {
   readonly id: string;
-  readonly kind = 'temperature' as const;
-  readonly unit = '°C';
   private last: SensorReading | null = null;
   private stale = true;
   private listeners = new Set<(r: SensorReading) => void>();
@@ -100,7 +139,10 @@ export class BleTemperatureDriver implements SensorDriver {
 
   constructor(
     private transport: BleTransport,
-    private profile: BleTemperatureProfile,
+    private profile: BleNotifyProfile,
+    readonly kind: K,
+    readonly unit: string,
+    private round: (x: number) => number,
   ) {
     this.id = `ble-${profile.id}`;
     transport.onDisconnect(() => void this.handleDisconnect());
@@ -121,7 +163,7 @@ export class BleTemperatureDriver implements SensorDriver {
   private onValue(v: DataView) {
     const c = this.profile.parse(v);
     if (c === null) return;
-    this.last = { value: round1(c), unit: this.unit, ts: Date.now() };
+    this.last = { value: this.round(c), unit: this.unit, ts: Date.now() };
     this.setStale(false);
     this.listeners.forEach((cb) => cb(this.last!));
   }
@@ -168,6 +210,20 @@ export class BleTemperatureDriver implements SensorDriver {
     return () => {
       this.staleListeners.delete(cb);
     };
+  }
+}
+
+/** 실물 BLE 온도 센서(°C, 소수 첫째 자리). */
+export class BleTemperatureDriver extends BleNotifyDriver<'temperature'> {
+  constructor(transport: BleTransport, profile: BleTemperatureProfile) {
+    super(transport, profile, 'temperature', '°C', round1);
+  }
+}
+
+/** 실물 BLE 심박 센서(회/분, 정수). 값은 구독자에게만 전달하고 이 드라이버 밖에 남기지 않는다. */
+export class BleHeartRateDriver extends BleNotifyDriver<'pulse'> {
+  constructor(transport: BleTransport, profile: BleHeartRateProfile = heartRateProfile) {
+    super(transport, profile, 'pulse', '회/분', Math.round);
   }
 }
 

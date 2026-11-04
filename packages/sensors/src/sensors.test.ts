@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { simulateDissolution } from '@sci/engine-matter';
-import { MockGasDriver, MockHumidityDriver, MockLightDriver, MockPressureDriver, MockScaleDriver, MockTemperatureDriver, mulberry32 } from './index';
+import { MockGasDriver, MockHumidityDriver, MockLightDriver, MockPressureDriver, MockPulseDriver, MockScaleDriver, MockTemperatureDriver, mulberry32 } from './index';
 
 describe('mulberry32', () => {
   it('같은 시드면 같은 수열', () => {
@@ -156,5 +156,23 @@ describe('MockHumidityDriver', () => {
       expect(dry.read().value).toBeGreaterThanOrEqual(0);
       expect(wet.read().value).toBeLessThanOrEqual(100);
     }
+  });
+});
+
+describe('MockPulseDriver', () => {
+  it('단위 회/분, 정수, ±1 잡음, 시드 재현', () => {
+    const a = new MockPulseDriver(() => 111, 7);
+    const b = new MockPulseDriver(() => 111, 7);
+    const ra = Array.from({ length: 50 }, () => a.read().value);
+    expect(ra).toEqual(Array.from({ length: 50 }, () => b.read().value));
+    for (const v of ra) {
+      expect(Math.abs(v - 111)).toBeLessThanOrEqual(1);
+      expect(Number.isInteger(v)).toBe(true);
+    }
+    expect(a.read().unit).toBe('회/분');
+    expect(a.kind).toBe('pulse');
+    expect(a.id).toBe('mock-pulse');
+    const zero = new MockPulseDriver(() => 0, 7);
+    for (let i = 0; i < 50; i++) expect(zero.read().value).toBeGreaterThanOrEqual(0);
   });
 });

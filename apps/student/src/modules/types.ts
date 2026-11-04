@@ -53,7 +53,7 @@ export interface ExperimentModule<S extends { t: number }, R> {
   metric: { sampleKey: keyof S; resultKey: keyof R; sameThreshold(exp: Experiment): number };
   /** yMin: y축 눈금이 시작하는 값(기본 0). markers: x축 위의 세로 점선과 라벨(예: 스위치 켜짐·꺼짐 시각), 없으면 그리지 않는다. */
   /** 재생이 끝난 뒤 플레이헤드를 옮겨 둘 시각. 없으면 끝에 둔다(예: 하루 실험은 정오). */
-  restPlayhead?: number;
+  restPlayhead?: number | ((exp: Experiment, trial: Trial<S, R>) => number);
   graph: {
     yLabel: string;
     /** x축 라벨(기본 '시간(초)'). 괄호 안은 단위로, 플레이헤드 읽기(aria-valuetext)에도 쓴다. */
@@ -76,6 +76,8 @@ export interface ExperimentModule<S extends { t: number }, R> {
   /** 가장 최근에 끝난 시행의 결과에 따라 결과표 아래에 보여 줄 경고(없으면 null). 없는 모듈은 아무것도 보이지 않는다. */
   resultNote?(r: R): string | null;
   sensors(snapshot: S | null, values: Values): SensorSpec[];
+  /** 결과표 아래에 덧붙이는 영역(선택 기능 등). 시뮬레이션·결과·튜터에는 연결하지 않는다. 없으면 아무것도 그리지 않는다. */
+  ResultsExtra?: ComponentType<{ experiment: Experiment; values: Values }>;
   MacroView: ComponentType<ViewProps<S>>;
   MicroView: ComponentType<ViewProps<S>>;
 }

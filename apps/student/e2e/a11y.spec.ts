@@ -613,6 +613,52 @@ test('g4-microbe 어두운 화면: 처음, 점검표, 실행 뒤, 배율 ×400, 
   await expectNoSeriousViolations(page);
 });
 
+// ---- g5-body ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`g5-body ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 처음, 점검표, 실행 뒤, 달리기·앉기·오른손, 내 맥박 허가 화면과 측정 칸`, async ({ page }) => {
+    // 검사가 많아 오래 걸리고, 가짜 시계로 15초를 건너뛰므로 움직임 줄이기로 그림 반복을 멈춘다.
+    test.setTimeout(90_000);
+    await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
+    await gotoUnit(page, 'g5-body');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '운동 종류');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(page.getByRole('dialog', { name: '안전 점검표' })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await confirmSafetyDialog(page);
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByRole('figure', { name: '그래프로 보기' }).getByTestId('graph-marker')).toHaveCount(2);
+    await expectNoSeriousViolations(page);
+    await page.reload();
+    await setValue(page, '운동 종류', '제자리 달리기');
+    await expectNoSeriousViolations(page);
+    await setValue(page, '운동 종류', '가만히 앉아 있기');
+    await setValue(page, '맥박을 잰 손목', '오른손 손목');
+    await expectNoSeriousViolations(page);
+    // 내 맥박 재기: 허가 화면, 허가 전(비활성 버튼), 허가 뒤 값이 있는 칸
+    await page.locator('details.real-pulse summary').click();
+    await expect(page.getByRole('dialog', { name: '내 맥박 재기' })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await page.getByRole('button', { name: '안 할래요' }).click();
+    await expectNoSeriousViolations(page);
+    await page.getByRole('button', { name: '허가 화면 열기' }).click();
+    await page.getByRole('button', { name: '허가할게요' }).click();
+    await page.clock.install();
+    const row = page.locator('[data-slot=before]');
+    await row.getByRole('button', { name: '15초 재기' }).click();
+    await expectNoSeriousViolations(page);
+    await page.clock.runFor(16_000);
+    await row.getByLabel('15초 동안 센 횟수').fill('19');
+    await expectNoSeriousViolations(page);
+    await row.getByRole('button', { name: '기록(×4)' }).click();
+    await expect(row.getByLabel('운동 전 내 맥박')).toHaveText('76회/분');
+    await expectNoSeriousViolations(page);
+  });
+}
+
 // ---- 수업 연결 ----
 
 for (const scheme of ['light', 'dark'] as const) {

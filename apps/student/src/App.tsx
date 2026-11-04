@@ -16,6 +16,7 @@ import { ObserveLab } from './modules/sky-observation/ObserveLab';
 import { readPlaybackSeconds } from './playback';
 import { UNITS, parseRoute, unitHash, type UnitEntry } from './units';
 import type { AnyModule } from './modules/types';
+import { restPlayheadOf } from './modules/restPlayhead';
 import { DesignPanel } from './components/DesignPanel';
 import { GraphView } from './components/GraphView';
 import { SensorBar } from './components/SensorBar';
@@ -166,9 +167,13 @@ function Lab({
   useEffect(() => {
     if (state.playing || !state.active || mod.restPlayhead === undefined) return;
     if (restedTrial.current === state.active) return;
+    // 숫자는 그대로, 함수는 그 시행의 조건·결과로 계산한다(시행마다 시각이 다른 단원).
+    const trial = state.trials.find((t) => t.id === state.active);
+    if (!trial) return;
     restedTrial.current = state.active;
-    runtime.setPlayhead(mod.restPlayhead);
-  }, [state.playing, state.active, mod, runtime]);
+    const rest = restPlayheadOf(mod, experiment, trial);
+    if (rest !== undefined) runtime.setPlayhead(rest);
+  }, [state.playing, state.active, state.trials, mod, experiment, runtime]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const active: Trial<any, any> | undefined = state.trials.find((t) => t.id === state.active);
@@ -330,6 +335,7 @@ function Lab({
             </div>
           </div>
           <ResultsTable experiment={experiment} module={mod} trials={state.trials} playingId={state.playing ? state.active : null} />
+          {mod.ResultsExtra && <mod.ResultsExtra experiment={experiment} values={shownValues} />}
         </section>
       </main>
 

@@ -190,3 +190,22 @@ button.unit-card:hover { border-color:var(--accent); }
 .pause-leave { min-height:44px; padding:8px 18px; font-size:1rem; }
 .pause-text { margin:0; padding:16px; font-size:clamp(1.8rem, 6vw, 3.2rem); font-weight:800; text-align:center; }
 .scope-zoom { display:flex; gap:6px; margin-top:6px; }
+.real-pulse { margin-top:12px; }
+.real-pulse summary { cursor:pointer; font-weight:700; min-height:44px; display:flex; align-items:center; }
+.real-pulse summary:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+.rp-notice { margin:4px 0 8px; }
+.rp-consent-state { margin:8px 0; }
+.rp-ble { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:8px 0; }
+.rp-slots { list-style:none; margin:8px 0; padding:0; display:grid; gap:8px; }
+.rp-slot { display:grid; grid-template-columns: minmax(5.5rem,auto) 1fr 1fr; gap:4px 12px; align-items:center; padding:8px; border:1px solid var(--line); border-radius:8px; }
+.rp-actions { grid-column: 1 / -1; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.rp-enter { display:flex; flex-wrap:wrap; gap:8px; align-items:flex-end; }
+.rp-enter label { display:flex; flex-direction:column; gap:2px; }
+.rp-enter input { font:inherit; min-height:44px; width:8rem; padding:0 8px; background:var(--card); color:var(--fg); border:2px solid var(--line); border-radius:8px; }
+.rp-timer { font-weight:700; }
+.rp-hint { margin:4px 0; font-size:.85rem; }
+.rp-error { margin:4px 0; color:var(--warn); font-weight:700; }
+.rp-notice-wipe { margin:4px 0; min-height:1.3em; }
+.rp-buttons { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+.consent-list { margin:8px 0; padding-left:1.2rem; }
+@media (max-width:600px) { .rp-slot { grid-template-columns: 1fr; } }

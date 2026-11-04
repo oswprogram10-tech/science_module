@@ -12,6 +12,7 @@ import lifecycleJson from '../../../content/units/g3-lifecycle/manifest.json';
 import plantJson from '../../../content/units/g6-plant/manifest.json';
 import ecosystemJson from '../../../content/units/g4-ecosystem/manifest.json';
 import microbeJson from '../../../content/units/g4-microbe/manifest.json';
+import bodyJson from '../../../content/units/g5-body/manifest.json';
 import earthJson from '../../../content/units/g6-earth-motion/manifest.json';
 import {
   ManifestError,
@@ -165,7 +166,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
   const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
   it('아홉 매니페스트가 모두 검증을 통과한다', () => {
-    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson]) expect(() => parseManifest(j)).not.toThrow();
+    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson]) expect(() => parseManifest(j)).not.toThrow();
   });
 
   it('연소 매니페스트의 점검표와 경고 문구를 읽는다', () => {
@@ -287,6 +288,23 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     expect(e.dependent.map((d) => d.key)).toEqual(['cover7', 'firstDay']);
     expect(e.params).toEqual({ days: 10 });
     expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['tempC', 'light']);
+  });
+
+  it('우리 몸의 구조와 기능 매니페스트의 변인, 안전 종류, 점검표, 탐침을 읽는다', () => {
+    const m = parseManifest(bodyJson);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g5-body', 5, 'life', ['6과04-01']]);
+    const e = m.experiments[0] as VariableExperiment;
+    expect(e.module).toBe('exercise-body');
+    expect(e.safety).toEqual(['exercise']);
+    expect(e.safetyChecklist).toHaveLength(3);
+    expect(Object.keys(e.safetyMessages ?? {})).toEqual(['NO_GOGGLES', 'NO_GLOVES', 'SPILL', 'FOOD']);
+    expect(e.variables.map((v) => v.key)).toEqual(['kind', 'minutes', 'wrist']);
+    expect(e.variables[0]!.options.map((o) => o.value)).toEqual(['sit', 'walk', 'run']);
+    expect(e.variables[1]!.options.map((o) => o.value)).toEqual([1, 3]);
+    expect(e.variables[2]!.options.map((o) => o.value)).toEqual(['left', 'right']);
+    expect(e.dependent.map((d) => d.key)).toEqual(['pulseEnd', 'breathEnd']);
+    expect(e.params).toEqual({ totalMin: 10 });
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['kind', 'wrist']);
   });
 
   it('두 필드는 없어도 된다', () => {

@@ -48,7 +48,7 @@ const render = (unit: (typeof variableUnits)[number], mod: AnyModule, trial: Any
   );
 
 describe('GraphView', () => {
-  const existing = variableUnits.filter((u) => u.module.kind !== 'electromagnet' && u.module.kind !== 'magma-cooling' && u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration' && u.module.kind !== 'food-web' && u.module.kind !== 'mold-growth');
+  const existing = variableUnits.filter((u) => u.module.kind !== 'electromagnet' && u.module.kind !== 'magma-cooling' && u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration' && u.module.kind !== 'food-web' && u.module.kind !== 'mold-growth' && u.module.kind !== 'exercise-body');
 
   it('기존 단원은 모든 조건에서 최댓값이 처음 값 또는 마지막 값이다 (y축 범위를 모든 표본의 최댓값으로 잡아도 달라지지 않는다)', () => {
     expect(existing.length).toBeGreaterThanOrEqual(5);
@@ -171,7 +171,7 @@ describe('markers: 시행에서 계산하는 함수 형태', () => {
 });
 
 describe('x축 라벨·눈금(xLabel, xTicks, xTickFormat)', () => {
-  const existing = variableUnits.filter((u) => u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration' && u.module.kind !== 'food-web' && u.module.kind !== 'mold-growth');
+  const existing = variableUnits.filter((u) => u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration' && u.module.kind !== 'food-web' && u.module.kind !== 'mold-growth' && u.module.kind !== 'exercise-body');
   const seasons = () => variableUnits.find((u) => u.id === 'g6-seasons')!;
   const base = { season: 'summer', tiltDeg: 23.44, stickCm: 10 };
 
@@ -224,12 +224,14 @@ describe('x축 라벨·눈금(xLabel, xTicks, xTickFormat)', () => {
 describe('여러 선(graph.series)과 y축 눈금(graph.yTicks)', () => {
   const foodWeb = () => variableUnits.find((u) => u.id === 'g4-ecosystem')!;
   const base = { rabbits0: 10, foxes0: 2, rain: 'normal', furColor: 'white' };
-  const others = variableUnits.filter((u) => u.id !== 'g4-ecosystem');
+  // series로 여러 선을 그리는 단원: 먹이 관계(세 선)와 우리 몸(맥박·호흡 두 선)
+  const SERIES_UNITS = ['g4-ecosystem', 'g5-body'];
+  const others = variableUnits.filter((u) => !SERIES_UNITS.includes(u.id));
   // yTicks로 축을 고정한 단원. 이 단원들은 'series: undefined는 그림을 바꾸지 않는다' 비교에서 yTicks를 남긴다.
-  const FIXED_Y = ['g4-ecosystem', 'g4-microbe'];
+  const FIXED_Y = ['g4-ecosystem', 'g4-microbe', 'g5-body'];
 
-  it('series를 쓰는 모듈은 먹이 관계뿐이고, yTicks는 먹이 관계와 곰팡이만 쓴다', () => {
-    expect(variableUnits.filter((u) => u.module.graph.series !== undefined).map((u) => u.id)).toEqual(['g4-ecosystem']);
+  it('series를 쓰는 모듈은 먹이 관계와 우리 몸뿐이고, yTicks는 먹이 관계·곰팡이·우리 몸만 쓴다', () => {
+    expect(variableUnits.filter((u) => u.module.graph.series !== undefined).map((u) => u.id)).toEqual(SERIES_UNITS);
     expect(variableUnits.filter((u) => u.module.graph.yTicks !== undefined).map((u) => u.id).sort()).toEqual([...FIXED_Y].sort());
   });
 
@@ -264,6 +266,31 @@ describe('여러 선(graph.series)과 y축 눈금(graph.yTicks)', () => {
     const html = render(unit, single, trialOf(unit, base));
     expect(html.match(/<polyline/g)).toHaveLength(1);
     expect(html).not.toContain('graph-legend');
+  });
+
+  it('우리 몸 그래프는 맥박(실선)·호흡(점선) 두 선과 범례, y축 0~180(회/분), x축 "시간(분)" 0~10, 운동 시작·끝 표식을 그린다', () => {
+    const unit = variableUnits.find((u) => u.id === 'g5-body')!;
+    const html = render(unit, unit.module, trialOf(unit, { kind: 'walk', minutes: 1, wrist: 'left' }));
+    const tags = html.match(/<polyline data-testid="graph-series"[^>]*>/g) ?? [];
+    const lines = tags.map((t) => [/data-series="(\w+)"/.exec(t)![1], /stroke-dasharray="([\d ]+)"/.exec(t)?.[1]]);
+    expect(lines).toEqual([['pulse', undefined], ['breath', '7 4']]);
+    const items = html.match(/<li data-testid="graph-legend-item">.*?<\/li>/g) ?? [];
+    expect(items).toHaveLength(2);
+    expect(items[0]).toContain('맥박(회/분)');
+    expect(items[1]).toContain('호흡(회/분)');
+    const yTicks = [...html.matchAll(/text-anchor="end"[^>]*>([^<]+)</g)].map((m) => m[1]);
+    expect(yTicks).toContain('180');
+    expect(yTicks).toContain('0');
+    expect(html).toContain('시간(분)');
+    expect(html).toContain('회/분');
+    const markers = html.match(/<g data-testid="graph-marker">.*?<\/g>/g) ?? [];
+    expect(markers).toHaveLength(2);
+    expect(markers[0]).toContain('운동 시작');
+    expect(markers[1]).toContain('운동 끝');
+    // 운동 시간이 길면 "운동 끝" 표식이 더 오른쪽이다.
+    const xs = (v: Record<string, string | number>) =>
+      (render(unit, unit.module, trialOf(unit, v)).match(/<g data-testid="graph-marker">.*?<\/g>/g) ?? []).map((g) => Number(/x1="([\d.]+)"/.exec(g)![1]));
+    expect(xs({ kind: 'walk', minutes: 3, wrist: 'left' })[1]!).toBeGreaterThan(xs({ kind: 'walk', minutes: 1, wrist: 'left' })[1]!);
   });
 
   it('먹이 관계 그래프는 풀·토끼·여우 세 선을 서로 다른 색과 선 모양으로 그린다', () => {
