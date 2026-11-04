@@ -105,3 +105,26 @@ describe('reduce: 멈춤·만료', () => {
     expect(isExpired(s, T0 + EXPIRE_MS + 10, false)).toBe(false);
   });
 });
+
+describe('리뷰 반영 v0.1', () => {
+  const joined = () => reduce(fresh(), { type: 'join', group: 1, now: T0 });
+  const locked = { ...status, safetyLocked: true };
+  it('STALE_MS는 75초(ping 30초의 2.5배)', () => {
+    expect(STALE_MS).toBe(75_000);
+  });
+  it('잠금 없음 status가 오면 교사가 확인한 경고는 지우고 미확인 경고는 남긴다', () => {
+    let s = run(joined(), { type: 'safety', group: 1, safetyType: 'SPILL', at: 1, now: T0 + 1 }, { type: 'safety', group: 1, safetyType: 'FOOD', at: 2, now: T0 + 1 });
+    s = run(s, { type: 'status', group: 1, status: locked, now: T0 + 2 }, { type: 'ack', group: 1, safetyType: 'SPILL', now: T0 + 3 });
+    // 잠긴 채라면 확인된 경고도 남는다
+    s = reduce(s, { type: 'status', group: 1, status: locked, now: T0 + 4 });
+    expect(toSnapshot(s).groups[0]!.safety.map((x) => [x.type, x.acked])).toEqual([['SPILL', true], ['FOOD', false]]);
+    s = reduce(s, { type: 'status', group: 1, status, now: T0 + 5 });
+    expect(toSnapshot(s).groups[0]!.safety.map((x) => [x.type, x.acked])).toEqual([['FOOD', false]]);
+  });
+  it('잠금 없음으로 끝난 모둠이 다시 join하면 확인된 경고를 지운다', () => {
+    let s = run(joined(), { type: 'status', group: 1, status, now: T0 + 1 }, { type: 'safety', group: 1, safetyType: 'SPILL', at: 1, now: T0 + 2 }, { type: 'ack', group: 1, safetyType: 'SPILL', now: T0 + 3 });
+    s = run(s, { type: 'leave', group: 1, now: T0 + 4 }, { type: 'join', group: 1, now: T0 + 5 });
+    expect(toSnapshot(s).groups[0]!.safety).toEqual([]);
+  });
+});
+

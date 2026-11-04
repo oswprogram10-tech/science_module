@@ -183,4 +183,6 @@ button.unit-card:hover { border-color:var(--accent); }
 .code-field input { font:inherit; font-size:1.4rem; letter-spacing:.2em; text-transform:uppercase; min-height:44px; padding:4px 10px; border:2px solid var(--line); border-radius:8px; background:var(--card); color:var(--fg); }
 .classroom-pill { position:fixed; left:8px; bottom:8px; z-index:10; margin:0; padding:2px 10px; font-size:.8rem; background:var(--card); color:var(--fg); border:1px solid var(--line); border-radius:99px; pointer-events:none; }
 .pause-overlay { position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; background:var(--bg); outline:none; }
+.pause-leave-wrap { position:fixed; left:0; right:0; bottom:10vh; z-index:101; display:flex; justify-content:center; }
+.pause-leave { min-height:44px; padding:8px 18px; font-size:1rem; }
 .pause-text { margin:0; padding:16px; font-size:clamp(1.8rem, 6vw, 3.2rem); font-weight:800; text-align:center; }

@@ -49,10 +49,10 @@ function Screen({ client, soundOn, onSound }: { client: TeacherClient; soundOn: 
   }, [created]);
   const inClass = state.snapshot !== null || created !== null || (readCreds(window.location.hash) !== null && state.error === null);
 
-  if (state.error && state.error !== 'class_full' && state.error !== 'rate_limited') {
+  if (state.error && state.error !== 'class_full' && state.error !== 'rate_limited' && state.error !== 'bad_secret') {
     return <GoneScreen onBack={() => { writeHash(null); client.leave(); }} />;
   }
-  if (!inClass) return <StartScreen state={state} soundOn={soundOn} onSound={onSound} onCreate={() => client.create()} />;
+  if (!inClass) return <StartScreen state={state} soundOn={soundOn} onSound={onSound} onCreate={(secret) => client.create(secret)} />;
   return (
     <ClassScreen
       client={client}
@@ -72,8 +72,21 @@ const CONN_TEXT: Record<TeacherState['conn'], string> = {
   closed: '서버와 끊겼어요. 다시 연결하는 중…',
 };
 
-function StartScreen({ state, soundOn, onSound, onCreate }: { state: TeacherState; soundOn: boolean; onSound: () => void; onCreate: () => void }) {
+/** 주소의 `?key=`: 수업 만들기 비밀번호를 미리 채운다. */
+const keyFromUrl = (search: string = window.location.search): string => {
+  try {
+    return new URLSearchParams(search).get('key')?.slice(0, 64) ?? '';
+  } catch {
+    return '';
+  }
+};
+
+function StartScreen({ state, soundOn, onSound, onCreate }: { state: TeacherState; soundOn: boolean; onSound: () => void; onCreate: (secret: string) => void }) {
   const full = state.error === 'class_full';
+  const badSecret = state.error === 'bad_secret';
+  const [secret, setSecret] = useState(keyFromUrl);
+  // 서버가 비밀번호를 요구했거나(bad_secret) 주소에 ?key=가 있으면 입력칸을 보여 준다.
+  const showSecret = badSecret || secret !== '';
   return (
     <div className="app">
       <header className="top">
@@ -83,9 +96,25 @@ function StartScreen({ state, soundOn, onSound, onCreate }: { state: TeacherStat
         <p className="conn" role="status" data-conn={state.conn}>
           {CONN_TEXT[state.conn]}
         </p>
+        {showSecret && (
+          <label className="secret-field">
+            <span>수업 만들기 비밀번호</span>
+            <input
+              type="password"
+              value={secret}
+              maxLength={64}
+              autoComplete="off"
+              onChange={(e) => setSecret(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && state.conn === 'open' && !state.creating) onCreate(secret);
+              }}
+            />
+          </label>
+        )}
+        {badSecret && <p role="alert" className="error-text">비밀번호가 맞지 않아요. 다시 입력해 주세요.</p>}
         <div className="actions">
-          <button type="button" className="run" disabled={state.conn !== 'open'} onClick={onCreate}>
-            수업 만들기
+          <button type="button" className="run" disabled={state.conn !== 'open' || state.creating} onClick={() => onCreate(secret)}>
+            {state.creating ? '만드는 중…' : '수업 만들기'}
           </button>
           <button type="button" aria-pressed={soundOn} onClick={onSound}>
             {soundOn ? '알림 소리 켜짐' : '알림 소리 켜기'}
@@ -93,6 +122,7 @@ function StartScreen({ state, soundOn, onSound, onCreate }: { state: TeacherStat
         </div>
         <p className="hint">수업을 만들면 학생에게 보여 줄 6자리 코드가 생겨요. 안전 경고가 생기면 소리로도 알려 드려요.</p>
         {full && <p role="alert" className="error-text">지금은 수업을 더 만들 수 없어요. 끝난 수업을 정리한 뒤 다시 해 보세요.</p>}
+        {state.error === 'rate_limited' && <p role="alert" className="error-text">수업을 너무 자주 만들었어요. 잠시 뒤에 다시 해 보세요.</p>}
       </main>
     </div>
   );

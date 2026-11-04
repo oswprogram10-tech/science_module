@@ -28,7 +28,8 @@ export default defineConfig({
   // 수업 테스트만 주소에 `?classroom=`을 붙인다. 이미 떠 있는 서버를 재사용하면 오래된 빌드를 검사할 수 있어 항상 새로 띄운다.
   webServer: [
     {
-      command: 'pnpm build && pnpm exec vite preview --port 4174 --strictPort',
+      // ?classroom= 는 빌드 때 허용한 호스트만 받는다(리뷰 반영 v0.1). 수업 E2E가 쓰는 localhost를 허용한다.
+      command: 'VITE_CLASSROOM_ALLOWED_HOSTS=localhost pnpm build && pnpm exec vite preview --port 4174 --strictPort',
       url: 'http://localhost:4174',
       reuseExistingServer: false,
       timeout: 180_000,
@@ -42,7 +43,8 @@ export default defineConfig({
     {
       command: 'pnpm --filter @sci/server start',
       url: 'http://localhost:8787/health',
-      env: { PORT: '8787' },
+      // CI 재시도가 같은 서버에서 돌면 IP당 수업 만들기 한도(기본 10/시간)에 걸릴 수 있어 E2E 서버만 늘린다.
+      env: { PORT: '8787', CREATES_PER_HOUR: '1000' },
       reuseExistingServer: false,
       timeout: 60_000,
     },

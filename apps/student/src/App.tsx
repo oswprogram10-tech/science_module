@@ -27,6 +27,7 @@ import { SafetyDialog } from './components/safety/SafetyDialog';
 import { devMode } from './components/safety/devMode';
 import { reportSafety, reportSafetyClear, useClassroomStatus, usePaused } from './classroom/bus';
 import { classroomUrl } from './classroom/config';
+import { ErrorBoundary } from './classroom/ErrorBoundary';
 import { LazyHost } from './classroom/lazy';
 import { resolveSafetyMessages, speak } from './components/safety/safetyMessages';
 
@@ -47,9 +48,11 @@ export function App() {
         <Routes />
       </div>
       {classroomOn && (
-        <Suspense fallback={null}>
-          <LazyHost showPill={parseRoute(hash).page === 'unit'} />
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={null}>
+            <LazyHost showPill={parseRoute(hash).page === 'unit'} />
+          </Suspense>
+        </ErrorBoundary>
       )}
     </>
   );

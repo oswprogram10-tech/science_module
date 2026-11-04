@@ -119,6 +119,14 @@ test.describe('수업 연결', () => {
     await dialog.getByRole('button', { name: '참여하기' }).click();
     await expect(s7.getByTestId('pause-overlay')).toBeVisible();
 
+    // 선생님이 사라져도 나갈 수 있어야 한다: 아래 화면은 inert지만 막 안의 「수업 나가기」는 키보드로 닿는다.
+    await s7.keyboard.press('Tab');
+    const leave = s7.getByTestId('pause-leave');
+    await expect(leave).toBeFocused();
+    await s7.keyboard.press('Enter');
+    await expect(s7.getByTestId('pause-overlay')).toHaveCount(0);
+    await expect(s7.getByRole('button', { name: '수업 참여' })).toBeVisible();
+
     await teacher.getByRole('button', { name: '다시 시작' }).click();
     for (const s of [s2, s5, s7]) {
       await expect(s.getByTestId('pause-overlay')).toHaveCount(0);

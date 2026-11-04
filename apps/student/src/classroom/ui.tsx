@@ -21,8 +21,9 @@ export function ClassroomHost({ showPill }: { showPill: boolean }) {
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // 등급을 알 때만 다시 참여한다(deviceTier 없이 join하면 교사 화면에서 등급이 빠진다).
     const url = classroomUrl();
-    if (url) classroom.restore(url, tier);
+    if (url && tier) classroom.restore(url, tier);
   }, [tier]);
 
   // 막이 뜨면 포커스를 막으로 옮긴다(아래 화면은 inert라 포커스를 잃는다).
@@ -44,6 +45,14 @@ export function ClassroomHost({ showPill }: { showPill: boolean }) {
           </div>
         )}
       </div>
+      {paused && (
+        // 아래 화면은 inert라서, 선생님이 사라져도 나갈 수 있게 막 위에 따로 버튼을 둔다(막의 문구와는 별개).
+        <div className="pause-leave-wrap">
+          <button type="button" className="pause-leave" data-testid="pause-leave" onClick={() => classroom.leave()}>
+            수업 나가기
+          </button>
+        </div>
+      )}
     </>
   );
 }

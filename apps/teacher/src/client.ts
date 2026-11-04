@@ -9,9 +9,11 @@ export interface TeacherState {
   created: { code: string; token: string } | null;
   /** 수업을 볼 수 없는 오류(없는 수업, 잘못된 토큰 등). */
   error: ErrorCode | null;
+  /** 수업 만들기를 보냈고 아직 답이 없다(버튼을 잠그는 데 쓴다). */
+  creating: boolean;
 }
 
-const EMPTY: TeacherState = { conn: 'connecting', snapshot: null, created: null, error: null };
+const EMPTY: TeacherState = { conn: 'connecting', snapshot: null, created: null, error: null, creating: false };
 
 /** 교사 화면의 서버 연결. 끊기면 자동으로 다시 이어서 watch한다. */
 export class TeacherClient {
@@ -20,6 +22,7 @@ export class TeacherClient {
   private ws: WebSocket | null = null;
   private creds: { code: string; token: string } | null;
   private wantCreate = false;
+  private secret: string | undefined;
   private retry = 0;
   private timer: ReturnType<typeof setTimeout> | null = null;
   private disposed = false;
@@ -61,7 +64,7 @@ export class TeacherClient {
       this.retry = 0;
       this.set({ conn: 'open' });
       if (this.creds) this.send({ t: 'watch', ...this.creds });
-      else if (this.wantCreate) this.send({ t: 'create' });
+      else if (this.wantCreate) this.send(this.createMsg());
     };
     ws.onmessage = (ev) => {
       if (typeof ev.data !== 'string') return;
@@ -70,16 +73,20 @@ export class TeacherClient {
       if (m.t === 'created') {
         this.wantCreate = false;
         this.creds = { code: m.code, token: m.token };
-        this.set({ created: { code: m.code, token: m.token } });
+        this.set({ created: { code: m.code, token: m.token }, creating: false });
       } else if (m.t === 'snapshot') {
         this.set({ snapshot: m });
       } else if (m.t === 'error') {
+        if (m.code === 'bad_message' && (this.state.created || this.state.snapshot)) {
+          // 이미 수업을 보고 있는 중에 온 bad_message(중복 create 등)는 치명적이지 않다.
+          return;
+        }
         if (m.code === 'no_class' || m.code === 'bad_token' || m.code === 'bad_message') {
           this.creds = null;
-          this.set({ error: m.code, snapshot: null });
+          this.set({ error: m.code, snapshot: null, creating: false });
         } else {
           this.wantCreate = false;
-          this.set({ error: m.code });
+          this.set({ error: m.code, creating: false });
         }
       }
     };
@@ -107,10 +114,17 @@ export class TeacherClient {
     if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify(msg));
   }
 
-  create() {
+  private createMsg() {
+    return { t: 'create', ...(this.secret ? { secret: this.secret } : {}) };
+  }
+
+  /** 수업 만들기. 이미 보낸 요청의 답을 기다리는 중이면 다시 보내지 않는다. secret은 서버에 CREATE_SECRET이 있을 때 쓴다. */
+  create(secret?: string) {
+    if (this.state.creating) return;
     this.wantCreate = true;
-    this.set({ error: null });
-    this.send({ t: 'create' });
+    this.secret = secret?.slice(0, 64) || undefined;
+    this.set({ error: null, creating: true });
+    this.send(this.createMsg());
   }
   pause(on: boolean) {
     this.send({ t: 'pause', on });
@@ -126,7 +140,7 @@ export class TeacherClient {
   leave() {
     this.creds = null;
     this.wantCreate = false;
-    this.set({ snapshot: null, created: null, error: null });
+    this.set({ snapshot: null, created: null, error: null, creating: false });
   }
   dispose() {
     this.disposed = true;

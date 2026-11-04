@@ -36,6 +36,11 @@ describe('클라이언트 메시지', () => {
   });
   it('정상 교사 메시지', () => {
     expect(parseClientMessage(j({ t: 'create' }))).not.toBeNull();
+    expect(parseClientMessage(j({ t: 'create', secret: 'pw' }))).toMatchObject({ secret: 'pw' });
+    expect(parseClientMessage(j({ t: 'create', secret: 'x'.repeat(64) }))).not.toBeNull();
+    expect(parseClientMessage(j({ t: 'create', secret: 'x'.repeat(65) }))).toBeNull();
+    expect(parseClientMessage(j({ t: 'create', secret: 1 }))).toBeNull();
+    expect(parseServerMessage(j({ t: 'error', code: 'bad_secret' }))).not.toBeNull();
     expect(parseClientMessage(j({ t: 'watch', code: 'ABC234', token: TOKEN }))).not.toBeNull();
     expect(parseClientMessage(j({ t: 'pause', on: true }))).not.toBeNull();
     expect(parseClientMessage(j({ t: 'ack', group: 2, type: 'SPILL' }))).not.toBeNull();

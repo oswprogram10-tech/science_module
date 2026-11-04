@@ -1,8 +1,10 @@
-import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import {
   CODE_ALPHABET,
   CODE_LENGTH,
   MAX_MESSAGE_BYTES,
+  TEACHERLESS_EXPIRE_MS,
+  TEACHER_GONE_UNPAUSE_MS,
   checkJoin,
   createClass,
   isExpired,
@@ -21,11 +23,26 @@ export const MSGS_PER_SECOND = 10;
 export const MAX_BAD_MESSAGES = 3;
 /** 교사에게 보내는 snapshot 간격의 최소값(ms): 초당 최대 4회. */
 export const SNAPSHOT_INTERVAL_MS = 250;
+/** 서버 전체에서 열려 있는 소켓 수 상한. */
+export const MAX_SOCKETS = 600;
+/** IP 하나당 열려 있는 소켓 수 상한. 학교는 공용 IP 하나를 쓰므로 이보다 낮추지 않는다. */
+export const MAX_SOCKETS_PER_IP = 80;
+/** 연결 후 이 시간(ms) 안에 create/watch/join에 성공하지 못하면 끊는다. */
+export const UNAUTH_TIMEOUT_MS = 10_000;
+/** IP 하나당 수업 만들기 한도(시간당). */
+export const CREATES_PER_HOUR = 10;
+/** 속도 제한을 이 시간(ms) 동안 계속 넘기면 연결을 끊는다. */
+export const RATE_OVERFLOW_CLOSE_MS = 5000;
+/** 교사 소켓의 쓰기 대기량이 이 값(바이트)을 넘으면 snapshot을 다음 기회로 미룬다. */
+export const MAX_BUFFERED_BYTES = 1024 * 1024;
+const HOUR_MS = 3600_000;
 
 /** ws 소켓 중 허브가 쓰는 부분. 테스트에서 가짜로 바꿀 수 있다. */
 export interface Conn {
   send(data: string): void;
   close(code?: number): void;
+  /** 아직 보내지 못하고 쌓인 바이트 수(ws의 bufferedAmount). 없으면 0으로 본다. */
+  buffered?(): number;
 }
 
 /** 로그에는 수업 코드와 모둠 번호, 이벤트 종류만 남긴다. 메시지 본문은 넘기지 않는다. */
@@ -38,14 +55,27 @@ interface ClassRec {
   students: Map<number, Conn>;
   lastSnapshotAt: number;
   snapshotTimer: ReturnType<typeof setTimeout> | null;
+  /** 교사 연결이 마지막으로 하나도 없게 된 때. 교사가 있으면 null. */
+  noTeacherSince: number | null;
 }
 
 interface ConnMeta {
   role: 'none' | 'teacher' | 'student';
   code?: string;
   group?: number;
+  ip?: string;
+  openedAt: number;
+  /** 허브가 이미 닫은 연결(교체·수업 종료). 이후 메시지는 무시한다. */
+  dead: boolean;
   windowStart: number;
   windowCount: number;
+  windowOverflowed: boolean;
+  /** 속도 제한을 넘기 시작한 때(연속으로 넘기는 동안만 유지). */
+  overflowSince: number | null;
+  /**
+   * 규격 위반 누적 횟수. 시간이 지나도 줄어들지 않는다(연결 하나가 평생 3번까지).
+   * 속도 제한 같은 일시적 오류와 달리 정상 클라이언트는 규격 위반을 내지 않으므로 의도한 동작이다.
+   */
   bad: number;
 }
 
@@ -53,6 +83,12 @@ export interface HubOptions {
   now?: () => number;
   log?: LogFn;
   maxClasses?: number;
+  /** 설정하면 create에 같은 secret이 있어야 한다(CREATE_SECRET). */
+  createSecret?: string;
+  /** IP당 시간당 create 한도. 기본 10. */
+  createsPerHour?: number;
+  maxSockets?: number;
+  maxSocketsPerIp?: number;
 }
 
 export function makeCode(): string {
@@ -68,7 +104,13 @@ export function makeCode(): string {
 
 export class Hub {
   readonly classes = new Map<string, ClassRec>();
-  private readonly meta = new WeakMap<Conn, ConnMeta>();
+  private readonly meta = new Map<Conn, ConnMeta>();
+  private readonly ipCounts = new Map<string, number>();
+  private readonly createLog = new Map<string, number[]>();
+  private readonly secretHash: Buffer | null;
+  private readonly createsPerHour: number;
+  private readonly maxSockets: number;
+  private readonly maxSocketsPerIp: number;
   private readonly now: () => number;
   private readonly log: LogFn;
   private readonly maxClasses: number;
@@ -77,23 +119,64 @@ export class Hub {
     this.now = opts.now ?? Date.now;
     this.log = opts.log ?? (() => {});
     this.maxClasses = opts.maxClasses ?? MAX_CLASSES;
+    this.secretHash = opts.createSecret ? sha(opts.createSecret) : null;
+    this.createsPerHour = opts.createsPerHour ?? CREATES_PER_HOUR;
+    this.maxSockets = opts.maxSockets ?? MAX_SOCKETS;
+    this.maxSocketsPerIp = opts.maxSocketsPerIp ?? MAX_SOCKETS_PER_IP;
   }
 
-  /** 새 연결을 등록한다. */
-  open(conn: Conn): void {
-    this.meta.set(conn, { role: 'none', windowStart: this.now(), windowCount: 0, bad: 0 });
+  /** 열려 있는 소켓 수. */
+  get socketCount(): number {
+    return this.meta.size;
+  }
+
+  /** 새 연결을 등록한다. 상한을 넘으면 1013으로 닫고 false를 돌려준다(등록하지 않는다). */
+  open(conn: Conn, ip?: string): boolean {
+    if (this.meta.size >= this.maxSockets || (ip !== undefined && (this.ipCounts.get(ip) ?? 0) >= this.maxSocketsPerIp)) {
+      this.log('socket_cap');
+      try {
+        conn.close(1013);
+      } catch {
+        /* 이미 끊김 */
+      }
+      return false;
+    }
+    if (ip !== undefined) this.ipCounts.set(ip, (this.ipCounts.get(ip) ?? 0) + 1);
+    const t = this.now();
+    this.meta.set(conn, {
+      role: 'none',
+      ...(ip !== undefined ? { ip } : {}),
+      openedAt: t,
+      dead: false,
+      windowStart: t,
+      windowCount: 0,
+      windowOverflowed: false,
+      overflowSince: null,
+      bad: 0,
+    });
+    return true;
   }
 
   /** 원문 메시지 하나를 처리한다. */
   message(conn: Conn, raw: string): void {
     const m = this.meta.get(conn);
-    if (!m) return;
+    if (!m || m.dead) return;
     const t = this.now();
     if (t - m.windowStart >= 1000) {
+      // 직전 1초가 정상이었거나 한동안 조용했다면 "연속" 초과가 아니다.
+      if (!m.windowOverflowed || t - m.windowStart >= 2000) m.overflowSince = null;
       m.windowStart = t;
       m.windowCount = 0;
+      m.windowOverflowed = false;
     }
     if (++m.windowCount > MSGS_PER_SECOND) {
+      m.windowOverflowed = true;
+      m.overflowSince ??= t;
+      if (t - m.overflowSince >= RATE_OVERFLOW_CLOSE_MS) {
+        this.log('rate_limit_close', m.code, m.group);
+        conn.close(1008);
+        return;
+      }
       this.send(conn, { t: 'error', code: 'rate_limited' });
       return;
     }
@@ -115,10 +198,16 @@ export class Hub {
     const m = this.meta.get(conn);
     if (!m) return;
     this.meta.delete(conn);
+    if (m.ip !== undefined) {
+      const n = (this.ipCounts.get(m.ip) ?? 1) - 1;
+      if (n <= 0) this.ipCounts.delete(m.ip);
+      else this.ipCounts.set(m.ip, n);
+    }
     const rec = m.code ? this.classes.get(m.code) : undefined;
     if (!rec) return;
     if (m.role === 'teacher') {
       rec.teachers.delete(conn);
+      if (rec.teachers.size === 0) rec.noTeacherSince = this.now();
       this.log('teacher_left', rec.state.code);
     } else if (m.role === 'student' && m.group !== undefined && rec.students.get(m.group) === conn) {
       rec.students.delete(m.group);
@@ -136,16 +225,45 @@ export class Hub {
     }
   }
 
-  /** 만료된 수업을 지운다. 지운 개수를 돌려준다. */
+  /**
+   * 주기적으로 부른다. 만료된 수업을 지우고(지운 개수를 돌려준다),
+   * 교사가 사라진 채 멈춰 있는 수업의 멈춤을 풀고, 인증하지 못한 연결을 끊는다.
+   */
   sweep(): number {
     const t = this.now();
     let n = 0;
     for (const [code, rec] of this.classes) {
+      const gone = rec.teachers.size === 0 && rec.noTeacherSince !== null ? t - rec.noTeacherSince : 0;
       if (isExpired(rec.state, t, rec.teachers.size + rec.students.size > 0)) {
         this.dropClass(code, false);
         this.log('class_expired', code);
         n++;
+      } else if (gone >= TEACHERLESS_EXPIRE_MS) {
+        // 교사 없이 오래된 수업: 학생에게 끝났음을 알리고 지운다.
+        this.endClass(rec);
+        this.log('class_expired_teacherless', code);
+        n++;
+      } else if (rec.state.paused && gone >= TEACHER_GONE_UNPAUSE_MS) {
+        this.apply(rec, { type: 'pause', on: false, now: t });
+        for (const s of rec.students.values()) this.send(s, { t: 'pause', on: false });
+        this.log('pause_off_teacher_gone', code);
       }
+    }
+    for (const [conn, m] of this.meta) {
+      if (m.role === 'none' && !m.dead && t - m.openedAt >= UNAUTH_TIMEOUT_MS) {
+        m.dead = true;
+        this.log('unauth_timeout');
+        try {
+          conn.close(1008);
+        } catch {
+          /* 이미 끊김 */
+        }
+      }
+    }
+    for (const [ip, list] of this.createLog) {
+      const recent = list.filter((x) => t - x < HOUR_MS);
+      if (recent.length === 0) this.createLog.delete(ip);
+      else if (recent.length !== list.length) this.createLog.set(ip, recent);
     }
     return n;
   }
@@ -172,7 +290,19 @@ export class Hub {
   private handle(conn: Conn, m: ConnMeta, msg: ClientMessage): void {
     switch (msg.t) {
       case 'create': {
+        if (m.role === 'teacher') {
+          // 이미 교사인 연결의 create는 멱등: 현재 수업의 created와 snapshot을 다시 보낸다.
+          const cur = m.code ? this.classes.get(m.code) : undefined;
+          if (!cur) return this.error(conn, 'bad_message');
+          this.send(conn, { t: 'created', code: cur.state.code, token: cur.token.toString('hex') });
+          this.send(conn, toSnapshot(cur.state));
+          return;
+        }
         if (m.role !== 'none') return this.error(conn, 'bad_message');
+        if (!this.allowCreate(m)) return this.error(conn, 'rate_limited');
+        if (this.secretHash && !(typeof msg.secret === 'string' && timingSafeEqual(sha(msg.secret), this.secretHash))) {
+          return this.error(conn, 'bad_secret');
+        }
         if (this.classes.size >= this.maxClasses) return this.error(conn, 'class_full');
         let code = makeCode();
         while (this.classes.has(code)) code = makeCode();
@@ -184,6 +314,7 @@ export class Hub {
           students: new Map(),
           lastSnapshotAt: 0,
           snapshotTimer: null,
+          noTeacherSince: null,
         };
         this.classes.set(code, rec);
         m.role = 'teacher';
@@ -194,12 +325,20 @@ export class Hub {
         return;
       }
       case 'watch': {
+        if (m.role === 'teacher') {
+          // 이미 교사인 연결의 watch는 멱등: 같은 수업이면 현재 snapshot을 다시 보낸다.
+          const cur = m.code ? this.classes.get(m.code) : undefined;
+          if (!cur || cur.state.code !== msg.code) return this.error(conn, 'bad_message');
+          this.send(conn, toSnapshot(cur.state));
+          return;
+        }
         if (m.role !== 'none') return this.error(conn, 'bad_message');
         const rec = this.classes.get(msg.code);
         if (!rec) return this.error(conn, 'no_class');
         const given = Buffer.from(msg.token, 'hex');
         if (given.length !== rec.token.length || !timingSafeEqual(given, rec.token)) return this.error(conn, 'bad_token');
         rec.teachers.add(conn);
+        rec.noTeacherSince = null;
         m.role = 'teacher';
         m.code = msg.code;
         rec.state = reduce(rec.state, { type: 'touch', now: this.now() });
@@ -220,7 +359,13 @@ export class Hub {
         // 오래 조용했던 이전 연결은 새 연결로 바꾼다.
         const old = rec.students.get(msg.group);
         if (old) {
-          this.meta.delete(old);
+          const om = this.meta.get(old);
+          if (om) {
+            om.dead = true;
+            om.role = 'none';
+            delete om.code;
+            delete om.group;
+          }
           rec.students.delete(msg.group);
           try {
             old.close(4001);
@@ -297,14 +442,35 @@ export class Hub {
   private scheduleSnapshot(rec: ClassRec): void {
     if (rec.snapshotTimer || rec.teachers.size === 0) return;
     const wait = Math.max(0, rec.lastSnapshotAt + SNAPSHOT_INTERVAL_MS - this.now());
-    const fire = () => {
+    const fire = (targets: Iterable<Conn>) => {
       rec.snapshotTimer = null;
       rec.lastSnapshotAt = this.now();
       const snap = toSnapshot(rec.state);
-      for (const tc of rec.teachers) this.send(tc, snap);
+      const skipped: Conn[] = [];
+      for (const tc of targets) {
+        if (!rec.teachers.has(tc)) continue;
+        // 쓰기 대기량이 큰 교사 소켓에는 쌓아 두지 않고 다음 기회에 보낸다.
+        if ((tc.buffered?.() ?? 0) > MAX_BUFFERED_BYTES) skipped.push(tc);
+        else this.send(tc, snap);
+      }
+      if (skipped.length > 0) rec.snapshotTimer = setTimeout(() => fire(skipped), SNAPSHOT_INTERVAL_MS);
     };
-    if (wait === 0) fire();
-    else rec.snapshotTimer = setTimeout(fire, wait);
+    if (wait === 0) fire([...rec.teachers]);
+    else rec.snapshotTimer = setTimeout(() => fire([...rec.teachers]), wait);
+  }
+
+  /** IP당 시간당 create 횟수를 센다. 한도를 넘으면 false. IP를 모르는 연결(테스트)은 세지 않는다. */
+  private allowCreate(m: ConnMeta): boolean {
+    if (m.ip === undefined) return true;
+    const t = this.now();
+    const list = (this.createLog.get(m.ip) ?? []).filter((x) => t - x < HOUR_MS);
+    if (list.length >= this.createsPerHour) {
+      this.createLog.set(m.ip, list);
+      return false;
+    }
+    list.push(t);
+    this.createLog.set(m.ip, list);
+    return true;
   }
 
   private endClass(rec: ClassRec): void {
@@ -322,7 +488,13 @@ export class Hub {
     this.classes.delete(code);
     if (closeConns) {
       for (const c of [...rec.teachers, ...rec.students.values()]) {
-        this.meta.delete(c);
+        const cm = this.meta.get(c);
+        if (cm) {
+          cm.dead = true;
+          cm.role = 'none';
+          delete cm.code;
+          delete cm.group;
+        }
         try {
           c.close(1000);
         } catch {
@@ -332,3 +504,5 @@ export class Hub {
     }
   }
 }
+
+const sha = (v: string): Buffer => createHash('sha256').update(v).digest();

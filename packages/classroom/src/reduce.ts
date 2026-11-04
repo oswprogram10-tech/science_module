@@ -8,10 +8,17 @@ import {
   type StatusMessage,
 } from './protocol';
 
-/** 연결이 이 시간(ms) 넘게 조용하면 같은 모둠 번호의 새 연결로 바꾼다. */
-export const STALE_MS = 30_000;
+/**
+ * 연결이 이 시간(ms) 넘게 조용하면 같은 모둠 번호의 새 연결로 바꾼다.
+ * ping은 30초마다 보내고, 한 번 놓쳐도 바로 바뀌지 않도록 ping 간격의 2.5배로 둔다.
+ */
+export const STALE_MS = 75_000;
 /** 연결이 하나도 없이 이 시간이 지나면 수업을 지운다. */
 export const EXPIRE_MS = 6 * 60 * 60 * 1000;
+/** 교사 연결이 이 시간(ms) 동안 하나도 없으면(학생이 남아 있어도) 수업을 지운다. */
+export const TEACHERLESS_EXPIRE_MS = 30 * 60 * 1000;
+/** 멈춤 상태에서 교사 연결이 이 시간(ms) 동안 없으면 멈춤을 푼다. */
+export const TEACHER_GONE_UNPAUSE_MS = 30_000;
 
 export interface SafetyEntry {
   type: SafetyType;
@@ -66,6 +73,8 @@ export function isExpired(state: ClassState, now: number, hasConnections: boolea
   return !hasConnections && now - state.lastActivity >= EXPIRE_MS;
 }
 
+const dropAcked = (list: SafetyEntry[]): SafetyEntry[] => list.filter((s) => !s.acked);
+
 function withGroup(state: ClassState, group: number, now: number, fn: (g: GroupRecord) => GroupRecord): ClassState {
   const prev = state.groups[group];
   if (!prev) return state;
@@ -84,7 +93,8 @@ export function reduce(state: ClassState, event: ClassEvent): ClassState {
         lastSeen: event.now,
         ...(event.deviceTier ? { deviceTier: event.deviceTier } : {}),
         ...(prev?.status ? { status: prev.status } : {}),
-        safety: prev?.safety ?? [],
+        // 이전 연결의 마지막 상태가 잠금 없음이었다면 확인된 경고는 오래된 것이다.
+        safety: prev ? (prev.status && !prev.status.safetyLocked ? dropAcked(prev.safety) : prev.safety) : [],
       };
       return { ...state, lastActivity: event.now, groups: { ...state.groups, [event.group]: rec } };
     }
@@ -97,7 +107,12 @@ export function reduce(state: ClassState, event: ClassEvent): ClassState {
     case 'seen':
       return withGroup(state, event.group, event.now, (g) => g);
     case 'status':
-      return withGroup(state, event.group, event.now, (g) => ({ ...g, status: event.status }));
+      return withGroup(state, event.group, event.now, (g) => ({
+        ...g,
+        status: event.status,
+        // 잠금이 풀렸다고 알려 오면(새로고침 등) 교사가 이미 확인한 경고는 남기지 않는다.
+        safety: event.status.safetyLocked ? g.safety : dropAcked(g.safety),
+      }));
     case 'safety':
       return withGroup(state, event.group, event.now, (g) => ({
         ...g,

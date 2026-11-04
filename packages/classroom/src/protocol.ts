@@ -25,7 +25,7 @@ export type Phase = z.infer<typeof phaseSchema>;
 export const tierSchema = z.enum(['A', 'B', 'C']);
 export type DeviceTier = z.infer<typeof tierSchema>;
 
-export const ERROR_CODES = ['bad_message', 'no_class', 'bad_token', 'group_taken', 'class_full', 'rate_limited'] as const;
+export const ERROR_CODES = ['bad_message', 'no_class', 'bad_token', 'group_taken', 'class_full', 'rate_limited', 'bad_secret'] as const;
 export const errorCodeSchema = z.enum(ERROR_CODES);
 export type ErrorCode = z.infer<typeof errorCodeSchema>;
 
@@ -56,7 +56,8 @@ export const safetySchema = z.strictObject({
 export const safetyClearSchema = z.strictObject({ t: z.literal('safetyClear'), type: safetyTypeSchema });
 
 // ---- 교사 -> 서버 ----
-export const createSchema = z.strictObject({ t: z.literal('create') });
+/** secret: 서버에 CREATE_SECRET이 설정돼 있을 때만 필요하다. */
+export const createSchema = z.strictObject({ t: z.literal('create'), secret: z.string().max(64).optional() });
 export const watchSchema = z.strictObject({ t: z.literal('watch'), code: codeSchema, token: tokenSchema });
 export const pauseSchema = z.strictObject({ t: z.literal('pause'), on: z.boolean() });
 export const ackSchema = z.strictObject({ t: z.literal('ack'), group: groupSchema, type: safetyTypeSchema });

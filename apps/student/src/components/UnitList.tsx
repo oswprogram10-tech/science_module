@@ -1,5 +1,6 @@
 import { Suspense, useMemo } from 'react';
 import { classroomUrl } from '../classroom/config';
+import { ErrorBoundary } from '../classroom/ErrorBoundary';
 import { LazyControl } from '../classroom/lazy';
 import type { UnitEntry } from '../units';
 
@@ -16,9 +17,11 @@ export function UnitList({ units, hrefOf }: { units: UnitEntry[]; hrefOf: (id: s
         <h1>과학 실험 단원 목록</h1>
         <p className="question">실험해 볼 단원을 골라 주세요.</p>
         {classroomOn && (
-          <Suspense fallback={null}>
-            <LazyControl />
-          </Suspense>
+          <ErrorBoundary>
+            <Suspense fallback={null}>
+              <LazyControl />
+            </Suspense>
+          </ErrorBoundary>
         )}
       </header>
       <main className="unit-list">
