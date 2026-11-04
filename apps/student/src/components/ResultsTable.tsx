@@ -18,6 +18,9 @@ export function ResultsTable({
   const columns = mod.resultColumns(experiment);
   const metricOf = (t: Trial<any, any>) => t.result[mod.metric.resultKey] as number; // eslint-disable-line @typescript-eslint/no-explicit-any
   const threshold = mod.metric.sameThreshold(experiment);
+  // 재생이 끝난 가장 최근 시행의 결과에 대한 경고(재생 중에는 보이지 않는다).
+  const lastDone = playingId === null ? trials[trials.length - 1] : undefined;
+  const note = lastDone && mod.resultNote ? mod.resultNote(lastDone.result) : null;
   const optionLabel = (key: string, value: string | number) =>
     experiment.variables.find((v) => v.key === key)?.options.find((o) => o.value === value)?.label ?? String(value);
 
@@ -79,6 +82,7 @@ export function ResultsTable({
           </tbody>
         </table>
       </div>
+      {note && <p className="warning" role="note">{note}</p>}
     </div>
   );
 }

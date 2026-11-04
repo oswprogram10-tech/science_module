@@ -24,6 +24,12 @@ export interface SensorSpec {
   ariaLabel?: string;
 }
 
+export interface GraphMarker {
+  /** 그래프 x축 위치(초) */
+  t: number;
+  label: string;
+}
+
 export interface ResultColumn<R> {
   label: string;
   value(r: R): string;
@@ -36,9 +42,17 @@ export interface ExperimentModule<S extends { t: number }, R> {
   interpolate(a: S, b: S, k: number): S;
   /** 예측 비교와 그래프 y축에 쓰는 주 측정값 */
   metric: { sampleKey: keyof S; resultKey: keyof R; sameThreshold(exp: Experiment): number };
-  /** yMin: y축 눈금이 시작하는 값(기본 0) */
-  graph: { yLabel: string; yMin?: number };
+  /** yMin: y축 눈금이 시작하는 값(기본 0). markers: x축 위의 세로 점선과 라벨(예: 스위치 켜짐·꺼짐 시각), 없으면 그리지 않는다. */
+  graph: {
+    yLabel: string;
+    yMin?: number;
+    /** 개수처럼 정수만 의미 있는 값이면 true: 눈금 간격을 1 이상으로 둔다. */
+    integerTicks?: boolean;
+    markers?(exp: Experiment): GraphMarker[];
+  };
   resultColumns(exp: Experiment): ResultColumn<R>[];
+  /** 가장 최근에 끝난 시행의 결과에 따라 결과표 아래에 보여 줄 경고(없으면 null). 없는 모듈은 아무것도 보이지 않는다. */
+  resultNote?(r: R): string | null;
   sensors(snapshot: S | null, values: Values): SensorSpec[];
   MacroView: ComponentType<ViewProps<S>>;
   MicroView: ComponentType<ViewProps<S>>;

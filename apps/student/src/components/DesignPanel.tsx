@@ -17,6 +17,7 @@ interface Props {
 /** 매니페스트 safety 종류 중, 조건과 상관없이 실행 버튼 아래에 항상 보여 주는 경고. */
 const ALWAYS_NOTICE: Record<string, string> = {
   sunlight: '⚠ 렌즈로 해를 직접 보면 눈을 크게 다칠 수 있어요.',
+  electric: '⚠ 가정용 콘센트 전기로는 절대 실험하지 않아요.',
 };
 
 const PREDICTION_ICON: Record<Prediction, string> = { increase: '▲', decrease: '▼', same: '＝' };

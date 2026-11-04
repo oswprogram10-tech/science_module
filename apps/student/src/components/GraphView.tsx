@@ -1,4 +1,5 @@
 import { useRef, type KeyboardEvent } from 'react';
+import type { VariableExperiment as Experiment } from '@sci/schema';
 import type { Trial } from '@sci/runtime';
 import { sampleAt, trialDuration } from '@sci/runtime';
 import type { AnyModule } from '../modules/types';
@@ -9,6 +10,7 @@ type AnyTrial = Trial<any, any>;
 
 interface Props {
   module: AnyModule;
+  experiment: Experiment;
   trial: AnyTrial | undefined;
   prev: AnyTrial | undefined;
   playhead: number;
@@ -43,22 +45,24 @@ function toPoints(
   return pts.join(' ');
 }
 
-export function GraphView({ module: mod, trial, prev, playhead, playing, onPlayhead, describedBy }: Props) {
+export function GraphView({ module: mod, experiment, trial, prev, playhead, playing, onPlayhead, describedBy }: Props) {
   const sampleKey = String(mod.metric.sampleKey);
   const { name: yName, unit: yUnit } = splitLabel(mod.graph.yLabel);
   const yMin = mod.graph.yMin ?? 0;
-  /** y축 범위용 최댓값: 처음 값과 마지막 값 중 큰 쪽(둘 사이에서 이보다 커지는 일은 없다). */
+  /** y축 범위용 최댓값: 모든 표본 중 가장 큰 값(올랐다가 내려오는 곡선도 담도록). */
   const yDataMax = (t: AnyTrial | undefined) => {
     if (!t) return yMin;
     const s = t.samples as Record<string, number>[];
-    return Math.max(Number(s[0]![sampleKey]), Number(s[s.length - 1]![sampleKey]));
+    return s.reduce((m, p) => Math.max(m, Number(p[sampleKey])), -Infinity);
   };
   const svgRef = useRef<SVGSVGElement>(null);
   const dragging = useRef(false);
 
   const xScale = niceScale(Math.max(trial ? trialDuration(trial) : 0, prev ? trialDuration(prev) : 0));
-  const yScale = yAxis(Math.max(yDataMax(trial), yDataMax(prev)), yMin);
+  // 정수 눈금 단원은 최댓값을 4 이상으로 잡아 눈금 간격이 1 아래로 내려가지 않게 한다.
+  const yScale = yAxis(Math.max(yDataMax(trial), yDataMax(prev), mod.graph.integerTicks ? yMin + 4 : 0), yMin);
   const xMax = xScale.max;
+  const markers = trial && mod.graph.markers ? mod.graph.markers(experiment).filter((m) => m.t >= 0 && m.t <= xMax) : [];
   const yMax = yScale.max;
   const sx = (t: number) => M.l + (t / xMax) * (W - M.l - M.r);
   const sy = (g: number) => H - M.b - ((g - yMin) / (yMax - yMin)) * (H - M.t - M.b);
@@ -160,6 +164,12 @@ export function GraphView({ module: mod, trial, prev, playhead, playing, onPlayh
         )}
         <text x={(M.l + W - M.r) / 2} y={H - 6} textAnchor="middle" fontSize="11" fill="currentColor">시간(초)</text>
         <text transform={`translate(11 ${(M.t + H - M.b) / 2}) rotate(-90)`} textAnchor="middle" fontSize="11" fill="currentColor">{mod.graph.yLabel}</text>
+        {markers.map((m) => (
+          <g key={`${m.t}:${m.label}`} data-testid="graph-marker">
+            <line x1={sx(m.t)} x2={sx(m.t)} y1={M.t} y2={H - M.b} stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" opacity="0.6" />
+            <text x={sx(m.t) + 3} y={M.t + 11} fontSize="12" fill="currentColor">{m.label}</text>
+          </g>
+        ))}
         {prev && <polyline points={toPoints(prev, sampleKey, sx, sy)} fill="none" stroke="#7a8794" strokeWidth="2" strokeDasharray="5 4" opacity="0.6" />}
         {trial && <polyline points={toPoints(trial, sampleKey, sx, sy)} fill="none" stroke="#1f6fb5" strokeWidth="2.5" />}
         {trial && (

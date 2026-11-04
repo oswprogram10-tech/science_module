@@ -264,6 +264,7 @@ function Lab({
             <mod.MicroView {...viewProps} />
             <GraphView
               module={mod}
+              experiment={experiment}
               trial={active}
               prev={prevOfActive}
               playhead={state.playhead}

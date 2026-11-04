@@ -170,3 +170,45 @@ test('g5-light 조금 볼록한 큰 렌즈로 바꾼 뒤', async ({ page }) => {
   await setValue(page, '렌즈와 종이 사이 거리', '20 cm');
   await expectNoSeriousViolations(page);
 });
+
+test('g6-electricity 처음 화면', async ({ page }) => {
+  await gotoUnit(page, 'g6-electricity', { dev: true });
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g6-electricity 안전 점검표가 열린 상태', async ({ page }) => {
+  await gotoUnit(page, 'g6-electricity');
+  await selectIV(page, '전지 연결');
+  await predict(page, '늘어난다');
+  await runButton(page).click();
+  await expect(page.getByRole('dialog', { name: '안전 점검표' })).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g6-electricity 에나멜선이 뜨거워진 뒤(켜진 상태와 꺼진 상태)', async ({ page }) => {
+  await gotoUnit(page, 'g6-electricity');
+  await selectIV(page, '전지 연결');
+  await setValue(page, '에나멜선을 감은 횟수', '50회');
+  await setValue(page, '전지 연결', '전지 2개 직렬 연결');
+  await predict(page, '늘어난다');
+  await runButton(page).click();
+  await confirmSafetyDialog(page);
+  await expect(runButton(page)).toHaveText('▶ 실험 실행');
+  await expect(page.getByText('⚠ 에나멜선이 40 °C 넘게 뜨거워졌어요. 실제 실험에서는 오래 연결하지 않아요.')).toBeVisible();
+  await expectNoSeriousViolations(page);
+  const slider = page.getByRole('slider', { name: '그래프 시각 옮기기' });
+  await slider.focus();
+  await slider.press('Home');
+  for (let i = 0; i < 6; i++) await slider.press('PageUp');
+  await expect(page.getByText('스위치 켜짐 · 클립 18개 · ⚠ 에나멜선이 뜨거워요')).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g6-electricity 빨대, 병렬, 반대 방향으로 바꾼 뒤', async ({ page }) => {
+  await gotoUnit(page, 'g6-electricity');
+  await setValue(page, '속에 넣은 것', '빨대만 (철못 없음)');
+  await setValue(page, '전지 연결', '전지 2개 병렬 연결');
+  await setValue(page, '전지 방향', '반대 방향');
+  await expectNoSeriousViolations(page);
+});

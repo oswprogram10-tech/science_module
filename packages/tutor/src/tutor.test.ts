@@ -421,3 +421,63 @@ describe('g5-light 매니페스트 probe', () => {
     }
   });
 });
+
+// ---------- 전기의 이용(전자석) 매니페스트 ----------
+import electricityJson from '../../../content/units/g6-electricity/manifest.json';
+
+describe('g6-electricity 매니페스트 probe', () => {
+  const e = parseManifest(electricityJson).experiments[0]! as VariableExperiment;
+  const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+  const eKeys = e.variables.map((v) => v.key);
+  const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+  const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: 'turns', ...x });
+  const fair = (iv: string): Partial<ProbeContext> => ({
+    ivKey: iv,
+    lastAnalysis: { kind: 'fair-test', changed: [iv] },
+    prediction: 'same',
+    observed: 'same',
+  });
+
+  it('iv별 fair-test 질문을 고른다', () => {
+    expect(selectProbe(eCtx(fair('battery')), e.tutor.probes, eGuard)).toContain('점이 움직이는 빠르기는 어떻게 달랐나요');
+    expect(selectProbe(eCtx(fair('direction')), e.tutor.probes, eGuard)).toContain('클립의 수와 나침반 바늘은 각각 어떻게 되었나요');
+    expect(selectProbe(eCtx(fair('core')), e.tutor.probes, eGuard)).toContain('속에 넣은 것만 바꾸었을 때 클립의 수가 어떻게 달라졌나요');
+    expect(selectProbe(eCtx(fair('turns')), e.tutor.probes, eGuard)).toContain('에나멜선을 감은 횟수만 바꾸었을 때 붙은 클립의 수');
+  });
+
+  it('모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+    let n = 0;
+    for (const probe of e.tutor.probes) {
+      for (const iv of eKeys) {
+        for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+          const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+          expect(text).not.toMatch(/[{}]|\(를\)|\(가\)|\(과\)/);
+          n++;
+        }
+      }
+    }
+    expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+  });
+
+  it('금지 구절을 담은 문장은 실제로 막는다', () => {
+    for (const f of e.tutor.forbiddenAnswers) expect(guardOutput(`${f}요`, eGuard).ok, f).toBe(false);
+  });
+
+  it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+    const situations: Partial<ProbeContext>[] = [
+      {},
+      { lastAnalysis: { kind: 'first-trial', changed: [] } },
+      { lastAnalysis: { kind: 'confounded', changed: ['turns', 'battery'] } },
+      { lastAnalysis: { kind: 'iv-unchanged', changed: ['battery'] } },
+      { lastAnalysis: { kind: 'repeat', changed: [] } },
+      { ...fair('turns'), prediction: 'increase', observed: 'same' },
+      { ...fair('direction'), prediction: 'increase', observed: 'same' },
+    ];
+    for (const s of situations) {
+      const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+      expect(text).not.toBe(FALLBACK_PROBE);
+      expect(guardOutput(text, eGuard).ok, text).toBe(true);
+    }
+  });
+});
