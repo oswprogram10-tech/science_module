@@ -24,7 +24,7 @@ export function ResultsTable({
   return (
     <div className="results">
       <h2>결과표</h2>
-      <div className="table-wrap">
+      <div className="table-wrap" role="region" aria-label="결과표(좌우로 밀어서 볼 수 있어요)" tabIndex={0}>
         <table id="results-table">
           <caption className="sr-only">시행별 조건과 결과</caption>
           <thead>

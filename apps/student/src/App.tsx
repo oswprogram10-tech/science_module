@@ -25,6 +25,19 @@ const subscribeHash = (cb: () => void) => {
 };
 const getHash = () => window.location.hash;
 
+/** `?playback=초` (0.2~8, 기본 8): 재생 시간을 줄여 자동 테스트를 빠르게 한다. 읽을 수 없으면 undefined(기본값). */
+function readPlaybackSeconds(): number | undefined {
+  try {
+    const raw = new URLSearchParams(window.location.search).get('playback');
+    if (raw === null || raw.trim() === '') return undefined;
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return undefined;
+    return Math.min(8, Math.max(0.2, n));
+  } catch {
+    return undefined;
+  }
+}
+
 export function App() {
   const hash = useSyncExternalStore(subscribeHash, getHash);
   const route = parseRoute(hash);
@@ -64,6 +77,7 @@ function Lab({
     () => Object.fromEntries(experiment.variables.map((v) => [v.key, v.default])),
     [experiment],
   );
+  const playbackSeconds = useMemo(readPlaybackSeconds, []);
   const runtime = useMemo(
     () =>
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -71,8 +85,9 @@ function Lab({
         defaults,
         clock: () => performance.now(),
         canRun: (s) => canRun(s, experiment.gateway).ok,
+        playbackSeconds,
       }),
-    [defaults, experiment],
+    [defaults, experiment, playbackSeconds],
   );
   const [runError, setRunError] = useState<string | null>(null);
   const recorder = useMemo(() => new MemoryRecorder(), []);

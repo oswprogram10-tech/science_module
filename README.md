@@ -14,8 +14,11 @@ pnpm dev            # 학생 앱 개발 서버 (http://localhost:5173)
 pnpm test           # 모든 패키지 테스트 (vitest)
 pnpm typecheck      # 모든 패키지 타입 검사
 pnpm build          # 학생 앱 프로덕션 빌드 (apps/student/dist)
+pnpm e2e            # 브라우저 자동 테스트 (Playwright)
 ```
 `pnpm --filter student dev`로도 개발 서버를 띄울 수 있습니다.
+
+테스트 방법(단위 테스트, 브라우저 테스트, `?playback=` 빠른 재생, 디버깅)은 `docs/testing.md`를 보세요.
 
 ## 단원 목록과 이동
 앱을 열면 학년별 단원 카드가 나오는 단원 목록(`#/`)이 보입니다. 카드를 누르면 그 단원의 실험 화면(`#/unit/{단원 id}`)으로 이동하고, 실험 화면 위쪽의 「← 단원 목록」으로 돌아옵니다. 주소창에 직접 쓸 수도 있습니다.

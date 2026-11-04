@@ -7,7 +7,8 @@
     "dev": "pnpm --filter student dev",
     "build": "pnpm -r --if-present build",
     "test": "vitest run",
-    "typecheck": "pnpm -r --if-present typecheck"
+    "typecheck": "pnpm -r --if-present typecheck",
+    "e2e": "pnpm --filter student e2e"
   },
   "devDependencies": {
     "typescript": "^7.0.2",

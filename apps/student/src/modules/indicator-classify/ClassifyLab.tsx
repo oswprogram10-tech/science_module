@@ -351,7 +351,7 @@ export function ClassifyLab({
       </main>
 
       <section className="results" aria-label="결과표">
-        <div className="table-wrap">
+        <div className="table-wrap" role="region" aria-label="용액별 결과표(좌우로 밀어서 볼 수 있어요)" tabIndex={0}>
           <table id="results-table">
             <caption className="sr-only">용액별 예측, 지시약 결과, 넣은 무리</caption>
             <thead>
