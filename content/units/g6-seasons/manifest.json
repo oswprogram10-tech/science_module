@@ -1,0 +1,89 @@
+{
+  "id": "g6-seasons",
+  "title": "계절의 변화",
+  "grade": 6,
+  "standards": ["6과13-01"],
+  "engine": "earth",
+  "experiments": [
+    {
+      "id": "sun-angle",
+      "module": "sun-angle",
+      "title": "계절에 따른 태양 남중 고도와 자전축 기울기",
+      "question": "계절에 따라 태양의 남중 고도, 그림자 길이, 낮의 길이가 달라지는 까닭은 무엇일까?",
+      "predictionPrompt": "예측: 태양의 남중 고도는?",
+      "variables": [
+        {
+          "key": "season",
+          "label": "계절(공전 위치)",
+          "type": "choice",
+          "options": [
+            { "value": "spring", "label": "봄 (3월 하순)" },
+            { "value": "summer", "label": "여름 (6월 하순)" },
+            { "value": "autumn", "label": "가을 (9월 하순)" },
+            { "value": "winter", "label": "겨울 (12월 하순)" }
+          ],
+          "default": "spring"
+        },
+        {
+          "key": "tiltDeg",
+          "label": "자전축 기울기",
+          "type": "choice",
+          "unit": "°",
+          "options": [
+            { "value": 0, "label": "0° (기울지 않음, 만약에)" },
+            { "value": 23.44, "label": "23.5° (실제)" },
+            { "value": 30, "label": "30° (만약에)" }
+          ],
+          "default": 23.44
+        },
+        {
+          "key": "stickCm",
+          "label": "막대 길이",
+          "type": "choice",
+          "unit": "cm",
+          "options": [
+            { "value": 10, "label": "10 cm" },
+            { "value": 20, "label": "20 cm" }
+          ],
+          "default": 10
+        }
+      ],
+      "dependent": [
+        { "key": "noonAltDeg", "label": "태양의 남중 고도", "unit": "°" },
+        { "key": "noonShadowCm", "label": "낮 12시 그림자 길이", "unit": "cm" }
+      ],
+      "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
+      "safety": ["sunlight"],
+      "safetyChecklist": [
+        "태양을 직접 보지 않아요.",
+        "그림자 길이는 막대 아래 그림자만 보고 재요.",
+        "한낮에 밖에서 오래 관측할 때는 모자를 써요."
+      ],
+      "safetyNotices": [],
+      "limits": ["적위", "황도", "천구", "시간각", "방위각", "복사"],
+      "params": { "latDeg": 37.5 },
+      "tutor": {
+        "forbiddenAnswers": [
+          "자전축이 기울어져 있기 때문",
+          "기울어진 채 공전하기 때문",
+          "남중 고도가 높을수록 그림자가 짧",
+          "남중 고도가 높을수록 낮이 길",
+          "여름에 남중 고도가 높",
+          "막대 길이는 남중 고도와 관계없"
+        ],
+        "probes": [
+          { "when": "before-run", "text": "{iv}을(를) 바꾸면 태양의 남중 고도가 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?" },
+          { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?" },
+          { "when": "confounded", "text": "{changed}이(가) 함께 바뀌었어요. 남중 고도가 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
+          { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },
+          { "when": "repeat", "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
+          { "when": "fair-test", "text": "{iv}만 바꾸었을 때 남중 고도, 그림자 길이, 낮의 길이는 각각 어떻게 달라졌나요? 결과표에서 세 값을 함께 비교해 볼까요?" },
+          { "when": "fair-test", "iv": "season", "text": "계절만 바꾸었어요. 우주에서 보기 화면에서 지구의 자전축과 태양 빛이 우리나라에 닿는 모습을 비교해 볼까요?" },
+          { "when": "fair-test", "iv": "tiltDeg", "text": "자전축 기울기만 바꾸었어요. 이 기울기에서 계절을 바꾸면 결과가 어떻게 될지 확인해 볼까요?" },
+          { "when": "fair-test", "iv": "stickCm", "text": "막대 길이만 바꾸었을 때 달라진 값과 달라지지 않은 값은 각각 무엇인가요? 그 까닭은 무엇일까요?" },
+          { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 눈으로 보기 화면의 태양 높이와 그림자를 다시 살펴볼까요?" }
+        ]
+      }
+    }
+  ]
+}

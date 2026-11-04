@@ -50,9 +50,10 @@ export function guardOutput(text: string, config: GuardConfig): GuardResult {
 const JOSA_PATTERN = /(\S)(을\(를\)|이\(가\)|와\(과\)|은\(는\))/g;
 
 function fixJosa(text: string): string {
-  return text.replace(JOSA_PATTERN, (_m, prev: string, pair: string) => {
+  return text.replace(JOSA_PATTERN, (_m, prev: string, pair: string, offset: number) => {
     const p = `${pair[0]}/${pair[2]}` as JosaPair;
-    return prev + josa(prev, p);
+    // 앞 글자가 ')'면 괄호 설명 앞 낱말로 판단해야 하므로 앞부분 전체를 넘긴다.
+    return prev + josa(text.slice(0, offset + prev.length), p);
   });
 }
 

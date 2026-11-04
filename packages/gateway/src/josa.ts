@@ -15,7 +15,9 @@ function hasBatchim(word: string): boolean | null {
  */
 export function josa(word: string, pair: JosaPair): string {
   const [withBatchim, without] = pair.split('/') as [string, string];
-  const b = hasBatchim(word);
+  // "계절(공전 위치)"처럼 끝이 괄호 설명이면 괄호 앞 낱말로 받침을 판단한다.
+  const base = /\)\s*$/.test(word) && word.includes('(') ? word.slice(0, word.lastIndexOf('(')) : word;
+  const b = hasBatchim(base);
   if (b === null) return `${withBatchim}(${without})`;
   // 와/과는 받침 있으면 "과", 없으면 "와"이므로 쌍의 순서가 반대다.
   if (pair === '와/과') return b ? '과' : '와';

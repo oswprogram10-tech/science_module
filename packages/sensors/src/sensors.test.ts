@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { simulateDissolution } from '@sci/engine-matter';
-import { MockGasDriver, MockPressureDriver, MockScaleDriver, MockTemperatureDriver, mulberry32 } from './index';
+import { MockGasDriver, MockLightDriver, MockPressureDriver, MockScaleDriver, MockTemperatureDriver, mulberry32 } from './index';
 
 describe('mulberry32', () => {
   it('같은 시드면 같은 수열', () => {
@@ -113,5 +113,26 @@ describe('MockGasDriver', () => {
       expect(a.kind).toBe(kind);
     }
     expect(new MockGasDriver('oxygen', () => 21, 1).id).not.toBe(new MockGasDriver('carbonDioxide', () => 21, 1).id);
+  });
+});
+
+describe('MockLightDriver', () => {
+  it('단위 %, 소수 첫째 자리, ±0.5 잡음, 0~100 %로 자르기, 시드 재현', () => {
+    const a = new MockLightDriver(() => 60, 5);
+    const b = new MockLightDriver(() => 60, 5);
+    const ra = Array.from({ length: 50 }, () => a.read().value);
+    expect(ra).toEqual(Array.from({ length: 50 }, () => b.read().value));
+    for (const v of ra) {
+      expect(Math.abs(v - 60)).toBeLessThanOrEqual(0.5 + 1e-9);
+      expect(Math.round(v * 10) / 10).toBe(v);
+    }
+    expect(a.read().unit).toBe('%');
+    expect(a.kind).toBe('light');
+    const dark = new MockLightDriver(() => 0, 5);
+    const bright = new MockLightDriver(() => 100, 5);
+    for (let i = 0; i < 50; i++) {
+      expect(dark.read().value).toBeGreaterThanOrEqual(0);
+      expect(bright.read().value).toBeLessThanOrEqual(100);
+    }
   });
 });

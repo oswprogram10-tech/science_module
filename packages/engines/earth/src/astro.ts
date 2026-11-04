@@ -48,9 +48,22 @@ export interface SunInput {
   rotation?: Rotation;
 }
 
-export function sunPosition({ hour, dayOfYear, latDeg = SEOUL_LAT_DEG, rotation = 'forward' }: SunInput): SkyPoint {
+export interface SunDecInput {
+  hour: number;
+  /** 태양의 적위(°). 날짜 대신 값을 직접 준다. */
+  decDeg: number;
+  latDeg?: number;
+  rotation?: Rotation;
+}
+
+/** 적위를 직접 받아 태양의 고도·방위각을 구한다. 정오(12시)가 남중이다. sunPosition과 같은 식이다. */
+export function sunPositionAtDeclination({ hour, decDeg, latDeg = SEOUL_LAT_DEG, rotation = 'forward' }: SunDecInput): SkyPoint {
   const H = 15 * (hour - 12) * (rotation === 'reverse' ? -1 : 1);
-  return horizontal(H, sunDeclination(dayOfYear), latDeg);
+  return horizontal(H, decDeg, latDeg);
+}
+
+export function sunPosition({ hour, dayOfYear, latDeg = SEOUL_LAT_DEG, rotation = 'forward' }: SunInput): SkyPoint {
+  return sunPositionAtDeclination({ hour, decDeg: sunDeclination(dayOfYear), latDeg, rotation });
 }
 
 export interface StarInput {

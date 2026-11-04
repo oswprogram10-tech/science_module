@@ -4,7 +4,7 @@ export interface SensorReading {
   ts: number;
 }
 
-export type SensorKind = 'temperature' | 'scale' | 'pressure' | 'oxygen' | 'carbonDioxide';
+export type SensorKind = 'temperature' | 'scale' | 'pressure' | 'oxygen' | 'carbonDioxide' | 'light';
 
 export interface SensorDriver {
   id: string;
@@ -80,6 +80,7 @@ export const TEMPERATURE_NOISE_C = 0.2;
 export const SCALE_NOISE_G = 0.01;
 export const PRESSURE_NOISE_KPA = 0.1;
 export const GAS_NOISE_PCT = 0.05;
+export const LIGHT_NOISE_PCT = 0.5;
 export const BEAKER_G = 100;
 
 /** 값 = source() + 시드 고정 잡음(±0.2 °C), 소수 첫째 자리. */
@@ -131,5 +132,16 @@ export class MockGasDriver extends MockDriver {
   }
   protected measure() {
     return roundTo(this.source() + (this.rng() * 2 - 1) * GAS_NOISE_PCT, 1);
+  }
+}
+
+/** 값 = source()(%, 상대 빛 세기) + 시드 고정 잡음(±0.5 %), 0~100 %로 자르고 소수 첫째 자리. */
+export class MockLightDriver extends MockDriver {
+  id = 'mock-light';
+  kind = 'light' as const;
+  unit = '%';
+  protected measure() {
+    const v = this.source() + (this.rng() * 2 - 1) * LIGHT_NOISE_PCT;
+    return roundTo(Math.min(100, Math.max(0, v)), 1);
   }
 }

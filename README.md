@@ -35,6 +35,7 @@ pnpm e2e            # 브라우저 자동 테스트 (Playwright)
 | `#/unit/g6-electricity` | 6학년 전기의 이용 (전자석의 세기) |
 | `#/unit/g4-land` | 4학년 땅의 변화 (마그마가 식는 빠르기와 알갱이 크기) |
 | `#/unit/g6-earth-motion` | 6학년 지구의 운동 (땅에서 보기와 우주에서 보기를 비교하는 관찰 과제) |
+| `#/unit/g6-seasons` | 6학년 계절의 변화 (계절·자전축 기울기·막대 길이에 따른 태양 남중 고도, 그림자, 낮의 길이) |
 
 산과 염기: 보안경 실제 감지는 모의 감지기로 대체, 모델은 스파이크 S2 이후. 주소 앞에 `?dev=1`을 붙이면(`/?dev=1#/unit/g6-acid-base`) 모의 안전 상황 버튼이 나타납니다.
 
@@ -45,7 +46,7 @@ pnpm e2e            # 브라우저 자동 테스트 (Playwright)
 
 | 활동 유형 | `module` | 흐름 | 화면 |
 |---|---|---|---|
-| 변인 실험 | `dissolution`, `gas-syringe`, `candle-jar`, `insulated-cup`, `convex-lens`, `electromagnet`, `magma-cooling` | 바꿀 조건(조작변인) 고르기 → 예측 → 실행 → 시행 비교와 구조적 피드백 | `Lab`(`App.tsx`) |
+| 변인 실험 | `dissolution`, `gas-syringe`, `candle-jar`, `insulated-cup`, `convex-lens`, `electromagnet`, `magma-cooling`, `sun-angle` | 바꿀 조건(조작변인) 고르기 → 예측 → 실행 → 시행 비교와 구조적 피드백 | `Lab`(`App.tsx`) |
 | 분류 활동 | `indicator-classify` | 시험 → 관찰한 근거로 무리에 넣기 → 관찰과 분류가 맞는지 확인 | `ClassifyLab` |
 | 관찰 과제 | `sky-observation` | 예측 → 시각·달 슬라이더와 조건 토글로 두 시점 화면 관찰 → 관찰 기록 → 예측과 관찰 비교 | `ObserveLab` |
 
@@ -56,15 +57,15 @@ pnpm e2e            # 브라우저 자동 테스트 (Playwright)
 ## 구조
 | 경로 | 설명 |
 |---|---|
-| `content/units/g4-gases/manifest.json`, `content/units/g5-solution/manifest.json`, `content/units/g6-acid-base/manifest.json`, `content/units/g6-combustion/manifest.json`, `content/units/g5-heat/manifest.json`, `content/units/g5-light/manifest.json`, `content/units/g6-electricity/manifest.json`, `content/units/g4-land/manifest.json`, `content/units/g6-earth-motion/manifest.json` | 단원 매니페스트 (변인, 게이트웨이, 튜터 탐침 질문) |
+| `content/units/g4-gases/manifest.json`, `content/units/g5-solution/manifest.json`, `content/units/g6-acid-base/manifest.json`, `content/units/g6-combustion/manifest.json`, `content/units/g5-heat/manifest.json`, `content/units/g5-light/manifest.json`, `content/units/g6-electricity/manifest.json`, `content/units/g4-land/manifest.json`, `content/units/g6-earth-motion/manifest.json`, `content/units/g6-seasons/manifest.json` | 단원 매니페스트 (변인, 게이트웨이, 튜터 탐침 질문) |
 | `packages/schema` | `@sci/schema` zod 스키마 |
 | `packages/runtime` | `@sci/runtime` 시행 관리, 타임라인, 플레이헤드 |
 | `packages/gateway` | `@sci/gateway` 실행 조건, 시행 비교, 구조적 피드백, 조사 |
 | `packages/engines/matter` | `@sci/engine-matter` 용해 모델, 기체 모델, 지시약 분류, 연소 모델 |
 | `packages/engines/physics` | `@sci/engine-physics` 보온 컵 모델(뉴턴 냉각 법칙), 볼록 렌즈 모델(광선 추적), 전자석 모델 |
-| `packages/engines/earth` | `@sci/engine-earth` 마그마 냉각 모델(식는 빠르기에 따른 알갱이 크기), 천체 모델(태양·별 위치, 낮과 밤, 별자리, 관찰 과제 정답 규칙) |
+| `packages/engines/earth` | `@sci/engine-earth` 마그마 냉각 모델(식는 빠르기에 따른 알갱이 크기), 천체 모델(태양·별 위치, 낮과 밤, 별자리, 관찰 과제 정답 규칙), 태양 고도 모델(계절·자전축 기울기에 따른 남중 고도·그림자·낮의 길이·받는 에너지, 교사 검수 대상) |
 | `packages/vision` | `@sci/vision` 색 변환·평균색·색표 매칭, 안전 감지기 인터페이스와 모의 감지기 |
-| `packages/sensors` | `@sci/sensors` 센서 인터페이스와 Mock 드라이버 |
+| `packages/sensors` | `@sci/sensors` 센서 인터페이스와 Mock 드라이버(온도·무게·압력·산소·이산화 탄소·빛 세기) |
 | `packages/tutor` | `@sci/tutor` 규칙 기반 탐침 질문과 출력 가드 |
 | `packages/xapi` | `@sci/xapi` xAPI 문장 생성과 메모리 큐 |
 | `apps/student` | Vite + React 19 학생 앱 (`src/modules/`에 실험 모듈, `src/units.ts`에 단원 목록) |

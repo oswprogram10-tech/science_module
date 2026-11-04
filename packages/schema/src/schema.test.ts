@@ -7,6 +7,7 @@ import heatJson from '../../../content/units/g5-heat/manifest.json';
 import lightJson from '../../../content/units/g5-light/manifest.json';
 import electricityJson from '../../../content/units/g6-electricity/manifest.json';
 import landJson from '../../../content/units/g4-land/manifest.json';
+import seasonsJson from '../../../content/units/g6-seasons/manifest.json';
 import earthJson from '../../../content/units/g6-earth-motion/manifest.json';
 import {
   ManifestError,
@@ -159,8 +160,8 @@ describe('활동 유형 union (module 기준)', () => {
 describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
   const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
-  it('여덟 매니페스트가 모두 검증을 통과한다', () => {
-    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson]) expect(() => parseManifest(j)).not.toThrow();
+  it('아홉 매니페스트가 모두 검증을 통과한다', () => {
+    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson]) expect(() => parseManifest(j)).not.toThrow();
   });
 
   it('연소 매니페스트의 점검표와 경고 문구를 읽는다', () => {
@@ -206,6 +207,19 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     expect(e.variables.map((v) => v.key)).toEqual(['place', 'grams', 'dish', 'color']);
     expect(e.dependent.map((d) => d.key)).toEqual(['sizeMm', 'solidS']);
     expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['place', 'color']);
+  });
+
+  it('계절의 변화 매니페스트의 점검표, 안전 종류, 변인을 읽는다', () => {
+    const m = parseManifest(seasonsJson);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g6-seasons', 6, 'earth', ['6과13-01']]);
+    const e = m.experiments[0] as VariableExperiment;
+    expect(e.module).toBe('sun-angle');
+    expect(e.safetyChecklist).toHaveLength(3);
+    expect(e.safety).toEqual(['sunlight']);
+    expect(e.variables.map((v) => v.key)).toEqual(['season', 'tiltDeg', 'stickCm']);
+    expect(e.variables[1]!.options.map((o) => o.value)).toEqual([0, 23.44, 30]);
+    expect(e.dependent.map((d) => d.key)).toEqual(['noonAltDeg', 'noonShadowCm']);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['season', 'tiltDeg', 'stickCm']);
   });
 
   it('두 필드는 없어도 된다', () => {

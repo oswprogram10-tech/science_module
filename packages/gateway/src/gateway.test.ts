@@ -147,3 +147,12 @@ describe('observedOutcome', () => {
     expect(observedOutcome(10, 7.9, 2)).toBe('decrease');
   });
 });
+
+describe('josa: 끝이 괄호 설명인 낱말', () => {
+  it('괄호 앞 낱말의 받침으로 조사를 고른다', () => {
+    expect(josa('계절(공전 위치)', '을/를')).toBe('을');
+    expect(josa('자전축 기울기(만약에)', '이/가')).toBe('가');
+    expect(josa('물의 양', '을/를')).toBe('을');
+    expect(josa('ABC', '을/를')).toBe('을(를)');
+  });
+});

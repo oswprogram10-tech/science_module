@@ -119,6 +119,11 @@ describe('치환', () => {
       '젓기와 물의 양이 바뀜',
     );
   });
+  it('괄호 설명으로 끝나는 라벨은 괄호 앞 낱말에 맞춘다', () => {
+    expect(renderProbe('{iv}을(를) 바꿔요', { iv: '계절(공전 위치)', changed: [] })).toBe('계절(공전 위치)을 바꿔요');
+    expect(renderProbe('{changed}이(가) 바뀌었어요', { iv: '', changed: ['자전축 기울기', '계절(공전 위치)'] })).toBe('자전축 기울기와 계절(공전 위치)이 바뀌었어요');
+  });
+
   it('한글이 아닌 낱말 뒤에는 괄호형이 남는다', () => {
     expect(renderProbe('{iv}을(를)', { iv: 'pH', changed: [] })).toBe('pH을(를)');
   });
@@ -575,5 +580,81 @@ describe('지구의 운동 과제 probe 전수 검사', () => {
   it('금지 문장과 limits 용어는 실제로 가드에 걸린다', () => {
     for (const phrase of o.tutor.forbiddenAnswers) expect(guardOutput(phrase, oGuard).ok).toBe(false);
     for (const l of o.limits) expect(guardOutput(`${l}이에요`, oGuard).ok, l).toBe(false);
+  });
+});
+
+// ---------- 계절의 변화(태양 고도) 매니페스트 ----------
+import seasonsJson from '../../../content/units/g6-seasons/manifest.json';
+
+describe('g6-seasons 매니페스트 probe', () => {
+  const e = parseManifest(seasonsJson).experiments[0]! as VariableExperiment;
+  const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+  const eKeys = e.variables.map((v) => v.key);
+  const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+  const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: 'season', ...x });
+  const fair = (iv: string): Partial<ProbeContext> => ({
+    ivKey: iv,
+    lastAnalysis: { kind: 'fair-test', changed: [iv] },
+    prediction: 'same',
+    observed: 'same',
+  });
+
+  it('iv별 fair-test 질문을 고른다', () => {
+    expect(selectProbe(eCtx(fair('season')), e.tutor.probes, eGuard)).toContain('우주에서 보기 화면에서 지구의 자전축과 태양 빛이 우리나라에 닿는 모습');
+    expect(selectProbe(eCtx(fair('tiltDeg')), e.tutor.probes, eGuard)).toContain('이 기울기에서 계절을 바꾸면 결과가 어떻게 될지');
+    expect(selectProbe(eCtx(fair('stickCm')), e.tutor.probes, eGuard)).toContain('달라진 값과 달라지지 않은 값은 각각 무엇인가요');
+  });
+
+  it('모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+    let n = 0;
+    for (const probe of e.tutor.probes) {
+      for (const iv of eKeys) {
+        for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+          const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+          // "계절(공전 위치)"처럼 괄호로 끝나는 라벨도 괄호 앞 낱말로 조사를 맞추므로 괄호형 조사가 남지 않아야 한다.
+          expect(text).not.toMatch(/[{}]/);
+          expect(text).not.toMatch(/(을\(를\)|이\(가\)|와\(과\)|은\(는\))/);
+          n++;
+        }
+      }
+    }
+    expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+  });
+
+  it('금지 구절을 담은 문장과 limits 용어를 담은 문장은 실제로 막는다', () => {
+    for (const f of e.tutor.forbiddenAnswers) expect(guardOutput(`${f}요`, eGuard).ok, f).toBe(false);
+    for (const l of e.limits) expect(guardOutput(`${l}이에요`, eGuard).ok, l).toBe(false);
+  });
+
+  it('화면에 보이는 매니페스트 글(질문, 변인·선택지 이름, 점검표)에는 limits 용어가 없다', () => {
+    const shown = [
+      e.title,
+      e.question,
+      e.predictionPrompt,
+      ...e.variables.flatMap((v) => [v.label, ...v.options.map((o) => o.label)]),
+      ...e.dependent.map((d) => d.label),
+      ...(e.safetyChecklist ?? []),
+      ...e.tutor.probes.map((p) => p.text),
+    ];
+    for (const text of shown) for (const l of e.limits) expect(text, text).not.toContain(l);
+  });
+
+  it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+    const situations: Partial<ProbeContext>[] = [
+      {},
+      { lastAnalysis: { kind: 'first-trial', changed: [] } },
+      { lastAnalysis: { kind: 'confounded', changed: ['season', 'tiltDeg'] } },
+      { lastAnalysis: { kind: 'iv-unchanged', changed: ['stickCm'] } },
+      { lastAnalysis: { kind: 'repeat', changed: [] } },
+      { ...fair('season'), prediction: 'increase', observed: 'same' },
+      { ...fair('tiltDeg'), prediction: 'increase', observed: 'same' },
+      { ...fair('stickCm'), prediction: 'increase', observed: 'same' },
+    ];
+    for (const s of situations) {
+      const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+      expect(text).not.toBe(FALLBACK_PROBE);
+      expect(guardOutput(text, eGuard).ok, text).toBe(true);
+    }
   });
 });

@@ -7,6 +7,7 @@ import { insulatedCupModule } from './insulated-cup';
 import { convexLensModule } from './convex-lens';
 import { electromagnetModule } from './electromagnet';
 import { magmaCoolingModule } from './magma-cooling';
+import { sunAngleModule } from './sun-angle';
 
 export const MODULES: Record<ModuleKind, AnyModule> = {
   dissolution: dissolutionModule,
@@ -16,4 +17,5 @@ export const MODULES: Record<ModuleKind, AnyModule> = {
   'convex-lens': convexLensModule,
   electromagnet: electromagnetModule,
   'magma-cooling': magmaCoolingModule,
+  'sun-angle': sunAngleModule,
 };

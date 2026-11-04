@@ -330,3 +330,70 @@ test('g6-earth-motion 어두운 화면: 처음, 낮, 별, 계절', async ({ page
   await earthSlider(page, '달').fill('8');
   await expectNoSeriousViolations(page);
 });
+
+// ---- g6-seasons ----
+
+const SEASON_IV = '계절(공전 위치)을 바꿀 조건으로 고르기';
+
+async function seasonsRun(page: Page) {
+  await page.getByRole('radio', { name: SEASON_IV }).check();
+  await predict(page, '늘어난다');
+  await runButton(page).click();
+  await confirmSafetyDialog(page);
+  await expect(runButton(page)).toHaveText('▶ 실험 실행');
+}
+
+test('g6-seasons 처음 화면', async ({ page }) => {
+  await gotoUnit(page, 'g6-seasons');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g6-seasons 안전 점검표가 열린 상태', async ({ page }) => {
+  await gotoUnit(page, 'g6-seasons');
+  await page.getByRole('radio', { name: SEASON_IV }).check();
+  await predict(page, '늘어난다');
+  await runButton(page).click();
+  await expect(page.getByRole('dialog', { name: '안전 점검표' })).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g6-seasons 실행한 뒤(그래프 표식)와 한밤(그래프 시각을 처음으로)', async ({ page }) => {
+  await gotoUnit(page, 'g6-seasons');
+  await seasonsRun(page);
+  await expect(page.getByRole('figure', { name: '그래프로 보기' }).getByTestId('graph-marker')).toBeVisible();
+  await expectNoSeriousViolations(page);
+  const slider = page.getByRole('slider', { name: '그래프 시각 옮기기' });
+  await slider.focus();
+  await slider.press('Home');
+  await expect(page.getByText('0시 0분 · 태양이 지평선 아래에 있어요')).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g6-seasons 여름, 기울기 0°, 겨울·30°·20 cm로 바꾼 뒤', async ({ page }) => {
+  await gotoUnit(page, 'g6-seasons');
+  await setValue(page, '계절(공전 위치)', '여름');
+  await expectNoSeriousViolations(page);
+  await setValue(page, '자전축 기울기', '기울지 않음');
+  await expectNoSeriousViolations(page);
+  await setValue(page, '계절(공전 위치)', '겨울');
+  await setValue(page, '자전축 기울기', '30° (만약에)');
+  await setValue(page, '막대 길이', '20 cm');
+  await expect(page.getByText('→ 더 길어요')).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g6-seasons 어두운 화면: 처음, 여름 실행 뒤, 한밤, 기울기 0°', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await gotoUnit(page, 'g6-seasons');
+  await expectNoSeriousViolations(page);
+  await setValue(page, '계절(공전 위치)', '여름');
+  await seasonsRun(page);
+  await expectNoSeriousViolations(page);
+  const slider = page.getByRole('slider', { name: '그래프 시각 옮기기' });
+  await slider.focus();
+  await slider.press('Home');
+  await expectNoSeriousViolations(page);
+  await setValue(page, '자전축 기울기', '기울지 않음');
+  await expectNoSeriousViolations(page);
+});

@@ -48,7 +48,7 @@ const render = (unit: (typeof variableUnits)[number], mod: AnyModule, trial: Any
   );
 
 describe('GraphView', () => {
-  const existing = variableUnits.filter((u) => u.module.kind !== 'electromagnet' && u.module.kind !== 'magma-cooling');
+  const existing = variableUnits.filter((u) => u.module.kind !== 'electromagnet' && u.module.kind !== 'magma-cooling' && u.module.kind !== 'sun-angle');
 
   it('기존 단원은 모든 조건에서 최댓값이 처음 값 또는 마지막 값이다 (y축 범위를 모든 표본의 최댓값으로 잡아도 달라지지 않는다)', () => {
     expect(existing.length).toBeGreaterThanOrEqual(5);
@@ -167,5 +167,56 @@ describe('markers: 시행에서 계산하는 함수 형태', () => {
     render(unit, spy, trial);
     expect(seen[0]).toBe(unit.experiment);
     expect(seen[1]).toBe(trial);
+  });
+});
+
+describe('x축 라벨·눈금(xLabel, xTicks, xTickFormat)', () => {
+  const existing = variableUnits.filter((u) => u.module.kind !== 'sun-angle');
+  const seasons = () => variableUnits.find((u) => u.id === 'g6-seasons')!;
+  const base = { season: 'summer', tiltDeg: 23.44, stickCm: 10 };
+
+  it('기존 단원은 x축 라벨이 "시간(초)"이고, 새 필드를 쓰지 않으며, 기본 라벨을 명시해도 똑같이 그려진다', () => {
+    expect(existing.length).toBeGreaterThanOrEqual(7);
+    for (const unit of existing) {
+      expect(unit.module.graph.xLabel).toBeUndefined();
+      expect(unit.module.graph.xTicks).toBeUndefined();
+      expect(unit.module.graph.xTickFormat).toBeUndefined();
+      const trial = trialOf(unit, combos(unit)[0]!);
+      const plain = render(unit, unit.module, trial);
+      expect(plain).toContain('>시간(초)<');
+      expect(plain).toContain('초, ');
+      const explicit: AnyModule = { ...unit.module, graph: { ...unit.module.graph, xLabel: '시간(초)' } };
+      expect(render(unit, explicit, trial)).toBe(plain);
+    }
+  });
+
+  it('xTickFormat만 항등 함수로 줘도 자동 눈금의 글자가 같다 (소수 자릿수가 없는 단원)', () => {
+    const unit = variableUnits.find((u) => u.id === 'g4-land')!;
+    const trial = trialOf(unit, { place: 'room', grams: 5, dish: 'glass', color: 'white' });
+    const plain = render(unit, unit.module, trial);
+    const fmt: AnyModule = { ...unit.module, graph: { ...unit.module.graph, xTickFormat: (t: number) => t.toFixed(0) } };
+    expect(render(unit, fmt, trial)).toBe(plain);
+  });
+
+  it('계절의 변화 그래프는 "시각(시)" 라벨, 0·6·12·18·24 눈금, 12시 "남중" 표식이 있다', () => {
+    const unit = seasons();
+    const html = render(unit, unit.module, trialOf(unit, base));
+    expect(html).toContain('>시각(시)<');
+    expect(html).not.toContain('>시간(초)<');
+    const xTicks = [...html.matchAll(/<text x="([\d.]+)" y="(\d+)" text-anchor="middle">(\d+)<\/text>/g)].filter((m) => Number(m[2]) > 200);
+    expect(xTicks.map((m) => m[3])).toEqual(['0', '6', '12', '18', '24']);
+    const groups = html.match(/<g data-testid="graph-marker">.*?<\/g>/g) ?? [];
+    expect(groups).toHaveLength(1);
+    expect(groups[0]).toContain('남중');
+    // 12시 표식은 x축의 정중앙(눈금 0과 24의 한가운데)에 있다
+    const x1 = Number(/x1="([\d.]+)"/.exec(groups[0]!)![1]);
+    expect(x1).toBeCloseTo((44 + (320 - 12)) / 2, 1);
+    expect(html).toContain('태양 고도(°)');
+  });
+
+  it('계절의 변화 그래프 슬라이더의 읽기 값은 시 단위다', () => {
+    const unit = seasons();
+    const html = render(unit, unit.module, trialOf(unit, base));
+    expect(html).toMatch(/aria-valuetext="0시, 태양 고도 0 °"/);
   });
 });

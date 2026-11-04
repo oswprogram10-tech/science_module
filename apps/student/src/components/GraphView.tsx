@@ -19,6 +19,7 @@ interface Props {
   describedBy: string;
 }
 
+const DEFAULT_X_LABEL = '시간(초)';
 const W = 320;
 const H = 240;
 const M = { l: 44, r: 12, t: 14, b: 38 };
@@ -48,6 +49,8 @@ function toPoints(
 export function GraphView({ module: mod, experiment, trial, prev, playhead, playing, onPlayhead, describedBy }: Props) {
   const sampleKey = String(mod.metric.sampleKey);
   const { name: yName, unit: yUnit } = splitLabel(mod.graph.yLabel);
+  const xLabel = mod.graph.xLabel ?? DEFAULT_X_LABEL;
+  const { unit: xUnit } = splitLabel(xLabel);
   const yMin = mod.graph.yMin ?? 0;
   /** y축 범위용 최댓값: 모든 표본 중 가장 큰 값(올랐다가 내려오는 곡선도 담도록). */
   const yDataMax = (t: AnyTrial | undefined) => {
@@ -58,7 +61,12 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
   const svgRef = useRef<SVGSVGElement>(null);
   const dragging = useRef(false);
 
-  const xScale = niceScale(Math.max(trial ? trialDuration(trial) : 0, prev ? trialDuration(prev) : 0));
+  const xData = Math.max(trial ? trialDuration(trial) : 0, prev ? trialDuration(prev) : 0);
+  const fixedTicks = mod.graph.xTicks;
+  const xScale = fixedTicks && fixedTicks.length > 1
+    ? { max: fixedTicks[fixedTicks.length - 1]!, step: 0, ticks: fixedTicks, decimals: 0 }
+    : niceScale(xData);
+  const xTickText = (t: number) => (mod.graph.xTickFormat ? mod.graph.xTickFormat(t) : formatTick(t, xScale.decimals));
   // 정수 눈금 단원은 최댓값을 4 이상으로 잡아 눈금 간격이 1 아래로 내려가지 않게 한다.
   const yScale = yAxis(Math.max(yDataMax(trial), yDataMax(prev), mod.graph.integerTicks ? yMin + 4 : 0), yMin);
   const xMax = xScale.max;
@@ -134,7 +142,7 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
         'aria-valuemin': 0,
         'aria-valuemax': r1(duration),
         'aria-valuenow': r1(playhead),
-        'aria-valuetext': `${r1(playhead)}초, ${yName} ${r1(sampleAt(trial, playhead, mod.interpolate)[sampleKey])}${yUnit ? ` ${yUnit}` : ''}`,
+        'aria-valuetext': `${r1(playhead)}${xUnit}, ${yName} ${r1(sampleAt(trial, playhead, mod.interpolate)[sampleKey])}${yUnit ? ` ${yUnit}` : ''}`,
         'aria-disabled': playing ? true : undefined,
         onKeyDown,
       }
@@ -167,7 +175,7 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
             {xScale.ticks.map((t) => (
               <g key={`x${t}`}>
                 <line x1={sx(t)} x2={sx(t)} y1={H - M.b} y2={H - M.b + 4} stroke="#666" />
-                <text x={sx(t)} y={H - M.b + 15} textAnchor="middle">{formatTick(t, xScale.decimals)}</text>
+                <text x={sx(t)} y={H - M.b + 15} textAnchor="middle">{xTickText(t)}</text>
               </g>
             ))}
             {yScale.ticks.map((g) => (
@@ -179,7 +187,7 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
             ))}
           </g>
         )}
-        <text x={(M.l + W - M.r) / 2} y={H - 6} textAnchor="middle" fontSize="11" fill="currentColor">시간(초)</text>
+        <text x={(M.l + W - M.r) / 2} y={H - 6} textAnchor="middle" fontSize="11" fill="currentColor">{xLabel}</text>
         <text transform={`translate(11 ${(M.t + H - M.b) / 2}) rotate(-90)`} textAnchor="middle" fontSize="11" fill="currentColor">{mod.graph.yLabel}</text>
         {placedMarkers.map(({ m, row, flip }) => (
           <g key={`${m.t}:${m.label}`} data-testid="graph-marker">

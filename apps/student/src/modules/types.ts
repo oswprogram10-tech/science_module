@@ -25,7 +25,7 @@ export interface SensorSpec {
 }
 
 export interface GraphMarker {
-  /** 그래프 x축 위치(초) */
+  /** 그래프 x축 위치(x축 단위. 기본은 초) */
   t: number;
   label: string;
 }
@@ -43,8 +43,16 @@ export interface ExperimentModule<S extends { t: number }, R> {
   /** 예측 비교와 그래프 y축에 쓰는 주 측정값 */
   metric: { sampleKey: keyof S; resultKey: keyof R; sameThreshold(exp: Experiment): number };
   /** yMin: y축 눈금이 시작하는 값(기본 0). markers: x축 위의 세로 점선과 라벨(예: 스위치 켜짐·꺼짐 시각), 없으면 그리지 않는다. */
+  /** 재생이 끝난 뒤 플레이헤드를 옮겨 둘 시각. 없으면 끝에 둔다(예: 하루 실험은 정오). */
+  restPlayhead?: number;
   graph: {
     yLabel: string;
+    /** x축 라벨(기본 '시간(초)'). 괄호 안은 단위로, 플레이헤드 읽기(aria-valuetext)에도 쓴다. */
+    xLabel?: string;
+    /** x축 눈금 위치. 없으면 재생 길이에 맞춰 자동으로 잡는다. 있으면 마지막 값이 x축 끝이다. */
+    xTicks?: number[];
+    /** x축 눈금 글자(기본: 자동 눈금의 소수 자릿수에 맞춘 숫자). */
+    xTickFormat?: (t: number) => string;
     yMin?: number;
     /** 개수처럼 정수만 의미 있는 값이면 true: 눈금 간격을 1 이상으로 둔다. */
     integerTicks?: boolean;

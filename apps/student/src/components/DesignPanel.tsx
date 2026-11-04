@@ -20,6 +20,8 @@ const ALWAYS_NOTICE: Record<string, string> = {
   electric: '⚠ 가정용 콘센트 전기로는 절대 실험하지 않아요.',
   // `hot`은 연소·전기 단원도 쓰는데 그 화면은 그대로 두려고, 단원 모듈 이름을 붙인 키로 이 단원에만 보여 준다.
   'magma-cooling:hot': '⚠ 녹인 물질과 접시는 굳은 뒤에도 한동안 뜨거워요.',
+  // `sunlight`의 기본 문구는 렌즈를 쓰는 빛 단원용이라, 이 단원은 모듈 이름을 붙인 키로 따로 쓴다.
+  'sun-angle:sunlight': '⚠ 태양을 직접 바라보면 눈을 다칠 수 있어요.',
 };
 
 const PREDICTION_ICON: Record<Prediction, string> = { increase: '▲', decrease: '▼', same: '＝' };

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import {
   analyzeTrial,
   canRun,
@@ -133,6 +133,15 @@ function Lab({
     });
     return () => cancelAnimationFrame(id);
   }, [state.playing, runtime]);
+
+  // 재생이 끝나면 모듈이 정한 시각으로 플레이헤드를 옮긴다(시행마다 한 번).
+  const restedTrial = useRef<string | null>(null);
+  useEffect(() => {
+    if (state.playing || !state.active || mod.restPlayhead === undefined) return;
+    if (restedTrial.current === state.active) return;
+    restedTrial.current = state.active;
+    runtime.setPlayhead(mod.restPlayhead);
+  }, [state.playing, state.active, mod, runtime]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const active: Trial<any, any> | undefined = state.trials.find((t) => t.id === state.active);
