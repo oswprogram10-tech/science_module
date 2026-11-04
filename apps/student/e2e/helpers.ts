@@ -133,3 +133,54 @@ export async function confirmSafetyDialog(page: Page) {
   await dialog.getByRole('button', { name: '확인했어요' }).click();
   await expect(dialog).toBeHidden();
 }
+
+// ---- 수업 연결(교사 대시보드) 도우미 ----
+
+export const TEACHER_URL = 'http://localhost:4175/';
+export const SERVER_WS = 'ws://localhost:8787/ws';
+
+/** 교사 화면에서 수업을 만들고 코드를 돌려준다. */
+export async function createClass(teacher: Page): Promise<string> {
+  await teacher.goto(TEACHER_URL);
+  const create = teacher.getByRole('button', { name: '수업 만들기' });
+  await expect(create).toBeEnabled();
+  await create.click();
+  const code = (await teacher.getByTestId('class-code').textContent())!.trim();
+  expect(code).toMatch(/^[A-HJ-KM-NP-Z2-9]{6}$/);
+  return code;
+}
+
+/** 학생 앱의 주소. 수업 테스트만 `?classroom=`을 붙인다. */
+export function studentUrl(opts: { server?: string; dev?: boolean; hash?: string } = {}): string {
+  const params = [`classroom=${opts.server ?? SERVER_WS}`, 'playback=0.3'];
+  if (opts.dev) params.push('dev=1');
+  return `/?${params.join('&')}${opts.hash ?? ''}`;
+}
+
+/** 단원 목록에서 수업 참여 대화상자로 참여한다. */
+export async function joinClass(page: Page, code: string, group: number, opts: { server?: string; dev?: boolean } = {}) {
+  await page.goto(studentUrl(opts));
+  await page.getByRole('button', { name: '수업 참여' }).click();
+  const dialog = page.getByRole('dialog', { name: '수업 참여' });
+  await dialog.getByLabel('수업 코드').fill(code);
+  await dialog.getByRole('button', { name: `${group}모둠`, exact: true }).click();
+  await dialog.getByRole('button', { name: '참여하기' }).click();
+  await expect(page.getByTestId('classroom-status')).toHaveText(`수업 ${code} · ${group}모둠 · 연결됨`);
+}
+
+/** 화면 없이 서버에 붙는 가짜 학생(Node 기본 WebSocket). 경고까지 보낼 수 있다. */
+export async function rawStudent(code: string, group: number, server = SERVER_WS) {
+  const ws = new WebSocket(server);
+  await new Promise<void>((res, rej) => {
+    ws.onopen = () => res();
+    ws.onerror = () => rej(new Error('서버에 연결하지 못했어요'));
+  });
+  const joined = new Promise<void>((res) => {
+    ws.onmessage = (ev) => {
+      if (JSON.parse(String(ev.data)).t === 'joined') res();
+    };
+  });
+  ws.send(JSON.stringify({ t: 'join', code, group, appVersion: 'e2e' }));
+  await joined;
+  return ws;
+}

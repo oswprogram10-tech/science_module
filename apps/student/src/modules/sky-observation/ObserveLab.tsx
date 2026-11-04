@@ -4,6 +4,7 @@ import type { ObservationExperiment } from '@sci/schema';
 import { renderAndGuard } from '@sci/tutor';
 import { MemoryRecorder, buildStatement, toExtensions } from '@sci/xapi';
 import { readPlaybackSeconds } from '../../playback';
+import { useClassroomStatus, usePaused } from '../../classroom/bus';
 import { GroundView } from './GroundView';
 import { RevolutionSpaceView, RotationSpaceView } from './SpaceView';
 import { feedbackText } from './feedback';
@@ -53,6 +54,7 @@ export function ObserveLab({
   const reduced = useMemo(prefersReducedMotion, []);
   const daySeconds = useMemo(() => readPlaybackSeconds() ?? 8, []);
   const [playing, setPlaying] = useState(false);
+  const paused = usePaused();
 
   const emit = useCallback(
     (verb: string, extensions?: Record<string, unknown>) => {
@@ -95,7 +97,7 @@ export function ObserveLab({
   const hourRef = useRef(ts.hour);
   hourRef.current = ts.hour;
   useEffect(() => {
-    if (!playing) return;
+    if (!playing || paused) return;
     const start = hourRef.current >= 24 ? 0 : hourRef.current;
     const t0 = performance.now();
     let id = 0;
@@ -110,7 +112,7 @@ export function ObserveLab({
     };
     id = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(id);
-  }, [playing, daySeconds, onHour]);
+  }, [playing, paused, daySeconds, onHour]);
 
   const onSelectTask = (id: string) => {
     setPlaying(false);
@@ -165,7 +167,20 @@ export function ObserveLab({
         }지구는 ${rotation === 'forward' ? '서쪽에서 동쪽으로' : '동쪽에서 서쪽으로'} 돌아요`
       : `우주에서 보기: ${ts.month}월 15일, 지구는 태양 둘레 궤도 위에 있고 밤하늘은 태양 반대쪽을 향해요`;
 
-  const tutorText = renderAndGuard(tutorSituation(state, exp), {}, task.probes, {
+  const situation = tutorSituation(state, exp);
+  const doneCount = exp.tasks.filter((t) => isCompleted(state, t.id)).length;
+  // 수업 연결(있을 때만 쓰인다): 진행 요약만 알린다.
+  useClassroomStatus({
+    unitId,
+    activity: 'observe',
+    phase: doneCount > 0 ? 'reviewing' : ts.prediction !== null ? 'running' : 'designing',
+    trials: doneCount,
+    lastKind: situation,
+    mismatch: situation === 'prediction-mismatch' || situation === 'record-mismatch',
+    safetyLocked: false,
+  });
+
+  const tutorText = renderAndGuard(situation, {}, task.probes, {
     forbiddenAnswers: exp.tutor.forbiddenAnswers,
     limits: exp.limits,
   });

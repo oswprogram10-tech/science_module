@@ -18,6 +18,8 @@ pnpm e2e            # 브라우저 자동 테스트 (Playwright)
 ```
 `pnpm --filter student dev`로도 개발 서버를 띄울 수 있습니다.
 
+교사 대시보드(수업 연결, 모둠 실시간 현황, 안전 알림, 모두 멈춤)는 `pnpm classroom:dev`로 서버와 교사 앱을 함께 띄웁니다. 자세한 사용법은 `docs/classroom.md`를 보세요.
+
 테스트 방법(단위 테스트, 브라우저 테스트, `?playback=` 빠른 재생, 디버깅)은 `docs/testing.md`를 보세요.
 
 ## 단원 목록과 이동

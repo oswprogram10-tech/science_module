@@ -1,6 +1,10 @@
+import { Suspense, useMemo } from 'react';
+import { classroomUrl } from '../classroom/config';
+import { LazyControl } from '../classroom/lazy';
 import type { UnitEntry } from '../units';
 
 export function UnitList({ units, hrefOf }: { units: UnitEntry[]; hrefOf: (id: string) => string }) {
+  const classroomOn = useMemo(() => classroomUrl() !== null, []);
   const grades = [
     ...new Set(units.filter((u) => u.ok).map((u) => (u as Extract<UnitEntry, { ok: true }>).manifest.grade)),
   ].sort((a, b) => a - b);
@@ -11,6 +15,11 @@ export function UnitList({ units, hrefOf }: { units: UnitEntry[]; hrefOf: (id: s
       <header className="top">
         <h1>과학 실험 단원 목록</h1>
         <p className="question">실험해 볼 단원을 골라 주세요.</p>
+        {classroomOn && (
+          <Suspense fallback={null}>
+            <LazyControl />
+          </Suspense>
+        )}
       </header>
       <main className="unit-list">
         {grades.map((grade) => (

@@ -1,0 +1,78 @@
+import { describe, expect, it } from 'vitest';
+import {
+  CODE_ALPHABET,
+  MAX_MESSAGE_BYTES,
+  normalizeCode,
+  parseClientMessage,
+  parseServerMessage,
+} from './protocol';
+
+const j = (o: unknown) => JSON.stringify(o);
+const TOKEN = '0123456789abcdef0123456789abcdef';
+
+describe('수업 코드', () => {
+  it('헷갈리는 글자(0 O 1 I L)를 쓰지 않는다', () => {
+    for (const c of '0O1IL') expect(CODE_ALPHABET).not.toContain(c);
+    expect(CODE_ALPHABET).toHaveLength(31);
+  });
+  it('공백을 지우고 대문자로 바꾼다', () => {
+    expect(normalizeCode(' abc 234 ')).toBe('ABC234');
+  });
+  it('길이나 글자가 틀리면 null', () => {
+    expect(normalizeCode('ABC23')).toBeNull();
+    expect(normalizeCode('ABC0O1')).toBeNull();
+  });
+});
+
+describe('클라이언트 메시지', () => {
+  it('정상 join·status·safety·safetyClear', () => {
+    expect(parseClientMessage(j({ t: 'join', code: 'ABC234', group: 3, deviceTier: 'B', appVersion: '0.0.0' }))).toMatchObject({ t: 'join', group: 3 });
+    expect(
+      parseClientMessage(j({ t: 'status', unitId: 'g5-solution', activity: 'variable', phase: 'running', trials: 2, lastKind: 'fair-test', mismatch: false, safetyLocked: false })),
+    ).toMatchObject({ t: 'status', trials: 2 });
+    expect(parseClientMessage(j({ t: 'status', phase: 'idle', trials: 0, safetyLocked: false }))).not.toBeNull();
+    expect(parseClientMessage(j({ t: 'safety', type: 'NO_GOGGLES', at: 1700000000000 }))).not.toBeNull();
+    expect(parseClientMessage(j({ t: 'safetyClear', type: 'FOOD' }))).not.toBeNull();
+  });
+  it('정상 교사 메시지', () => {
+    expect(parseClientMessage(j({ t: 'create' }))).not.toBeNull();
+    expect(parseClientMessage(j({ t: 'watch', code: 'ABC234', token: TOKEN }))).not.toBeNull();
+    expect(parseClientMessage(j({ t: 'pause', on: true }))).not.toBeNull();
+    expect(parseClientMessage(j({ t: 'ack', group: 2, type: 'SPILL' }))).not.toBeNull();
+    expect(parseClientMessage(j({ t: 'end' }))).not.toBeNull();
+  });
+  it('잘못된 메시지는 null', () => {
+    expect(parseClientMessage('not json')).toBeNull();
+    expect(parseClientMessage(j({ t: 'nope' }))).toBeNull();
+    expect(parseClientMessage(j({ t: 'join', code: 'ABC234', group: 13, appVersion: '1' }))).toBeNull();
+    expect(parseClientMessage(j({ t: 'join', code: 'ABC234', group: 0, appVersion: '1' }))).toBeNull();
+    expect(parseClientMessage(j({ t: 'join', code: 'abc234', group: 1, appVersion: '1' }))).toBeNull();
+    expect(parseClientMessage(j({ t: 'join', code: 'ABC234', group: 1.5, appVersion: '1' }))).toBeNull();
+    expect(parseClientMessage(j({ t: 'pause', on: 'yes' }))).toBeNull();
+    expect(parseClientMessage(j({ t: 'watch', code: 'ABC234', token: 'short' }))).toBeNull();
+    expect(parseClientMessage(j({ t: 'safety', type: 'FIRE', at: 1 }))).toBeNull();
+  });
+  it('정해지지 않은 필드(예: 튜터 대화 원문)는 거절한다', () => {
+    expect(parseClientMessage(j({ t: 'status', phase: 'idle', trials: 0, safetyLocked: false, tutorText: '정답은…' }))).toBeNull();
+  });
+  it('8 KB를 넘으면 null', () => {
+    const big = j({ t: 'status', phase: 'idle', trials: 0, safetyLocked: false, lastKind: 'x'.repeat(MAX_MESSAGE_BYTES) });
+    expect(parseClientMessage(big)).toBeNull();
+  });
+});
+
+describe('서버 메시지', () => {
+  it('정상 메시지를 읽는다', () => {
+    expect(parseServerMessage(j({ t: 'joined', code: 'ABC234', group: 1 }))).not.toBeNull();
+    expect(parseServerMessage(j({ t: 'error', code: 'group_taken' }))).not.toBeNull();
+    expect(parseServerMessage(j({ t: 'created', code: 'ABC234', token: TOKEN }))).not.toBeNull();
+    expect(
+      parseServerMessage(
+        j({ t: 'snapshot', code: 'ABC234', paused: false, groups: [{ group: 1, online: true, lastSeen: 1, trials: 0, mismatch: false, safety: [], safetyLocked: false }] }),
+      ),
+    ).not.toBeNull();
+  });
+  it('모르는 오류 코드는 null', () => {
+    expect(parseServerMessage(j({ t: 'error', code: 'boom' }))).toBeNull();
+  });
+});

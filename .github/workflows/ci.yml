@@ -43,6 +43,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # @playwright/test 버전(1.63.0)에 맞는 크로미움과 시스템 의존성을 설치한다.
       - run: pnpm --filter student exec playwright install --with-deps chromium
+      # playwright.config.ts의 webServer가 학생 앱(4174), 교사 앱(4175), 수업 중계 서버(8787)를 함께 띄운다.
       - run: pnpm e2e
       - name: 실패 시 리포트·트레이스 업로드
         if: failure()

@@ -28,6 +28,7 @@ import { MockSafetyPanel } from '../../components/safety/MockSafetyPanel';
 import { SafetyAlertBanner } from '../../components/safety/SafetyAlertBanner';
 import { SafetyDialog } from '../../components/safety/SafetyDialog';
 import { devMode } from '../../components/safety/devMode';
+import { reportSafety, reportSafetyClear, useClassroomStatus } from '../../classroom/bus';
 import { HAZARD_NOTICE, SAFETY_MESSAGES, speak } from '../../components/safety/safetyMessages';
 
 const ACTOR_ID = 'anon-student-001';
@@ -78,6 +79,7 @@ export function ClassifyLab({
   useEffect(() => {
     detector.start((e: SafetyEvent) => {
       store.update((s) => raiseAlert(s, e));
+      reportSafety(e.type);
       speak(SAFETY_MESSAGES[e.type]);
       emit('safety-alert', { type: e.type });
     });
@@ -168,10 +170,25 @@ export function ClassifyLab({
 
   const alertMessages = [...new Set(state.alerts.map((a) => SAFETY_MESSAGES[a.type]))];
 
+  // 수업 연결(있을 때만 쓰인다): 진행 요약만 알린다.
+  const testCount = Object.values(state.tests).reduce((n, t) => n + (t?.length ?? 0), 0);
+  useClassroomStatus({
+    unitId,
+    activity: 'classify',
+    phase: state.checked ? 'reviewing' : testCount > 0 ? 'running' : 'designing',
+    trials: testCount,
+    lastKind: situation.when,
+    mismatch: situation.when === 'prediction-mismatch',
+    safetyLocked: state.alerts.length > 0,
+  });
+
   return (
     <div className="app">
       <PatternDefs />
-      <SafetyAlertBanner messages={alertMessages} onDismiss={() => store.update(dismissAlerts)} />
+      <SafetyAlertBanner messages={alertMessages} onDismiss={() => {
+          reportSafetyClear(state.alerts.map((a) => a.type));
+          store.update(dismissAlerts);
+        }} />
       <header className="top">
         <a className="back" href="#/">← 단원 목록</a>
         <h1>{title}</h1>

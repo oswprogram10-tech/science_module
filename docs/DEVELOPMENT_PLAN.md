@@ -28,6 +28,7 @@
 | D6 | 1단계 우선 단원 | 10개로 확정(§7.2). 혼합물의 분리는 2단계로. |
 | D7 | 센서 프로토콜 | 0단계에 제조사 프로토콜을 확보한다. 실패하면 micro:bit·아두이노 기반 자체 센서로 대체. Mock 드라이버로 먼저 개발한다. |
 | D8 | 기준 기기와 앱 포장 | 기준 기기 초안(A/B/C 등급)과 앱 포장 v0. 실제 보유 기기 목록으로 갱신 필요. (`docs/DEVICES.md`, `docs/app-packaging.md`) |
+| D9 | 수업 중계 서버 v0 | Fastify + `@fastify/websocket`, 상태는 메모리에만 둔다(로그인·기록 저장이 필요한 2단계에서 NestJS·PostgreSQL 도입). 학생은 수업 코드+모둠 번호로만 참여하고 진행 요약만 보낸다. (`docs/specs/teacher-dashboard-v0.md`, `docs/classroom.md`) |
 
 ---
 
@@ -87,7 +88,7 @@
                                            │ HTTPS / WebSocket
 ┌──────────────────────── Server (CSAP 클라우드) ───────────────────────────────┐
 │  API (NestJS) · 인증 · 학급/모둠 · 콘텐츠 매니페스트 배포                      │
-│  Realtime Hub (WebSocket: 교사 대시보드 ↔ 학생 기기)                          │
+│  Realtime Hub (WebSocket: 교사 대시보드 ↔ 학생 기기) — v0: Fastify 중계(메모리)│
 │  Model Registry (튜터·비전 모델 버전 배포) · 가드레일 집계 수신               │
 │  LRS (xAPI 저장) · Analytics 배치 · PostgreSQL · Redis · Object Storage        │
 └────────────────────────────────────────────────────────────────────────────────┘

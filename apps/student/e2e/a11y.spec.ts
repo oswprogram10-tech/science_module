@@ -13,6 +13,9 @@ import {
   predictSolution,
   indicatorButton,
   setValue,
+  createClass,
+  rawStudent,
+  studentUrl,
 } from './helpers';
 import type { Locator } from '@playwright/test';
 
@@ -397,3 +400,42 @@ test('g6-seasons 어두운 화면: 처음, 여름 실행 뒤, 한밤, 기울기 
   await setValue(page, '자전축 기울기', '기울지 않음');
   await expectNoSeriousViolations(page);
 });
+
+// ---- 수업 연결 ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`교사 화면(${scheme === 'light' ? '밝게' : '어둡게'}): 시작·수업 화면·끝내기 대화상자`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.goto('http://localhost:4175/');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+
+    const code = await createClass(page);
+    // 연결된 모둠, 안전 경고가 있는 모둠, 끊긴 모둠을 한 화면에 모은다.
+    const a = await rawStudent(code, 2);
+    const b = await rawStudent(code, 5);
+    b.send(JSON.stringify({ t: 'status', unitId: 'g5-solution', activity: 'variable', phase: 'reviewing', trials: 2, lastKind: 'confounded', mismatch: false, safetyLocked: true }));
+    b.send(JSON.stringify({ t: 'safety', type: 'NO_GOGGLES', at: Date.now() }));
+    const c = await rawStudent(code, 8);
+    c.close();
+    await expect(page.getByRole('alert')).toContainText('1건');
+    await expect(page.getByRole('listitem', { name: '8모둠', exact: true })).toContainText('끊김');
+    await expectNoSeriousViolations(page);
+
+    await page.getByRole('button', { name: '모두 멈춤' }).click();
+    await expect(page.getByRole('button', { name: '다시 시작' })).toBeVisible();
+    await page.getByRole('button', { name: '수업 끝내기' }).click();
+    await expect(page.getByRole('dialog', { name: '수업을 끝낼까요?' })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    a.close();
+    b.close();
+  });
+
+  test(`학생 수업 참여 대화상자(${scheme === 'light' ? '밝게' : '어둡게'})`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.goto(studentUrl());
+    await page.getByRole('button', { name: '수업 참여' }).click();
+    await expect(page.getByRole('dialog', { name: '수업 참여' })).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+}

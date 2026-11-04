@@ -14,6 +14,9 @@
     "tutor:export": "tsx packages/tutor/scripts/cli.ts export",
     "tutor:import": "tsx packages/tutor/scripts/cli.ts import",
     "tutor:authoring-data": "tsx packages/tutor/scripts/authoring-data.ts",
+    "teacher:dev": "pnpm --filter teacher dev",
+    "server:dev": "pnpm --filter @sci/server dev",
+    "classroom:dev": "pnpm --parallel --filter @sci/server --filter teacher dev",
     "cap:sync": "pnpm --filter student cap:sync",
     "android:debug": "pnpm --filter student android:debug",
     "ios:sim": "pnpm --filter student ios:sim"

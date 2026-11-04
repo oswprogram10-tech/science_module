@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import {
   analyzeTrial,
   canRun,
@@ -25,6 +25,9 @@ import { MockSafetyPanel } from './components/safety/MockSafetyPanel';
 import { SafetyAlertBanner } from './components/safety/SafetyAlertBanner';
 import { SafetyDialog } from './components/safety/SafetyDialog';
 import { devMode } from './components/safety/devMode';
+import { reportSafety, reportSafetyClear, useClassroomStatus, usePaused } from './classroom/bus';
+import { classroomUrl } from './classroom/config';
+import { LazyHost } from './classroom/lazy';
 import { resolveSafetyMessages, speak } from './components/safety/safetyMessages';
 
 const subscribeHash = (cb: () => void) => {
@@ -34,6 +37,25 @@ const subscribeHash = (cb: () => void) => {
 const getHash = () => window.location.hash;
 
 export function App() {
+  const hash = useSyncExternalStore(subscribeHash, getHash);
+  const paused = usePaused();
+  const classroomOn = useMemo(() => classroomUrl() !== null, []);
+  return (
+    <>
+      {/* 선생님이 "모두 멈춤"을 누르면 아래 화면은 입력을 받지 않는다. */}
+      <div inert={paused}>
+        <Routes />
+      </div>
+      {classroomOn && (
+        <Suspense fallback={null}>
+          <LazyHost showPill={parseRoute(hash).page === 'unit'} />
+        </Suspense>
+      )}
+    </>
+  );
+}
+
+function Routes() {
   const hash = useSyncExternalStore(subscribeHash, getHash);
   const route = parseRoute(hash);
   const unit =
@@ -96,6 +118,7 @@ function Lab({
   const safetyMessages = useMemo(() => resolveSafetyMessages(experiment.safetyMessages), [experiment]);
   const detector = useMemo(() => new MockSafetyDetector(), []);
   const dev = useMemo(devMode, []);
+  const paused = usePaused();
   const [alerts, setAlerts] = useState<SafetyEventType[]>([]);
   const [safetyConfirmed, setSafetyConfirmed] = useState(false);
   const [safetyOpen, setSafetyOpen] = useState(false);
@@ -113,6 +136,7 @@ function Lab({
   useEffect(() => {
     detector.start((e: SafetyEvent) => {
       setAlerts((a) => [...a, e.type]);
+      reportSafety(e.type);
       speak(safetyMessages[e.type]);
       emit('safety-alert', { extensions: toExtensions({ type: e.type }) });
     });
@@ -126,13 +150,13 @@ function Lab({
 
   // 재생 루프: requestAnimationFrame으로 runtime.tickNow 호출
   useEffect(() => {
-    if (!state.playing) return;
+    if (!state.playing || paused) return;
     let id = requestAnimationFrame(function frame() {
       runtime.tickNow();
       id = requestAnimationFrame(frame);
     });
     return () => cancelAnimationFrame(id);
-  }, [state.playing, runtime]);
+  }, [state.playing, paused, runtime]);
 
   // 재생이 끝나면 모듈이 정한 시각으로 플레이헤드를 옮긴다(시행마다 한 번).
   const restedTrial = useRef<string | null>(null);
@@ -234,9 +258,26 @@ function Lab({
     { forbiddenAnswers: experiment.tutor.forbiddenAnswers, limits: experiment.limits },
   );
 
+  // 수업 연결(있을 때만 쓰인다): 진행 요약을 알린다. 튜터 문장·센서 값은 보내지 않는다.
+  useClassroomStatus({
+    unitId,
+    activity: 'variable',
+    phase: state.playing ? 'running' : state.trials.length > 0 ? 'reviewing' : 'designing',
+    trials: state.trials.length,
+    ...(last ? { lastKind: last.analysis.kind } : {}),
+    mismatch: !!(observed && last?.prediction && observed !== last.prediction),
+    safetyLocked,
+  });
+
   return (
     <div className="app">
-      <SafetyAlertBanner messages={alertMessages} onDismiss={() => setAlerts([])} />
+      <SafetyAlertBanner
+        messages={alertMessages}
+        onDismiss={() => {
+          reportSafetyClear(alerts);
+          setAlerts([]);
+        }}
+      />
       <header className="top">
         <a className="back" href="#/">← 단원 목록</a>
         <h1>{title}</h1>
