@@ -7,11 +7,15 @@ import heatJson from '../../../content/units/g5-heat/manifest.json';
 import lightJson from '../../../content/units/g5-light/manifest.json';
 import electricityJson from '../../../content/units/g6-electricity/manifest.json';
 import landJson from '../../../content/units/g4-land/manifest.json';
+import earthJson from '../../../content/units/g6-earth-motion/manifest.json';
 import {
   ManifestError,
+  isClassificationExperiment,
+  isObservationExperiment,
   isVariableExperiment,
   parseManifest,
   type ClassificationExperiment,
+  type ObservationExperiment,
   type VariableExperiment,
 } from './index';
 
@@ -220,5 +224,51 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     const badMsg = clone(combustionJson);
     badMsg.experiments[0].safetyMessages = { NO_GOGGLES: 3 };
     expect(() => parseManifest(badMsg)).toThrow(ManifestError);
+  });
+});
+
+describe('관찰 활동 (sky-observation)', () => {
+  const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
+  const e = parseManifest(earthJson).experiments[0]!;
+
+  it('지구의 운동 매니페스트가 검증을 통과하고 관찰 활동으로 판별된다', () => {
+    expect(isObservationExperiment(e)).toBe(true);
+    expect(isVariableExperiment(e)).toBe(false);
+    expect(isClassificationExperiment(e)).toBe(false);
+    const o = e as ObservationExperiment;
+    expect(o.tasks.map((t) => t.id)).toEqual(['sun-path', 'day-night', 'star-path', 'season-stars', 'winter-stars']);
+    expect(o.tasks.map((t) => t.view)).toEqual(['rotation', 'rotation', 'rotation', 'revolution', 'revolution']);
+    expect(o.tasks.map((t) => t.answer)).toEqual([
+      'sun-path-direction', 'antipode-day-night', 'star-path-direction', 'constellation-changes', 'winter-constellation',
+    ]);
+    for (const t of o.tasks) expect(t.probes.map((p) => p.when).sort()).toEqual(
+      ['before-observe', 'observing', 'prediction-mismatch', 'record-match', 'record-mismatch'],
+    );
+    expect(o.tutor.probes).toEqual([]);
+    expect(o.params).toEqual({ latDeg: 37.5 });
+  });
+
+  it('기존 활동 유형은 관찰 활동으로 판별되지 않는다', () => {
+    expect(isObservationExperiment(parseManifest(acidBaseJson).experiments[0]!)).toBe(false);
+    expect(isObservationExperiment(parseManifest(manifestJson).experiments[0]!)).toBe(false);
+    expect(isVariableExperiment(parseManifest(landJson).experiments[0]!)).toBe(true);
+  });
+
+  it('잘못된 관찰 활동을 거부한다', () => {
+    const edit = (fn: (x: any) => void) => {
+      const c = clone(earthJson);
+      fn(c.experiments[0]);
+      return c;
+    };
+    expect(() => parseManifest(edit((x) => { x.tasks[0].answer = 'nope'; }))).toThrow(ManifestError);
+    expect(() => parseManifest(edit((x) => { x.tasks[0].view = 'orbit'; }))).toThrow(ManifestError);
+    expect(() => parseManifest(edit((x) => { x.tasks[1].options = [x.tasks[1].options[0]]; }))).toThrow(ManifestError);
+    expect(() =>
+      parseManifest(edit((x) => { x.tasks[3].options = Array.from({ length: 6 }, (_, i) => ({ value: `v${i}`, label: `v${i}` })); })),
+    ).toThrow(ManifestError);
+    expect(() => parseManifest(edit((x) => { x.tasks[0].controls[0].default = 'sideways'; }))).toThrow(ManifestError);
+    expect(() => parseManifest(edit((x) => { x.tasks[0].probes[0].when = 'before-run'; }))).toThrow(ManifestError);
+    expect(() => parseManifest(edit((x) => { x.tasks = []; }))).toThrow(ManifestError);
+    expect(() => parseManifest(edit((x) => { delete x.tasks; }))).toThrow(ManifestError);
   });
 });

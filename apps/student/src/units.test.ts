@@ -12,8 +12,8 @@ import { UNITS, buildRegistry, parseRoute, unitHash } from './units';
 const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
 describe('단원 레지스트리', () => {
-  it('여덟 단원이 모두 로드된다', () => {
-    expect(UNITS.map((u) => u.id)).toEqual(['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat', 'g5-light', 'g6-electricity', 'g4-land']);
+  it('아홉 단원이 모두 로드된다', () => {
+    expect(UNITS.map((u) => u.id)).toEqual(['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat', 'g5-light', 'g6-electricity', 'g4-land', 'g6-earth-motion']);
     expect(UNITS.every((u) => u.ok)).toBe(true);
     const gases = UNITS[0]!;
     if (gases.ok) expect(gases.module.kind).toBe('gas-syringe');
@@ -37,6 +37,9 @@ describe('단원 레지스트리', () => {
     const land = UNITS[7]!;
     expect(land.ok && land.activity).toBe('variable');
     if (land.ok) expect(land.module.kind).toBe('magma-cooling');
+    const earth = UNITS[8]!;
+    expect(earth.ok && earth.activity).toBe('observe');
+    if (earth.ok) expect(earth.module.kind).toBe('sky-observation');
   });
 
   it('schema 검증에 실패한 단원이 있어도 다른 단원은 로드된다', () => {

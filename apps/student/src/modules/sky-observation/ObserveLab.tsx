@@ -1,0 +1,367 @@
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { isDaylight } from '@sci/engine-earth';
+import type { ObservationExperiment } from '@sci/schema';
+import { renderAndGuard } from '@sci/tutor';
+import { MemoryRecorder, buildStatement, toExtensions } from '@sci/xapi';
+import { readPlaybackSeconds } from '../../playback';
+import { GroundView } from './GroundView';
+import { RevolutionSpaceView, RotationSpaceView } from './SpaceView';
+import { feedbackText } from './feedback';
+import { dayFor, formatHour, groundScene, rotationOf, sunTrail } from './model';
+import {
+  canObserve,
+  canRecord,
+  createInitialState,
+  createObserveStore,
+  current,
+  feedbackKind,
+  isCompleted,
+  predict,
+  record,
+  recordMatchesModel,
+  select,
+  setControl,
+  setHour,
+  setMonth,
+  tutorSituation,
+  type Value,
+} from './observeStore';
+
+const ACTOR_ID = 'anon-student-001';
+const activityId = (unitId: string, expId: string) => `https://sci-bridge.local/activities/${unitId}/${expId}`;
+
+const prefersReducedMotion = (): boolean => {
+  try {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch {
+    return false;
+  }
+};
+
+export function ObserveLab({
+  unitId,
+  title,
+  experiment: exp,
+}: {
+  unitId: string;
+  title: string;
+  experiment: ObservationExperiment;
+}) {
+  const store = useMemo(() => createObserveStore(createInitialState(exp)), [exp]);
+  const state = useSyncExternalStore(store.subscribe, store.getState);
+  const recorder = useMemo(() => new MemoryRecorder(), []);
+  const reduced = useMemo(prefersReducedMotion, []);
+  const daySeconds = useMemo(() => readPlaybackSeconds() ?? 8, []);
+  const [playing, setPlaying] = useState(false);
+
+  const emit = useCallback(
+    (verb: string, extensions?: Record<string, unknown>) => {
+      const stmt = buildStatement({
+        actorId: ACTOR_ID,
+        verb,
+        objectId: activityId(unitId, exp.id),
+        result: extensions ? { extensions: toExtensions(extensions) } : undefined,
+      });
+      recorder.record(stmt);
+      console.debug('[xAPI]', stmt);
+    },
+    [unitId, exp.id, recorder],
+  );
+
+  const { task, ts } = current(state, exp);
+  const enabled = canObserve(state, exp);
+  const recordable = canRecord(state, exp);
+  const rotation = rotationOf(ts.controls);
+  const optionLabel = (v: Value | null | undefined) => task.options.find((o) => o.value === v)?.label ?? '';
+
+  /** 첫 조작은 'observed'로 알린다. */
+  const noteObserved = (wasObserved: boolean, detail: Record<string, unknown>) => {
+    if (!wasObserved || 'control' in detail) emit('observed', { task: task.id, ...detail });
+  };
+
+  const onHour = useCallback(
+    (hour: number) => {
+      const before = store.getState();
+      const after = store.update((s) => setHour(s, exp, hour));
+      if (after !== before) {
+        const was = before.tasks[before.selected]!.observed;
+        if (!was) emit('observed', { task: before.selected, kind: 'hour' });
+      }
+    },
+    [store, exp, emit],
+  );
+
+  // 재생: 하루를 daySeconds초에 돌린다. 끝나거나 화면에서 사라지면 반드시 멈춘다.
+  const hourRef = useRef(ts.hour);
+  hourRef.current = ts.hour;
+  useEffect(() => {
+    if (!playing) return;
+    const start = hourRef.current >= 24 ? 0 : hourRef.current;
+    const t0 = performance.now();
+    let id = 0;
+    const frame = () => {
+      const h = Math.min(24, start + ((performance.now() - t0) / 1000) * (24 / daySeconds));
+      onHour(h);
+      if (h >= 24) {
+        setPlaying(false);
+        return;
+      }
+      id = requestAnimationFrame(frame);
+    };
+    id = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(id);
+  }, [playing, daySeconds, onHour]);
+
+  const onSelectTask = (id: string) => {
+    setPlaying(false);
+    store.update((s) => select(s, exp, id));
+  };
+
+  const onPredict = (value: Value) => {
+    const before = store.getState();
+    const after = store.update((s) => predict(s, exp, value));
+    if (after !== before) emit('predicted', { task: task.id, prediction: String(value) });
+  };
+
+  const onMonth = (month: number) => {
+    const before = store.getState();
+    const after = store.update((s) => setMonth(s, exp, month));
+    if (after !== before) noteObserved(before.tasks[before.selected]!.observed, { kind: 'month' });
+  };
+
+  const onControl = (key: string, value: Value) => {
+    const before = store.getState();
+    const after = store.update((s) => setControl(s, exp, key, value));
+    if (after !== before) {
+      setPlaying(false);
+      noteObserved(before.tasks[before.selected]!.observed, { kind: 'control', control: key, value: String(value) });
+    }
+  };
+
+  const onRecord = (value: Value) => {
+    const before = store.getState();
+    const after = store.update((s) => record(s, exp, value));
+    if (after === before) return;
+    const cur = current(after, exp);
+    emit('recorded', {
+      task: task.id,
+      option: String(value),
+      matchesModel: recordMatchesModel(exp, cur.task, cur.ts),
+    });
+    if (!isCompleted(before, task.id)) emit('task-completed', { task: task.id });
+  };
+
+  // ---- 화면 값 ----
+  const scene = groundScene(exp, task, ts);
+  const trail = task.view === 'rotation' ? sunTrail(exp, task, ts, state.trail) : [];
+  const spaceLabel =
+    task.view === 'rotation'
+      ? `우주에서 보기: ${scene.timeLabel}, 북극 위에서 본 지구. 우리나라는 ${
+          isDaylight({ hour: ts.hour, lonOffsetDeg: 0 }) ? '태양 빛을 받는 낮' : '태양 빛을 받지 못하는 밤'
+        } 쪽에 있고, ${
+          task.answer === 'antipode-day-night'
+            ? `지구 반대편은 ${isDaylight({ hour: ts.hour, lonOffsetDeg: 180 }) ? '낮' : '밤'} 쪽에 있어요. `
+            : ''
+        }지구는 ${rotation === 'forward' ? '서쪽에서 동쪽으로' : '동쪽에서 서쪽으로'} 돌아요`
+      : `우주에서 보기: ${ts.month}월 15일, 지구는 태양 둘레 궤도 위에 있고 밤하늘은 태양 반대쪽을 향해요`;
+
+  const tutorText = renderAndGuard(tutorSituation(state, exp), {}, task.probes, {
+    forbiddenAnswers: exp.tutor.forbiddenAnswers,
+    limits: exp.limits,
+  });
+  const feedback = feedbackText(feedbackKind(state, exp));
+  const showAntipode = task.answer === 'antipode-day-night';
+
+  return (
+    <div className="app">
+      <header className="top">
+        <a className="back" href="#/">← 단원 목록</a>
+        <h1>{title}</h1>
+        <p className="question">탐구 질문: {exp.question}</p>
+      </header>
+
+      <main className="observe-layout">
+        <section className="panel" aria-label="과제 목록">
+          <h2>과제 목록</h2>
+          <ul className="task-list">
+            {exp.tasks.map((t) => {
+              const done = isCompleted(state, t.id);
+              return (
+                <li key={t.id}>
+                  <button
+                    type="button"
+                    className={state.selected === t.id ? 'selected' : ''}
+                    aria-current={state.selected === t.id ? 'true' : undefined}
+                    onClick={() => onSelectTask(t.id)}
+                  >
+                    <span>{t.title}</span>
+                    {done && (
+                      <span className="done-tag">
+                        <span aria-hidden="true">✓ </span>완료
+                      </span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+
+        <div className="center">
+          <div className="observe-views">
+            <figure className="view observe-view">
+              <figcaption>땅에서 보기</figcaption>
+              <GroundView scene={scene} trail={trail} />
+              <p className="view-note" data-testid="ground-caption">{scene.caption}</p>
+            </figure>
+            <figure className="view observe-view space">
+              <figcaption>우주에서 보기</figcaption>
+              {task.view === 'rotation' ? (
+                <RotationSpaceView hour={ts.hour} rotation={rotation} showAntipode={showAntipode} ariaLabel={spaceLabel} />
+              ) : (
+                <RevolutionSpaceView month={ts.month} dayOfYear={dayFor(exp, task, ts.month)} ariaLabel={spaceLabel} />
+              )}
+              <p className="view-note" data-testid="space-caption">
+                {task.view === 'rotation' ? `북극 위에서 본 모습 · ${scene.timeLabel}` : `${ts.month}월 15일 · 밤 9시`}
+              </p>
+            </figure>
+          </div>
+
+          <section className="panel" aria-label="관찰하기">
+            <h2>관찰하기</h2>
+            {!enabled && (
+              <p className="hint" aria-live="polite">
+                예측을 먼저 골라 주세요.
+              </p>
+            )}
+            {task.view === 'rotation' ? (
+              <div className="slider-row">
+                <span id="slider-label" className="slider-name">시각</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={24}
+                  step={0.5}
+                  value={ts.hour}
+                  disabled={!enabled}
+                  aria-labelledby="slider-label"
+                  aria-valuetext={formatHour(ts.hour)}
+                  onChange={(e) => {
+                    setPlaying(false);
+                    onHour(Number(e.target.value));
+                  }}
+                />
+                <span className="slider-value" aria-hidden="true">{formatHour(ts.hour)}</span>
+                {!reduced && (
+                  <button type="button" className="secondary play" disabled={!enabled} onClick={() => setPlaying((p) => !p)}>
+                    {playing ? '⏸ 멈추기' : '▶ 재생'}
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
+                <div className="slider-row">
+                  <span id="slider-label" className="slider-name">달</span>
+                  <input
+                    type="range"
+                    min={1}
+                    max={12}
+                    step={1}
+                    value={ts.month}
+                    disabled={!enabled}
+                    aria-labelledby="slider-label"
+                    aria-valuetext={`${ts.month}월`}
+                    onChange={(e) => onMonth(Number(e.target.value))}
+                  />
+                  <span className="slider-value" aria-hidden="true">{ts.month}월</span>
+                </div>
+                <p className="hint">시각은 밤 9시로 맞춰져 있어요.</p>
+              </>
+            )}
+            {(task.controls ?? []).map((c) => (
+              <fieldset key={c.key} className="plain control-group" disabled={!enabled}>
+                <legend>{c.label}</legend>
+                <div className="choices">
+                  {c.options.map((o) => (
+                    <button
+                      key={String(o.value)}
+                      type="button"
+                      className={ts.controls[c.key] === o.value ? 'selected' : ''}
+                      aria-pressed={ts.controls[c.key] === o.value}
+                      onClick={() => onControl(c.key, o.value)}
+                    >
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+            ))}
+          </section>
+        </div>
+
+        <div className="side">
+          <section className="panel" aria-label="예측">
+            <h2>예측</h2>
+            <fieldset className="plain predict-group">
+              <legend>{task.question}</legend>
+              <div className="choices">
+                {task.options.map((o) => (
+                  <button
+                    key={String(o.value)}
+                    type="button"
+                    className={ts.prediction === o.value ? 'selected' : ''}
+                    aria-pressed={ts.prediction === o.value}
+                    onClick={() => onPredict(o.value)}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          </section>
+
+          <section className="panel" aria-label="관찰 기록">
+            <h2>관찰 기록</h2>
+            <fieldset className="plain predict-group" disabled={!recordable}>
+              <legend>내가 관찰한 것은 무엇인가요?</legend>
+              <div className="choices">
+                {task.options.map((o) => (
+                  <button
+                    key={String(o.value)}
+                    type="button"
+                    className={ts.recorded?.value === o.value ? 'selected' : ''}
+                    aria-pressed={ts.recorded?.value === o.value}
+                    onClick={() => onRecord(o.value)}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+            {!recordable && (
+              <p className="hint">
+                {enabled ? '시각이나 달, 조건을 한 번 바꾸어 관찰하면 기록할 수 있어요.' : '예측을 고르고 관찰한 뒤에 기록할 수 있어요.'}
+              </p>
+            )}
+            <p className="compare" data-testid="compare" aria-live="polite">
+              {ts.recorded
+                ? `예측: ${optionLabel(ts.prediction)} / 관찰: ${optionLabel(ts.recorded.value)}`
+                : '기록하면 예측과 관찰을 나란히 보여 줄게요.'}
+            </p>
+          </section>
+
+          <div className="boxes single">
+            <div className="box feedback" aria-live="polite">
+              <h2>피드백</h2>
+              <p>{feedback}</p>
+            </div>
+            <div className="box tutor" aria-live="polite">
+              <h2>생각해 볼까요?</h2>
+              <p>{tutorText}</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}

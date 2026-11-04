@@ -2,7 +2,7 @@ import type { ComponentType } from 'react';
 import type { Values } from '@sci/gateway';
 import type { Trial } from '@sci/runtime';
 import type { SensorKind } from '@sci/sensors';
-import type { ClassificationExperiment, VariableExperiment as Experiment, ModuleKind } from '@sci/schema';
+import type { ClassificationExperiment, ObservationExperiment, VariableExperiment as Experiment, ModuleKind } from '@sci/schema';
 
 /** 화면이 그리는 데 필요한 값. values는 화면에 보이는 시행(없으면 현재 선택)의 조건이다. */
 export interface ViewProps<S extends { t: number }> {
@@ -67,4 +67,10 @@ export type AnyModule = ExperimentModule<any, any>;
 export interface ClassifyModule {
   kind: 'indicator-classify';
   validate(exp: ClassificationExperiment): string[];
+}
+
+/** 관찰 활동 모듈. 화면은 ObserveLab이 그리고, 모듈은 매니페스트 검증만 맡는다. */
+export interface ObserveModule {
+  kind: 'sky-observation';
+  validate(exp: ObservationExperiment): string[];
 }

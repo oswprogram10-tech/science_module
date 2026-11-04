@@ -14,6 +14,7 @@ import {
   indicatorButton,
   setValue,
 } from './helpers';
+import type { Locator } from '@playwright/test';
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
@@ -262,5 +263,70 @@ test('g4-land 어두운 화면에서 다 굳은 뒤', async ({ page }) => {
   await runButton(page).click();
   await confirmSafetyDialog(page);
   await expect(runButton(page)).toHaveText('▶ 실험 실행');
+  await expectNoSeriousViolations(page);
+});
+
+// ---- g6-earth-motion ----
+
+const region = (page: Page, name: string) => page.getByRole('region', { name, exact: true });
+async function earthPick(page: Page, title: string, prediction: string) {
+  await region(page, '과제 목록').getByRole('button', { name: new RegExp(`^${title}`) }).click();
+  await region(page, '예측').getByRole('button', { name: prediction, exact: true }).click();
+}
+const earthSlider = (page: Page, name: '시각' | '달'): Locator => page.getByRole('slider', { name, exact: true });
+
+test('g6-earth-motion 처음 화면', async ({ page }) => {
+  await gotoUnit(page, 'g6-earth-motion');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g6-earth-motion 태양 과제를 조작하고 기록한 뒤(낮, 만약에)', async ({ page }) => {
+  await gotoUnit(page, 'g6-earth-motion');
+  await earthPick(page, '하루 동안 태양의 움직임', '동쪽에서 서쪽으로');
+  await earthSlider(page, '시각').fill('9');
+  await region(page, '관찰 기록').getByRole('button', { name: '동쪽에서 서쪽으로', exact: true }).click();
+  await expectNoSeriousViolations(page);
+  await region(page, '관찰하기').getByRole('button', { name: /\(만약에\)/ }).click();
+  await region(page, '관찰 기록').getByRole('button', { name: '동쪽에서 서쪽으로', exact: true }).click();
+  await expect(page.getByText('관찰 화면을 다시 살펴볼까요?')).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g6-earth-motion 낮과 밤 과제(반대편 표시, 밤)', async ({ page }) => {
+  await gotoUnit(page, 'g6-earth-motion');
+  await earthPick(page, '낮과 밤', '낮이에요');
+  await earthSlider(page, '시각').fill('2');
+  await expectNoSeriousViolations(page);
+});
+
+test('g6-earth-motion 별 과제(밤하늘, 별자리 이름)', async ({ page }) => {
+  await gotoUnit(page, 'g6-earth-motion');
+  await earthPick(page, '밤하늘 별의 움직임', '동쪽에서 서쪽으로');
+  await earthSlider(page, '시각').fill('22');
+  await expect(page.getByTestId('constellation-orion')).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g6-earth-motion 계절 별자리 과제(공전 그림)', async ({ page }) => {
+  await gotoUnit(page, 'g6-earth-motion');
+  await earthPick(page, '계절에 따라 보이는 별자리', '계절이 바뀌어도 같아요');
+  await earthSlider(page, '달').fill('1');
+  await expectNoSeriousViolations(page);
+});
+
+test('g6-earth-motion 어두운 화면: 처음, 낮, 별, 계절', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await gotoUnit(page, 'g6-earth-motion');
+  await expectNoSeriousViolations(page);
+  await earthPick(page, '하루 동안 태양의 움직임', '동쪽에서 서쪽으로');
+  await earthSlider(page, '시각').fill('9');
+  await region(page, '관찰 기록').getByRole('button', { name: '동쪽에서 서쪽으로', exact: true }).click();
+  await expectNoSeriousViolations(page);
+  await earthPick(page, '밤하늘 별의 움직임', '동쪽에서 서쪽으로');
+  await earthSlider(page, '시각').fill('22');
+  await expectNoSeriousViolations(page);
+  await earthPick(page, '계절에 따라 보이는 별자리', '계절마다 달라져요');
+  await earthSlider(page, '달').fill('8');
   await expectNoSeriousViolations(page);
 });

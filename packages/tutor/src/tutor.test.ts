@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import manifestJson from '../../../content/units/g5-solution/manifest.json';
-import { parseManifest, type ClassificationExperiment, type VariableExperiment } from '@sci/schema';
+import { parseManifest, type ClassificationExperiment, type ObservationExperiment, type VariableExperiment } from '@sci/schema';
+import earthMotionJson from '../../../content/units/g6-earth-motion/manifest.json';
 import {
   FALLBACK_PROBE,
   guardOutput,
@@ -539,5 +540,40 @@ describe('g4-land 매니페스트 probe', () => {
       expect(text).not.toBe(FALLBACK_PROBE);
       expect(guardOutput(text, eGuard).ok, text).toBe(true);
     }
+  });
+});
+
+// ---------- 지구의 운동(관찰 활동) 매니페스트 ----------
+describe('지구의 운동 과제 probe 전수 검사', () => {
+  const o = parseManifest(earthMotionJson).experiments[0]! as ObservationExperiment;
+  const oGuard = { forbiddenAnswers: o.tutor.forbiddenAnswers, limits: o.limits };
+
+  it('모든 과제 × 모든 probe가 가드를 통과하고 폴백이 아니며 그대로 출력된다', () => {
+    let count = 0;
+    for (const task of o.tasks) {
+      for (const probe of task.probes) {
+        const out = renderAndGuard(probe.when, {}, task.probes, oGuard);
+        expect(out, `${task.id}/${probe.when}`).not.toBe(FALLBACK_PROBE);
+        expect(out).toBe(probe.text);
+        expect(guardOutput(probe.text, oGuard).ok, `${task.id}/${probe.when}: ${probe.text}`).toBe(true);
+        expect(out).not.toMatch(/\{|\}|\(를\)|\(는\)|\(가\)/);
+        count++;
+      }
+    }
+    expect(count).toBe(25);
+  });
+
+  it('과제 probe에는 어려운 용어(limits)와 정답 문장이 없다', () => {
+    for (const task of o.tasks) {
+      for (const probe of task.probes) {
+        for (const l of o.limits) expect(probe.text, `${task.id}/${probe.when}`).not.toContain(l);
+        for (const f of o.tutor.forbiddenAnswers) expect(probe.text, `${task.id}/${probe.when}`).not.toContain(f);
+      }
+    }
+  });
+
+  it('금지 문장과 limits 용어는 실제로 가드에 걸린다', () => {
+    for (const phrase of o.tutor.forbiddenAnswers) expect(guardOutput(phrase, oGuard).ok).toBe(false);
+    for (const l of o.limits) expect(guardOutput(`${l}이에요`, oGuard).ok, l).toBe(false);
   });
 });

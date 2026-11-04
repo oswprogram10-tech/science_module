@@ -12,6 +12,8 @@ import { MemoryRecorder, buildStatement, toExtensions } from '@sci/xapi';
 import type { VariableExperiment } from '@sci/schema';
 import { MockSafetyDetector, type SafetyEvent, type SafetyEventType } from '@sci/vision';
 import { ClassifyLab } from './modules/indicator-classify/ClassifyLab';
+import { ObserveLab } from './modules/sky-observation/ObserveLab';
+import { readPlaybackSeconds } from './playback';
 import { UNITS, parseRoute, unitHash, type UnitEntry } from './units';
 import type { AnyModule } from './modules/types';
 import { DesignPanel } from './components/DesignPanel';
@@ -31,19 +33,6 @@ const subscribeHash = (cb: () => void) => {
 };
 const getHash = () => window.location.hash;
 
-/** `?playback=초` (0.2~8, 기본 8): 재생 시간을 줄여 자동 테스트를 빠르게 한다. 읽을 수 없으면 undefined(기본값). */
-function readPlaybackSeconds(): number | undefined {
-  try {
-    const raw = new URLSearchParams(window.location.search).get('playback');
-    if (raw === null || raw.trim() === '') return undefined;
-    const n = Number(raw);
-    if (!Number.isFinite(n)) return undefined;
-    return Math.min(8, Math.max(0.2, n));
-  } catch {
-    return undefined;
-  }
-}
-
 export function App() {
   const hash = useSyncExternalStore(subscribeHash, getHash);
   const route = parseRoute(hash);
@@ -59,6 +48,9 @@ export function App() {
     // key: 단원을 바꾸면 런타임 상태를 새로 만든다.
     if (unit.activity === 'classify') {
       return <ClassifyLab key={unit.id} unitId={unit.id} title={unit.manifest.title} experiment={unit.experiment} />;
+    }
+    if (unit.activity === 'observe') {
+      return <ObserveLab key={unit.id} unitId={unit.id} title={unit.manifest.title} experiment={unit.experiment} />;
     }
     return <Lab key={unit.id} unitId={unit.id} title={unit.manifest.title} experiment={unit.experiment} module={unit.module} />;
   }

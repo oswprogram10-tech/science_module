@@ -169,9 +169,72 @@ export const classificationExperimentSchema = z.object({
   tutor: classifyTutorConfigSchema,
 });
 
+// ---- 관찰 활동 ----
+
+export const OBSERVE_MODULE = 'sky-observation' as const;
+
+export const observationProbeWhenSchema = z.enum([
+  'before-observe',
+  'observing',
+  'record-mismatch',
+  'record-match',
+  'prediction-mismatch',
+]);
+
+export const observationProbeSchema = z.object({
+  when: observationProbeWhenSchema,
+  text: z.string().min(1),
+});
+
+/** 관찰 과제의 모델 결과를 계산하는 규칙 이름. 계산은 @sci/engine-earth의 answerFor가 맡는다. */
+export const observationAnswerSchema = z.enum([
+  'sun-path-direction',
+  'antipode-day-night',
+  'star-path-direction',
+  'constellation-changes',
+  'winter-constellation',
+]);
+
+export const observationControlSchema = z
+  .object({
+    key: z.string().min(1),
+    label: z.string().min(1),
+    options: z.array(optionSchema).min(1),
+    default: optionValue,
+  })
+  .refine((c) => c.options.some((o) => o.value === c.default), {
+    message: 'default는 options 중 하나여야 합니다.',
+    path: ['default'],
+  });
+
+export const observationTaskSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  question: z.string().min(1),
+  options: z.array(optionSchema).min(2).max(5),
+  view: z.enum(['rotation', 'revolution']),
+  controls: z.array(observationControlSchema).optional(),
+  answer: observationAnswerSchema,
+  probes: z.array(observationProbeSchema),
+});
+
+export const observationTutorConfigSchema = z.object({
+  forbiddenAnswers: z.array(z.string().min(1)),
+  /** 관찰 활동의 질문은 과제(tasks[].probes)에 있다. */
+  probes: z.array(z.unknown()),
+});
+
+export const observationExperimentSchema = z.object({
+  ...commonShape,
+  module: z.literal(OBSERVE_MODULE),
+  tasks: z.array(observationTaskSchema).min(1),
+  tutor: observationTutorConfigSchema,
+});
+
 export const experimentSchema = z.discriminatedUnion('module', [
   variableExperimentSchema,
   classificationExperimentSchema,
+  observationExperimentSchema,
 ]);
 
 export const manifestSchema = z.object({
@@ -194,7 +257,13 @@ export type GatewayConfig = z.infer<typeof gatewaySchema>;
 export type TutorConfig = z.infer<typeof tutorConfigSchema>;
 export type VariableExperiment = z.infer<typeof variableExperimentSchema>;
 export type ClassificationExperiment = z.infer<typeof classificationExperimentSchema>;
-export type Experiment = VariableExperiment | ClassificationExperiment;
+export type ObservationExperiment = z.infer<typeof observationExperimentSchema>;
+export type ObservationTask = z.infer<typeof observationTaskSchema>;
+export type ObservationControl = z.infer<typeof observationControlSchema>;
+export type ObservationAnswerRule = z.infer<typeof observationAnswerSchema>;
+export type ObservationProbe = z.infer<typeof observationProbeSchema>;
+export type ObservationProbeWhen = z.infer<typeof observationProbeWhenSchema>;
+export type Experiment = VariableExperiment | ClassificationExperiment | ObservationExperiment;
 export type ClassifyProbe = z.infer<typeof classifyProbeSchema>;
 export type ClassifyProbeWhen = z.infer<typeof classifyProbeWhenSchema>;
 export type ColorDef = z.infer<typeof colorDefSchema>;
@@ -203,9 +272,12 @@ export type ClassifySolution = z.infer<typeof solutionSchema>;
 export type ClassifyIndicator = z.infer<typeof indicatorSchema>;
 export type Manifest = z.infer<typeof manifestSchema>;
 
-export const isVariableExperiment = (e: Experiment): e is VariableExperiment => e.module !== CLASSIFY_MODULE;
+export const isVariableExperiment = (e: Experiment): e is VariableExperiment =>
+  e.module !== CLASSIFY_MODULE && e.module !== OBSERVE_MODULE;
 export const isClassificationExperiment = (e: Experiment): e is ClassificationExperiment =>
   e.module === CLASSIFY_MODULE;
+
+export const isObservationExperiment = (e: Experiment): e is ObservationExperiment => e.module === OBSERVE_MODULE;
 
 export class ManifestError extends Error {
   readonly issues: string[];

@@ -1,0 +1,147 @@
+{
+  "id": "g6-earth-motion",
+  "title": "지구의 운동",
+  "grade": 6,
+  "standards": ["6과12-01"],
+  "engine": "earth",
+  "experiments": [
+    {
+      "id": "sky-observation",
+      "module": "sky-observation",
+      "title": "땅에서 보기와 우주에서 보기를 비교하며 관찰하기",
+      "question": "지구가 움직이면 땅에서 보는 하늘은 어떻게 달라질까?",
+      "safety": [],
+      "limits": ["적경", "적위", "황도", "천구", "시간각", "방위각"],
+      "params": { "latDeg": 37.5 },
+      "tasks": [
+        {
+          "id": "sun-path",
+          "title": "하루 동안 태양의 움직임",
+          "view": "rotation",
+          "question": "지구가 서쪽에서 동쪽으로 자전할 때, 땅에서 보면 태양은 어느 쪽에서 어느 쪽으로 움직여 보일까?",
+          "options": [
+            { "value": "east-to-west", "label": "동쪽에서 서쪽으로" },
+            { "value": "west-to-east", "label": "서쪽에서 동쪽으로" },
+            { "value": "still", "label": "움직이지 않아요" }
+          ],
+          "controls": [
+            {
+              "key": "rotation",
+              "label": "지구의 자전 방향",
+              "options": [
+                { "value": "forward", "label": "서쪽에서 동쪽으로 (실제)" },
+                { "value": "reverse", "label": "동쪽에서 서쪽으로 (만약에)" }
+              ],
+              "default": "forward"
+            }
+          ],
+          "answer": "sun-path-direction",
+          "probes": [
+            { "when": "before-observe", "text": "아침에 해가 뜨는 쪽을 떠올려 볼까요? 그 생각을 예측에 이용해 보세요." },
+            { "when": "observing", "text": "시각을 바꾸면서 우주에서 보기 화면의 한국 표시와 땅에서 보기 화면의 태양을 함께 살펴볼까요?" },
+            { "when": "record-mismatch", "text": "땅에서 보기 화면에서 아침과 저녁의 태양 위치를 다시 비교해 볼까요? 방향 글자도 확인해 보세요." },
+            { "when": "record-match", "text": "자전 방향을 '만약에'로 바꾸면 땅에서 보이는 태양의 움직임은 어떻게 될까요? 바꿔서 확인해 볼까요?" },
+            { "when": "prediction-mismatch", "text": "예측과 관찰이 달랐네요. 우주에서 보기 화면의 어떤 움직임이 그 차이를 만들었을까요?" }
+          ]
+        },
+        {
+          "id": "day-night",
+          "title": "낮과 밤",
+          "view": "rotation",
+          "question": "우리나라가 낮 12시일 때, 지구 반대편에 있는 곳은 낮일까, 밤일까?",
+          "options": [
+            { "value": "day", "label": "낮이에요" },
+            { "value": "night", "label": "밤이에요" }
+          ],
+          "answer": "antipode-day-night",
+          "probes": [
+            { "when": "before-observe", "text": "태양 빛이 지구의 어느 쪽을 비추는지 생각해 볼까요?" },
+            { "when": "observing", "text": "우주에서 보기 화면에서 빛을 받는 쪽과 받지 못하는 쪽을 찾아볼까요? 반대편 표시는 어느 쪽에 있나요?" },
+            { "when": "record-mismatch", "text": "우주에서 보기 화면에서 반대편 표시가 밝은 쪽과 어두운 쪽 중 어디에 있는지 다시 살펴볼까요?" },
+            { "when": "record-match", "text": "시각을 계속 바꾸면 우리나라와 반대편의 낮과 밤은 어떻게 바뀌나요?" },
+            { "when": "prediction-mismatch", "text": "예측과 관찰이 달랐네요. 태양 빛이 닿는 범위를 다시 생각해 볼까요?" }
+          ]
+        },
+        {
+          "id": "star-path",
+          "title": "밤하늘 별의 움직임",
+          "view": "rotation",
+          "question": "밤 동안 남쪽 하늘의 별들은 어느 쪽에서 어느 쪽으로 움직여 보일까?",
+          "options": [
+            { "value": "east-to-west", "label": "동쪽에서 서쪽으로" },
+            { "value": "west-to-east", "label": "서쪽에서 동쪽으로" },
+            { "value": "still", "label": "움직이지 않아요" }
+          ],
+          "controls": [
+            {
+              "key": "rotation",
+              "label": "지구의 자전 방향",
+              "options": [
+                { "value": "forward", "label": "서쪽에서 동쪽으로 (실제)" },
+                { "value": "reverse", "label": "동쪽에서 서쪽으로 (만약에)" }
+              ],
+              "default": "forward"
+            }
+          ],
+          "answer": "star-path-direction",
+          "probes": [
+            { "when": "before-observe", "text": "낮에 태양이 움직여 보인 모습과 비교해서 예측해 볼까요?" },
+            { "when": "observing", "text": "밤 시각으로 바꾸고 별자리가 시간에 따라 어디로 가는지 따라가 볼까요?" },
+            { "when": "record-mismatch", "text": "밤 9시와 자정의 별자리 위치를 땅에서 보기 화면에서 다시 비교해 볼까요?" },
+            { "when": "record-match", "text": "태양과 별이 움직여 보이는 방향을 비교하면 어떤 공통점이 있나요? 그 까닭은 무엇일까요?" },
+            { "when": "prediction-mismatch", "text": "예측과 관찰이 달랐네요. 우주에서 보기 화면의 지구가 도는 방향을 다시 살펴볼까요?" }
+          ]
+        },
+        {
+          "id": "season-stars",
+          "title": "계절에 따라 보이는 별자리",
+          "view": "revolution",
+          "question": "지구가 태양 둘레를 돌면, 계절마다 밤 9시 남쪽 하늘에 보이는 별자리는 어떻게 될까?",
+          "options": [
+            { "value": "same", "label": "계절이 바뀌어도 같아요" },
+            { "value": "changes", "label": "계절마다 달라져요" }
+          ],
+          "answer": "constellation-changes",
+          "probes": [
+            { "when": "before-observe", "text": "밤에 우리가 바라보는 하늘은 태양이 있는 쪽일까요, 반대쪽일까요?" },
+            { "when": "observing", "text": "달을 바꾸면서 우주에서 보기 화면의 지구 위치와 밤하늘 쪽을 함께 살펴볼까요?" },
+            { "when": "record-mismatch", "text": "1월, 4월, 8월, 10월로 바꾸어 가며 땅에서 보기 화면의 별자리 이름을 다시 비교해 볼까요?" },
+            { "when": "record-match", "text": "지구가 공전하는 동안 밤하늘이 향하는 쪽은 어떻게 바뀌나요?" },
+            { "when": "prediction-mismatch", "text": "예측과 관찰이 달랐네요. 지구의 위치가 바뀌면 밤에 바라보는 쪽도 바뀌는지 살펴볼까요?" }
+          ]
+        },
+        {
+          "id": "winter-stars",
+          "title": "겨울철 대표 별자리",
+          "view": "revolution",
+          "question": "1월 밤 9시 남쪽 하늘에서 볼 수 있는 대표 별자리는 무엇일까?",
+          "options": [
+            { "value": "leo", "label": "사자자리" },
+            { "value": "cygnus", "label": "백조자리" },
+            { "value": "pegasus", "label": "페가수스자리" },
+            { "value": "orion", "label": "오리온자리" }
+          ],
+          "answer": "winter-constellation",
+          "probes": [
+            { "when": "before-observe", "text": "겨울밤 하늘에서 본 적 있는 별자리를 떠올려 볼까요?" },
+            { "when": "observing", "text": "달을 1월로 맞추고 땅에서 보기 화면의 남쪽 하늘을 살펴볼까요?" },
+            { "when": "record-mismatch", "text": "달이 1월로 맞춰져 있는지, 시각이 밤 9시인지 다시 확인해 볼까요?" },
+            { "when": "record-match", "text": "다른 계절에는 어떤 별자리가 그 자리에 보이는지 달을 바꿔서 찾아볼까요?" },
+            { "when": "prediction-mismatch", "text": "예측과 관찰이 달랐네요. 별자리 모양을 땅에서 보기 화면과 비교해 볼까요?" }
+          ]
+        }
+      ],
+      "tutor": {
+        "forbiddenAnswers": [
+          "동쪽에서 서쪽으로 움직여 보여",
+          "지구가 자전하기 때문",
+          "지구가 공전하기 때문",
+          "계절마다 별자리가 달라",
+          "반대편은 밤",
+          "겨울철 대표 별자리는 오리온"
+        ],
+        "probes": []
+      }
+    }
+  ]
+}
