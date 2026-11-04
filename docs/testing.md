@@ -35,3 +35,12 @@ pnpm --filter student exec playwright show-trace test-results/<폴더>/trace.zip
 pnpm --filter student exec playwright show-report
 ```
 화면을 보면서 고치려면 `pnpm --filter student exec playwright test --ui` 또는 `--headed`를 쓰세요.
+
+## GitHub Actions
+
+`.github/workflows/ci.yml`이 모든 push와 pull request에서 두 작업을 병렬로 돌립니다.
+
+- **타입 검사 · 단위 테스트 · 빌드**: `pnpm typecheck`, `pnpm test`, `pnpm build`
+- **화면 테스트**: `playwright install --with-deps chromium` 후 `pnpm e2e`. 실패하면 `playwright-report`·`test-results`를 아티팩트로 7일간 보관합니다. 내려받아 `npx playwright show-trace <trace.zip>`으로 엽니다.
+
+같은 브랜치에 새 push가 오면 진행 중인 실행은 취소됩니다.
