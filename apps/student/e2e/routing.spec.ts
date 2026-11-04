@@ -1,13 +1,16 @@
 import { test, expect } from './helpers';
 
-test('단원 목록은 4·5·6학년으로 묶인 카드 10개를 보여 준다', async ({ page }) => {
+test('단원 목록은 3·4·5·6학년으로 묶인 카드 11개를 보여 준다', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1, name: '과학 실험 단원 목록' })).toBeVisible();
-  for (const g of ['4학년', '5학년', '6학년']) {
+  for (const g of ['3학년', '4학년', '5학년', '6학년']) {
     await expect(page.getByRole('heading', { level: 2, name: g })).toBeVisible();
   }
   const cards = page.getByRole('button', { name: /탐구 질문:/ });
-  await expect(cards).toHaveCount(10);
+  await expect(cards).toHaveCount(11);
+  const grade3 = page.getByRole('region', { name: '3학년' }).getByRole('button');
+  await expect(grade3).toHaveCount(1);
+  await expect(grade3.nth(0)).toContainText('생물의 한살이');
   const grade4 = page.getByRole('region', { name: '4학년' }).getByRole('button');
   await expect(grade4).toHaveCount(2);
   await expect(grade4.nth(0)).toContainText('여러 가지 기체');
@@ -37,6 +40,7 @@ for (const [grade, title, id] of [
   ['4학년', '땅의 변화', 'g4-land'],
   ['6학년', '지구의 운동', 'g6-earth-motion'],
   ['6학년', '계절의 변화', 'g6-seasons'],
+  ['3학년', '생물의 한살이', 'g3-lifecycle'],
 ] as const) {
   test(`${title} 카드를 누르면 #/unit/${id}로 가고 단원 목록으로 돌아온다`, async ({ page }) => {
     await page.goto('/');

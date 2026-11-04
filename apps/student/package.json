@@ -19,6 +19,7 @@
     "@capacitor/core": "8.5.3",
     "@capacitor/ios": "8.5.3",
     "@sci/engine-earth": "workspace:*",
+    "@sci/engine-life": "workspace:*",
     "@sci/engine-matter": "workspace:*",
     "@sci/engine-physics": "workspace:*",
     "@sci/classroom": "workspace:*",

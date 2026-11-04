@@ -66,6 +66,9 @@ importers:
       '@sci/engine-earth':
         specifier: workspace:*
         version: link:../../packages/engines/earth
+      '@sci/engine-life':
+        specifier: workspace:*
+        version: link:../../packages/engines/life
       '@sci/engine-matter':
         specifier: workspace:*
         version: link:../../packages/engines/matter
@@ -163,6 +166,12 @@ importers:
         version: 4.6.7
 
   packages/engines/earth:
+    dependencies:
+      '@sci/schema':
+        specifier: workspace:*
+        version: link:../../schema
+
+  packages/engines/life:
     dependencies:
       '@sci/schema':
         specifier: workspace:*

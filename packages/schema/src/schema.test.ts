@@ -8,6 +8,7 @@ import lightJson from '../../../content/units/g5-light/manifest.json';
 import electricityJson from '../../../content/units/g6-electricity/manifest.json';
 import landJson from '../../../content/units/g4-land/manifest.json';
 import seasonsJson from '../../../content/units/g6-seasons/manifest.json';
+import lifecycleJson from '../../../content/units/g3-lifecycle/manifest.json';
 import earthJson from '../../../content/units/g6-earth-motion/manifest.json';
 import {
   ManifestError,
@@ -161,7 +162,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
   const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
   it('아홉 매니페스트가 모두 검증을 통과한다', () => {
-    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson]) expect(() => parseManifest(j)).not.toThrow();
+    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson]) expect(() => parseManifest(j)).not.toThrow();
   });
 
   it('연소 매니페스트의 점검표와 경고 문구를 읽는다', () => {
@@ -220,6 +221,20 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     expect(e.variables[1]!.options.map((o) => o.value)).toEqual([0, 23.44, 30]);
     expect(e.dependent.map((d) => d.key)).toEqual(['noonAltDeg', 'noonShadowCm']);
     expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['season', 'tiltDeg', 'stickCm']);
+  });
+
+  it('생물의 한살이 매니페스트의 변인, 안전 종류, 탐침을 읽는다', () => {
+    const m = parseManifest(lifecycleJson);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-lifecycle', 3, 'life', ['4과04-01']]);
+    const e = m.experiments[0] as VariableExperiment;
+    expect(e.module).toBe('germination');
+    expect(e.safety).toEqual([]);
+    expect(e.safetyChecklist).toBeUndefined();
+    expect(e.variables.map((v) => v.key)).toEqual(['water', 'tempC', 'light']);
+    expect(e.variables[1]!.options.map((o) => o.value)).toEqual([5, 20, 30]);
+    expect(e.dependent.map((d) => d.key)).toEqual(['sproutedDay7', 'firstDay']);
+    expect(e.params).toEqual({ seeds: 10, days: 10 });
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['light', 'tempC']);
   });
 
   it('두 필드는 없어도 된다', () => {

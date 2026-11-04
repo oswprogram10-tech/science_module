@@ -401,6 +401,49 @@ test('g6-seasons 어두운 화면: 처음, 여름 실행 뒤, 한밤, 기울기 
   await expectNoSeriousViolations(page);
 });
 
+// ---- g3-lifecycle ----
+
+async function lifecycleRun(page: Page) {
+  await selectIV(page, '물');
+  await predict(page, '늘어난다');
+  await runTrial(page);
+}
+
+test('g3-lifecycle 처음 화면', async ({ page }) => {
+  await gotoUnit(page, 'g3-lifecycle');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g3-lifecycle 실행한 뒤(그래프 표식)와 0일째, 어두운 곳·냉장고', async ({ page }) => {
+  await gotoUnit(page, 'g3-lifecycle');
+  await lifecycleRun(page);
+  await expect(page.getByRole('figure', { name: '그래프로 보기' }).getByTestId('graph-marker')).toBeVisible();
+  await expectNoSeriousViolations(page);
+  const slider = page.getByRole('slider', { name: '그래프 시각 옮기기' });
+  await slider.focus();
+  await slider.press('Home');
+  await expect(page.getByText('0일째 · 싹 튼 씨앗 0개')).toBeVisible();
+  await expectNoSeriousViolations(page);
+  await setValue(page, '빛', '어두운 곳');
+  await setValue(page, '온도', '냉장고');
+  await expect(page.getByText('상자를 덮음')).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g3-lifecycle 어두운 화면: 처음, 실행 뒤, 어두운 곳·따뜻한 곳, 물 없음', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await gotoUnit(page, 'g3-lifecycle');
+  await expectNoSeriousViolations(page);
+  await lifecycleRun(page);
+  await expectNoSeriousViolations(page);
+  await setValue(page, '빛', '어두운 곳');
+  await setValue(page, '온도', '따뜻한 곳');
+  await expectNoSeriousViolations(page);
+  await setValue(page, '물', '물을 주지 않음');
+  await expectNoSeriousViolations(page);
+});
+
 // ---- 수업 연결 ----
 
 for (const scheme of ['light', 'dark'] as const) {
