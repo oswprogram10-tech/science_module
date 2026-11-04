@@ -48,7 +48,12 @@ export function chooseCriterion(state: SortState, exp: CardSortExperiment, key: 
 }
 
 /** 카드의 특징을 관찰한다. 같은 특징을 다시 관찰해도 늘지 않는다. */
-export function observe(state: SortState, exp: CardSortExperiment, card: string, feature: string): SortState {
+export function observe<T extends { observed: Record<string, string[]> }>(
+  state: T,
+  exp: CardSortExperiment,
+  card: string,
+  feature: string,
+): T {
   if (!exp.cards.some((c) => c.key === card) || !exp.features.some((f) => f.key === feature)) return state;
   const prev = state.observed[card] ?? [];
   if (prev.includes(feature)) return state;
@@ -70,44 +75,54 @@ export function allPlaced(state: SortState, exp: CardSortExperiment): boolean {
 
 /** 카드가 지금 기준의 특징을 관찰했는가. 특징이 없는 기준(주관적 기준)이면 true. */
 export function isObservedFor(state: SortState, exp: CardSortExperiment, card: string): boolean {
-  const feature = criterionOf(exp, state.criterion)?.feature;
-  return feature === undefined || (state.observed[card] ?? []).includes(feature);
+  return observedFor(state.observed, card, criterionOf(exp, state.criterion)?.feature);
+}
+
+/** 카드가 이 특징을 관찰했는가. 특징이 없는 기준(주관적 기준)이면 true. */
+function observedFor(observed: Record<string, string[]>, card: string, feature: string | undefined): boolean {
+  return feature === undefined || (observed[card] ?? []).includes(feature);
 }
 
 /**
- * 확인하기. 우선순위: 주관적 기준 -> 넣지 않은 카드 -> 관찰하지 않은 카드 -> 관찰과 다른 무리 -> 완료.
- * 앞 단계에서 걸리면 거기서 끝난다. 완료면 그 기준을 completed에 넣는다. 기준이 없으면 바꾸지 않는다.
+ * 공유 판정. 무리 나누기와 트리가 같은 규칙을 쓴다. 대상은 `cards`(카드 key들)뿐이다.
+ * 우선순위: 주관적 기준 -> 넣지 않은 카드 -> 관찰하지 않은 카드 -> 관찰과 다른 무리 -> 완료.
+ * 앞 단계에서 걸리면 거기서 끝난다. 객관적 기준에서 placement 값은 특징값과 같은 문자열이다.
  */
+export function judgeCards(
+  exp: CardSortExperiment,
+  crit: SortCriterion,
+  cards: readonly string[],
+  placement: Record<string, string | null | undefined>,
+  observed: Record<string, string[]>,
+): SortCheck {
+  const items = (status: (card: string) => SortItemStatus): SortCheck['items'] =>
+    cards.map((k) => ({ card: k, status: status(k) }));
+  if (!crit.objective) return { kind: 'check-subjective', items: items(() => 'ok') };
+  const placed = (card: string) => placement[card] ?? null;
+  if (cards.some((k) => placed(k) === null)) {
+    return { kind: 'check-unplaced', items: items((k) => (placed(k) === null ? 'unplaced' : 'ok')) };
+  }
+  const seen = (k: string) => observedFor(observed, k, crit.feature);
+  if (cards.some((k) => !seen(k))) {
+    return { kind: 'check-unobserved', items: items((k) => (seen(k) ? 'ok' : 'unobserved')) };
+  }
+  const mismatch = (k: string) => exp.cards.find((c) => c.key === k)!.features[crit.feature!] !== placed(k);
+  if (cards.some(mismatch)) {
+    return { kind: 'check-inconsistent', items: items((k) => (mismatch(k) ? 'inconsistent' : 'ok')) };
+  }
+  return { kind: 'check-complete', items: items(() => 'ok') };
+}
+
+/** 확인하기(무리 나누기). 완료면 그 기준을 completed에 넣는다. 기준이 없으면 바꾸지 않는다. */
 export function check(state: SortState, exp: CardSortExperiment): SortState {
   const crit = criterionOf(exp, state.criterion);
   if (!crit) return state;
-  const items = (status: (card: string) => SortItemStatus): SortCheck['items'] =>
-    exp.cards.map((c) => ({ card: c.key, status: status(c.key) }));
-
-  if (!crit.objective) {
-    return { ...state, checked: { kind: 'check-subjective', items: items(() => 'ok') } };
-  }
-  const placed = (card: string) => state.placement[card] ?? null;
-  if (exp.cards.some((c) => placed(c.key) === null)) {
-    return { ...state, checked: { kind: 'check-unplaced', items: items((k) => (placed(k) === null ? 'unplaced' : 'ok')) } };
-  }
-  if (exp.cards.some((c) => !isObservedFor(state, exp, c.key))) {
-    return {
-      ...state,
-      checked: { kind: 'check-unobserved', items: items((k) => (isObservedFor(state, exp, k) ? 'ok' : 'unobserved')) },
-    };
-  }
-  const mismatch = (card: string) => exp.cards.find((c) => c.key === card)!.features[crit.feature!] !== placed(card);
-  if (exp.cards.some((c) => mismatch(c.key))) {
-    return {
-      ...state,
-      checked: { kind: 'check-inconsistent', items: items((k) => (mismatch(k) ? 'inconsistent' : 'ok')) },
-    };
-  }
+  const checked = judgeCards(exp, crit, exp.cards.map((c) => c.key), state.placement, state.observed);
+  if (checked.kind !== 'check-complete') return { ...state, checked };
   return {
     ...state,
     completed: state.completed.includes(crit.key) ? state.completed : [...state.completed, crit.key],
-    checked: { kind: 'check-complete', items: items(() => 'ok') },
+    checked,
   };
 }
 
@@ -162,3 +177,5 @@ export function validateCardSortExperiment(exp: CardSortExperiment): string[] {
   }
   return issues;
 }
+
+export * from './tree';

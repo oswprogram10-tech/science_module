@@ -14,6 +14,7 @@ import ecosystemJson from '../../../content/units/g4-ecosystem/manifest.json';
 import microbeJson from '../../../content/units/g4-microbe/manifest.json';
 import bodyJson from '../../../content/units/g5-body/manifest.json';
 import animalJson from '../../../content/units/g3-animal/manifest.json';
+import plantlifeJson from '../../../content/units/g3-plantlife/manifest.json';
 import earthJson from '../../../content/units/g6-earth-motion/manifest.json';
 import {
   ManifestError,
@@ -398,8 +399,37 @@ describe('카드 분류 활동 (card-sort)', () => {
 
   it('모르는 layout을 거부한다', () => {
     const bad = clone(animalJson);
-    bad.experiments[0].layout = 'tree';
+    bad.experiments[0].layout = 'order';
     expect(() => parseManifest(bad)).toThrow(ManifestError);
+  });
+
+  it('식물의 생활 매니페스트가 tree 배치로 검증을 통과한다', () => {
+    const t = parseManifest(plantlifeJson).experiments[0] as CardSortExperiment;
+    expect(isCardSortExperiment(t)).toBe(true);
+    expect(t.layout).toBe('tree');
+    expect(t.id).toBe('leaf-tree');
+    expect(t.cards.map((c) => c.icon)).toEqual(['maple', 'chrysanthemum', 'cherry', 'camellia', 'persimmon', 'lilac', 'iris', 'lily']);
+    expect(t.tutor.probes.map((p) => p.when).sort()).toEqual(
+      ['before-observe', 'check-complete', 'check-inconsistent', 'check-subjective', 'check-unobserved', 'check-unplaced', 'choose-criterion', 'finished', 'pick-card', 'sorting', 'tree-next-node', 'tree-split-empty'],
+    );
+  });
+
+  it('tree에서 예/아니요가 아닌 무리를 거부한다', () => {
+    const three = clone(plantlifeJson);
+    three.experiments[0].criteria[0].groups.push({ value: 'maybe', label: '모르겠다' });
+    expect(() => parseManifest(three)).toThrow(ManifestError);
+    const renamed = clone(plantlifeJson);
+    renamed.experiments[0].criteria[1].groups[0].value = 'serrated';
+    expect(() => parseManifest(renamed)).toThrow(ManifestError);
+    const swapped = clone(plantlifeJson);
+    swapped.experiments[0].criteria[2].groups.reverse();
+    expect(() => parseManifest(swapped)).toThrow(ManifestError);
+    // 주관 기준도 같은 규칙이다.
+    const subjective = clone(plantlifeJson);
+    subjective.experiments[0].criteria[3].groups = [{ value: 'good', label: '예쁘다' }, { value: 'bad', label: '예쁘지 않다' }];
+    expect(() => parseManifest(subjective)).toThrow(ManifestError);
+    // groups 배치는 이 제한을 받지 않는다(동물의 생활은 세 무리 기준이 있다).
+    expect(() => parseManifest(animalJson)).not.toThrow();
   });
 
   it('판별 합집합이 module로 갈라진다: 다른 유형의 필드로는 통과하지 못한다', () => {

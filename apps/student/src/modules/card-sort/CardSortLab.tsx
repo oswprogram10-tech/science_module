@@ -1,9 +1,7 @@
-import { useCallback, useMemo, useState, useSyncExternalStore } from 'react';
+import { useMemo, useState, useSyncExternalStore } from 'react';
 import { REQUIRED_CRITERIA, criterionOf } from '@sci/cardsort';
 import type { CardSortExperiment } from '@sci/schema';
 import { renderAndGuard } from '@sci/tutor';
-import { MemoryRecorder, buildStatement, toExtensions } from '@sci/xapi';
-import { AnimalIcon } from './AnimalIcons';
 import {
   allPlaced,
   check,
@@ -16,14 +14,18 @@ import {
   tutorSituation,
 } from './cardSortStore';
 import { cardSortFeedback } from './feedback';
+import { CardButton, Magnifier, useSortEmit } from './SortParts';
+import { TreeSortLab } from './TreeSortLab';
 import { useClassroomStatus } from '../../classroom/bus';
-
-const ACTOR_ID = 'anon-student-001';
-const activityId = (unitId: string, expId: string) => `https://sci-bridge.local/activities/${unitId}/${expId}`;
 
 export const CRITERION_CHANGED_NOTICE = '기준을 바꾸어서 카드를 다시 나눠요.';
 
-export function CardSortLab({
+/** 카드 분류 활동. layout에 따라 무리 나누기(groups)나 두 갈래 트리(tree) 화면을 그린다. */
+export function CardSortLab(props: { unitId: string; title: string; experiment: CardSortExperiment }) {
+  return props.experiment.layout === 'tree' ? <TreeSortLab {...props} /> : <GroupsSortLab {...props} />;
+}
+
+function GroupsSortLab({
   unitId,
   title,
   experiment: exp,
@@ -34,23 +36,10 @@ export function CardSortLab({
 }) {
   const store = useMemo(() => createCardSortStore(), []);
   const state = useSyncExternalStore(store.subscribe, store.getState);
-  const recorder = useMemo(() => new MemoryRecorder(), []);
   /** 기준을 바꿨을 때 스크린 리더에 알리는 문장(aria-live). */
   const [notice, setNotice] = useState('');
 
-  const emit = useCallback(
-    (verb: string, extensions?: Record<string, unknown>) => {
-      const stmt = buildStatement({
-        actorId: ACTOR_ID,
-        verb,
-        objectId: activityId(unitId, exp.id),
-        result: extensions ? { extensions: toExtensions(extensions) } : undefined,
-      });
-      recorder.record(stmt);
-      console.debug('[xAPI]', stmt);
-    },
-    [unitId, exp.id, recorder],
-  );
+  const emit = useSortEmit(unitId, exp.id);
 
   const crit = criterionOf(exp, state.criterion);
   const cardOf = (key: string) => exp.cards.find((c) => c.key === key)!;
@@ -164,42 +153,7 @@ export function CardSortLab({
         </section>
 
         <div className="center">
-          <section className="panel" aria-label="돋보기">
-            <h2>돋보기</h2>
-            {!sel && <p className="hint">카드를 고르면 여기에서 크게 보고 특징을 살펴볼 수 있어요.</p>}
-            {sel && (
-              <div className="magnifier">
-                <figure className="view magnifier-card">
-                  <AnimalIcon icon={sel.icon} size={140} />
-                  <figcaption>{sel.label}</figcaption>
-                </figure>
-                <div className="magnifier-side">
-                  <div className="choices" role="group" aria-label="특징 살펴보기">
-                    {exp.features.map((f) => (
-                      <button
-                        key={f.key}
-                        type="button"
-                        className={selObserved.includes(f.key) ? 'selected' : ''}
-                        onClick={() => onObserve(f.key)}
-                      >
-                        {f.label} 살펴보기
-                      </button>
-                    ))}
-                  </div>
-                  <h3>관찰 기록</h3>
-                  <ul className="obs-list" aria-label={`${sel.label} 관찰 기록`}>
-                    {selObserved.length === 0 && <li className="hint">버튼을 눌러 특징을 살펴보세요.</li>}
-                    {selObserved.map((f) => (
-                      <li key={f}>
-                        <strong>{exp.features.find((x) => x.key === f)?.label ?? f}</strong>
-                        <span>{sel.observations[f]}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
-          </section>
+          <Magnifier exp={exp} sel={sel} observed={selObserved} onObserve={onObserve} />
         </div>
 
         <div className="side">
@@ -298,36 +252,5 @@ export function CardSortLab({
         </div>
       </section>
     </div>
-  );
-}
-
-function CardButton({
-  label,
-  icon,
-  count,
-  total,
-  selected,
-  onClick,
-  small,
-}: {
-  label: string;
-  icon: string;
-  count: number;
-  total: number;
-  selected: boolean;
-  onClick: () => void;
-  small?: boolean;
-}) {
-  return (
-    <button type="button" className={`sort-card${selected ? ' selected' : ''}${small ? ' small' : ''}`} aria-pressed={selected} onClick={onClick}>
-      <AnimalIcon icon={icon} size={small ? 32 : 48} />
-      <span className="sort-card-name">{label}</span>
-      <span className="obs-dots" aria-hidden="true">
-        {Array.from({ length: total }, (_, i) => (
-          <span key={i} className={`dot${i < count ? ' on' : ''}`} />
-        ))}
-      </span>
-      <span className="obs-count">관찰 {count}/{total}</span>
-    </button>
   );
 }

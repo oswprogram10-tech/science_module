@@ -43,7 +43,8 @@ export function observeWhen(s: {
 
 /**
  * 카드 분류 활동의 튜터 상황 키. 위에서부터 첫 규칙을 적용한다:
- * 두 기준을 끝낸 확인 결과 → 확인 결과 → 기준 없음 → 카드 없음 → 관찰 전 → 분류 중.
+ * (트리) 한쪽이 빈 노드의 확인 → 완료를 끝낸 확인 결과 → (트리) 나눈 노드의 확인 → 확인 결과 → 기준 없음 → 카드 없음 → 관찰 전 → 분류 중.
+ * 트리에서 `tree-next-node`는 나눈 노드의 확인이 끝났고 아직 완료 전일 때이며, 어느 무리가 남았는지는 가리지 않는다.
  */
 export function cardSortWhen(
   exp: CardSortExperiment,
@@ -54,10 +55,18 @@ export function cardSortWhen(
     observed: readonly string[];
     /** 확인하기를 눌렀다면 그 결과의 종류. */
     checkKind: string | null;
-    /** 객관적 기준을 2개 이상 끝냈는가. */
+    /** 끝냈는가(무리 나누기: 객관적 기준 2개 이상, 트리: 모든 잎이 더 나눌 수 없음). */
     finished: boolean;
+    /** 트리일 때만. 지금 노드의 확인이 한쪽이 빈 채로 끝났는가. */
+    treeSplitEmpty?: boolean;
+    /** 트리일 때만(true). 이 값이 있으면 트리로 본다. */
+    tree?: boolean;
   },
 ): CardSortProbeWhen {
+  if (s.tree && s.checkKind === 'check-complete') {
+    if (s.treeSplitEmpty) return 'tree-split-empty';
+    return s.finished ? 'finished' : 'tree-next-node';
+  }
   if (s.checkKind === 'check-complete' && s.finished) return 'finished';
   if (s.checkKind) return s.checkKind as CardSortProbeWhen;
   if (!s.criterion) return 'choose-criterion';

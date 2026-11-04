@@ -56,9 +56,10 @@ const ICONS: Record<string, ReactNode> = {
       <circle cx="16" cy="29" r="2.2" {...EYE} stroke="none" />
     </g>
   ),
+  /* 걷는 다리 8개와 집게다리 2개, 모두 10개(관찰 문장과 같다). */
   crab: (
     <g {...S}>
-      <path d="M16 40 L6 48 M18 46 L10 56 M48 40 L58 48 M46 46 L54 56 M22 48 L18 58 M42 48 L46 58" fill="none" />
+      <path d="M17 36 L5 38 M17 41 L6 47 M20 46 L11 55 M25 49 L20 60 M47 36 L59 38 M47 41 L58 47 M44 46 L53 55 M39 49 L44 60" fill="none" />
       <path d="M18 30 L10 18 M46 30 L54 18" fill="none" />
       <circle cx="9" cy="14" r="7" fill="#e0574a" />
       <path d="M9 7 L9 14" fill="none" strokeWidth="2" />

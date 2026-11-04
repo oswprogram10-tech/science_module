@@ -48,6 +48,9 @@ const KIND_TEXT: Record<Activity, Record<string, string>> = {
     'check-inconsistent': '분류가 관찰과 다름',
     'check-complete': '기준 하나를 관찰에 맞게 나눔',
     finished: '두 가지 기준으로 분류함',
+    'tree-split-empty': '나누었더니 한쪽으로 모두 모임',
+    'tree-next-node': '한 무리를 나누고 다음 무리를 고르는 중',
+    'tree-finished': '더 나눌 수 없을 때까지 나눔',
   },
 };
 

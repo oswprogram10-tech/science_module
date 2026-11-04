@@ -6,7 +6,7 @@ import {
   type Prediction,
 } from '@sci/gateway';
 import { indicatorColor, type CheckKind } from '@sci/engine-matter';
-import { createSortState, isFinished } from '@sci/cardsort';
+import { createSortState, isEmptySplit, isFinished, isTreeFinished, splitCount, type TreeState } from '@sci/cardsort';
 import {
   isCardSortExperiment,
   isClassificationExperiment,
@@ -89,6 +89,8 @@ export type TutorState =
       placement: Record<string, string | null>;
       completed: string[];
       check: { kind: string; items: { card: string; status: string }[] } | null;
+      /** 트리 배치일 때만. criterion·placement·check는 지금 나누는 노드의 것이다. */
+      tree?: { finished: boolean; splitEmpty: boolean; splits: number; nodeCards: string[] };
     };
 
 export interface UnitInfo {
@@ -153,7 +155,8 @@ export function situationOf(state: TutorState, experiment: Experiment): string {
       selected: sel,
       observed: sel ? (state.observed[sel] ?? []) : [],
       checkKind: state.check?.kind ?? null,
-      finished: isFinished({ ...createSortState(), completed: state.completed }, exp),
+      finished: state.tree ? state.tree.finished : isFinished({ ...createSortState(), completed: state.completed }, exp),
+      ...(state.tree ? { tree: true, treeSplitEmpty: state.tree.splitEmpty } : {}),
     });
   }
   observeExp(experiment);
@@ -272,6 +275,9 @@ function cardSortBody(exp: CardSortExperiment, state: Extract<TutorState, { kind
   const featureLabel = (key: string) => exp.features.find((f) => f.key === key)?.label ?? key;
   const groupLabel = (key: string) => crit?.groups.find((g) => g.value === key)?.label ?? key;
   const lines = [
+    ...(state.tree
+      ? [`[지금 나누는 무리] ${state.tree.nodeCards.map(cardLabel).join(', ')}`, `[나눈 횟수] ${state.tree.splits}`]
+      : []),
     `[분류 기준] ${crit ? crit.label : '(고르지 않음)'}`,
     `[고른 카드] ${state.selected ? cardLabel(state.selected) : '(없음)'}`,
     '[카드별 기록]',
@@ -536,5 +542,39 @@ export function fromCardSortState(
     check: sortState.checked
       ? { kind: sortState.checked.kind, items: sortState.checked.items.map((i) => ({ card: i.card, status: i.status })) }
       : null,
+  };
+}
+
+/** 트리 상태(앱 저장소). 지금 나누는 노드를 카드 분류 상태 모양으로 옮긴다. */
+export interface TreeStateLike extends Pick<TreeState, 'nodes' | 'root' | 'observed' | 'selectedNode'> {
+  selected: string | null;
+}
+
+export function fromTreeState(
+  experiment: CardSortExperiment,
+  treeState: TreeStateLike,
+  unitId: string,
+): Extract<TutorState, { kind: 'card-sort' }> {
+  const node = treeState.nodes[treeState.selectedNode] ?? treeState.nodes[treeState.root]!;
+  const base = fromCardSortState(
+    experiment,
+    {
+      selected: treeState.selected,
+      criterion: node.criterion,
+      observed: treeState.observed,
+      placement: node.placement,
+      completed: [],
+      checked: node.checked,
+    },
+    unitId,
+  );
+  return {
+    ...base,
+    tree: {
+      finished: isTreeFinished(treeState, experiment),
+      splitEmpty: isEmptySplit(treeState, node.id),
+      splits: splitCount(treeState),
+      nodeCards: [...node.cards],
+    },
   };
 }

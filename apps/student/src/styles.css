@@ -97,6 +97,44 @@ button.unit-card:hover { border-color:var(--accent); }
 .gas-now { font-weight:700; text-decoration:underline; }
 
 /* 분류 활동 (산과 염기) */
+/* 카드 분류 트리 (식물의 생활): 넓은 화면은 위에서 아래로, 좁은 화면은 들여쓰기 목록 */
+.tree-layout { grid-template-columns: 340px minmax(0,1fr) 340px; }
+.tree-layout .tree-area { grid-column: 1 / -1; }
+.tree-area { --tree-line: color-mix(in srgb, var(--fg) 50%, var(--bg)); overflow-x:auto; }
+.tree-area h2 { margin-top:0; }
+.tree, .tree-children { list-style:none; margin:0; padding:0; display:flex; justify-content:center; }
+.tree-item { position:relative; display:flex; flex-direction:column; align-items:center; padding:0 6px; min-width:0; }
+.tree-children { position:relative; padding-top:22px; }
+.tree-children::before { content:''; position:absolute; top:0; left:50%; height:22px; border-left:2px solid var(--tree-line); }
+.tree-children > .tree-item { padding-top:22px; }
+.tree-children > .tree-item::before, .tree-children > .tree-item::after { content:''; position:absolute; top:0; width:50%; height:22px; border-top:2px solid var(--tree-line); }
+.tree-children > .tree-item::before { right:50%; }
+.tree-children > .tree-item::after { left:50%; border-left:2px solid var(--tree-line); }
+.tree-children > .tree-item:first-child::before { border-top:0; }
+.tree-children > .tree-item:last-child::after { border:0; }
+.tree-children > .tree-item:last-child::before { border-right:2px solid var(--tree-line); }
+.tree-edge { font-size:.9rem; font-weight:700; margin-bottom:4px; text-align:center; }
+.tree-node { display:flex; flex-direction:column; gap:4px; align-items:center; text-align:center; width:max-content; min-width:132px; max-width:min(300px, 100%); padding:8px 10px; }
+.tree-node .tn-title { font-weight:700; font-size:.95rem; }
+.tree-node .tn-cards { font-size:.9rem; font-weight:400; }
+.tree-node.leaf { border-style:dashed; }
+.tree-node.selected { border-style:solid; }
+.sort-criterion { display:flex; flex-direction:column; gap:2px; }
+.criterion-used { margin:0 0 4px 10px; }
+.tree-current h3 { margin:10px 0 4px; font-size:1rem; }
+.leaf-icon { color:var(--fg); }
+@media (max-width: 1100px) {
+  .tree-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .tree, .tree-children { display:block; }
+  .tree-item { align-items:stretch; padding:0; }
+  .tree-children { padding:0 0 0 14px; margin:6px 0 0 10px; border-left:2px solid var(--tree-line); }
+  .tree-children::before, .tree-children > .tree-item::before, .tree-children > .tree-item::after { display:none; }
+  .tree-children > .tree-item { padding-top:8px; }
+  .tree-edge { text-align:left; margin-bottom:2px; }
+  .tree-node { width:100%; max-width:none; align-items:flex-start; text-align:left; }
+}
 .classify-layout { display:grid; grid-template-columns: 280px minmax(0,1fr) 340px; gap:12px; align-items:start; }
 .side { display:flex; flex-direction:column; gap:12px; min-width:0; }
 .boxes.single { grid-template-columns: 1fr; }

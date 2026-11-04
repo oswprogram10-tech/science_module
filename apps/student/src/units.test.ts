@@ -14,7 +14,7 @@ const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
 describe('단원 레지스트리', () => {
   it('열 단원이 모두 로드된다', () => {
-    expect(UNITS.map((u) => u.id)).toEqual(['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat', 'g5-light', 'g6-electricity', 'g4-land', 'g6-earth-motion', 'g6-seasons', 'g3-lifecycle', 'g6-plant', 'g4-ecosystem', 'g4-microbe', 'g5-body', 'g3-animal']);
+    expect(UNITS.map((u) => u.id)).toEqual(['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat', 'g5-light', 'g6-electricity', 'g4-land', 'g6-earth-motion', 'g6-seasons', 'g3-lifecycle', 'g6-plant', 'g4-ecosystem', 'g4-microbe', 'g5-body', 'g3-animal', 'g3-plantlife']);
     expect(UNITS.every((u) => u.ok)).toBe(true);
     const gases = UNITS[0]!;
     if (gases.ok) expect(gases.module.kind).toBe('gas-syringe');
@@ -62,6 +62,9 @@ describe('단원 레지스트리', () => {
     const animal = UNITS[15]!;
     expect(animal.ok && animal.activity).toBe('card-sort');
     if (animal.ok) expect(animal.module.kind).toBe('card-sort');
+    const plantlife = UNITS[16]!;
+    expect(plantlife.ok && plantlife.activity).toBe('card-sort');
+    if (plantlife.ok && plantlife.activity === 'card-sort') expect(plantlife.experiment.layout).toBe('tree');
   });
 
   it('카드 분류 매니페스트가 깨져도 다른 단원은 로드된다', () => {

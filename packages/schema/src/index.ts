@@ -245,6 +245,8 @@ export const cardSortProbeWhenSchema = z.enum([
   'check-unobserved',
   'check-inconsistent',
   'check-complete',
+  'tree-split-empty',
+  'tree-next-node',
   'finished',
 ]);
 
@@ -258,8 +260,8 @@ export const cardSortTutorConfigSchema = z.object({
   probes: z.array(cardSortProbeSchema).min(1),
 });
 
-/** 카드 배치 형태. 이번에는 무리 나누기만 있고, 나중에 'tree', 'order'를 더한다. */
-export const cardSortLayoutSchema = z.enum(['groups']);
+/** 카드 배치 형태. 무리 나누기(groups)와 두 갈래 트리(tree)가 있고, 나중에 'order'를 더한다. */
+export const cardSortLayoutSchema = z.enum(['groups', 'tree']);
 
 export const sortFeatureSchema = z.object({
   key: z.string().min(1),
@@ -296,7 +298,12 @@ export const cardSortExperimentSchema = z.object({
   cards: z.array(sortCardSchema).min(1),
   safetyChecklist: z.array(z.string().min(1)).default([]),
   tutor: cardSortTutorConfigSchema,
-});
+}).refine(
+  (e) =>
+    e.layout !== 'tree' ||
+    e.criteria.every((c) => c.groups.length === 2 && c.groups[0]!.value === 'yes' && c.groups[1]!.value === 'no'),
+  { message: '트리에서는 모든 기준의 무리가 정확히 예(yes)·아니요(no) 둘이어야 합니다.', path: ['criteria'] },
+);
 
 export const experimentSchema = z.discriminatedUnion('module', [
   variableExperimentSchema,

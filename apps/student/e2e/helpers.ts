@@ -252,3 +252,51 @@ export async function sortFinishCriterion(page: Page, key: SortCriterionKey) {
   await sortAll(page, key);
   await sortCheckButton(page).click();
 }
+
+// ---- 식물의 생활(카드 분류 트리) ----
+
+export const LEAF_CARDS = ['단풍나무', '국화', '벚나무', '동백나무', '감나무', '라일락', '붓꽃', '백합'] as const;
+export type LeafCard = (typeof LEAF_CARDS)[number];
+export type LeafCriterionKey = 'serrated' | 'lobed' | 'parallel';
+export const LEAF_CRITERION_LABEL: Record<LeafCriterionKey, string> = {
+  serrated: '잎 가장자리가 톱니 모양인가요?',
+  lobed: '잎이 여러 갈래로 갈라져 있나요?',
+  parallel: '잎맥이 나란한가요?',
+};
+export const LEAF_FEATURE_LABEL: Record<LeafCriterionKey, string> = { serrated: '가장자리', lobed: '갈라짐', parallel: '잎맥' };
+/** 카드를 관찰에 맞게 넣을 쪽(테스트가 정답을 알고 있어야 올바른 분류를 재현할 수 있다). */
+export const LEAF_SIDE: Record<LeafCriterionKey, Record<LeafCard, '예' | '아니요'>> = {
+  serrated: { 단풍나무: '예', 국화: '예', 벚나무: '예', 동백나무: '예', 감나무: '아니요', 라일락: '아니요', 붓꽃: '아니요', 백합: '아니요' },
+  lobed: { 단풍나무: '예', 국화: '예', 벚나무: '아니요', 동백나무: '아니요', 감나무: '아니요', 라일락: '아니요', 붓꽃: '아니요', 백합: '아니요' },
+  parallel: { 단풍나무: '아니요', 국화: '아니요', 벚나무: '아니요', 동백나무: '아니요', 감나무: '아니요', 라일락: '아니요', 붓꽃: '예', 백합: '예' },
+};
+
+/** 트리의 노드 버튼. id는 'r', 'r/yes', 'r/no/yes'처럼 뿌리에서 간 길이다. */
+export const treeNode = (page: Page, id: string) => page.locator(`button#node-${id.replace(/\//g, '-')}`);
+export const treeNodes = (page: Page) => page.getByRole('navigation', { name: '나누기 트리 그림' }).getByRole('button');
+export const treePutButton = (page: Page, side: '예' | '아니요') => page.getByRole('button', { name: `${side} 쪽에 넣기`, exact: true });
+
+/** 노드를 고르고(질문을 골라) 주어진 카드를 관찰해 넣은 뒤 확인한다. override는 일부러 다른 쪽에 넣을 카드. */
+export async function treeSplit(
+  page: Page,
+  node: string,
+  key: LeafCriterionKey,
+  cards: readonly LeafCard[],
+  opts: { observe?: boolean; override?: Partial<Record<LeafCard, '예' | '아니요'>> } = {},
+) {
+  await treeNode(page, node).click();
+  await sortChoose(page, LEAF_CRITERION_LABEL[key]);
+  for (const card of cards) {
+    await sortCard(page, card).click();
+    if (opts.observe !== false) await sortObserveButton(page, LEAF_FEATURE_LABEL[key]).click();
+    await treePutButton(page, opts.override?.[card] ?? LEAF_SIDE[key][card]).click();
+  }
+  await sortCheckButton(page).click();
+}
+
+/** §1 완성 트리까지 나눈다. */
+export async function treeFinish(page: Page) {
+  await treeSplit(page, 'r', 'parallel', LEAF_CARDS);
+  await treeSplit(page, 'r/no', 'serrated', ['단풍나무', '국화', '벚나무', '동백나무', '감나무', '라일락']);
+  await treeSplit(page, 'r/no/yes', 'lobed', ['단풍나무', '국화', '벚나무', '동백나무']);
+}

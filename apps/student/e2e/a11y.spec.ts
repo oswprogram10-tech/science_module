@@ -22,6 +22,9 @@ import {
   sortAll,
   sortFinishCriterion,
   sortObserveButton,
+  treeNode,
+  treeSplit,
+  LEAF_CARDS,
 } from './helpers';
 import type { Locator } from '@playwright/test';
 
@@ -651,6 +654,43 @@ for (const scheme of ['light', 'dark'] as const) {
     await expectNoSeriousViolations(page);
 
     await sortChoose(page, '귀여운가요?');
+    await expectNoSeriousViolations(page);
+  });
+}
+
+// ---- g3-plantlife ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`g3-plantlife ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 처음, 돋보기, 첫 나눔, 한쪽으로 모인 노드, 비활성 질문, 다 나눈 뒤`, async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g3-plantlife');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+
+    await sortChoose(page, '잎맥이 나란한가요?');
+    await sortCard(page, '단풍나무').click();
+    await sortObserveButton(page, '잎맥').click();
+    await sortObserveButton(page, '갈라짐').click();
+    await expect(page.getByRole('list', { name: '단풍나무 관찰 기록' })).toContainText('손바닥처럼 5~7갈래로 깊게 갈라져 있어요.');
+    await expectNoSeriousViolations(page);
+    await sortCard(page, '단풍나무').click();
+
+    await treeSplit(page, 'r', 'parallel', LEAF_CARDS);
+    await expect(treeNode(page, 'r/yes')).toBeVisible();
+    await expectNoSeriousViolations(page);
+
+    await treeNode(page, 'r/no').click();
+    await expect(page.getByText('위에서 이미 쓴 질문이에요')).toBeVisible();
+    await expectNoSeriousViolations(page);
+
+    await treeSplit(page, 'r/yes', 'serrated', ['붓꽃', '백합']);
+    await expect(page.getByText('모든 잎이 한쪽으로 모였어요.').first()).toBeVisible();
+    await expectNoSeriousViolations(page);
+
+    await treeSplit(page, 'r/no', 'serrated', ['단풍나무', '국화', '벚나무', '동백나무', '감나무', '라일락']);
+    await treeSplit(page, 'r/no/yes', 'lobed', ['단풍나무', '국화', '벚나무', '동백나무']);
+    await expect(page.getByText('더 나눌 수 없을 때까지 나누었어요!')).toBeVisible();
     await expectNoSeriousViolations(page);
   });
 }

@@ -13,6 +13,12 @@ describe('describeSituation', () => {
     expect(describeSituation({ activity: 'classify', lastKind: 'testing', mismatch: false })).toBe('지시약으로 시험 중');
     expect(describeSituation({ activity: 'observe', lastKind: 'record-match', mismatch: false })).toBe('관찰을 잘 기록함');
   });
+  it('카드 분류 트리 상황 키', () => {
+    expect(describeSituation({ activity: 'card-sort', lastKind: 'tree-split-empty', mismatch: false })).toBe('나누었더니 한쪽으로 모두 모임');
+    expect(describeSituation({ activity: 'card-sort', lastKind: 'tree-next-node', mismatch: false })).toBe('한 무리를 나누고 다음 무리를 고르는 중');
+    expect(describeSituation({ activity: 'card-sort', lastKind: 'tree-finished', mismatch: false })).toBe('더 나눌 수 없을 때까지 나눔');
+    expect(describeSituation({ activity: 'card-sort', lastKind: 'finished', mismatch: false })).toBe('두 가지 기준으로 분류함');
+  });
   it('모르는 키나 없는 값은 null', () => {
     expect(describeSituation({ activity: 'classify', lastKind: 'zzz', mismatch: false })).toBeNull();
     expect(describeSituation({ mismatch: false })).toBeNull();

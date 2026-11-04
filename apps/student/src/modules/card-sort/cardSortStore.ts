@@ -78,13 +78,16 @@ export function tutorSituation(
 
 // ---- useSyncExternalStore용 얇은 저장소 ----
 
-export interface CardSortStore {
-  getState(): CardSortState;
+export interface Store<T> {
+  getState(): T;
   subscribe(listener: () => void): () => void;
-  update(fn: (s: CardSortState) => CardSortState): CardSortState;
+  update(fn: (s: T) => T): T;
 }
 
-export function createCardSortStore(initial: CardSortState = createInitialState()): CardSortStore {
+export type CardSortStore = Store<CardSortState>;
+
+/** 상태가 바뀔 때만 구독자를 부르는 저장소(무리 나누기와 트리가 함께 쓴다). */
+export function createStore<T>(initial: T): Store<T> {
   let state = initial;
   const listeners = new Set<() => void>();
   return {
@@ -102,4 +105,8 @@ export function createCardSortStore(initial: CardSortState = createInitialState(
       return state;
     },
   };
+}
+
+export function createCardSortStore(initial: CardSortState = createInitialState()): CardSortStore {
+  return createStore(initial);
 }
