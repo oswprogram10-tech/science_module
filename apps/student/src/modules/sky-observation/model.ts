@@ -2,10 +2,8 @@ import {
   CONSTELLATIONS,
   CONSTELLATION_KEYS,
   EQUINOX_DAY,
-  SEOUL_LAT_DEG,
   STAR_TASK_DAY,
   STAR_TASK_START_HOUR,
-  answerFor,
   dayOfMonth15,
   raSun,
   southConstellationAt,
@@ -16,6 +14,10 @@ import {
   type SkyPoint,
 } from '@sci/engine-earth';
 import type { ObservationExperiment, ObservationTask } from '@sci/schema';
+import { latOf, modelAnswer } from '@sci/tutor';
+
+// 모델 결과 계산은 튜터 데이터 도구와 공유하므로 @sci/tutor에 있다.
+export { latOf, modelAnswer };
 
 export type Controls = Record<string, string | number>;
 
@@ -23,11 +25,6 @@ export type Controls = Record<string, string | number>;
 export const NIGHT_HOUR = 21;
 /** 계절 과제에서 달 슬라이더의 처음 값. */
 export const DEFAULT_MONTH = 4;
-
-export const latOf = (exp: ObservationExperiment): number => {
-  const v = exp.params?.latDeg;
-  return typeof v === 'number' ? v : SEOUL_LAT_DEG;
-};
 
 const paramDay = (exp: ObservationExperiment): number => {
   const v = exp.params?.dayOfYear;
@@ -55,15 +52,6 @@ export const showsStars = (task: ObservationTask): boolean =>
   task.view === 'revolution' || task.answer === 'star-path-direction';
 
 export const rotationOf = (controls: Controls): Rotation => (controls.rotation === 'reverse' ? 'reverse' : 'forward');
-
-/** 모델이 계산한 이 과제의 결과(선택지 value). 조작의 현재 값을 쓴다. */
-export function modelAnswer(exp: ObservationExperiment, task: ObservationTask, controls: Controls): string {
-  const day = exp.params?.dayOfYear;
-  return answerFor(task.answer, controls, {
-    latDeg: latOf(exp),
-    dayOfYear: typeof day === 'number' ? day : undefined,
-  });
-}
 
 /** 오전 9시, 오후 12시, 오후 3시 30분처럼. 0시와 24시는 오전 12시. */
 export function formatHour(hour: number): string {

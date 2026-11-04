@@ -1,10 +1,10 @@
 import {
   checkClassification,
-  evidenceGroup,
   type CheckResult,
   type GroupKey,
 } from '@sci/engine-matter';
 import type { ClassificationExperiment, ClassifyProbeWhen } from '@sci/schema';
+import { classifyWhen } from '@sci/tutor';
 import type { SafetyEvent } from '@sci/vision';
 
 export type Prediction = GroupKey | 'unsure';
@@ -107,20 +107,18 @@ export function tutorSituation(
   exp: ClassificationExperiment,
 ): { when: ClassifyProbeWhen; solution: string } {
   const label = (key: string | null | undefined) => exp.solutions.find((s) => s.key === key)?.label ?? '';
-  if (state.checked) {
-    const kind = state.checked.kind;
-    const bad = state.checked.items.find((i) => i.status === 'inconsistent');
-    return { when: kind, solution: label(bad?.solution ?? state.selected) };
-  }
   const sel = state.selected;
-  const tested = sel ? (state.tests[sel] ?? []) : [];
-  if (sel && tested.length === 0) return { when: 'before-test', solution: label(sel) };
-  const pred = sel ? state.predictions[sel] : undefined;
-  if (sel && (pred === 'acid' || pred === 'base')) {
-    const ev = evidenceGroup(exp, sel, tested);
-    if (ev !== null && ev !== pred) return { when: 'prediction-mismatch', solution: label(sel) };
+  const when = classifyWhen(exp, {
+    selected: sel,
+    predictions: state.predictions,
+    tested: sel ? (state.tests[sel] ?? []) : [],
+    checkKind: state.checked?.kind ?? null,
+  });
+  if (state.checked && when === state.checked.kind) {
+    const bad = state.checked.items.find((i) => i.status === 'inconsistent');
+    return { when, solution: label(bad?.solution ?? sel) };
   }
-  return { when: 'testing', solution: label(sel) };
+  return { when, solution: label(sel) };
 }
 
 // ---- useSyncExternalStore용 얇은 저장소 ----

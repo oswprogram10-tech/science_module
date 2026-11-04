@@ -1,4 +1,5 @@
 import type { ObservationExperiment, ObservationProbeWhen, ObservationTask } from '@sci/schema';
+import { observeWhen } from '@sci/tutor';
 import { DEFAULT_MONTH, defaultHour, modelAnswer, type Controls } from './model';
 
 export type Value = string | number;
@@ -139,11 +140,11 @@ export function feedbackKind(state: ObserveState, exp: ObservationExperiment): F
 /** 튜터 칸 선택 규칙. 위에서부터 첫 규칙을 적용한다. */
 export function tutorSituation(state: ObserveState, exp: ObservationExperiment): ObservationProbeWhen {
   const { task, ts } = current(state, exp);
-  if (ts.prediction === null) return 'before-observe';
-  if (!ts.recorded) return 'observing';
-  if (recordMatchesModel(exp, task, ts) === false) return 'record-mismatch';
-  if (ts.recorded.value !== ts.prediction) return 'prediction-mismatch';
-  return 'record-match';
+  return observeWhen({
+    prediction: ts.prediction,
+    recorded: ts.recorded?.value ?? null,
+    matchesModel: recordMatchesModel(exp, task, ts),
+  });
 }
 
 // ---- useSyncExternalStore용 얇은 저장소 ----

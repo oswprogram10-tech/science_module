@@ -11,9 +11,13 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@sci/gateway": "workspace:*"
+    "@sci/engine-earth": "workspace:*",
+    "@sci/engine-matter": "workspace:*",
+    "@sci/gateway": "workspace:*",
+    "@sci/schema": "workspace:*"
   },
   "devDependencies": {
-    "@sci/schema": "workspace:*"
+    "@sci/runtime": "workspace:*",
+    "@types/node": "^22.20.5"
   }
 }

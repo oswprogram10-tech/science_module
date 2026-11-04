@@ -8,9 +8,14 @@
     "build": "pnpm -r --if-present build",
     "test": "vitest run",
     "typecheck": "pnpm -r --if-present typecheck",
-    "e2e": "pnpm --filter student e2e"
+    "e2e": "pnpm --filter student e2e",
+    "tutor:scenarios": "tsx packages/tutor/scripts/cli.ts scenarios",
+    "tutor:validate": "tsx packages/tutor/scripts/cli.ts validate",
+    "tutor:export": "tsx packages/tutor/scripts/cli.ts export",
+    "tutor:import": "tsx packages/tutor/scripts/cli.ts import"
   },
   "devDependencies": {
+    "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.1.0"
   }
