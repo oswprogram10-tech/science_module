@@ -13,6 +13,7 @@ import plantJson from '../../../content/units/g6-plant/manifest.json';
 import ecosystemJson from '../../../content/units/g4-ecosystem/manifest.json';
 import microbeJson from '../../../content/units/g4-microbe/manifest.json';
 import bodyJson from '../../../content/units/g5-body/manifest.json';
+import forceJson from '../../../content/units/g3-force/manifest.json';
 import animalJson from '../../../content/units/g3-animal/manifest.json';
 import plantlifeJson from '../../../content/units/g3-plantlife/manifest.json';
 import earthJson from '../../../content/units/g6-earth-motion/manifest.json';
@@ -170,7 +171,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
   const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
   it('아홉 매니페스트가 모두 검증을 통과한다', () => {
-    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson]) expect(() => parseManifest(j)).not.toThrow();
+    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, forceJson]) expect(() => parseManifest(j)).not.toThrow();
   });
 
   it('연소 매니페스트의 점검표와 경고 문구를 읽는다', () => {
@@ -309,6 +310,24 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     expect(e.dependent.map((d) => d.key)).toEqual(['pulseEnd', 'breathEnd']);
     expect(e.params).toEqual({ totalMin: 10 });
     expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['kind', 'wrist']);
+  });
+
+  it('힘과 우리 생활 매니페스트의 변인, 안전 종류, 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(forceJson);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-force', 3, 'physics', ['4과01-02']]);
+    const e = m.experiments[0] as VariableExperiment;
+    expect(e.module).toBe('lever-balance');
+    expect(e.safety).toEqual([]);
+    expect(e.safetyChecklist).toBeUndefined();
+    expect(e.variables.map((v) => v.key)).toEqual(['count', 'distance', 'shape']);
+    expect(e.variables[0]!.options.map((o) => o.value)).toEqual([1, 2, 4]);
+    expect(e.variables[1]!.options.map((o) => o.value)).toEqual([2, 4, 8]);
+    expect(e.variables[2]!.options.map((o) => o.value)).toEqual(['cylinder', 'cube']);
+    expect(e.variables.map((v) => v.default)).toEqual([2, 4, 'cylinder']);
+    expect(e.dependent.map((d) => d.key)).toEqual(['rightHeightCm']);
+    expect(e.params).toEqual({ durationS: 1 });
+    expect(e.tutor.forbiddenAnswers).toHaveLength(6);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['distance', 'count', 'shape']);
   });
 
   it('두 필드는 없어도 된다', () => {

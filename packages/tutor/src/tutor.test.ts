@@ -1070,3 +1070,100 @@ describe('g5-body 매니페스트 probe', () => {
     }
   });
 });
+
+
+// ---------- 힘과 우리 생활(막대의 수평 잡기) 매니페스트 ----------
+import forceJson from '../../../content/units/g3-force/manifest.json';
+
+describe('g3-force 매니페스트 probe', () => {
+  const e = parseManifest(forceJson).experiments[0]! as VariableExperiment;
+  const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+  const eKeys = e.variables.map((v) => v.key);
+  const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+  const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: 'distance', ...x });
+  const fair = (iv: string): Partial<ProbeContext> => ({
+    ivKey: iv,
+    lastAnalysis: { kind: 'fair-test', changed: [iv] },
+    prediction: 'same',
+    observed: 'same',
+  });
+
+  it('iv별 fair-test 질문을 고른다', () => {
+    expect(selectProbe(eCtx(fair('distance')), e.tutor.probes, eGuard)).toContain('수평이 된 자리가 있었나요?');
+    expect(selectProbe(eCtx(fair('count')), e.tutor.probes, eGuard)).toContain('추를 어디로 옮겨 보면 좋을까요?');
+    expect(selectProbe(eCtx(fair('shape')), e.tutor.probes, eGuard)).toContain('모양만 바꾸었을 때 막대는 달라졌나요?');
+  });
+
+  it('예측과 결과가 다르면 돌리려는 정도 그림을 보라고 한다', () => {
+    const text = selectProbe(eCtx({ ...fair('count'), prediction: 'increase', observed: 'decrease' }), e.tutor.probes, eGuard);
+    expect(text).toContain('돌리려는 정도 보기');
+  });
+
+  it('모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+    let n = 0;
+    for (const probe of e.tutor.probes) {
+      for (const iv of eKeys) {
+        for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+          const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+          expect(text).not.toMatch(/[{}]/);
+          expect(text).not.toMatch(/(을\(를\)|이\(가\)|와\(과\)|은\(는\))/);
+          n++;
+        }
+      }
+    }
+    expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+  });
+
+  it('질문 문장은 금지 구절·limits 용어와 겹치지 않는다', () => {
+    for (const probe of e.tutor.probes) {
+      for (const f of e.tutor.forbiddenAnswers) expect(probe.text, probe.text).not.toContain(f);
+      for (const l of e.limits) expect(probe.text, probe.text).not.toContain(l);
+    }
+  });
+
+  it('오검출 없음: 추의 수 전용 질문은 막히지 않고, 규칙을 말하는 문장은 막는다', () => {
+    const countProbe = e.tutor.probes.find((p) => p.iv === 'count')!;
+    expect(countProbe.text).toContain('추를 어디로 옮겨 보면 좋을까요?');
+    expect(guardOutput(countProbe.text, eGuard).ok).toBe(true);
+    for (const rule of ['무거운 쪽으로 기울어요', '받침점에서 멀수록 더 많이 기울어요', '무게와 거리를 곱하면 돼요', '무거운 물체를 받침점에 가깝게 놓아요', '모양은 관계없어요']) {
+      expect(guardOutput(rule, eGuard).ok, rule).toBe(false);
+    }
+  });
+
+  it('금지 구절을 담은 문장과 limits 용어를 담은 문장은 실제로 막는다', () => {
+    for (const f of e.tutor.forbiddenAnswers) expect(guardOutput(`${f}요`, eGuard).ok, f).toBe(false);
+    for (const l of e.limits) expect(guardOutput(`${l}이에요`, eGuard).ok, l).toBe(false);
+  });
+
+  it('곱셈 규칙은 어느 질문에도 나오지 않고, 화면에 보이는 글에는 limits 용어가 없다', () => {
+    const shown = [
+      e.title,
+      e.question,
+      e.predictionPrompt,
+      ...e.variables.flatMap((v) => [v.label, ...v.options.map((o) => o.label)]),
+      ...e.dependent.map((d) => d.label),
+      ...e.tutor.probes.map((p) => p.text),
+    ];
+    for (const text of shown) {
+      for (const l of e.limits) expect(text, text).not.toContain(l);
+      expect(text, text).not.toMatch(/곱|×/);
+    }
+  });
+
+  it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+    const situations: Partial<ProbeContext>[] = [
+      {},
+      { lastAnalysis: { kind: 'first-trial', changed: [] } },
+      { lastAnalysis: { kind: 'confounded', changed: ['count', 'distance'] } },
+      { lastAnalysis: { kind: 'iv-unchanged', changed: ['shape'] } },
+      { lastAnalysis: { kind: 'repeat', changed: [] } },
+      ...eKeys.flatMap((k) => [fair(k), { ...fair(k), prediction: 'increase' as const, observed: 'same' as const }]),
+    ];
+    for (const s of situations) {
+      const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+      expect(text).not.toBe(FALLBACK_PROBE);
+      expect(guardOutput(text, eGuard).ok, text).toBe(true);
+    }
+  });
+});

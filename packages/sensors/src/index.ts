@@ -6,7 +6,7 @@ export interface SensorReading {
   stale?: boolean;
 }
 
-export type SensorKind = 'temperature' | 'scale' | 'pressure' | 'oxygen' | 'carbonDioxide' | 'light' | 'humidity' | 'pulse';
+export type SensorKind = 'temperature' | 'scale' | 'pressure' | 'oxygen' | 'carbonDioxide' | 'light' | 'humidity' | 'pulse' | 'tilt';
 
 export interface SensorDriver {
   id: string;
@@ -85,6 +85,7 @@ export const GAS_NOISE_PCT = 0.05;
 export const LIGHT_NOISE_PCT = 0.5;
 export const HUMIDITY_NOISE_PCT = 0.5;
 export const PULSE_NOISE_BPM = 1;
+export const TILT_NOISE_DEG = 0.1;
 export const BEAKER_G = 100;
 
 /** 값 = source() + 시드 고정 잡음(±0.2 °C), 소수 첫째 자리. */
@@ -168,6 +169,16 @@ export class MockPulseDriver extends MockDriver {
   unit = '회/분';
   protected measure() {
     return Math.max(0, Math.round(this.source() + (this.rng() * 2 - 1) * PULSE_NOISE_BPM));
+  }
+}
+
+/** 가상 기울기 센서: 값 = source()(도, 부호 포함) + 시드 고정 잡음(±0.1°), 소수 첫째 자리. */
+export class MockTiltDriver extends MockDriver {
+  id = 'mock-tilt';
+  kind = 'tilt' as const;
+  unit = '°';
+  protected measure() {
+    return roundTo(this.source() + (this.rng() * 2 - 1) * TILT_NOISE_DEG, 1);
   }
 }
 

@@ -741,6 +741,39 @@ for (const scheme of ['light', 'dark'] as const) {
   });
 }
 
+// ---- g3-force ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`g3-force ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 처음, 실행 뒤(수평), 오른쪽이 내려감, 왼쪽이 내려감, 정육면체`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g3-force');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '오른쪽 추의 거리');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('기울어진 쪽: 수평이에요 · 오른쪽 끝 높이 10 cm')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await setValue(page, '오른쪽 추의 거리', '받침점에서 8칸');
+    await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('touch-mark')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await page.reload();
+    await setValue(page, '오른쪽 추의 수', '1개');
+    await setValue(page, '추의 모양', '정육면체');
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '오른쪽 추의 수');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('touch-mark')).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+}
+
 // ---- 수업 연결 ----
 
 for (const scheme of ['light', 'dark'] as const) {

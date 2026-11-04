@@ -13,6 +13,7 @@ import { transpirationModule } from './transpiration';
 import { foodWebModule } from './food-web';
 import { moldGrowthModule } from './mold-growth';
 import { exerciseBodyModule } from './exercise-body';
+import { leverBalanceModule } from './lever-balance';
 
 export const MODULES: Record<ModuleKind, AnyModule> = {
   dissolution: dissolutionModule,
@@ -28,4 +29,5 @@ export const MODULES: Record<ModuleKind, AnyModule> = {
   'food-web': foodWebModule,
   'mold-growth': moldGrowthModule,
   'exercise-body': exerciseBodyModule,
+  'lever-balance': leverBalanceModule,
 };

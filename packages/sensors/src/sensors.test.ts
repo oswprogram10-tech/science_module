@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { simulateDissolution } from '@sci/engine-matter';
-import { MockGasDriver, MockHumidityDriver, MockLightDriver, MockPressureDriver, MockPulseDriver, MockScaleDriver, MockTemperatureDriver, mulberry32 } from './index';
+import { MockGasDriver, MockHumidityDriver, MockLightDriver, MockPressureDriver, MockPulseDriver, MockScaleDriver, MockTemperatureDriver, MockTiltDriver, mulberry32 } from './index';
 
 describe('mulberry32', () => {
   it('같은 시드면 같은 수열', () => {
@@ -174,5 +174,23 @@ describe('MockPulseDriver', () => {
     expect(a.id).toBe('mock-pulse');
     const zero = new MockPulseDriver(() => 0, 7);
     for (let i = 0; i < 50; i++) expect(zero.read().value).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('MockTiltDriver', () => {
+  it('단위 °, 부호 유지, ±0.1 잡음, 소수 첫째 자리, 시드 재현', () => {
+    const a = new MockTiltDriver(() => -12.8, 7);
+    const b = new MockTiltDriver(() => -12.8, 7);
+    const ra = Array.from({ length: 50 }, () => a.read().value);
+    expect(ra).toEqual(Array.from({ length: 50 }, () => b.read().value));
+    for (const v of ra) {
+      expect(Math.abs(v + 12.8)).toBeLessThanOrEqual(0.1 + 1e-9);
+      expect(Math.round(v * 10) / 10).toBe(v);
+    }
+    expect(a.read().unit).toBe('°');
+    expect(a.kind).toBe('tilt');
+    expect(a.id).toBe('mock-tilt');
+    const right = new MockTiltDriver(() => 12.8, 7);
+    for (let i = 0; i < 50; i++) expect(right.read().value).toBeGreaterThan(12);
   });
 });
