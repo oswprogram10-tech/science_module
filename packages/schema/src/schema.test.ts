@@ -9,6 +9,7 @@ import electricityJson from '../../../content/units/g6-electricity/manifest.json
 import landJson from '../../../content/units/g4-land/manifest.json';
 import seasonsJson from '../../../content/units/g6-seasons/manifest.json';
 import lifecycleJson from '../../../content/units/g3-lifecycle/manifest.json';
+import plantJson from '../../../content/units/g6-plant/manifest.json';
 import earthJson from '../../../content/units/g6-earth-motion/manifest.json';
 import {
   ManifestError,
@@ -162,7 +163,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
   const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
   it('아홉 매니페스트가 모두 검증을 통과한다', () => {
-    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson]) expect(() => parseManifest(j)).not.toThrow();
+    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson]) expect(() => parseManifest(j)).not.toThrow();
   });
 
   it('연소 매니페스트의 점검표와 경고 문구를 읽는다', () => {
@@ -235,6 +236,21 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     expect(e.dependent.map((d) => d.key)).toEqual(['sproutedDay7', 'firstDay']);
     expect(e.params).toEqual({ seeds: 10, days: 10 });
     expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['light', 'tempC']);
+  });
+
+  it('식물의 구조와 기능 매니페스트의 변인, 안전 종류, 탐침을 읽는다', () => {
+    const m = parseManifest(plantJson);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g6-plant', 6, 'life', ['6과11-01']]);
+    const e = m.experiments[0] as VariableExperiment;
+    expect(e.module).toBe('transpiration');
+    expect(e.safety).toEqual([]);
+    expect(e.safetyChecklist).toBeUndefined();
+    expect(e.variables.map((v) => v.key)).toEqual(['leaves', 'light', 'wind', 'startMl']);
+    expect(e.variables[0]!.options.map((o) => o.value)).toEqual([0, 4, 8]);
+    expect(e.variables[3]!.options.map((o) => o.value)).toEqual([100, 150]);
+    expect(e.dependent.map((d) => d.key)).toEqual(['lostMl', 'remainingMl']);
+    expect(e.params).toEqual({ hours: 48 });
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['leaves', 'startMl']);
   });
 
   it('두 필드는 없어도 된다', () => {

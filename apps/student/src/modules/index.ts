@@ -9,6 +9,7 @@ import { electromagnetModule } from './electromagnet';
 import { magmaCoolingModule } from './magma-cooling';
 import { sunAngleModule } from './sun-angle';
 import { germinationModule } from './germination';
+import { transpirationModule } from './transpiration';
 
 export const MODULES: Record<ModuleKind, AnyModule> = {
   dissolution: dissolutionModule,
@@ -20,4 +21,5 @@ export const MODULES: Record<ModuleKind, AnyModule> = {
   'magma-cooling': magmaCoolingModule,
   'sun-angle': sunAngleModule,
   germination: germinationModule,
+  transpiration: transpirationModule,
 };

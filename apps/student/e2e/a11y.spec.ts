@@ -444,6 +444,57 @@ test('g3-lifecycle 어두운 화면: 처음, 실행 뒤, 어두운 곳·따뜻�
   await expectNoSeriousViolations(page);
 });
 
+// ---- g6-plant ----
+
+async function plantRun(page: Page) {
+  await selectIV(page, '잎의 수');
+  await predict(page, '줄어든다');
+  await runTrial(page);
+}
+
+test('g6-plant 처음 화면', async ({ page }) => {
+  await gotoUnit(page, 'g6-plant');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g6-plant 실행한 뒤(그래프 표식)와 0시간째, 잎 0장·어두운 곳·바람', async ({ page }) => {
+  await gotoUnit(page, 'g6-plant');
+  await plantRun(page);
+  await expect(page.getByRole('figure', { name: '그래프로 보기' }).getByTestId('graph-marker')).toBeVisible();
+  await expectNoSeriousViolations(page);
+  const slider = page.getByRole('slider', { name: '그래프 시각 옮기기' });
+  await slider.focus();
+  await slider.press('Home');
+  await expect(page.getByText('0시간 · 남은 물 100.0 mL')).toBeVisible();
+  await expectNoSeriousViolations(page);
+  // 시행이 있으면 그림은 그 시행의 조건을 보여 주므로, 새 화면에서 조건을 바꿔 본다.
+  await gotoUnit(page, 'g6-plant');
+  await page.reload();
+  await setValue(page, '빛', '어두운 곳');
+  await setValue(page, '바람', '선풍기 약하게');
+  await expect(page.getByText('선풍기', { exact: true })).toBeVisible();
+  await expectNoSeriousViolations(page);
+  await setValue(page, '잎의 수', '0장');
+  await expect(page.getByText('잎을 딴 자국')).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g6-plant 어두운 화면: 처음, 실행 뒤, 어두운 곳·바람, 잎 0장', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await gotoUnit(page, 'g6-plant');
+  await expectNoSeriousViolations(page);
+  await plantRun(page);
+  await expectNoSeriousViolations(page);
+  await page.reload();
+  await setValue(page, '빛', '어두운 곳');
+  await setValue(page, '바람', '선풍기 약하게');
+  await expect(page.getByText('선풍기', { exact: true })).toBeVisible();
+  await expectNoSeriousViolations(page);
+  await setValue(page, '잎의 수', '0장');
+  await expectNoSeriousViolations(page);
+});
+
 // ---- 수업 연결 ----
 
 for (const scheme of ['light', 'dark'] as const) {
