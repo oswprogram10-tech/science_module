@@ -34,7 +34,8 @@ export interface ExperimentModule<S extends { t: number }, R> {
   interpolate(a: S, b: S, k: number): S;
   /** 예측 비교와 그래프 y축에 쓰는 주 측정값 */
   metric: { sampleKey: keyof S; resultKey: keyof R; sameThreshold(exp: Experiment): number };
-  graph: { yLabel: string };
+  /** yMin: y축 눈금이 시작하는 값(기본 0) */
+  graph: { yLabel: string; yMin?: number };
   resultColumns(exp: Experiment): ResultColumn<R>[];
   sensors(snapshot: S | null, values: Values): SensorSpec[];
   MacroView: ComponentType<ViewProps<S>>;

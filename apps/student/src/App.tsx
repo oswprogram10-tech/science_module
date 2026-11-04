@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import {
   analyzeTrial,
   canRun,
@@ -10,6 +10,7 @@ import { createRuntime, sampleAt, type Trial } from '@sci/runtime';
 import { selectProbe } from '@sci/tutor';
 import { MemoryRecorder, buildStatement, toExtensions } from '@sci/xapi';
 import type { VariableExperiment } from '@sci/schema';
+import { MockSafetyDetector, type SafetyEvent, type SafetyEventType } from '@sci/vision';
 import { ClassifyLab } from './modules/indicator-classify/ClassifyLab';
 import { UNITS, parseRoute, unitHash, type UnitEntry } from './units';
 import type { AnyModule } from './modules/types';
@@ -18,6 +19,11 @@ import { GraphView } from './components/GraphView';
 import { SensorBar } from './components/SensorBar';
 import { ResultsTable } from './components/ResultsTable';
 import { UnitList } from './components/UnitList';
+import { MockSafetyPanel } from './components/safety/MockSafetyPanel';
+import { SafetyAlertBanner } from './components/safety/SafetyAlertBanner';
+import { SafetyDialog } from './components/safety/SafetyDialog';
+import { devMode } from './components/safety/devMode';
+import { resolveSafetyMessages, speak } from './components/safety/safetyMessages';
 
 const subscribeHash = (cb: () => void) => {
   window.addEventListener('hashchange', cb);
@@ -93,6 +99,34 @@ function Lab({
   const recorder = useMemo(() => new MemoryRecorder(), []);
   const state = useSyncExternalStore(runtime.subscribe, runtime.getSnapshot);
 
+  // 안전: 점검표(처음 실행할 때 한 번), 모의 감지기 경고(?dev=1 패널에서 일으킨다)
+  const safetyItems = experiment.safetyChecklist ?? [];
+  const safetyMessages = useMemo(() => resolveSafetyMessages(experiment.safetyMessages), [experiment]);
+  const detector = useMemo(() => new MockSafetyDetector(), []);
+  const dev = useMemo(devMode, []);
+  const [alerts, setAlerts] = useState<SafetyEventType[]>([]);
+  const [safetyConfirmed, setSafetyConfirmed] = useState(false);
+  const [safetyOpen, setSafetyOpen] = useState(false);
+  const alertMessages = alerts.map((a) => safetyMessages[a]);
+
+  const emit = useCallback(
+    (verb: string, result?: Record<string, unknown>) => {
+      const stmt = buildStatement({ actorId: ACTOR_ID, verb, objectId: activityId(unitId, experiment.id), result });
+      recorder.record(stmt);
+      console.debug('[xAPI]', stmt);
+    },
+    [unitId, experiment.id, recorder],
+  );
+
+  useEffect(() => {
+    detector.start((e: SafetyEvent) => {
+      setAlerts((a) => [...a, e.type]);
+      speak(safetyMessages[e.type]);
+      emit('safety-alert', { extensions: toExtensions({ type: e.type }) });
+    });
+    return () => detector.stop();
+  }, [detector, safetyMessages, emit]);
+
   const labels = useMemo(
     () => Object.fromEntries(experiment.variables.map((v) => [v.key, v.label])),
     [experiment],
@@ -124,15 +158,26 @@ function Lab({
 
   const gate = canRun({ ivKey: state.ivKey, prediction: state.prediction }, experiment.gateway);
 
+  const safetyLocked = alerts.length > 0;
   const onRun = () => {
-    if (!gate.ok || state.playing) return;
+    if (!gate.ok || state.playing || safetyLocked) return;
+    if (safetyItems.length > 0 && !safetyConfirmed) {
+      setSafetyOpen(true);
+      return;
+    }
+    doRun();
+  };
+
+  const onConfirmSafety = () => {
+    setSafetyConfirmed(true);
+    setSafetyOpen(false);
+    emit('safety-confirmed');
+    doRun();
+  };
+
+  const doRun = () => {
     try {
       const snap = runtime.getSnapshot();
-      const emit = (verb: string, result?: Record<string, unknown>) => {
-        const stmt = buildStatement({ actorId: ACTOR_ID, verb, objectId: activityId(unitId, experiment.id), result });
-        recorder.record(stmt);
-        console.debug('[xAPI]', stmt);
-      };
       const trial = runtime.run(
         (values) => mod.simulate(values, experiment),
         (prev, cur) => analyzeTrial(prev, cur, labels),
@@ -190,6 +235,7 @@ function Lab({
 
   return (
     <div className="app">
+      <SafetyAlertBanner messages={alertMessages} onDismiss={() => setAlerts([])} />
       <header className="top">
         <a className="back" href="#/">← 단원 목록</a>
         <h1>{title}</h1>
@@ -200,7 +246,11 @@ function Lab({
         <DesignPanel
           experiment={experiment}
           state={state}
-          gate={gate}
+          gate={
+            safetyLocked
+              ? { ok: false, reasons: [...gate.reasons, '안전 경고를 먼저 확인해 주세요.'] }
+              : gate
+          }
           onValue={runtime.setValue}
           onIV={runtime.setIV}
           onPrediction={runtime.setPrediction}
@@ -236,6 +286,17 @@ function Lab({
           <ResultsTable experiment={experiment} module={mod} trials={state.trials} playingId={state.playing ? state.active : null} />
         </section>
       </main>
+
+      {dev && <MockSafetyPanel onTrigger={(t) => detector.trigger(t)} />}
+
+      {safetyOpen && (
+        <SafetyDialog
+          items={safetyItems}
+          intro="실험을 시작하기 전에 모두 확인해 주세요."
+          onConfirm={onConfirmSafety}
+          onCancel={() => setSafetyOpen(false)}
+        />
+      )}
     </div>
   );
 }

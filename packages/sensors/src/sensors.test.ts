@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { simulateDissolution } from '@sci/engine-matter';
-import { MockPressureDriver, MockScaleDriver, MockTemperatureDriver, mulberry32 } from './index';
+import { MockGasDriver, MockPressureDriver, MockScaleDriver, MockTemperatureDriver, mulberry32 } from './index';
 
 describe('mulberry32', () => {
   it('같은 시드면 같은 수열', () => {
@@ -95,5 +95,23 @@ describe('MockPressureDriver', () => {
     expect(Math.abs(d.read().value - 101.3)).toBeLessThanOrEqual(0.1 + 1e-9);
     src = 202.6;
     expect(Math.abs(d.read().value - 202.6)).toBeLessThanOrEqual(0.1 + 1e-9);
+  });
+});
+
+describe('MockGasDriver', () => {
+  it('산소·이산화 탄소: 단위 %, 소수 첫째 자리, ±0.05 잡음, 시드 재현', () => {
+    for (const kind of ['oxygen', 'carbonDioxide'] as const) {
+      const a = new MockGasDriver(kind, () => 20.5, 9);
+      const b = new MockGasDriver(kind, () => 20.5, 9);
+      const ra = Array.from({ length: 50 }, () => a.read().value);
+      expect(ra).toEqual(Array.from({ length: 50 }, () => b.read().value));
+      for (const v of ra) {
+        expect(Math.abs(v - 20.5)).toBeLessThanOrEqual(0.1 + 1e-9); // 잡음 ±0.05를 소수 첫째 자리로 반올림
+        expect(Math.round(v * 10) / 10).toBe(v);
+      }
+      expect(a.read().unit).toBe('%');
+      expect(a.kind).toBe(kind);
+    }
+    expect(new MockGasDriver('oxygen', () => 21, 1).id).not.toBe(new MockGasDriver('carbonDioxide', () => 21, 1).id);
   });
 });

@@ -54,7 +54,7 @@
     ],
     "dependent": [
       { "key": "extinguishS", "label": "불이 꺼질 때까지 걸린 시간", "unit": "초" },
-      { "key": "oxygenEndPct", "label": "꺼질 때 산소 비율", "unit": "%" }
+      { "key": "usedOxygenMl", "label": "쓰인 산소의 양", "unit": "mL" }
     ],
     "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
     "safety": ["fire", "hot"],
@@ -107,7 +107,8 @@
 - 샘플: `{ t, oxygenPct, co2Pct, flame, fog, lit: 0|1 }`(lit은 보간 가능하게 숫자).
 - 결과:
   - `extinguishS`: 꺼진 시각, 소수 첫째 자리
-  - `oxygenEndPct`: 꺼질 때 산소 비율, 소수 첫째 자리
+  - `oxygenEndPct`: 꺼질 때 산소 비율, 소수 첫째 자리 (모델상 항상 out 값이라 화면에는 쓰지 않음)
+  - `usedOxygenMl`: jarMl × (start − 꺼질 때 산소%) / 100, 소수 첫째 자리
   - `co2EndPct`: 꺼질 때 이산화 탄소 비율, 소수 둘째 자리
 - `validateCombustionExperiment(exp)`:
   - 네 변인이 있고, 각 값이 허용 범위에 있어야 한다. jarMl은 100 이상 5000 이하, candle은 두 종류 중 하나, candleCount는 1~4 정수, candleColor는 아무 문자열이나 된다.
@@ -137,7 +138,7 @@
   - "분자" 낱말은 쓰지 않는다. reduced-motion이면 움직임을 멈춘다.
 - **그래프**: y = oxygenPct, 라벨 `산소 비율(%)`, `yMin` 14.
 - **센서**: 가상 산소 센서(oxygenPct), 가상 이산화 탄소 센서(co2Pct).
-- **결과 열**: 걸린 시간(초), 꺼질 때 산소(%), 꺼질 때 이산화 탄소(%).
+- **결과 열**: 걸린 시간(초), 쓰인 산소의 양(mL). (꺼질 때 산소·이산화 탄소 비율은 모델상 시행마다 같아서 표에서 뺐다. 센서로 보여 준다.)
 - **예측 비교**: `sameThreshold` = 1초.
 - **안전**: 처음 실행할 때 매니페스트의 점검표 대화상자를 띄운다. 실행 버튼 아래에 항상 "⚠ 실제 실험에서는 불 가까이에 얼굴을 대지 않아요."를 표시한다.
 

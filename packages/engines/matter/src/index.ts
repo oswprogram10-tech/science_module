@@ -3,3 +3,4 @@ export * from './simulate';
 export * from './validate';
 export * from './gas';
 export * from './indicator';
+export * from './combustion';

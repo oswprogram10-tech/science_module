@@ -5,10 +5,13 @@ const FOCUSABLE = 'input:not([disabled]), button:not([disabled]), [href], select
 /** 안전 점검표 대화상자. 모두 체크해야 확인할 수 있고, Esc로 닫는다. 포커스는 대화상자 안에 가둔다. */
 export function SafetyDialog({
   items,
+  intro = '위험한 용액을 시험하기 전에 모두 확인해 주세요.',
   onConfirm,
   onCancel,
 }: {
   items: string[];
+  /** 제목 아래 안내 문장. 기본은 산과 염기 화면의 문구. */
+  intro?: string;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
@@ -48,7 +51,7 @@ export function SafetyDialog({
     <div className="modal-backdrop">
       <div ref={ref} className="modal" role="dialog" aria-modal="true" aria-labelledby={titleId} onKeyDown={onKeyDown}>
         <h2 id={titleId}>안전 점검표</h2>
-        <p>위험한 용액을 시험하기 전에 모두 확인해 주세요.</p>
+        <p>{intro}</p>
         <ul className="checklist">
           {items.map((text, i) => (
             <li key={text}>

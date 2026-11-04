@@ -246,3 +246,61 @@ describe('renderAndGuard (활동 유형과 무관한 탐침)', () => {
     for (const phrase of ab.tutor.forbiddenAnswers) expect(guardOutput(phrase, abGuard).ok).toBe(false);
   });
 });
+
+// ---------- 물질의 연소 매니페스트 ----------
+import combustionJson from '../../../content/units/g6-combustion/manifest.json';
+
+describe('g6-combustion 매니페스트 probe', () => {
+  const c = parseManifest(combustionJson).experiments[0]! as VariableExperiment;
+  const cLabels = Object.fromEntries(c.variables.map((v) => [v.key, v.label]));
+  const cKeys = c.variables.map((v) => v.key);
+  const cGuard = { forbiddenAnswers: c.tutor.forbiddenAnswers, limits: c.limits };
+  const cCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: cLabels, ivKey: 'jarMl', ...x });
+  const fair = (iv: string): Partial<ProbeContext> => ({
+    ivKey: iv,
+    lastAnalysis: { kind: 'fair-test', changed: [iv] },
+    prediction: 'same',
+    observed: 'same',
+  });
+
+  it('iv별 fair-test 질문을 고른다', () => {
+    expect(selectProbe(cCtx(fair('jarMl')), c.tutor.probes, cGuard)).toContain('집기병 안에 무엇이');
+    expect(selectProbe(cCtx(fair('candleColor')), c.tutor.probes, cGuard)).toContain('초의 색깔만 바꾸었을 때');
+    expect(selectProbe(cCtx(fair('candleCount')), c.tutor.probes, cGuard)).toContain('센서 값도 함께 비교해 볼까요?');
+  });
+
+  it('모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+    let n = 0;
+    for (const probe of c.tutor.probes) {
+      for (const iv of cKeys) {
+        for (const changed of [...cKeys.map((k) => [k]), cKeys]) {
+          const text = renderProbe(probe.text, { iv: cLabels[iv]!, changed: changed.map((k) => cLabels[k]!) });
+          expect(guardOutput(text, cGuard).ok, text).toBe(true);
+          expect(text).not.toMatch(/[{}]|\(를\)|\(가\)|\(과\)/);
+          n++;
+        }
+      }
+    }
+    expect(n).toBe(c.tutor.probes.length * cKeys.length * (cKeys.length + 1));
+  });
+
+  it('금지 구절을 담은 문장은 실제로 막는다', () => {
+    for (const f of c.tutor.forbiddenAnswers) expect(guardOutput(`${f}요`, cGuard).ok, f).toBe(false);
+  });
+
+  it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+    const situations: Partial<ProbeContext>[] = [
+      {},
+      { lastAnalysis: { kind: 'first-trial', changed: [] } },
+      { lastAnalysis: { kind: 'confounded', changed: ['jarMl', 'candle'] } },
+      { lastAnalysis: { kind: 'iv-unchanged', changed: ['candle'] } },
+      { lastAnalysis: { kind: 'repeat', changed: [] } },
+      { ...fair('jarMl'), prediction: 'increase', observed: 'decrease' },
+    ];
+    for (const s of situations) {
+      const text = selectProbe(cCtx(s), c.tutor.probes, cGuard);
+      expect(text).not.toBe(FALLBACK_PROBE);
+      expect(guardOutput(text, cGuard).ok, text).toBe(true);
+    }
+  });
+});

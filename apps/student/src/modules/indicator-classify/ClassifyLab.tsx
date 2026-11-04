@@ -3,7 +3,7 @@ import { indicatorColor, type GroupKey } from '@sci/engine-matter';
 import { josa } from '@sci/gateway';
 import type { ClassificationExperiment } from '@sci/schema';
 import { renderAndGuard } from '@sci/tutor';
-import { MockSafetyDetector, type SafetyEvent, type SafetyEventType } from '@sci/vision';
+import { MockSafetyDetector, type SafetyEvent } from '@sci/vision';
 import { MemoryRecorder, buildStatement, toExtensions } from '@sci/xapi';
 import {
   allPlaced,
@@ -24,8 +24,11 @@ import { ColorReader, type ReadSource } from './ColorReader';
 import type { ColorReading } from './colorRead';
 import { PatternDefs, Swatch, TestTube } from './ColorViews';
 import { TUTOR_NO_SELECTION, classifyFeedback } from './feedback';
-import { SafetyDialog } from './SafetyDialog';
-import { HAZARD_NOTICE, MOCK_LABELS, SAFETY_MESSAGES, speak } from './safetyMessages';
+import { MockSafetyPanel } from '../../components/safety/MockSafetyPanel';
+import { SafetyAlertBanner } from '../../components/safety/SafetyAlertBanner';
+import { SafetyDialog } from '../../components/safety/SafetyDialog';
+import { devMode } from '../../components/safety/devMode';
+import { HAZARD_NOTICE, SAFETY_MESSAGES, speak } from '../../components/safety/safetyMessages';
 
 const ACTOR_ID = 'anon-student-001';
 const activityId = (unitId: string, expId: string) => `https://sci-bridge.local/activities/${unitId}/${expId}`;
@@ -36,15 +39,6 @@ const PREDICTIONS: { value: Prediction; label: string }[] = [
   { value: 'unsure', label: '잘 모르겠어요' },
 ];
 const PREDICTION_SHORT: Record<Prediction, string> = { acid: '산성', base: '염기성', unsure: '모르겠어요' };
-const MOCK_TYPES: SafetyEventType[] = ['NO_GOGGLES', 'NO_GLOVES', 'SPILL', 'FOOD'];
-
-const devMode = () => {
-  try {
-    return new URLSearchParams(window.location.search).get('dev') === '1';
-  } catch {
-    return false;
-  }
-};
 
 export function ClassifyLab({
   unitId,
@@ -177,18 +171,7 @@ export function ClassifyLab({
   return (
     <div className="app">
       <PatternDefs />
-      {state.alerts.length > 0 && (
-        <div className="alert-banner" role="alert">
-          <div>
-            {alertMessages.map((m) => (
-              <p key={m}>{m}</p>
-            ))}
-          </div>
-          <button type="button" onClick={() => store.update(dismissAlerts)}>
-            착용했어요
-          </button>
-        </div>
-      )}
+      <SafetyAlertBanner messages={alertMessages} onDismiss={() => store.update(dismissAlerts)} />
       <header className="top">
         <a className="back" href="#/">← 단원 목록</a>
         <h1>{title}</h1>
@@ -396,18 +379,7 @@ export function ClassifyLab({
         </div>
       </section>
 
-      {dev && (
-        <section className="panel dev-panel" aria-label="개발용: 모의 안전 상황">
-          <h2>개발용: 모의 안전 상황</h2>
-          <div className="choices">
-            {MOCK_TYPES.map((t) => (
-              <button key={t} type="button" onClick={() => detector.trigger(t)}>
-                {MOCK_LABELS[t]} ({t})
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
+      {dev && <MockSafetyPanel onTrigger={(t) => detector.trigger(t)} />}
 
       {pendingIndicator && (
         <SafetyDialog items={exp.safetyChecklist} onConfirm={onConfirmSafety} onCancel={() => setPendingIndicator(null)} />

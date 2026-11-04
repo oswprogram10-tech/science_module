@@ -1,10 +1,10 @@
 import { useRef } from 'react';
-import { MockPressureDriver, MockScaleDriver, MockTemperatureDriver, type SensorDriver, type SensorKind, type SensorReading } from '@sci/sensors';
+import { MockGasDriver, MockPressureDriver, MockScaleDriver, MockTemperatureDriver, type SensorDriver, type SensorKind, type SensorReading } from '@sci/sensors';
 import type { SensorSpec } from '../modules/types';
 
-const SEEDS: Record<SensorKind, number> = { temperature: 20250101, scale: 20250102, pressure: 20250103 };
-const DECIMALS: Record<SensorKind, number> = { temperature: 1, scale: 2, pressure: 1 };
-const ARIA: Record<SensorKind, string> = { temperature: '온도', scale: '무게', pressure: '압력' };
+const SEEDS: Record<SensorKind, number> = { temperature: 20250101, scale: 20250102, pressure: 20250103, oxygen: 20250104, carbonDioxide: 20250105 };
+const DECIMALS: Record<SensorKind, number> = { temperature: 1, scale: 2, pressure: 1, oxygen: 1, carbonDioxide: 1 };
+const ARIA: Record<SensorKind, string> = { temperature: '온도', scale: '무게', pressure: '압력', oxygen: '산소', carbonDioxide: '이산화 탄소' };
 
 function makeDriver(kind: SensorKind, source: () => number): SensorDriver {
   switch (kind) {
@@ -14,6 +14,9 @@ function makeDriver(kind: SensorKind, source: () => number): SensorDriver {
       return new MockScaleDriver(source, SEEDS.scale);
     case 'pressure':
       return new MockPressureDriver(source, SEEDS.pressure);
+    case 'oxygen':
+    case 'carbonDioxide':
+      return new MockGasDriver(kind, source, SEEDS[kind]);
   }
 }
 

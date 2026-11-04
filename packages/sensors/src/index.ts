@@ -4,7 +4,7 @@ export interface SensorReading {
   ts: number;
 }
 
-export type SensorKind = 'temperature' | 'scale' | 'pressure';
+export type SensorKind = 'temperature' | 'scale' | 'pressure' | 'oxygen' | 'carbonDioxide';
 
 export interface SensorDriver {
   id: string;
@@ -79,6 +79,7 @@ const roundTo = (x: number, digits: number) => {
 export const TEMPERATURE_NOISE_C = 0.2;
 export const SCALE_NOISE_G = 0.01;
 export const PRESSURE_NOISE_KPA = 0.1;
+export const GAS_NOISE_PCT = 0.05;
 export const BEAKER_G = 100;
 
 /** 값 = source() + 시드 고정 잡음(±0.2 °C), 소수 첫째 자리. */
@@ -112,5 +113,23 @@ export class MockPressureDriver extends MockDriver {
   unit = 'kPa';
   protected measure() {
     return roundTo(this.source() + (this.rng() * 2 - 1) * PRESSURE_NOISE_KPA, 1);
+  }
+}
+
+/** 값 = source()(%) + 시드 고정 잡음(±0.05 %), 소수 첫째 자리. kind는 산소 또는 이산화 탄소. */
+export class MockGasDriver extends MockDriver {
+  id: string;
+  unit = '%';
+  constructor(
+    readonly kind: 'oxygen' | 'carbonDioxide',
+    source: () => number,
+    seed: number,
+    pollMs?: number,
+  ) {
+    super(source, seed, pollMs);
+    this.id = kind === 'oxygen' ? 'mock-oxygen' : 'mock-carbon-dioxide';
+  }
+  protected measure() {
+    return roundTo(this.source() + (this.rng() * 2 - 1) * GAS_NOISE_PCT, 1);
   }
 }

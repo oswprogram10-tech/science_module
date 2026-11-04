@@ -21,3 +21,19 @@ export function niceScale(dataMax: number, targetTicks = 4): NiceScale {
 export function formatTick(v: number, decimals: number): string {
   return v.toFixed(decimals);
 }
+
+export interface YAxis extends NiceScale {
+  min: number;
+}
+
+/** y축: yMin부터 시작하는 눈금. yMin이 0이면 niceScale(dataMax × 1.05)와 같다. */
+export function yAxis(dataMax: number, yMin = 0): YAxis {
+  const s = niceScale((dataMax - yMin) * 1.05);
+  return {
+    min: yMin,
+    step: s.step,
+    decimals: s.decimals,
+    ticks: s.ticks.map((t) => +(yMin + t).toFixed(s.decimals)),
+    max: +(yMin + s.max).toFixed(s.decimals),
+  };
+}

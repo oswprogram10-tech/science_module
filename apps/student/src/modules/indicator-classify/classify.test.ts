@@ -20,7 +20,7 @@ import {
 } from './classifyStore';
 import { FEEDBACK_IDLE, classifyFeedback } from './feedback';
 import { readIndicatorColor, similarityOf } from './colorRead';
-import { SAFETY_MESSAGES } from './safetyMessages';
+import { SAFETY_MESSAGES } from '../../components/safety/safetyMessages';
 
 const exp = parseManifest(acidBaseJson).experiments[0] as ClassificationExperiment;
 const ev = { type: 'NO_GOGGLES', confidence: 1, ts: 1 } as const;

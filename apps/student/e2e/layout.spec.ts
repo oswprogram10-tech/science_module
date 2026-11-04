@@ -5,7 +5,7 @@ const VIEWPORTS = [
   { width: 1100, height: 800 },
   { width: 1280, height: 800 },
 ];
-const UNITS = ['g4-gases', 'g5-solution', 'g6-acid-base'];
+const UNITS = ['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion'];
 
 for (const vp of VIEWPORTS) {
   test.describe(`${vp.width}x${vp.height}`, () => {
@@ -20,7 +20,7 @@ for (const vp of VIEWPORTS) {
 
     for (const id of UNITS) {
       test(`${id}에 가로 스크롤이 없다`, async ({ page }) => {
-        await gotoUnit(page, id, { dev: id === 'g6-acid-base' });
+        await gotoUnit(page, id, { dev: id === 'g6-acid-base' || id === 'g6-combustion' });
         await expect(page.getByRole('link', { name: '← 단원 목록' })).toBeVisible();
         const { sw, iw } = await scrollWidth(page);
         expect(sw).toBeLessThanOrEqual(iw);

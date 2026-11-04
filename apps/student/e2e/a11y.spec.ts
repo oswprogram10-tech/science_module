@@ -1,6 +1,18 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
-import { test, expect, gotoUnit, selectIV, predict, runTrial, pickSolution, predictSolution, indicatorButton } from './helpers';
+import {
+  test,
+  expect,
+  gotoUnit,
+  selectIV,
+  predict,
+  runTrial,
+  runButton,
+  confirmSafetyDialog,
+  pickSolution,
+  predictSolution,
+  indicatorButton,
+} from './helpers';
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
@@ -49,5 +61,37 @@ test('g6-acid-base 안전 점검표가 열린 상태', async ({ page }) => {
   await predictSolution(page, '산성일 것 같아요');
   await indicatorButton(page, '푸른색 리트머스 종이').click();
   await expect(page.getByRole('dialog', { name: '안전 점검표' })).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g6-combustion 처음 화면', async ({ page }) => {
+  await gotoUnit(page, 'g6-combustion', { dev: true });
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g6-combustion 안전 점검표가 열린 상태', async ({ page }) => {
+  await gotoUnit(page, 'g6-combustion');
+  await selectIV(page, '집기병의 크기');
+  await predict(page, '늘어난다');
+  await runButton(page).click();
+  await expect(page.getByRole('dialog', { name: '안전 점검표' })).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g6-combustion 한 번 실험한 뒤', async ({ page }) => {
+  await gotoUnit(page, 'g6-combustion');
+  await selectIV(page, '집기병의 크기');
+  await predict(page, '늘어난다');
+  await runButton(page).click();
+  await confirmSafetyDialog(page);
+  await expect(runButton(page)).toHaveText('▶ 실험 실행');
+  await expectNoSeriousViolations(page);
+});
+
+test('g6-combustion 안전 경고 배너가 떠 있는 상태', async ({ page }) => {
+  await gotoUnit(page, 'g6-combustion', { dev: true });
+  await page.getByRole('button', { name: /NO_GOGGLES/ }).click();
+  await expect(page.getByRole('alert')).toBeVisible();
   await expectNoSeriousViolations(page);
 });

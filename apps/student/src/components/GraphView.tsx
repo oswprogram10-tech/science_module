@@ -2,7 +2,7 @@ import { useRef, type KeyboardEvent } from 'react';
 import type { Trial } from '@sci/runtime';
 import { sampleAt, trialDuration } from '@sci/runtime';
 import type { AnyModule } from '../modules/types';
-import { formatTick, niceScale } from '../axis';
+import { formatTick, niceScale, yAxis } from '../axis';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyTrial = Trial<any, any>;
@@ -46,18 +46,22 @@ function toPoints(
 export function GraphView({ module: mod, trial, prev, playhead, playing, onPlayhead, describedBy }: Props) {
   const sampleKey = String(mod.metric.sampleKey);
   const { name: yName, unit: yUnit } = splitLabel(mod.graph.yLabel);
+  const yMin = mod.graph.yMin ?? 0;
   /** y축 범위용 최댓값: 처음 값과 마지막 값 중 큰 쪽(둘 사이에서 이보다 커지는 일은 없다). */
-  const yDataMax = (t: AnyTrial | undefined) =>
-    t ? Math.max(Number(t.result[mod.metric.resultKey]), Number((t.samples[0] as Record<string, number>)[sampleKey])) : 0;
+  const yDataMax = (t: AnyTrial | undefined) => {
+    if (!t) return yMin;
+    const s = t.samples as Record<string, number>[];
+    return Math.max(Number(s[0]![sampleKey]), Number(s[s.length - 1]![sampleKey]));
+  };
   const svgRef = useRef<SVGSVGElement>(null);
   const dragging = useRef(false);
 
   const xScale = niceScale(Math.max(trial ? trialDuration(trial) : 0, prev ? trialDuration(prev) : 0));
-  const yScale = niceScale(Math.max(yDataMax(trial), yDataMax(prev)) * 1.05);
+  const yScale = yAxis(Math.max(yDataMax(trial), yDataMax(prev)), yMin);
   const xMax = xScale.max;
   const yMax = yScale.max;
   const sx = (t: number) => M.l + (t / xMax) * (W - M.l - M.r);
-  const sy = (g: number) => H - M.b - (g / yMax) * (H - M.t - M.b);
+  const sy = (g: number) => H - M.b - ((g - yMin) / (yMax - yMin)) * (H - M.t - M.b);
 
   const move = (clientX: number) => {
     const svg = svgRef.current;

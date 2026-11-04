@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest';
 import gasesJson from '../../../content/units/g4-gases/manifest.json';
 import solutionJson from '../../../content/units/g5-solution/manifest.json';
 import acidBaseJson from '../../../content/units/g6-acid-base/manifest.json';
+import combustionJson from '../../../content/units/g6-combustion/manifest.json';
 import { UNITS, buildRegistry, parseRoute, unitHash } from './units';
 
 const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
 describe('단원 레지스트리', () => {
-  it('세 단원이 모두 로드된다', () => {
-    expect(UNITS.map((u) => u.id)).toEqual(['g4-gases', 'g5-solution', 'g6-acid-base']);
+  it('네 단원이 모두 로드된다', () => {
+    expect(UNITS.map((u) => u.id)).toEqual(['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion']);
     expect(UNITS.every((u) => u.ok)).toBe(true);
     const gases = UNITS[0]!;
     if (gases.ok) expect(gases.module.kind).toBe('gas-syringe');
@@ -17,6 +18,9 @@ describe('단원 레지스트리', () => {
     const acidBase = UNITS[2]!;
     expect(acidBase.ok && acidBase.activity).toBe('classify');
     if (acidBase.ok) expect(acidBase.module.kind).toBe('indicator-classify');
+    const combustion = UNITS[3]!;
+    expect(combustion.ok && combustion.activity).toBe('variable');
+    if (combustion.ok) expect(combustion.module.kind).toBe('candle-jar');
   });
 
   it('schema 검증에 실패한 단원이 있어도 다른 단원은 로드된다', () => {
@@ -60,6 +64,16 @@ describe('단원 레지스트리', () => {
     expect(units[0]!.ok).toBe(false);
     expect(units[0]!.id).toBe('unit-1');
     expect(units[1]!.ok).toBe(true);
+  });
+});
+
+describe('연소 단원 로드', () => {
+  it('모듈 validate에 실패하면 오류 항목이 되고 다른 단원은 계속 쓸 수 있다', () => {
+    const broken = clone(combustionJson);
+    broken.experiments[0].variables.find((v: { key: string }) => v.key === 'jarMl').options[0].value = 10;
+    const units = buildRegistry([gasesJson, broken]);
+    expect(units.map((u) => u.ok)).toEqual([true, false]);
+    if (!units[1]!.ok) expect(units[1]!.issues.join()).toContain('jarMl');
   });
 });
 

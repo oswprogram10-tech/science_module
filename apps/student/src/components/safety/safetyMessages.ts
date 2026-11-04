@@ -8,6 +8,15 @@ export const SAFETY_MESSAGES: Record<SafetyEventType, string> = {
   FOOD: '실험 중에는 음식을 먹거나 용액을 맛보면 안 돼요!',
 };
 
+/** 단원 매니페스트가 바꾼 문구를 기본 문구 위에 덮어쓴다. */
+export function resolveSafetyMessages(
+  overrides?: Partial<Record<SafetyEventType, string>>,
+): Record<SafetyEventType, string> {
+  return { ...SAFETY_MESSAGES, ...overrides };
+}
+
+export const MOCK_TYPES: SafetyEventType[] = ['NO_GOGGLES', 'NO_GLOVES', 'SPILL', 'FOOD'];
+
 export const MOCK_LABELS: Record<SafetyEventType, string> = {
   NO_GOGGLES: '보안경 안 씀',
   NO_GLOVES: '장갑 안 낌',

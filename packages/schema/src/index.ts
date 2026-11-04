@@ -56,7 +56,7 @@ export const tutorConfigSchema = z.object({
 });
 
 /** 변인 실험(조작변인을 바꿔 수치를 비교하는 활동)의 모듈 종류. */
-export const moduleKindSchema = z.enum(['dissolution', 'gas-syringe']);
+export const moduleKindSchema = z.enum(['dissolution', 'gas-syringe', 'candle-jar']);
 
 export const safetyNoticeSchema = z.object({
   key: z.string().min(1),
@@ -75,8 +75,19 @@ const commonShape = {
   limits: z.array(z.string()).default([]),
 };
 
+/** 안전 경고 배너 문구를 단원에 맞게 바꾼다. 없는 종류는 기본 문구를 쓴다. */
+export const safetyMessagesSchema = z.object({
+  NO_GOGGLES: z.string().min(1).optional(),
+  NO_GLOVES: z.string().min(1).optional(),
+  SPILL: z.string().min(1).optional(),
+  FOOD: z.string().min(1).optional(),
+});
+
 export const variableExperimentSchema = z.object({
   ...commonShape,
+  /** 있으면 처음 실행을 누를 때 안전 점검표 대화상자를 띄운다. */
+  safetyChecklist: z.array(z.string().min(1)).optional(),
+  safetyMessages: safetyMessagesSchema.optional(),
   module: moduleKindSchema,
   /** dissolution 모듈의 validate가 필수로 검사한다. */
   spoonGrams: z.number().positive().optional(),
@@ -176,6 +187,7 @@ export type OptionValue = string | number;
 export type Variable = z.infer<typeof variableSchema>;
 export type ModuleKind = z.infer<typeof moduleKindSchema>;
 export type SafetyNotice = z.infer<typeof safetyNoticeSchema>;
+export type SafetyMessages = z.infer<typeof safetyMessagesSchema>;
 export type Probe = z.infer<typeof probeSchema>;
 export type ProbeWhen = z.infer<typeof probeWhenSchema>;
 export type GatewayConfig = z.infer<typeof gatewaySchema>;

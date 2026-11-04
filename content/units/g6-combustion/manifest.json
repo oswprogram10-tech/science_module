@@ -1,0 +1,97 @@
+{
+  "id": "g6-combustion",
+  "title": "물질의 연소",
+  "grade": 6,
+  "standards": ["6과14-01"],
+  "engine": "matter",
+  "experiments": [
+    {
+      "id": "candle-jar",
+      "module": "candle-jar",
+      "title": "집기병으로 덮은 촛불이 꺼지는 시간 비교하기",
+      "question": "촛불을 집기병으로 덮으면 불이 꺼질 때까지 걸리는 시간은 어떤 조건에 따라 달라질까?",
+      "predictionPrompt": "예측: 불이 꺼질 때까지 걸리는 시간은?",
+      "variables": [
+        {
+          "key": "jarMl",
+          "label": "집기병의 크기",
+          "type": "choice",
+          "unit": "mL",
+          "options": [
+            { "value": 250, "label": "작은 집기병 250 mL" },
+            { "value": 500, "label": "중간 집기병 500 mL" },
+            { "value": 1000, "label": "큰 집기병 1000 mL" }
+          ],
+          "default": 500
+        },
+        {
+          "key": "candle",
+          "label": "초의 굵기",
+          "type": "choice",
+          "options": [
+            { "value": "thin", "label": "가는 초" },
+            { "value": "thick", "label": "굵은 초" }
+          ],
+          "default": "thin"
+        },
+        {
+          "key": "candleCount",
+          "label": "초의 개수",
+          "type": "choice",
+          "unit": "개",
+          "options": [
+            { "value": 1, "label": "1개" },
+            { "value": 2, "label": "2개" }
+          ],
+          "default": 1
+        },
+        {
+          "key": "candleColor",
+          "label": "초의 색깔",
+          "type": "choice",
+          "options": [
+            { "value": "white", "label": "흰색 초" },
+            { "value": "red", "label": "빨간색 초" }
+          ],
+          "default": "white"
+        }
+      ],
+      "dependent": [
+        { "key": "extinguishS", "label": "불이 꺼질 때까지 걸린 시간", "unit": "초" },
+        { "key": "usedOxygenMl", "label": "쓰인 산소의 양", "unit": "mL" }
+      ],
+      "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
+      "safety": ["fire", "hot"],
+      "safetyChecklist": [
+        "긴 머리는 묶고, 소매가 불에 닿지 않게 했어요.",
+        "책상 위에 타기 쉬운 물건을 치웠어요.",
+        "불을 붙이거나 끌 때는 선생님과 함께해요."
+      ],
+      "safetyMessages": { "NO_GOGGLES": "불을 다루기 전에 보안경을 먼저 착용해 주세요!" },
+      "safetyNotices": [],
+      "limits": ["분자", "원자", "화학 반응식"],
+      "params": { "oxygenStartPct": 21, "oxygenOutPct": 16 },
+      "tutor": {
+        "forbiddenAnswers": [
+          "집기병이 클수록 오래 타",
+          "공기가 많을수록 오래 타",
+          "산소가 부족해서 꺼",
+          "산소가 있어야 탄",
+          "초의 색깔은 관계없",
+          "초가 많을수록 빨리 꺼"
+        ],
+        "probes": [
+          { "when": "before-run", "text": "{iv}을(를) 바꾸면 불이 꺼질 때까지 걸리는 시간이 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?" },
+          { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?" },
+          { "when": "confounded", "text": "{changed}이(가) 함께 바뀌었어요. 걸린 시간이 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
+          { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },
+          { "when": "repeat", "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
+          { "when": "fair-test", "text": "{iv}만 바꾸었을 때 불이 꺼질 때까지 걸린 시간은 어떻게 달라졌나요? 센서 값도 함께 비교해 볼까요?" },
+          { "when": "fair-test", "iv": "jarMl", "text": "집기병의 크기만 바꾸었을 때 걸린 시간이 달라졌어요. 집기병 안에 무엇이 더 많거나 적었을까요?" },
+          { "when": "fair-test", "iv": "candleColor", "text": "초의 색깔만 바꾸었을 때 걸린 시간이 달라졌나요? 이 결과로 무엇을 알 수 있을까요?" },
+          { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 그래프와 센서 값의 어느 부분을 보면 그 까닭을 찾을 수 있을까요?" }
+        ]
+      }
+    }
+  ]
+}
