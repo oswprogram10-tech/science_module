@@ -40,7 +40,20 @@ pnpm ios:sim           # 시뮬레이터용 빌드(서명 없음)
 
 ### CI
 
-`.github/workflows/ci.yml`의 `android-build`(ubuntu, 디버그 APK를 7일 보관)와 `ios-build`(macos, 시뮬레이터 빌드)가 기존 작업과 병렬로 돈다.
+`.github/workflows/ci.yml`의 `android-build`(ubuntu)와 `ios-build`(macos)가 기존 작업과 병렬로 돈다. push할 때마다 설치 파일 두 개가 만들어져 GitHub Actions 실행 결과의 **Artifacts**에 90일 동안 남는다.
+
+| 파일(아티팩트 이름) | 설치 가능 여부 |
+|---|---|
+| `android-debug-apk` (`app-debug.apk`) | **바로 설치 가능.** 디버그 키로 자동 서명되어 있다. zip을 풀어 APK를 기기로 옮기고, 설정에서 "출처를 알 수 없는 앱 설치 허용"을 켠 뒤 연다. 또는 `adb install app-debug.apk`. 스토어 배포용은 아니다(배포는 정식 키스토어로 서명한 release 빌드 필요). |
+| `ios-unsigned-ipa` (`SciBridgeON-unsigned.ipa`) | **그대로는 설치 안 됨.** Apple은 서명 없는 앱을 실기기에 설치하지 못하게 한다. 아래 중 하나로 서명해야 한다. |
+
+iOS 설치 방법:
+
+1. **무료 Apple ID**: Sideloadly나 AltStore 같은 도구에 ipa와 Apple ID를 넣어 다시 서명해 설치한다. 7일마다 다시 서명해야 하고, 기기당 3개 앱 제한이 있다. 개발 확인용이다.
+2. **Mac + Xcode**: `apps/student/ios/App`을 Xcode로 열고 Signing & Capabilities에서 본인 팀을 고른 뒤 USB로 연결한 기기에 바로 실행한다(무료 계정이면 7일 제한 동일).
+3. **Apple Developer Program(연 구독)**: TestFlight로 교사·학생 기기에 배포하거나, 학교 MDM(Apple School Manager)으로 일괄 설치한다. 실제 수업 배포는 이 방법이다.
+
+iOS 시뮬레이터 빌드는 Mac의 Xcode 시뮬레이터에서만 돈다.
 
 ## 권한 문구
 
