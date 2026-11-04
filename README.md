@@ -40,6 +40,7 @@ pnpm e2e            # 브라우저 자동 테스트 (Playwright)
 | `#/unit/g3-lifecycle` | 3학년 생물의 한살이 (물·온도·빛에 따른 씨앗의 싹 트기, 7일째 싹 튼 씨앗 수·처음 싹 튼 날·떡잎 색) |
 | `#/unit/g6-plant` | 6학년 식물의 구조와 기능 (잎의 수·빛·바람·처음 물의 양에 따른 이틀 동안 줄어든 물의 양, 증산 작용) |
 | `#/unit/g4-ecosystem` | 4학년 생물과 환경 (처음 토끼·여우 수, 비, 토끼 털 색에 따른 60일 동안의 풀·토끼·여우 수 변화, 먹이 관계와 생태계 평형) |
+| `#/unit/g4-microbe` | 4학년 다양한 생물과 우리 생활 (빵의 물기·온도·빛에 따른 곰팡이가 덮은 넓이와 처음 보인 날, 가상 현미경으로 균사와 포자 관찰) |
 | `#/unit/g6-seasons` | 6학년 계절의 변화 (계절·자전축 기울기·막대 길이에 따른 태양 남중 고도, 그림자, 낮의 길이) |
 
 산과 염기: 보안경 실제 감지는 모의 감지기로 대체, 모델은 스파이크 S2 이후. 주소 앞에 `?dev=1`을 붙이면(`/?dev=1#/unit/g6-acid-base`) 모의 안전 상황 버튼이 나타납니다.
@@ -51,7 +52,7 @@ pnpm e2e            # 브라우저 자동 테스트 (Playwright)
 
 | 활동 유형 | `module` | 흐름 | 화면 |
 |---|---|---|---|
-| 변인 실험 | `dissolution`, `gas-syringe`, `candle-jar`, `insulated-cup`, `convex-lens`, `electromagnet`, `magma-cooling`, `sun-angle`, `germination`, `transpiration`, `food-web` | 바꿀 조건(조작변인) 고르기 → 예측 → 실행 → 시행 비교와 구조적 피드백 | `Lab`(`App.tsx`) |
+| 변인 실험 | `dissolution`, `gas-syringe`, `candle-jar`, `insulated-cup`, `convex-lens`, `electromagnet`, `magma-cooling`, `sun-angle`, `germination`, `transpiration`, `food-web`, `mold-growth` | 바꿀 조건(조작변인) 고르기 → 예측 → 실행 → 시행 비교와 구조적 피드백 | `Lab`(`App.tsx`) |
 | 분류 활동 | `indicator-classify` | 시험 → 관찰한 근거로 무리에 넣기 → 관찰과 분류가 맞는지 확인 | `ClassifyLab` |
 | 관찰 과제 | `sky-observation` | 예측 → 시각·달 슬라이더와 조건 토글로 두 시점 화면 관찰 → 관찰 기록 → 예측과 관찰 비교 | `ObserveLab` |
 

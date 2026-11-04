@@ -899,3 +899,85 @@ describe('g4-ecosystem 매니페스트 probe', () => {
     }
   });
 });
+
+// ---------- 다양한 생물과 우리 생활(곰팡이가 자라는 조건) 매니페스트 ----------
+import microbeJson from '../../../content/units/g4-microbe/manifest.json';
+
+describe('g4-microbe 매니페스트 probe', () => {
+  const e = parseManifest(microbeJson).experiments[0]! as VariableExperiment;
+  const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+  const eKeys = e.variables.map((v) => v.key);
+  const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+  const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: 'moisture', ...x });
+  const fair = (iv: string): Partial<ProbeContext> => ({
+    ivKey: iv,
+    lastAnalysis: { kind: 'fair-test', changed: [iv] },
+    prediction: 'same',
+    observed: 'same',
+  });
+
+  it('iv별 fair-test 질문을 고른다', () => {
+    expect(selectProbe(eCtx(fair('tempC')), e.tutor.probes, eGuard)).toContain('냉장고 속 빵에서는 무슨 일이 일어났나요?');
+    expect(selectProbe(eCtx(fair('light')), e.tutor.probes, eGuard)).toContain('빛만 바꾸었을 때 결과가 달라졌나요?');
+    // 전용 질문이 없는 변인은 공통 fair-test 질문
+    expect(selectProbe(eCtx(fair('moisture')), e.tutor.probes, eGuard)).toContain('빵의 물기만 바꾸었을 때 곰팡이가 덮은 넓이와 처음 보인 날은 각각 어떻게 달라졌나요');
+  });
+
+  it('모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+    let n = 0;
+    for (const probe of e.tutor.probes) {
+      for (const iv of eKeys) {
+        for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+          const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+          expect(text).not.toMatch(/[{}]/);
+          expect(text).not.toMatch(/(을\(를\)|이\(가\)|와\(과\)|은\(는\))/);
+          n++;
+        }
+      }
+    }
+    expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+  });
+
+  it('질문 문장은 금지 구절·limits 용어와 겹치지 않는다', () => {
+    for (const probe of e.tutor.probes) {
+      for (const f of e.tutor.forbiddenAnswers) expect(probe.text, probe.text).not.toContain(f);
+      for (const l of e.limits) expect(probe.text, probe.text).not.toContain(l);
+    }
+  });
+
+  it('금지 구절을 담은 문장과 limits 용어를 담은 문장은 실제로 막는다', () => {
+    for (const f of e.tutor.forbiddenAnswers) expect(guardOutput(`${f}요`, eGuard).ok, f).toBe(false);
+    for (const l of e.limits) expect(guardOutput(`${l}이에요`, eGuard).ok, l).toBe(false);
+  });
+
+  it('화면에 보이는 매니페스트 글(질문, 변인·선택지 이름, 점검표, 경고 문구)에는 limits 용어가 없다', () => {
+    const shown = [
+      e.title,
+      e.question,
+      e.predictionPrompt,
+      ...e.variables.flatMap((v) => [v.label, ...v.options.map((o) => o.label)]),
+      ...e.dependent.map((d) => d.label),
+      ...e.tutor.probes.map((p) => p.text),
+      ...(e.safetyChecklist ?? []),
+      ...Object.values(e.safetyMessages ?? {}),
+    ];
+    for (const text of shown) for (const l of e.limits) expect(text, text).not.toContain(l);
+  });
+
+  it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+    const situations: Partial<ProbeContext>[] = [
+      {},
+      { lastAnalysis: { kind: 'first-trial', changed: [] } },
+      { lastAnalysis: { kind: 'confounded', changed: ['moisture', 'tempC'] } },
+      { lastAnalysis: { kind: 'iv-unchanged', changed: ['light'] } },
+      { lastAnalysis: { kind: 'repeat', changed: [] } },
+      ...eKeys.flatMap((k) => [fair(k), { ...fair(k), prediction: 'increase' as const, observed: 'same' as const }]),
+    ];
+    for (const s of situations) {
+      const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+      expect(text).not.toBe(FALLBACK_PROBE);
+      expect(guardOutput(text, eGuard).ok, text).toBe(true);
+    }
+  });
+});

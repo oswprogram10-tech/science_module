@@ -22,6 +22,8 @@ const ALWAYS_NOTICE: Record<string, string> = {
   'magma-cooling:hot': '⚠ 녹인 물질과 접시는 굳은 뒤에도 한동안 뜨거워요.',
   // `sunlight`의 기본 문구는 렌즈를 쓰는 빛 단원용이라, 이 단원은 모듈 이름을 붙인 키로 따로 쓴다.
   'sun-angle:sunlight': '⚠ 태양을 직접 바라보면 눈을 다칠 수 있어요.',
+  // 곰팡이가 핀 음식은 먹거나 냄새를 맡지 않는다. 다른 단원이 `microbe`를 쓸 때를 생각해 모듈 이름을 붙인 키로 둔다.
+  'mold-growth:microbe': '⚠ 곰팡이가 핀 음식은 먹거나 냄새를 맡지 않아요.',
 };
 
 const PREDICTION_ICON: Record<Prediction, string> = { increase: '▲', decrease: '▼', same: '＝' };

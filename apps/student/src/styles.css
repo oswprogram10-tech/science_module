@@ -189,3 +189,4 @@ button.unit-card:hover { border-color:var(--accent); }
 .pause-leave-wrap { position:fixed; left:0; right:0; bottom:10vh; z-index:101; display:flex; justify-content:center; }
 .pause-leave { min-height:44px; padding:8px 18px; font-size:1rem; }
 .pause-text { margin:0; padding:16px; font-size:clamp(1.8rem, 6vw, 3.2rem); font-weight:800; text-align:center; }
+.scope-zoom { display:flex; gap:6px; margin-top:6px; }

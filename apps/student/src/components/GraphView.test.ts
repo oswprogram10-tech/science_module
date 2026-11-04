@@ -48,7 +48,7 @@ const render = (unit: (typeof variableUnits)[number], mod: AnyModule, trial: Any
   );
 
 describe('GraphView', () => {
-  const existing = variableUnits.filter((u) => u.module.kind !== 'electromagnet' && u.module.kind !== 'magma-cooling' && u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration' && u.module.kind !== 'food-web');
+  const existing = variableUnits.filter((u) => u.module.kind !== 'electromagnet' && u.module.kind !== 'magma-cooling' && u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration' && u.module.kind !== 'food-web' && u.module.kind !== 'mold-growth');
 
   it('기존 단원은 모든 조건에서 최댓값이 처음 값 또는 마지막 값이다 (y축 범위를 모든 표본의 최댓값으로 잡아도 달라지지 않는다)', () => {
     expect(existing.length).toBeGreaterThanOrEqual(5);
@@ -171,7 +171,7 @@ describe('markers: 시행에서 계산하는 함수 형태', () => {
 });
 
 describe('x축 라벨·눈금(xLabel, xTicks, xTickFormat)', () => {
-  const existing = variableUnits.filter((u) => u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration' && u.module.kind !== 'food-web');
+  const existing = variableUnits.filter((u) => u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration' && u.module.kind !== 'food-web' && u.module.kind !== 'mold-growth');
   const seasons = () => variableUnits.find((u) => u.id === 'g6-seasons')!;
   const base = { season: 'summer', tiltDeg: 23.44, stickCm: 10 };
 
@@ -225,10 +225,19 @@ describe('여러 선(graph.series)과 y축 눈금(graph.yTicks)', () => {
   const foodWeb = () => variableUnits.find((u) => u.id === 'g4-ecosystem')!;
   const base = { rabbits0: 10, foxes0: 2, rain: 'normal', furColor: 'white' };
   const others = variableUnits.filter((u) => u.id !== 'g4-ecosystem');
+  // yTicks로 축을 고정한 단원. 이 단원들은 'series: undefined는 그림을 바꾸지 않는다' 비교에서 yTicks를 남긴다.
+  const FIXED_Y = ['g4-ecosystem', 'g4-microbe'];
 
-  it('series와 yTicks를 쓰는 모듈은 먹이 관계뿐이다', () => {
+  it('series를 쓰는 모듈은 먹이 관계뿐이고, yTicks는 먹이 관계와 곰팡이만 쓴다', () => {
     expect(variableUnits.filter((u) => u.module.graph.series !== undefined).map((u) => u.id)).toEqual(['g4-ecosystem']);
-    expect(variableUnits.filter((u) => u.module.graph.yTicks !== undefined).map((u) => u.id)).toEqual(['g4-ecosystem']);
+    expect(variableUnits.filter((u) => u.module.graph.yTicks !== undefined).map((u) => u.id).sort()).toEqual([...FIXED_Y].sort());
+  });
+
+  it('곰팡이 그래프는 냉장고(거의 0%)에서도 y축을 0~100%로 고정한다', () => {
+    const unit = variableUnits.find((u) => u.id === 'g4-microbe')!;
+    const html = render(unit, unit.module, trialOf(unit, combos(unit)[0]!));
+    const yTicks = [...html.matchAll(/text-anchor="end"[^>]*>([^<]+)</g)].map((m) => m[1]);
+    expect(yTicks).toEqual(['0', '20', '40', '60', '80', '100']);
   });
 
   it('series가 없는 단원은 선 하나만 그리고 범례가 없다', () => {
@@ -246,7 +255,8 @@ describe('여러 선(graph.series)과 y축 눈금(graph.yTicks)', () => {
     for (const unit of others) {
       const trial = trialOf(unit, combos(unit)[0]!);
       const plain = render(unit, unit.module, trial);
-      const explicit: AnyModule = { ...unit.module, graph: { ...unit.module.graph, series: undefined, yTicks: undefined } };
+      const yTicks = FIXED_Y.includes(unit.id) ? unit.module.graph.yTicks : undefined;
+      const explicit: AnyModule = { ...unit.module, graph: { ...unit.module.graph, series: undefined, yTicks } };
       expect(render(unit, explicit, trial)).toBe(plain);
     }
     const unit = foodWeb();

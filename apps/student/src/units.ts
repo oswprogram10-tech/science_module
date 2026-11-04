@@ -22,6 +22,7 @@ import seasonsJson from '../../../content/units/g6-seasons/manifest.json';
 import lifecycleJson from '../../../content/units/g3-lifecycle/manifest.json';
 import plantJson from '../../../content/units/g6-plant/manifest.json';
 import ecosystemJson from '../../../content/units/g4-ecosystem/manifest.json';
+import microbeJson from '../../../content/units/g4-microbe/manifest.json';
 import { MODULES } from './modules';
 import { classifyModule } from './modules/indicator-classify';
 import { observeModule } from './modules/sky-observation';
@@ -80,7 +81,7 @@ export function buildRegistry(
   return raws.map((raw, i) => loadUnit(raw, i, modules));
 }
 
-export const UNITS: UnitEntry[] = buildRegistry([gasesJson, solutionJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, earthMotionJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson]);
+export const UNITS: UnitEntry[] = buildRegistry([gasesJson, solutionJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, earthMotionJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson]);
 
 export type Route = { page: 'list' } | { page: 'unit'; unitId: string };
 

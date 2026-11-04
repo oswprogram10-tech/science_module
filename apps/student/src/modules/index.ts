@@ -11,6 +11,7 @@ import { sunAngleModule } from './sun-angle';
 import { germinationModule } from './germination';
 import { transpirationModule } from './transpiration';
 import { foodWebModule } from './food-web';
+import { moldGrowthModule } from './mold-growth';
 
 export const MODULES: Record<ModuleKind, AnyModule> = {
   dissolution: dissolutionModule,
@@ -24,4 +25,5 @@ export const MODULES: Record<ModuleKind, AnyModule> = {
   germination: germinationModule,
   transpiration: transpirationModule,
   'food-web': foodWebModule,
+  'mold-growth': moldGrowthModule,
 };

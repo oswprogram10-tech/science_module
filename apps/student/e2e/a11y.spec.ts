@@ -547,6 +547,72 @@ test('g4-ecosystem 어두운 화면: 처음, 실행 뒤, 여우 0마리·비 많
   await expectNoSeriousViolations(page);
 });
 
+// ---- g4-microbe ----
+
+async function microbeRun(page: Page) {
+  await selectIV(page, '온도');
+  await predict(page, '늘어난다');
+  await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+  await confirmSafetyDialog(page);
+  await expect(runButton(page)).toHaveText('▶ 실험 실행');
+}
+
+test('g4-microbe 처음 화면과 안전 점검표가 열린 상태', async ({ page }) => {
+  await gotoUnit(page, 'g4-microbe');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expectNoSeriousViolations(page);
+  await selectIV(page, '온도');
+  await predict(page, '늘어난다');
+  await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+  await expect(page.getByRole('dialog', { name: '안전 점검표' })).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g4-microbe 실행한 뒤(그래프 표식)와 0일째, 배율 ×400·×40, 마른 빵·냉장고·어두운 곳', async ({ page }) => {
+  await gotoUnit(page, 'g4-microbe');
+  await microbeRun(page);
+  await expect(page.getByRole('figure', { name: '그래프로 보기' }).getByTestId('graph-marker')).toBeVisible();
+  await expectNoSeriousViolations(page);
+  const micro = page.getByRole('figure', { name: '가상 현미경으로 보기' });
+  await micro.getByRole('button', { name: '×400', exact: true }).click();
+  await expectNoSeriousViolations(page);
+  await micro.getByRole('button', { name: '×40', exact: true }).click();
+  await expectNoSeriousViolations(page);
+  const slider = page.getByRole('slider', { name: '그래프 시각 옮기기' });
+  await slider.focus();
+  await slider.press('Home');
+  await expect(page.getByText('0일째 · 곰팡이가 덮은 넓이 0%')).toBeVisible();
+  await expectNoSeriousViolations(page);
+  // 시행이 있으면 그림은 그 시행의 조건을 보여 주므로, 새 화면에서 조건을 바꿔 본다.
+  await page.reload();
+  await setValue(page, '빵의 물기', '마른 빵');
+  await setValue(page, '온도', '냉장고');
+  await setValue(page, '빛', '어두운 곳');
+  await expect(page.getByText('지퍼 봉지 · 어두운 곳')).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g4-microbe 어두운 화면: 처음, 점검표, 실행 뒤, 배율 ×400, 마른 빵·어두운 곳', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await gotoUnit(page, 'g4-microbe');
+  await expectNoSeriousViolations(page);
+  await selectIV(page, '온도');
+  await predict(page, '늘어난다');
+  await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+  await expect(page.getByRole('dialog', { name: '안전 점검표' })).toBeVisible();
+  await expectNoSeriousViolations(page);
+  await confirmSafetyDialog(page);
+  await expect(runButton(page)).toHaveText('▶ 실험 실행');
+  await expectNoSeriousViolations(page);
+  await page.getByRole('figure', { name: '가상 현미경으로 보기' }).getByRole('button', { name: '×400', exact: true }).click();
+  await expectNoSeriousViolations(page);
+  await page.reload();
+  await setValue(page, '빵의 물기', '마른 빵');
+  await setValue(page, '빛', '어두운 곳');
+  await expect(page.getByText('지퍼 봉지 · 어두운 곳')).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
 // ---- 수업 연결 ----
 
 for (const scheme of ['light', 'dark'] as const) {
