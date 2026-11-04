@@ -48,6 +48,9 @@ svg[role=slider]:focus-visible { outline:3px solid var(--accent); outline-offset
 .rock-card p { margin:0; font-weight:700; }
 .view-note { margin:6px 0 0; font-size:.85rem; min-height:1.3em; text-align:center; }
 .legend { margin:0 2px 0 8px; }
+.graph-legend { list-style:none; margin:6px 0 0; padding:0; display:flex; flex-wrap:wrap; justify-content:center; gap:4px 14px; font-size:.9rem; }
+.graph-legend li { display:flex; align-items:center; gap:6px; white-space:nowrap; }
+.view.graph .graph-legend svg { width:32px; height:8px; max-width:32px; flex:none; }
 .water-dot { color:#468cd2; } .dissolved-dot { color:#e0952b; } .pile-dot { color:#8a5a14; } .o2-dot { color:#d93a2f; } .co2-dot { color:var(--fg); } .h2o-dot { color:#2f7cc4; } .other-dot { color:#7a8794; } .line-now { color:#1f6fb5; } .line-prev { color:#7a8794; }
 .sensors { display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
 .badge { background:var(--changed); border:1px solid var(--warn); border-radius:6px; padding:2px 8px; font-size:.85rem; font-weight:700; }

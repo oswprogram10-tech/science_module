@@ -48,7 +48,7 @@ const render = (unit: (typeof variableUnits)[number], mod: AnyModule, trial: Any
   );
 
 describe('GraphView', () => {
-  const existing = variableUnits.filter((u) => u.module.kind !== 'electromagnet' && u.module.kind !== 'magma-cooling' && u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration');
+  const existing = variableUnits.filter((u) => u.module.kind !== 'electromagnet' && u.module.kind !== 'magma-cooling' && u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration' && u.module.kind !== 'food-web');
 
   it('기존 단원은 모든 조건에서 최댓값이 처음 값 또는 마지막 값이다 (y축 범위를 모든 표본의 최댓값으로 잡아도 달라지지 않는다)', () => {
     expect(existing.length).toBeGreaterThanOrEqual(5);
@@ -171,7 +171,7 @@ describe('markers: 시행에서 계산하는 함수 형태', () => {
 });
 
 describe('x축 라벨·눈금(xLabel, xTicks, xTickFormat)', () => {
-  const existing = variableUnits.filter((u) => u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration');
+  const existing = variableUnits.filter((u) => u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration' && u.module.kind !== 'food-web');
   const seasons = () => variableUnits.find((u) => u.id === 'g6-seasons')!;
   const base = { season: 'summer', tiltDeg: 23.44, stickCm: 10 };
 
@@ -218,5 +218,104 @@ describe('x축 라벨·눈금(xLabel, xTicks, xTickFormat)', () => {
     const unit = seasons();
     const html = render(unit, unit.module, trialOf(unit, base));
     expect(html).toMatch(/aria-valuetext="0시, 태양 고도 0 °"/);
+  });
+});
+
+describe('여러 선(graph.series)과 y축 눈금(graph.yTicks)', () => {
+  const foodWeb = () => variableUnits.find((u) => u.id === 'g4-ecosystem')!;
+  const base = { rabbits0: 10, foxes0: 2, rain: 'normal', furColor: 'white' };
+  const others = variableUnits.filter((u) => u.id !== 'g4-ecosystem');
+
+  it('series와 yTicks를 쓰는 모듈은 먹이 관계뿐이다', () => {
+    expect(variableUnits.filter((u) => u.module.graph.series !== undefined).map((u) => u.id)).toEqual(['g4-ecosystem']);
+    expect(variableUnits.filter((u) => u.module.graph.yTicks !== undefined).map((u) => u.id)).toEqual(['g4-ecosystem']);
+  });
+
+  it('series가 없는 단원은 선 하나만 그리고 범례가 없다', () => {
+    expect(others.length).toBeGreaterThanOrEqual(10);
+    for (const unit of others) {
+      const html = render(unit, unit.module, trialOf(unit, combos(unit)[0]!));
+      expect(html).not.toContain('graph-series');
+      expect(html).not.toContain('graph-legend');
+      expect(html.match(/<polyline/g)).toHaveLength(1);
+      expect(html).toContain('stroke="#1f6fb5"');
+    }
+  });
+
+  it('series와 yTicks를 빼면 먹이 관계도 선 하나(풀)로 그려지고, 다른 단원의 series: undefined는 그림을 바꾸지 않는다', () => {
+    for (const unit of others) {
+      const trial = trialOf(unit, combos(unit)[0]!);
+      const plain = render(unit, unit.module, trial);
+      const explicit: AnyModule = { ...unit.module, graph: { ...unit.module.graph, series: undefined, yTicks: undefined } };
+      expect(render(unit, explicit, trial)).toBe(plain);
+    }
+    const unit = foodWeb();
+    const single: AnyModule = { ...unit.module, graph: { ...unit.module.graph, series: undefined } };
+    const html = render(unit, single, trialOf(unit, base));
+    expect(html.match(/<polyline/g)).toHaveLength(1);
+    expect(html).not.toContain('graph-legend');
+  });
+
+  it('먹이 관계 그래프는 풀·토끼·여우 세 선을 서로 다른 색과 선 모양으로 그린다', () => {
+    const unit = foodWeb();
+    const html = render(unit, unit.module, trialOf(unit, base));
+    const tags = html.match(/<polyline data-testid="graph-series"[^>]*>/g) ?? [];
+    const lines = tags.map((t) => [/data-series="(\w+)"/.exec(t)![1], /stroke="(#\w+)"/.exec(t)![1], /stroke-dasharray="([\d ]+)"/.exec(t)?.[1]]);
+    expect(lines.map((m) => m[0])).toEqual(['grassPct', 'rabbits', 'foxes']);
+    expect(new Set(lines.map((m) => m[1])).size).toBe(3);
+    expect(lines.map((m) => m[2])).toEqual([undefined, '7 4', '2 4']);
+    expect(html.match(/<polyline/g)).toHaveLength(3);
+  });
+
+  it('범례는 글자·선 모양·색을 함께 보여 준다', () => {
+    const unit = foodWeb();
+    const html = render(unit, unit.module, trialOf(unit, base));
+    const items = html.match(/<li data-testid="graph-legend-item">.*?<\/li>/g) ?? [];
+    expect(items).toHaveLength(3);
+    expect(items[0]).toContain('풀의 양(%)');
+    expect(items[1]).toContain('토끼 수(마리)');
+    expect(items[2]).toContain('여우 수(마리)');
+    expect(items[0]).not.toContain('stroke-dasharray');
+    expect(items[1]).toContain('stroke-dasharray="7 4"');
+    expect(items[2]).toContain('stroke-dasharray="2 4"');
+    for (const [i, c] of ['#16a34a', '#d97706', '#9333ea'].entries()) expect(items[i]).toContain(`stroke="${c}"`);
+    // 시행이 없으면 범례도 없다
+    expect(render(unit, unit.module, undefined)).not.toContain('graph-legend');
+  });
+
+  it('y축은 0~100(눈금 20 간격) 하나이고 라벨은 "수(마리) / 풀의 양(%)", x축은 "날짜(일)" 0~60이다', () => {
+    const unit = foodWeb();
+    const html = render(unit, unit.module, trialOf(unit, base));
+    const yTicks = [...html.matchAll(/text-anchor="end"[^>]*>([^<]+)</g)].map((m) => m[1]);
+    expect(yTicks).toEqual(['0', '20', '40', '60', '80', '100']);
+    expect(html).toContain('>수(마리) / 풀의 양(%)<');
+    expect(html).toContain('>날짜(일)<');
+    const xTicks = [...html.matchAll(/<text x="([\d.]+)" y="(\d+)" text-anchor="middle">(\d+)<\/text>/g)].filter((m) => Number(m[2]) > 200);
+    expect(xTicks.map((m) => m[3])).toEqual(['0', '10', '20', '30', '40', '50', '60']);
+  });
+
+  it('앞 시행은 풀(metric) 한 줄만 흐리게 겹친다', () => {
+    const unit = foodWeb();
+    const html = renderToStaticMarkup(
+      createElement(GraphView, {
+        module: unit.module,
+        experiment: unit.experiment,
+        trial: trialOf(unit, base),
+        prev: trialOf(unit, { ...base, foxes0: 0 }),
+        playhead: 0,
+        playing: false,
+        onPlayhead: () => {},
+        describedBy: 'results-table',
+      }),
+    );
+    expect(html.match(/<polyline/g)).toHaveLength(4);
+    expect(html.match(/opacity="0.6"/g)).toHaveLength(1);
+    expect(html).toContain('앞 시행(풀의 양(%))');
+  });
+
+  it('슬라이더의 읽기 값은 세 값을 모두 말한다', () => {
+    const unit = foodWeb();
+    const html = render(unit, unit.module, trialOf(unit, base));
+    expect(html).toMatch(/aria-valuetext="0일, 풀의 양\(%\) 80, 토끼 수\(마리\) 10, 여우 수\(마리\) 2"/);
   });
 });

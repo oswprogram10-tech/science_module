@@ -318,7 +318,7 @@ function Lab({
               describedBy="results-table"
             />
           </div>
-          <SensorBar specs={sensorSpecs} />
+          {sensorSpecs.length > 0 && <SensorBar specs={sensorSpecs} />}
           <div className="boxes">
             <div className="box feedback" aria-live="polite">
               <h2>피드백</h2>

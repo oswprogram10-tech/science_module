@@ -52,11 +52,13 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
   const xLabel = mod.graph.xLabel ?? DEFAULT_X_LABEL;
   const { unit: xUnit } = splitLabel(xLabel);
   const yMin = mod.graph.yMin ?? 0;
-  /** y축 범위용 최댓값: 모든 표본 중 가장 큰 값(올랐다가 내려오는 곡선도 담도록). */
+  const series = mod.graph.series;
+  /** y축 범위용 최댓값: 모든 표본 중 가장 큰 값(올랐다가 내려오는 곡선도 담도록). 여러 선이면 모든 선 중에서. */
   const yDataMax = (t: AnyTrial | undefined) => {
     if (!t) return yMin;
     const s = t.samples as Record<string, number>[];
-    return s.reduce((m, p) => Math.max(m, Number(p[sampleKey])), -Infinity);
+    const keys = series ? series.map((x) => x.key) : [sampleKey];
+    return s.reduce((m, p) => keys.reduce((mm, k) => Math.max(mm, Number(p[k])), m), -Infinity);
   };
   const svgRef = useRef<SVGSVGElement>(null);
   const dragging = useRef(false);
@@ -68,7 +70,10 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
     : niceScale(xData);
   const xTickText = (t: number) => (mod.graph.xTickFormat ? mod.graph.xTickFormat(t) : formatTick(t, xScale.decimals));
   // 정수 눈금 단원은 최댓값을 4 이상으로 잡아 눈금 간격이 1 아래로 내려가지 않게 한다.
-  const yScale = yAxis(Math.max(yDataMax(trial), yDataMax(prev), mod.graph.integerTicks ? yMin + 4 : 0), yMin);
+  const fixedYTicks = mod.graph.yTicks;
+  const yScale = fixedYTicks && fixedYTicks.length > 1
+    ? { min: yMin, max: fixedYTicks[fixedYTicks.length - 1]!, step: 0, ticks: fixedYTicks, decimals: 0 }
+    : yAxis(Math.max(yDataMax(trial), yDataMax(prev), mod.graph.integerTicks ? yMin + 4 : 0), yMin);
   const xMax = xScale.max;
   const markerSpec = mod.graph.markers;
   const markers =
@@ -142,13 +147,15 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
         'aria-valuemin': 0,
         'aria-valuemax': r1(duration),
         'aria-valuenow': r1(playhead),
-        'aria-valuetext': `${r1(playhead)}${xUnit}, ${yName} ${r1(sampleAt(trial, playhead, mod.interpolate)[sampleKey])}${yUnit ? ` ${yUnit}` : ''}`,
+        'aria-valuetext': series
+          ? `${r1(playhead)}${xUnit}, ${series.map((x) => `${x.label} ${r1(sampleAt(trial, playhead, mod.interpolate)[x.key])}`).join(', ')}`
+          : `${r1(playhead)}${xUnit}, ${yName} ${r1(sampleAt(trial, playhead, mod.interpolate)[sampleKey])}${yUnit ? ` ${yUnit}` : ''}`,
         'aria-disabled': playing ? true : undefined,
         onKeyDown,
       }
     : {
         role: 'img' as const,
-        'aria-label': `시간에 따른 ${yName} 그래프. 자세한 값은 결과표를 보세요.`,
+        'aria-label': `시간에 따른 ${series ? series.map((x) => x.label).join(', ') : yName} 그래프. 자세한 값은 결과표를 보세요.`,
       };
 
   return (
@@ -200,7 +207,10 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
           </g>
         ))}
         {prev && <polyline points={toPoints(prev, sampleKey, sx, sy)} fill="none" stroke="#7a8794" strokeWidth="2" strokeDasharray="5 4" opacity="0.6" />}
-        {trial && <polyline points={toPoints(trial, sampleKey, sx, sy)} fill="none" stroke="#1f6fb5" strokeWidth="2.5" />}
+        {trial && !series && <polyline points={toPoints(trial, sampleKey, sx, sy)} fill="none" stroke="#1f6fb5" strokeWidth="2.5" />}
+        {trial && series?.map((x) => (
+          <polyline key={x.key} data-testid="graph-series" data-series={x.key} points={toPoints(trial, x.key, sx, sy)} fill="none" stroke={x.color} strokeWidth="2.5" strokeDasharray={x.dash} />
+        ))}
         {trial && (
           <g>
             <line x1={sx(playhead)} x2={sx(playhead)} y1={M.t} y2={H - M.b} stroke="#c0392b" strokeWidth="2" />
@@ -209,8 +219,20 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
         )}
         {!trial && <text x={W / 2} y={H / 2} textAnchor="middle" fontSize="12" fill="#666">실험하면 그래프가 그려져요.</text>}
       </svg>
+      {trial && series && (
+        <ul className="graph-legend" aria-label="범례">
+          {series.map((x) => (
+            <li key={x.key} data-testid="graph-legend-item">
+              <svg viewBox="0 0 32 8" width="32" height="8" aria-hidden="true">
+                <line x1="1" x2="31" y1="4" y2="4" stroke={x.color} strokeWidth="3" strokeDasharray={x.dash} />
+              </svg>
+              <span>{x.label}</span>
+            </li>
+          ))}
+        </ul>
+      )}
       <p className="view-note">
-        {trial ? <><span className="legend line-now">━</span> 이번 시행 {prev && <><span className="legend line-prev">╌</span> 앞 시행</>}</> : ''}
+        {trial && series ? <>{prev && <><span className="legend line-prev">╌</span> 앞 시행({series.find((x) => x.key === sampleKey)?.label ?? yName})을 흐리게 겹쳐 그렸어요.</>}</> : trial ? <><span className="legend line-now">━</span> 이번 시행 {prev && <><span className="legend line-prev">╌</span> 앞 시행</>}</> : ''}
         {trial && !playing ? ' · 그래프를 누르거나 ← → 키로 시각을 옮겨 보세요.' : ''}
       </p>
     </figure>

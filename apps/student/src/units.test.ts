@@ -13,7 +13,7 @@ const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
 describe('단원 레지스트리', () => {
   it('열 단원이 모두 로드된다', () => {
-    expect(UNITS.map((u) => u.id)).toEqual(['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat', 'g5-light', 'g6-electricity', 'g4-land', 'g6-earth-motion', 'g6-seasons', 'g3-lifecycle', 'g6-plant']);
+    expect(UNITS.map((u) => u.id)).toEqual(['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat', 'g5-light', 'g6-electricity', 'g4-land', 'g6-earth-motion', 'g6-seasons', 'g3-lifecycle', 'g6-plant', 'g4-ecosystem']);
     expect(UNITS.every((u) => u.ok)).toBe(true);
     const gases = UNITS[0]!;
     if (gases.ok) expect(gases.module.kind).toBe('gas-syringe');
@@ -49,6 +49,9 @@ describe('단원 레지스트리', () => {
     const plant = UNITS[11]!;
     expect(plant.ok && plant.activity).toBe('variable');
     if (plant.ok) expect(plant.module.kind).toBe('transpiration');
+    const ecosystem = UNITS[12]!;
+    expect(ecosystem.ok && ecosystem.activity).toBe('variable');
+    if (ecosystem.ok) expect(ecosystem.module.kind).toBe('food-web');
   });
 
   it('schema 검증에 실패한 단원이 있어도 다른 단원은 로드된다', () => {

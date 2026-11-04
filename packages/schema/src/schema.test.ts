@@ -10,6 +10,7 @@ import landJson from '../../../content/units/g4-land/manifest.json';
 import seasonsJson from '../../../content/units/g6-seasons/manifest.json';
 import lifecycleJson from '../../../content/units/g3-lifecycle/manifest.json';
 import plantJson from '../../../content/units/g6-plant/manifest.json';
+import ecosystemJson from '../../../content/units/g4-ecosystem/manifest.json';
 import earthJson from '../../../content/units/g6-earth-motion/manifest.json';
 import {
   ManifestError,
@@ -163,7 +164,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
   const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
   it('아홉 매니페스트가 모두 검증을 통과한다', () => {
-    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson]) expect(() => parseManifest(j)).not.toThrow();
+    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson]) expect(() => parseManifest(j)).not.toThrow();
   });
 
   it('연소 매니페스트의 점검표와 경고 문구를 읽는다', () => {
@@ -251,6 +252,23 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     expect(e.dependent.map((d) => d.key)).toEqual(['lostMl', 'remainingMl']);
     expect(e.params).toEqual({ hours: 48 });
     expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['leaves', 'startMl']);
+  });
+
+  it('생물과 환경 매니페스트의 변인, 안전 종류, 탐침을 읽는다', () => {
+    const m = parseManifest(ecosystemJson);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-ecosystem', 4, 'life', ['4과14-01']]);
+    const e = m.experiments[0] as VariableExperiment;
+    expect(e.module).toBe('food-web');
+    expect(e.safety).toEqual([]);
+    expect(e.safetyChecklist).toBeUndefined();
+    expect(e.variables.map((v) => v.key)).toEqual(['rabbits0', 'foxes0', 'rain', 'furColor']);
+    expect(e.variables[0]!.options.map((o) => o.value)).toEqual([10, 20]);
+    expect(e.variables[1]!.options.map((o) => o.value)).toEqual([0, 2, 4]);
+    expect(e.variables[2]!.options.map((o) => o.value)).toEqual(['low', 'normal', 'high']);
+    expect(e.variables[3]!.options.map((o) => o.value)).toEqual(['white', 'brown']);
+    expect(e.dependent.map((d) => d.key)).toEqual(['grassDay60', 'rabbitsMax']);
+    expect(e.params).toEqual({ days: 60 });
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['foxes0', 'furColor']);
   });
 
   it('두 필드는 없어도 된다', () => {

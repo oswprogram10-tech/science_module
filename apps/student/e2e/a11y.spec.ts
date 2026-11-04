@@ -495,6 +495,58 @@ test('g6-plant 어두운 화면: 처음, 실행 뒤, 어두운 곳·바람, 잎 
   await expectNoSeriousViolations(page);
 });
 
+// ---- g4-ecosystem ----
+
+async function ecosystemRun(page: Page) {
+  await selectIV(page, '처음 여우 수');
+  await predict(page, '줄어든다');
+  await runTrial(page);
+}
+
+test('g4-ecosystem 처음 화면', async ({ page }) => {
+  await gotoUnit(page, 'g4-ecosystem');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expectNoSeriousViolations(page);
+});
+
+test('g4-ecosystem 실행한 뒤(그래프 범례·표식)와 0일째, 여우 0마리·비 많이·토끼 20마리', async ({ page }) => {
+  await gotoUnit(page, 'g4-ecosystem');
+  await ecosystemRun(page);
+  await expect(page.getByRole('figure', { name: '그래프로 보기' }).getByTestId('graph-legend-item')).toHaveCount(3);
+  await expectNoSeriousViolations(page);
+  const slider = page.getByRole('slider', { name: '그래프 시각 옮기기' });
+  await slider.focus();
+  await slider.press('Home');
+  await expect(page.getByText('0일째 · 풀 80% · 토끼 10마리 · 여우 2마리')).toBeVisible();
+  await expectNoSeriousViolations(page);
+  // 시행이 있으면 그림은 그 시행의 조건을 보여 주므로, 새 화면에서 조건을 바꿔 본다.
+  await gotoUnit(page, 'g4-ecosystem');
+  await page.reload();
+  await setValue(page, '처음 여우 수', '0마리 (여우 없음)');
+  await expect(page.getByText('여우가 없어요')).toBeVisible();
+  await expect(page.getByText('없음', { exact: true })).toBeVisible();
+  await expectNoSeriousViolations(page);
+  await setValue(page, '비가 오는 정도', '많이');
+  await setValue(page, '처음 토끼 수', '20마리');
+  await setValue(page, '토끼 털 색', '갈색');
+  await expectNoSeriousViolations(page);
+});
+
+test('g4-ecosystem 어두운 화면: 처음, 실행 뒤, 여우 0마리·비 많이', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await gotoUnit(page, 'g4-ecosystem');
+  await expectNoSeriousViolations(page);
+  await ecosystemRun(page);
+  await expectNoSeriousViolations(page);
+  await page.reload();
+  await setValue(page, '처음 여우 수', '0마리 (여우 없음)');
+  await expect(page.getByText('여우가 없어요')).toBeVisible();
+  await expectNoSeriousViolations(page);
+  await setValue(page, '비가 오는 정도', '많이');
+  await setValue(page, '토끼 털 색', '갈색');
+  await expectNoSeriousViolations(page);
+});
+
 // ---- 수업 연결 ----
 
 for (const scheme of ['light', 'dark'] as const) {
