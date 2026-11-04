@@ -88,7 +88,7 @@ export function LensRayView({ experiment, values }: ViewProps<ConvexLensSample>)
         <text x={CX} y={focusY + 6} textAnchor="middle" fontSize="18" fill="#c2410c" aria-hidden="true" data-testid="meet-star" {...halo}>★</text>
         {/* 라벨은 광선 오른쪽에 둔다. 종이와 가까우면 겹치지 않게 위로 올린다. */}
         <text x={CX + 14} y={Math.abs(focusY - paperY) < 34 ? focusY - 34 : focusY - 4} textAnchor="start" {...text} {...halo}>
-          <tspan x={CX + 14}>빛이 한곳에</tspan>
+          <tspan x={CX + 14}>{'빛이 한곳에 '}</tspan>
           <tspan x={CX + 14} dy="15">모이는 곳</tspan>
         </text>
 

@@ -27,7 +27,8 @@ export default defineConfig({
   webServer: {
     command: 'pnpm build && pnpm exec vite preview --port 4174 --strictPort',
     url: 'http://localhost:4174',
-    reuseExistingServer: !CI,
+    // 이미 떠 있는 서버(이전 빌드)를 재사용하면 오래된 화면을 검사할 수 있어 항상 새로 띄운다.
+    reuseExistingServer: false,
     timeout: 180_000,
   },
 });

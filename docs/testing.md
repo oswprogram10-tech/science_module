@@ -12,7 +12,7 @@ pnpm e2e                                   # 루트에서. 빌드 후 vite previ
 pnpm --filter student exec playwright test solution   # 파일 이름으로 일부만 실행
 ```
 - 설치된 브라우저를 그대로 씁니다(`playwright install` 불필요). 브라우저를 못 찾으면 `PW_CHROMIUM_PATH=/경로/chrome pnpm e2e`처럼 실행 파일을 알려 주세요.
-- `CI` 환경 변수가 있으면 재시도 1회, 이미 떠 있는 서버를 재사용하지 않습니다.
+- `CI` 환경 변수가 있으면 재시도 1회. 이미 떠 있는 서버는 어디서든 재사용하지 않습니다(오래된 빌드를 검사하는 일을 막기 위해). 포트 4174가 사용 중이면 실패하니 그 프로세스를 먼저 끄세요.
 - 테스트 코드는 `apps/student/e2e/*.spec.ts`, 공통 도우미(`selectIV`, `predict`, `runTrial` 등)는 `e2e/helpers.ts`에 있습니다. 모든 spec은 페이지 오류·콘솔 오류가 하나도 없어야 통과합니다.
 
 ### 빠른 재생: `playback` 주소 변수
