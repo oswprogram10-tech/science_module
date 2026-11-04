@@ -12,6 +12,7 @@ import { MemoryRecorder, buildStatement, toExtensions } from '@sci/xapi';
 import type { VariableExperiment } from '@sci/schema';
 import { MockSafetyDetector, type SafetyEvent, type SafetyEventType } from '@sci/vision';
 import { ClassifyLab } from './modules/indicator-classify/ClassifyLab';
+import { CardSortLab } from './modules/card-sort/CardSortLab';
 import { ObserveLab } from './modules/sky-observation/ObserveLab';
 import { readPlaybackSeconds } from './playback';
 import { UNITS, parseRoute, unitHash, type UnitEntry } from './units';
@@ -74,6 +75,9 @@ function Routes() {
     // key: 단원을 바꾸면 런타임 상태를 새로 만든다.
     if (unit.activity === 'classify') {
       return <ClassifyLab key={unit.id} unitId={unit.id} title={unit.manifest.title} experiment={unit.experiment} />;
+    }
+    if (unit.activity === 'card-sort') {
+      return <CardSortLab key={unit.id} unitId={unit.id} title={unit.manifest.title} experiment={unit.experiment} />;
     }
     if (unit.activity === 'observe') {
       return <ObserveLab key={unit.id} unitId={unit.id} title={unit.manifest.title} experiment={unit.experiment} />;

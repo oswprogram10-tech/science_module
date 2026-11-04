@@ -37,6 +37,18 @@ const KIND_TEXT: Record<Activity, Record<string, string>> = {
     'record-match': '관찰을 잘 기록함',
     'prediction-mismatch': '예측과 다른 결과',
   },
+  'card-sort': {
+    'choose-criterion': '분류 기준을 고르기 전',
+    'pick-card': '카드를 고르는 중',
+    'before-observe': '특징을 살펴보기 전',
+    sorting: '카드를 나누는 중',
+    'check-subjective': '사람마다 다르게 나눌 수 있는 기준으로 확인함',
+    'check-unplaced': '무리에 넣지 않은 카드가 있음',
+    'check-unobserved': '살펴보지 않은 카드가 있음',
+    'check-inconsistent': '분류가 관찰과 다름',
+    'check-complete': '기준 하나를 관찰에 맞게 나눔',
+    finished: '두 가지 기준으로 분류함',
+  },
 };
 
 /** 최근 상황을 사람이 읽는 한 문장으로 바꾼다. 알 수 없으면 null. */

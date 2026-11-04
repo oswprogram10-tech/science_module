@@ -13,13 +13,16 @@ import plantJson from '../../../content/units/g6-plant/manifest.json';
 import ecosystemJson from '../../../content/units/g4-ecosystem/manifest.json';
 import microbeJson from '../../../content/units/g4-microbe/manifest.json';
 import bodyJson from '../../../content/units/g5-body/manifest.json';
+import animalJson from '../../../content/units/g3-animal/manifest.json';
 import earthJson from '../../../content/units/g6-earth-motion/manifest.json';
 import {
   ManifestError,
+  isCardSortExperiment,
   isClassificationExperiment,
   isObservationExperiment,
   isVariableExperiment,
   parseManifest,
+  type CardSortExperiment,
   type ClassificationExperiment,
   type ObservationExperiment,
   type VariableExperiment,
@@ -369,5 +372,45 @@ describe('관찰 활동 (sky-observation)', () => {
     expect(() => parseManifest(edit((x) => { x.tasks[0].probes[0].when = 'before-run'; }))).toThrow(ManifestError);
     expect(() => parseManifest(edit((x) => { x.tasks = []; }))).toThrow(ManifestError);
     expect(() => parseManifest(edit((x) => { delete x.tasks; }))).toThrow(ManifestError);
+  });
+});
+
+describe('카드 분류 활동 (card-sort)', () => {
+  const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
+  const e = parseManifest(animalJson).experiments[0]!;
+
+  it('동물의 생활 매니페스트가 검증을 통과하고 카드 분류 활동으로 판별된다', () => {
+    expect(e.module).toBe('card-sort');
+    expect(isCardSortExperiment(e)).toBe(true);
+    expect(isVariableExperiment(e)).toBe(false);
+    expect(isClassificationExperiment(e)).toBe(false);
+    expect(isObservationExperiment(e)).toBe(false);
+    const c = e as CardSortExperiment;
+    expect(c.layout).toBe('groups');
+    expect(c.features.map((f) => f.key)).toEqual(['habitat', 'legs', 'wings']);
+    expect(c.criteria.map((x) => x.key)).toEqual(['habitat', 'legs', 'wings', 'cute']);
+    expect(c.cards).toHaveLength(8);
+    expect(c.safetyChecklist).toEqual([]);
+    expect(c.tutor.probes.map((p) => p.when).sort()).toEqual(
+      ['before-observe', 'check-complete', 'check-inconsistent', 'check-subjective', 'check-unobserved', 'check-unplaced', 'choose-criterion', 'finished', 'pick-card', 'sorting'],
+    );
+  });
+
+  it('모르는 layout을 거부한다', () => {
+    const bad = clone(animalJson);
+    bad.experiments[0].layout = 'tree';
+    expect(() => parseManifest(bad)).toThrow(ManifestError);
+  });
+
+  it('판별 합집합이 module로 갈라진다: 다른 유형의 필드로는 통과하지 못한다', () => {
+    const noCards = clone(animalJson);
+    delete noCards.experiments[0].cards;
+    expect(() => parseManifest(noCards)).toThrow(ManifestError);
+    const asClassify = clone(animalJson);
+    asClassify.experiments[0].module = 'indicator-classify';
+    expect(() => parseManifest(asClassify)).toThrow(ManifestError);
+    const badProbe = clone(animalJson);
+    badProbe.experiments[0].tutor.probes[0].when = 'before-test';
+    expect(() => parseManifest(badProbe)).toThrow(ManifestError);
   });
 });

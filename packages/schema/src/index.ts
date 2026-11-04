@@ -231,10 +231,78 @@ export const observationExperimentSchema = z.object({
   tutor: observationTutorConfigSchema,
 });
 
+// ---- 카드 분류 활동 ----
+
+export const CARD_SORT_MODULE = 'card-sort' as const;
+
+export const cardSortProbeWhenSchema = z.enum([
+  'choose-criterion',
+  'pick-card',
+  'before-observe',
+  'sorting',
+  'check-subjective',
+  'check-unplaced',
+  'check-unobserved',
+  'check-inconsistent',
+  'check-complete',
+  'finished',
+]);
+
+export const cardSortProbeSchema = z.object({
+  when: cardSortProbeWhenSchema,
+  text: z.string().min(1),
+});
+
+export const cardSortTutorConfigSchema = z.object({
+  forbiddenAnswers: z.array(z.string().min(1)),
+  probes: z.array(cardSortProbeSchema).min(1),
+});
+
+/** 카드 배치 형태. 이번에는 무리 나누기만 있고, 나중에 'tree', 'order'를 더한다. */
+export const cardSortLayoutSchema = z.enum(['groups']);
+
+export const sortFeatureSchema = z.object({
+  key: z.string().min(1),
+  label: z.string().min(1),
+});
+
+export const sortCriterionSchema = z.object({
+  key: z.string().min(1),
+  label: z.string().min(1),
+  /** 객관적 기준이 보는 특징. 주관적 기준에는 없다. */
+  feature: z.string().min(1).optional(),
+  objective: z.boolean(),
+  /** 무리. 객관적 기준에서는 value가 특징값과 1:1로 대응한다. */
+  groups: z.array(z.object({ value: z.string().min(1), label: z.string().min(1) })).min(2),
+});
+
+export const sortCardSchema = z.object({
+  key: z.string().min(1),
+  label: z.string().min(1),
+  /** 그림 key. 학생 앱이 key별 그림을 그린다. */
+  icon: z.string().min(1),
+  /** 특징 key -> 특징값. 화면에 드러내지 않는다. */
+  features: z.record(z.string(), z.string().min(1)),
+  /** 특징 key -> 관찰 문장(보이는 사실만). */
+  observations: z.record(z.string(), z.string().min(1)),
+});
+
+export const cardSortExperimentSchema = z.object({
+  ...commonShape,
+  module: z.literal(CARD_SORT_MODULE),
+  layout: cardSortLayoutSchema,
+  features: z.array(sortFeatureSchema).min(1),
+  criteria: z.array(sortCriterionSchema).min(1),
+  cards: z.array(sortCardSchema).min(1),
+  safetyChecklist: z.array(z.string().min(1)).default([]),
+  tutor: cardSortTutorConfigSchema,
+});
+
 export const experimentSchema = z.discriminatedUnion('module', [
   variableExperimentSchema,
   classificationExperimentSchema,
   observationExperimentSchema,
+  cardSortExperimentSchema,
 ]);
 
 export const manifestSchema = z.object({
@@ -263,7 +331,13 @@ export type ObservationControl = z.infer<typeof observationControlSchema>;
 export type ObservationAnswerRule = z.infer<typeof observationAnswerSchema>;
 export type ObservationProbe = z.infer<typeof observationProbeSchema>;
 export type ObservationProbeWhen = z.infer<typeof observationProbeWhenSchema>;
-export type Experiment = VariableExperiment | ClassificationExperiment | ObservationExperiment;
+export type CardSortExperiment = z.infer<typeof cardSortExperimentSchema>;
+export type CardSortProbe = z.infer<typeof cardSortProbeSchema>;
+export type CardSortProbeWhen = z.infer<typeof cardSortProbeWhenSchema>;
+export type SortFeature = z.infer<typeof sortFeatureSchema>;
+export type SortCriterion = z.infer<typeof sortCriterionSchema>;
+export type SortCard = z.infer<typeof sortCardSchema>;
+export type Experiment = VariableExperiment | ClassificationExperiment | ObservationExperiment | CardSortExperiment;
 export type ClassifyProbe = z.infer<typeof classifyProbeSchema>;
 export type ClassifyProbeWhen = z.infer<typeof classifyProbeWhenSchema>;
 export type ColorDef = z.infer<typeof colorDefSchema>;
@@ -273,11 +347,12 @@ export type ClassifyIndicator = z.infer<typeof indicatorSchema>;
 export type Manifest = z.infer<typeof manifestSchema>;
 
 export const isVariableExperiment = (e: Experiment): e is VariableExperiment =>
-  e.module !== CLASSIFY_MODULE && e.module !== OBSERVE_MODULE;
+  e.module !== CLASSIFY_MODULE && e.module !== OBSERVE_MODULE && e.module !== CARD_SORT_MODULE;
 export const isClassificationExperiment = (e: Experiment): e is ClassificationExperiment =>
   e.module === CLASSIFY_MODULE;
 
 export const isObservationExperiment = (e: Experiment): e is ObservationExperiment => e.module === OBSERVE_MODULE;
+export const isCardSortExperiment = (e: Experiment): e is CardSortExperiment => e.module === CARD_SORT_MODULE;
 
 export class ManifestError extends Error {
   readonly issues: string[];

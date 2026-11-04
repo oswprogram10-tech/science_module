@@ -41,6 +41,7 @@ pnpm e2e            # 브라우저 자동 테스트 (Playwright)
 | `#/unit/g6-plant` | 6학년 식물의 구조와 기능 (잎의 수·빛·바람·처음 물의 양에 따른 이틀 동안 줄어든 물의 양, 증산 작용) |
 | `#/unit/g4-ecosystem` | 4학년 생물과 환경 (처음 토끼·여우 수, 비, 토끼 털 색에 따른 60일 동안의 풀·토끼·여우 수 변화, 먹이 관계와 생태계 평형) |
 | `#/unit/g4-microbe` | 4학년 다양한 생물과 우리 생활 (빵의 물기·온도·빛에 따른 곰팡이가 덮은 넓이와 처음 보인 날, 가상 현미경으로 균사와 포자 관찰) |
+| `#/unit/g3-animal` | 3학년 동물의 생활 (카드 8장을 사는 곳·다리·날개 관찰로 분류, 주관적 기준 구별, 객관적 기준 2가지 완료) |
 | `#/unit/g5-body` | 5학년 우리 몸의 구조와 기능 (운동 종류·시간·손목에 따른 운동 직후 맥박·호흡과 원래 맥박으로 돌아오는 시간, 심장·폐·혈관 보기, 선택 기능 "내 맥박 재기") |
 | `#/unit/g6-seasons` | 6학년 계절의 변화 (계절·자전축 기울기·막대 길이에 따른 태양 남중 고도, 그림자, 낮의 길이) |
 
@@ -65,6 +66,7 @@ pnpm e2e            # 브라우저 자동 테스트 (Playwright)
 | 경로 | 설명 |
 |---|---|
 | `content/units/g4-gases/manifest.json`, `content/units/g5-solution/manifest.json`, `content/units/g6-acid-base/manifest.json`, `content/units/g6-combustion/manifest.json`, `content/units/g5-heat/manifest.json`, `content/units/g5-light/manifest.json`, `content/units/g6-electricity/manifest.json`, `content/units/g4-land/manifest.json`, `content/units/g6-earth-motion/manifest.json`, `content/units/g6-seasons/manifest.json`, `content/units/g3-lifecycle/manifest.json`, `content/units/g6-plant/manifest.json`, `content/units/g4-ecosystem/manifest.json` | 단원 매니페스트 (변인, 게이트웨이, 튜터 탐침 질문) |
+| `packages/cardsort` | `@sci/cardsort` 카드 분류 판정 로직(단원과 무관한 순수 함수) |
 | `packages/schema` | `@sci/schema` zod 스키마 |
 | `packages/runtime` | `@sci/runtime` 시행 관리, 타임라인, 플레이헤드 |
 | `packages/gateway` | `@sci/gateway` 실행 조건, 시행 비교, 구조적 피드백, 조사 |

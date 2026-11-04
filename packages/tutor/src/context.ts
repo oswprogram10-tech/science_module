@@ -6,10 +6,13 @@ import {
   type Prediction,
 } from '@sci/gateway';
 import { indicatorColor, type CheckKind } from '@sci/engine-matter';
+import { createSortState, isFinished } from '@sci/cardsort';
 import {
+  isCardSortExperiment,
   isClassificationExperiment,
   isObservationExperiment,
   isVariableExperiment,
+  type CardSortExperiment,
   type ClassificationExperiment,
   type Experiment,
   type ObservationExperiment,
@@ -18,7 +21,7 @@ import {
 } from '@sci/schema';
 import { pickProbeKey } from './index';
 import { modelAnswer } from './observeModel';
-import { classifyWhen, observeWhen } from './situation';
+import { cardSortWhen, classifyWhen, observeWhen } from './situation';
 
 /** 입력 형식 버전. 형식을 바꾸면 올린다(학습 데이터를 다시 내보내야 한다). */
 export const PROMPT_VERSION = 'v0';
@@ -73,6 +76,19 @@ export type TutorState =
       recorded: string | null;
       controls: Record<string, string>;
       matchesModel: boolean | null;
+    }
+  | {
+      kind: 'card-sort';
+      unitId: string;
+      experimentId: string;
+      selected: string | null;
+      criterion: string | null;
+      /** 카드 key -> 관찰한 특징 key들. */
+      observed: Record<string, string[]>;
+      /** 카드 key -> 지금 기준에서 넣은 무리 key. */
+      placement: Record<string, string | null>;
+      completed: string[];
+      check: { kind: string; items: { card: string; status: string }[] } | null;
     };
 
 export interface UnitInfo {
@@ -94,6 +110,10 @@ function variableExp(experiment: Experiment): VariableExperiment {
 }
 function classifyExp(experiment: Experiment): ClassificationExperiment {
   if (!isClassificationExperiment(experiment)) throw new Error('분류 활동이 아닙니다.');
+  return experiment;
+}
+function cardSortExp(experiment: Experiment): CardSortExperiment {
+  if (!isCardSortExperiment(experiment)) throw new Error('카드 분류 활동이 아닙니다.');
   return experiment;
 }
 function observeExp(experiment: Experiment): ObservationExperiment {
@@ -123,6 +143,17 @@ export function situationOf(state: TutorState, experiment: Experiment): string {
       predictions: state.predictions,
       tested: sel ? (state.tests[sel] ?? []).map((t) => t.indicator) : [],
       checkKind: (state.check?.kind as CheckKind | undefined) ?? null,
+    });
+  }
+  if (state.kind === 'card-sort') {
+    const exp = cardSortExp(experiment);
+    const sel = state.selected;
+    return cardSortWhen(exp, {
+      criterion: state.criterion,
+      selected: sel,
+      observed: sel ? (state.observed[sel] ?? []) : [],
+      checkKind: state.check?.kind ?? null,
+      finished: isFinished({ ...createSortState(), completed: state.completed }, exp),
     });
   }
   observeExp(experiment);
@@ -228,6 +259,45 @@ function classifyBody(exp: ClassificationExperiment, state: Extract<TutorState, 
   return lines;
 }
 
+const SORT_STATUS_NAME: Record<string, string> = {
+  ok: '문제 없음',
+  unobserved: '아직 살펴보지 않음',
+  inconsistent: '다시 비교 필요',
+  unplaced: '무리에 안 넣음',
+};
+
+function cardSortBody(exp: CardSortExperiment, state: Extract<TutorState, { kind: 'card-sort' }>): string[] {
+  const cardLabel = (key: string | null | undefined) => exp.cards.find((c) => c.key === key)?.label ?? key ?? '';
+  const crit = exp.criteria.find((c) => c.key === state.criterion);
+  const featureLabel = (key: string) => exp.features.find((f) => f.key === key)?.label ?? key;
+  const groupLabel = (key: string) => crit?.groups.find((g) => g.value === key)?.label ?? key;
+  const lines = [
+    `[분류 기준] ${crit ? crit.label : '(고르지 않음)'}`,
+    `[고른 카드] ${state.selected ? cardLabel(state.selected) : '(없음)'}`,
+    '[카드별 기록]',
+  ];
+  // 학생이 한 활동(관찰·분류)만 적는다. 카드의 특징값이나 알맞은 무리는 쓰지 않는다.
+  let any = false;
+  for (const c of exp.cards) {
+    const seen = state.observed[c.key] ?? [];
+    const placed = state.placement[c.key] ?? null;
+    if (seen.length === 0 && placed === null && state.selected !== c.key) continue;
+    any = true;
+    lines.push(
+      `- ${c.label}: ${seen.length > 0 ? `관찰 ${seen.map(featureLabel).join(', ')}` : '관찰 없음'}${JOIN}넣은 무리 ${placed ? groupLabel(placed) : '없음'}`,
+    );
+  }
+  if (!any) lines.push('(아직 없음)');
+  const done = state.completed.map((k) => exp.criteria.find((c) => c.key === k)?.label ?? k);
+  lines.push(`[끝낸 기준] ${done.length > 0 ? done.join(', ') : '(없음)'}`);
+  if (state.check) {
+    lines.push(
+      `[확인 결과] ${state.check.items.map((i) => `${cardLabel(i.card)} ${SORT_STATUS_NAME[i.status] ?? i.status}`).join(JOIN)}`,
+    );
+  }
+  return lines;
+}
+
 function taskOf(exp: ObservationExperiment, id: string): ObservationTask {
   return exp.tasks.find((t) => t.id === id) ?? exp.tasks[0]!;
 }
@@ -265,6 +335,7 @@ export function buildTutorInput(
   ];
   if (state.kind === 'variable') lines.push(...variableBody(variableExp(experiment), state));
   else if (state.kind === 'classify') lines.push(...classifyBody(classifyExp(experiment), state));
+  else if (state.kind === 'card-sort') lines.push(...cardSortBody(cardSortExp(experiment), state));
   else lines.push(...observeBody(observeExp(experiment), state));
   const said = utterance?.trim();
   lines.push(`[학생] ${said ? said : '(말하지 않음)'}`);
@@ -427,5 +498,43 @@ export function fromObserveState(
     recorded: str(ts?.recorded?.value),
     controls,
     matchesModel: ts?.recorded ? ts.recorded.value === modelAnswer(experiment, task, ts.recorded.controls) : null,
+  };
+}
+
+/** CardSortState(앱 저장소)가 그대로 들어맞는다. */
+export interface CardSortStateLike {
+  selected: string | null;
+  criterion: string | null;
+  observed: Record<string, string[]>;
+  placement: Record<string, string | null>;
+  completed: string[];
+  checked: { kind: string; items: { card: string; status: string }[] } | null;
+}
+
+export function fromCardSortState(
+  experiment: CardSortExperiment,
+  sortState: CardSortStateLike,
+  unitId: string,
+): Extract<TutorState, { kind: 'card-sort' }> {
+  const observed: Record<string, string[]> = {};
+  const placement: Record<string, string | null> = {};
+  for (const c of experiment.cards) {
+    const seen = sortState.observed[c.key] ?? [];
+    if (seen.length > 0) observed[c.key] = [...seen];
+    const placed = sortState.placement[c.key];
+    if (placed !== undefined) placement[c.key] = placed;
+  }
+  return {
+    kind: 'card-sort',
+    unitId,
+    experimentId: experiment.id,
+    selected: sortState.selected,
+    criterion: sortState.criterion,
+    observed,
+    placement,
+    completed: [...sortState.completed],
+    check: sortState.checked
+      ? { kind: sortState.checked.kind, items: sortState.checked.items.map((i) => ({ card: i.card, status: i.status })) }
+      : null,
   };
 }

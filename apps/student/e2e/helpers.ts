@@ -184,3 +184,71 @@ export async function rawStudent(code: string, group: number, server = SERVER_WS
   await joined;
   return ws;
 }
+
+// ---- 카드 분류(동물의 생활) 도우미 ----
+
+export const ANIMAL_CARDS = ['개미', '달팽이', '지렁이', '고양이', '붕어', '게', '참새', '나비'] as const;
+export type SortCriterionKey = 'habitat' | 'legs' | 'wings';
+export const SORT_CRITERION_LABEL: Record<SortCriterionKey, string> = {
+  habitat: '어디에서 사나요?',
+  legs: '다리가 있나요?',
+  wings: '날개가 있나요?',
+};
+export const SORT_FEATURE_LABEL: Record<SortCriterionKey, string> = { habitat: '사는 곳', legs: '다리', wings: '날개' };
+/** 카드를 관찰에 맞게 넣을 무리 라벨(테스트가 정답을 알고 있어야 올바른 분류를 재현할 수 있다). */
+export const SORT_GROUP: Record<SortCriterionKey, Record<(typeof ANIMAL_CARDS)[number], string>> = {
+  habitat: {
+    개미: '땅에서 사는 동물', 달팽이: '땅에서 사는 동물', 지렁이: '땅에서 사는 동물', 고양이: '땅에서 사는 동물',
+    붕어: '물에서 사는 동물', 게: '물에서 사는 동물', 참새: '날아다니는 동물', 나비: '날아다니는 동물',
+  },
+  legs: {
+    개미: '다리가 있다', 달팽이: '다리가 없다', 지렁이: '다리가 없다', 고양이: '다리가 있다',
+    붕어: '다리가 없다', 게: '다리가 있다', 참새: '다리가 있다', 나비: '다리가 있다',
+  },
+  wings: {
+    개미: '날개가 없다', 달팽이: '날개가 없다', 지렁이: '날개가 없다', 고양이: '날개가 없다',
+    붕어: '날개가 없다', 게: '날개가 없다', 참새: '날개가 있다', 나비: '날개가 있다',
+  },
+};
+
+/** 분류 기준 라디오를 고른다. */
+export async function sortChoose(page: Page, criterion: string) {
+  await page.getByRole('radio', { name: criterion, exact: true }).check();
+}
+
+/** 카드 버튼(카드 더미나 무리 칸 어디에 있든). */
+export const sortCard = (page: Page, card: string) => page.getByRole('button', { name: new RegExp(`^${card} 관찰 \\d/3$`) });
+export const sortObserveButton = (page: Page, feature: string) =>
+  page.getByRole('region', { name: '돋보기' }).getByRole('button', { name: `${feature} 살펴보기`, exact: true });
+export const sortPutButton = (page: Page, group: string) => page.getByRole('button', { name: `${group}에 넣기`, exact: true });
+export const sortCheckButton = (page: Page) => page.getByRole('button', { name: '분류 확인하기' });
+export const sortFeedback = (page: Page) => page.getByRole('heading', { name: '피드백' }).locator('..');
+export const sortTutor = (page: Page) => page.getByRole('heading', { name: '생각해 볼까요?' }).locator('..');
+
+/** 카드를 고르고(관찰할 특징이 있으면 살펴본 뒤) 무리에 넣는다. */
+export async function sortOne(page: Page, card: string, group: string, feature?: string) {
+  await sortCard(page, card).click();
+  if (feature) await sortObserveButton(page, feature).click();
+  await sortPut(page, group);
+}
+async function sortPut(page: Page, group: string) {
+  await sortPutButton(page, group).click();
+}
+
+/** 8장을 모두 나눈다. observe가 true면 지금 기준의 특징을 먼저 살펴본다. override는 카드별로 일부러 다른 무리에 넣을 때. */
+export async function sortAll(
+  page: Page,
+  key: SortCriterionKey,
+  opts: { observe?: boolean; override?: Partial<Record<(typeof ANIMAL_CARDS)[number], string>> } = {},
+) {
+  for (const card of ANIMAL_CARDS) {
+    await sortOne(page, card, opts.override?.[card] ?? SORT_GROUP[key][card], opts.observe === false ? undefined : SORT_FEATURE_LABEL[key]);
+  }
+}
+
+/** 기준 하나를 관찰에 맞게 끝낸다(고르기 -> 관찰 -> 넣기 -> 확인). */
+export async function sortFinishCriterion(page: Page, key: SortCriterionKey) {
+  await sortChoose(page, SORT_CRITERION_LABEL[key]);
+  await sortAll(page, key);
+  await sortCheckButton(page).click();
+}

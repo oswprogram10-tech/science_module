@@ -16,6 +16,12 @@ import {
   createClass,
   rawStudent,
   studentUrl,
+  sortCard,
+  sortCheckButton,
+  sortChoose,
+  sortAll,
+  sortFinishCriterion,
+  sortObserveButton,
 } from './helpers';
 import type { Locator } from '@playwright/test';
 
@@ -612,6 +618,42 @@ test('g4-microbe 어두운 화면: 처음, 점검표, 실행 뒤, 배율 ×400, 
   await expect(page.getByText('지퍼 봉지 · 어두운 곳')).toBeVisible();
   await expectNoSeriousViolations(page);
 });
+
+// ---- g3-animal ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`g3-animal ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 처음, 돋보기와 관찰 기록, 다시 비교하기, 두 기준을 끝낸 뒤`, async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g3-animal');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+
+    await sortChoose(page, '다리가 있나요?');
+    await sortCard(page, '게').click();
+    await sortObserveButton(page, '다리').click();
+    await sortObserveButton(page, '사는 곳').click();
+    await expect(page.getByRole('list', { name: '게 관찰 기록' })).toContainText('다리가 10개 있어요.');
+    await expectNoSeriousViolations(page);
+
+    await sortAll(page, 'legs', { override: { 게: '다리가 없다' } });
+    await sortCheckButton(page).click();
+    await expect(page.getByText('게는 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?')).toBeVisible();
+    await expectNoSeriousViolations(page);
+
+    // 게를 옮겨 첫 기준을 끝내고, 두 번째 기준까지 끝낸다.
+    await sortCard(page, '게').click();
+    await page.getByRole('button', { name: '다리가 있다에 넣기', exact: true }).click();
+    await sortCheckButton(page).click();
+    await expect(page.getByText('관찰한 특징과 분류가 서로 잘 맞아요.')).toBeVisible();
+    await sortFinishCriterion(page, 'habitat');
+    await expect(page.getByText('두 가지 기준으로 분류했어요!')).toBeVisible();
+    await expectNoSeriousViolations(page);
+
+    await sortChoose(page, '귀여운가요?');
+    await expectNoSeriousViolations(page);
+  });
+}
 
 // ---- g5-body ----
 

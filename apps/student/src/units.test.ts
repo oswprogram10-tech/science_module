@@ -6,6 +6,7 @@ import combustionJson from '../../../content/units/g6-combustion/manifest.json';
 import heatJson from '../../../content/units/g5-heat/manifest.json';
 import lightJson from '../../../content/units/g5-light/manifest.json';
 import electricityJson from '../../../content/units/g6-electricity/manifest.json';
+import animalJson from '../../../content/units/g3-animal/manifest.json';
 import landJson from '../../../content/units/g4-land/manifest.json';
 import { UNITS, buildRegistry, parseRoute, unitHash } from './units';
 
@@ -13,7 +14,7 @@ const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
 describe('단원 레지스트리', () => {
   it('열 단원이 모두 로드된다', () => {
-    expect(UNITS.map((u) => u.id)).toEqual(['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat', 'g5-light', 'g6-electricity', 'g4-land', 'g6-earth-motion', 'g6-seasons', 'g3-lifecycle', 'g6-plant', 'g4-ecosystem', 'g4-microbe', 'g5-body']);
+    expect(UNITS.map((u) => u.id)).toEqual(['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat', 'g5-light', 'g6-electricity', 'g4-land', 'g6-earth-motion', 'g6-seasons', 'g3-lifecycle', 'g6-plant', 'g4-ecosystem', 'g4-microbe', 'g5-body', 'g3-animal']);
     expect(UNITS.every((u) => u.ok)).toBe(true);
     const gases = UNITS[0]!;
     if (gases.ok) expect(gases.module.kind).toBe('gas-syringe');
@@ -58,6 +59,21 @@ describe('단원 레지스트리', () => {
     const body = UNITS[14]!;
     expect(body.ok && body.activity).toBe('variable');
     if (body.ok) expect(body.module.kind).toBe('exercise-body');
+    const animal = UNITS[15]!;
+    expect(animal.ok && animal.activity).toBe('card-sort');
+    if (animal.ok) expect(animal.module.kind).toBe('card-sort');
+  });
+
+  it('카드 분류 매니페스트가 깨져도 다른 단원은 로드된다', () => {
+    const broken = clone(animalJson);
+    broken.experiments[0].cards[0].features.legs = 'maybe';
+    const units = buildRegistry([gasesJson, broken, solutionJson]);
+    expect(units.map((u) => u.ok)).toEqual([true, false, true]);
+    const bad = units[1]!;
+    if (!bad.ok) expect(bad.issues.join()).toContain('maybe');
+    const noFeature = clone(animalJson);
+    delete noFeature.experiments[0].cards[0].observations.wings;
+    expect(buildRegistry([noFeature])[0]!.ok).toBe(false);
   });
 
   it('schema 검증에 실패한 단원이 있어도 다른 단원은 로드된다', () => {
