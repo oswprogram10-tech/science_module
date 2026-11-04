@@ -53,3 +53,50 @@ jobs:
             apps/student/playwright-report/
             apps/student/test-results/
           retention-days: 7
+
+  # 앱 빌드(서명 없음). 설치 가능한 디버그 APK와 시뮬레이터용 앱이 만들어지는지만 확인한다.
+  android-build:
+    name: 안드로이드 앱 빌드 (debug APK)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter student build
+      - run: npx cap sync android
+        working-directory: apps/student
+      # 러너에 설치된 Android SDK(ANDROID_HOME)를 쓴다.
+      - run: ./gradlew assembleDebug
+        working-directory: apps/student/android
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-debug-apk
+          path: apps/student/android/app/build/outputs/apk/debug/*.apk
+          retention-days: 7
+
+  ios-build:
+    name: iOS 앱 빌드 (시뮬레이터)
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter student build
+      - run: npx cap sync ios
+        working-directory: apps/student
+      - run: xcodebuild -scheme App -sdk iphonesimulator -configuration Debug build CODE_SIGNING_ALLOWED=NO
+        working-directory: apps/student/ios/App

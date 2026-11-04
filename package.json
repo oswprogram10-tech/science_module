@@ -13,7 +13,10 @@
     "tutor:validate": "tsx packages/tutor/scripts/cli.ts validate",
     "tutor:export": "tsx packages/tutor/scripts/cli.ts export",
     "tutor:import": "tsx packages/tutor/scripts/cli.ts import",
-    "tutor:authoring-data": "tsx packages/tutor/scripts/authoring-data.ts"
+    "tutor:authoring-data": "tsx packages/tutor/scripts/authoring-data.ts",
+    "cap:sync": "pnpm --filter student cap:sync",
+    "android:debug": "pnpm --filter student android:debug",
+    "ios:sim": "pnpm --filter student ios:sim"
   },
   "devDependencies": {
     "tsx": "^4.23.15",

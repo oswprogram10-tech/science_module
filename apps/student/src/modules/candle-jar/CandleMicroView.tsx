@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react';
 import type { CombustionSample } from '@sci/engine-matter';
 import type { ViewProps } from '../types';
+import { scaleCount } from '../../platform/deviceTier';
+import { useParticleScale } from '../../platform/DeviceTierContext';
 
 const W = 240;
 const H = 240;
@@ -41,16 +43,20 @@ function jarPath(ctx: CanvasRenderingContext2D) {
   ctx.lineTo(r, b);
 }
 
-export function counts(oxygenPct: number) {
-  const o2 = Math.max(0, Math.min(O2_AT_START, Math.round((O2_AT_START * oxygenPct) / START_PCT)));
-  const lost = O2_AT_START - o2;
+/** scale: 기기 등급 배율. 전체 알갱이 수와 처음 산소 알갱이 수에 같이 곱해 산소 비율(약 21 %)을 지킨다. */
+export function counts(oxygenPct: number, scale = 1) {
+  const total = scale === 1 ? TOTAL : scaleCount(TOTAL, scale);
+  const o2Start = scale === 1 ? O2_AT_START : scaleCount(O2_AT_START, scale);
+  const o2 = Math.max(0, Math.min(o2Start, Math.round((o2Start * oxygenPct) / START_PCT)));
+  const lost = o2Start - o2;
   const co2 = Math.round(lost * CO2_SHARE);
-  return { o2, co2, water: lost - co2, other: TOTAL - O2_AT_START };
+  return { o2, co2, water: lost - co2, other: total - o2Start, total, o2Start };
 }
 
 export function CandleMicroView({ snapshot }: ViewProps<CombustionSample>) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { o2, co2, water, other } = counts(snapshot?.oxygenPct ?? START_PCT);
+  const scale = useParticleScale();
+  const { o2, co2, water, other, total, o2Start } = counts(snapshot?.oxygenPct ?? START_PCT, scale);
 
   const dots = useMemo(() => {
     const r = mulberry(7);
@@ -62,8 +68,8 @@ export function CandleMicroView({ snapshot }: ViewProps<CombustionSample>) {
     }));
   }, []);
 
-  const stateRef = useRef({ o2, co2 });
-  stateRef.current = { o2, co2 };
+  const stateRef = useRef({ o2, co2, total, o2Start });
+  stateRef.current = { o2, co2, total, o2Start };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -74,7 +80,7 @@ export function CandleMicroView({ snapshot }: ViewProps<CombustionSample>) {
     let raf = 0;
 
     const draw = (time: number) => {
-      const { o2: nO, co2: nC } = stateRef.current;
+      const { o2: nO, co2: nC, total: nTotal, o2Start: nO2Start } = stateRef.current;
       ctx.clearRect(0, 0, W, H);
       ctx.fillStyle = '#eef6fc';
       ctx.fillRect(0, 0, W, H);
@@ -88,9 +94,10 @@ export function CandleMicroView({ snapshot }: ViewProps<CombustionSample>) {
       ctx.stroke();
 
       dots.forEach((dot, i) => {
+        if (i >= nTotal) return;
         const x = dot.x + Math.sin((time / 600) * (1 + dot.r) + dot.ph) * 6 * amp;
         const y = dot.y + Math.cos((time / 700) * (1 + dot.r) + dot.ph * 1.3) * 6 * amp;
-        if (i >= O2_AT_START) {
+        if (i >= nO2Start) {
           ctx.fillStyle = '#8a949e'; // 그 밖의 기체
           ctx.beginPath();
           ctx.arc(x, y, 4, 0, Math.PI * 2);
@@ -117,7 +124,7 @@ export function CandleMicroView({ snapshot }: ViewProps<CombustionSample>) {
     };
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
-  }, [dots, o2, co2, water]); // 움직임을 줄인 경우 값이 바뀔 때 한 번씩 다시 그린다
+  }, [dots, o2, co2, water, total]); // 움직임을 줄인 경우 값이 바뀔 때 한 번씩 다시 그린다
 
   return (
     <figure className="view particles" aria-label="알갱이로 보기">

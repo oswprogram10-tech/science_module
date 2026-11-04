@@ -8,9 +8,16 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "cap:sync": "pnpm build && cap sync",
+    "android:debug": "cd android && ./gradlew assembleDebug",
+    "ios:sim": "cd ios/App && xcodebuild -scheme App -sdk iphonesimulator -configuration Debug build CODE_SIGNING_ALLOWED=NO"
   },
   "dependencies": {
+    "@capacitor-community/bluetooth-le": "8.3.0",
+    "@capacitor/android": "8.5.3",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/ios": "8.5.3",
     "@sci/engine-earth": "workspace:*",
     "@sci/engine-matter": "workspace:*",
     "@sci/engine-physics": "workspace:*",
@@ -26,6 +33,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
+    "@capacitor/cli": "8.5.3",
     "@playwright/test": "1.63.0",
     "@types/node": "^22.20.5",
     "@types/react": "^19.3.0",

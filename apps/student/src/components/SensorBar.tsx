@@ -1,6 +1,8 @@
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { MockGasDriver, MockLightDriver, MockPressureDriver, MockScaleDriver, MockTemperatureDriver, type SensorDriver, type SensorKind, type SensorReading } from '@sci/sensors';
 import type { SensorSpec } from '../modules/types';
+import { devMode } from './safety/devMode';
+import { RealTemperatureControls, useRealTemperature } from './RealTemperature';
 
 const SEEDS: Record<SensorKind, number> = { temperature: 20250101, scale: 20250102, pressure: 20250103, oxygen: 20250104, carbonDioxide: 20250105, light: 20250106 };
 const DECIMALS: Record<SensorKind, number> = { temperature: 1, scale: 2, pressure: 1, oxygen: 1, carbonDioxide: 1, light: 1 };
@@ -48,17 +50,32 @@ function useSensorReadings(specs: SensorSpec[]): SensorReading[] {
 
 export function SensorBar({ specs }: { specs: SensorSpec[] }) {
   const readings = useSensorReadings(specs);
+  const dev = useMemo(devMode, []);
+  const real = useRealTemperature();
+  // (시험) 실물 온도 센서가 연결되면 첫 가상 온도계 자리에 실측값을 보여 준다. 시뮬레이션 계산에는 쓰지 않는다.
+  const tempIndex = dev ? specs.findIndex((s) => s.kind === 'temperature') : -1;
+  const realShown = tempIndex >= 0 && real.status === 'connected';
   return (
     <div className="sensors" role="group" aria-label="센서">
       <span className="badge">모의 센서</span>
-      {specs.map((spec, i) => (
-        <div className="sensor" key={spec.id}>
-          <span className="sensor-name">{spec.label}</span>
-          <output className="sensor-value" aria-label={spec.ariaLabel ?? ARIA[spec.kind]}>
-            {readings[i]!.value.toFixed(DECIMALS[spec.kind])} {readings[i]!.unit}
-          </output>
-        </div>
-      ))}
+      {specs.map((spec, i) => {
+        const isReal = realShown && i === tempIndex;
+        return (
+          <div className="sensor" key={spec.id}>
+            <span className="sensor-name">{isReal ? '실물 온도계' : spec.label}</span>
+            {isReal && <span className="badge real-badge">실물 센서</span>}
+            <output className="sensor-value" aria-label={spec.ariaLabel ?? ARIA[spec.kind]}>
+              {isReal
+                ? real.value === null || Number.isNaN(real.value)
+                  ? '기다리는 중'
+                  : `${real.value.toFixed(DECIMALS[spec.kind])} °C`
+                : `${readings[i]!.value.toFixed(DECIMALS[spec.kind])} ${readings[i]!.unit}`}
+            </output>
+            {isReal && real.stale && <span className="real-stale">(끊김: 마지막 값)</span>}
+          </div>
+        );
+      })}
+      {tempIndex >= 0 && <RealTemperatureControls real={real} />}
     </div>
   );
 }

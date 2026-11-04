@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react';
 import type { DissolutionSample } from '@sci/engine-matter';
 import type { ViewProps } from '../types';
+import { scaleCount } from '../../platform/deviceTier';
+import { useParticleScale } from '../../platform/DeviceTierContext';
 
 const W = 240;
 const H = 240;
@@ -36,8 +38,9 @@ export function ParticleView({ snapshot }: ViewProps<DissolutionSample>) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dissolved = snapshot?.dissolvedG ?? 0;
   const undissolved = snapshot?.undissolvedG ?? 0;
-  const nD = Math.min(MAX_DISSOLVED, Math.round(dissolved * 6));
-  const nU = Math.min(MAX_UNDISSOLVED, Math.round(undissolved * 12));
+  const scale = useParticleScale();
+  const nD = Math.min(scaleCount(MAX_DISSOLVED, scale), Math.round(dissolved * 6));
+  const nU = Math.min(scaleCount(MAX_UNDISSOLVED, scale), Math.round(undissolved * 12));
 
   const water = useMemo(() => makeDots(WATER_COUNT, 1, (r) => [10 + r() * (W - 20), 20 + r() * (H - 30)]), []);
   const dissolvedDots = useMemo(() => makeDots(MAX_DISSOLVED, 2, (r) => [14 + r() * (W - 28), 24 + r() * (H - 40)]), []);

@@ -2,6 +2,8 @@ export interface SensorReading {
   value: number;
   unit: string;
   ts: number;
+  /** 실물 센서가 끊겨 마지막 값을 그대로 보여 줄 때 true */
+  stale?: boolean;
 }
 
 export type SensorKind = 'temperature' | 'scale' | 'pressure' | 'oxygen' | 'carbonDioxide' | 'light';
@@ -145,3 +147,5 @@ export class MockLightDriver extends MockDriver {
     return roundTo(Math.min(100, Math.max(0, v)), 1);
   }
 }
+
+export * from './ble';

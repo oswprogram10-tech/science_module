@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef } from 'react';
 import type { GasSample } from '@sci/engine-matter';
 import { mulberry32 } from '@sci/sensors';
 import type { ViewProps } from '../types';
+import { scaleCount } from '../../platform/deviceTier';
+import { useParticleScale } from '../../platform/DeviceTierContext';
 
 const W = 240;
 const H = 240;
@@ -36,7 +38,8 @@ export function GasMicroView({ snapshot, values }: ViewProps<GasSample>) {
   const pressure = snapshot?.pressureAtm ?? 1;
   const gasTempC = snapshot?.gasTempC ?? 20;
   const gas = GAS[String(values.gasType)] ?? GAS.air!;
-  const count = Math.min(MAX_PARTICLES, Math.max(1, Math.round(startMl))); // 처음 부피에 비례
+  const scale = useParticleScale();
+  const count = Math.min(scaleCount(MAX_PARTICLES, scale), Math.max(1, Math.round(startMl))); // 처음 부피에 비례
 
   // 시드 고정 의사난수로 처음 위치와 방향을 정한다.
   const seeds = useMemo<Seed[]>(() => {
