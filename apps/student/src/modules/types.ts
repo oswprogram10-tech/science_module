@@ -20,6 +20,8 @@ export interface SensorSpec {
   unit: string;
   kind: SensorKind;
   source: number;
+  /** 같은 종류의 센서가 둘 이상일 때 접근성 이름(기본: 종류 이름). */
+  ariaLabel?: string;
 }
 
 export interface ResultColumn<R> {

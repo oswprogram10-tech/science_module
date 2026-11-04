@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@sci/engine-matter": "workspace:*",
+    "@sci/engine-physics": "workspace:*",
     "@sci/gateway": "workspace:*",
     "@sci/runtime": "workspace:*",
     "@sci/schema": "workspace:*",

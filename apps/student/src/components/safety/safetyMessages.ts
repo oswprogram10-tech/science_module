@@ -1,6 +1,14 @@
 import type { SafetyEventType } from '@sci/vision';
 
-/** 안전 경고 배너 문구. 같은 문장을 음성으로도 읽는다. */
+/** 단원과 무관한 기본 안전 경고 문구. 단원은 매니페스트 safetyMessages로 덮어쓴다. 같은 문장을 음성으로도 읽는다. */
+export const DEFAULT_SAFETY_MESSAGES: Record<SafetyEventType, string> = {
+  NO_GOGGLES: '실험을 계속하기 전에 보안경을 먼저 착용해 주세요!',
+  NO_GLOVES: '실험 재료를 만지기 전에 실험용 장갑을 먼저 껴 주세요!',
+  SPILL: '실험 재료가 쏟아졌어요! 손대지 말고 바로 선생님께 알려 주세요.',
+  FOOD: '실험 중에는 음식을 먹거나 실험 재료를 맛보면 안 돼요!',
+};
+
+/** 산과 염기(용액 실험) 전용 문구. */
 export const SAFETY_MESSAGES: Record<SafetyEventType, string> = {
   NO_GOGGLES: '산성 용액 실험 전 보안경을 먼저 착용해 주세요!',
   NO_GLOVES: '용액을 만지기 전에 실험용 장갑을 먼저 껴 주세요!',
@@ -12,7 +20,7 @@ export const SAFETY_MESSAGES: Record<SafetyEventType, string> = {
 export function resolveSafetyMessages(
   overrides?: Partial<Record<SafetyEventType, string>>,
 ): Record<SafetyEventType, string> {
-  return { ...SAFETY_MESSAGES, ...overrides };
+  return { ...DEFAULT_SAFETY_MESSAGES, ...overrides };
 }
 
 export const MOCK_TYPES: SafetyEventType[] = ['NO_GOGGLES', 'NO_GLOVES', 'SPILL', 'FOOD'];
@@ -20,7 +28,7 @@ export const MOCK_TYPES: SafetyEventType[] = ['NO_GOGGLES', 'NO_GLOVES', 'SPILL'
 export const MOCK_LABELS: Record<SafetyEventType, string> = {
   NO_GOGGLES: '보안경 안 씀',
   NO_GLOVES: '장갑 안 낌',
-  SPILL: '용액 쏟음',
+  SPILL: '재료 쏟음',
   FOOD: '음식 먹음',
 };
 

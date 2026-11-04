@@ -52,7 +52,7 @@ export function SensorBar({ specs }: { specs: SensorSpec[] }) {
       {specs.map((spec, i) => (
         <div className="sensor" key={spec.id}>
           <span className="sensor-name">{spec.label}</span>
-          <output className="sensor-value" aria-label={ARIA[spec.kind]}>
+          <output className="sensor-value" aria-label={spec.ariaLabel ?? ARIA[spec.kind]}>
             {readings[i]!.value.toFixed(DECIMALS[spec.kind])} {readings[i]!.unit}
           </output>
         </div>

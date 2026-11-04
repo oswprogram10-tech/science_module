@@ -3,13 +3,14 @@ import gasesJson from '../../../content/units/g4-gases/manifest.json';
 import solutionJson from '../../../content/units/g5-solution/manifest.json';
 import acidBaseJson from '../../../content/units/g6-acid-base/manifest.json';
 import combustionJson from '../../../content/units/g6-combustion/manifest.json';
+import heatJson from '../../../content/units/g5-heat/manifest.json';
 import { UNITS, buildRegistry, parseRoute, unitHash } from './units';
 
 const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
 describe('단원 레지스트리', () => {
-  it('네 단원이 모두 로드된다', () => {
-    expect(UNITS.map((u) => u.id)).toEqual(['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion']);
+  it('다섯 단원이 모두 로드된다', () => {
+    expect(UNITS.map((u) => u.id)).toEqual(['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat']);
     expect(UNITS.every((u) => u.ok)).toBe(true);
     const gases = UNITS[0]!;
     if (gases.ok) expect(gases.module.kind).toBe('gas-syringe');
@@ -21,6 +22,9 @@ describe('단원 레지스트리', () => {
     const combustion = UNITS[3]!;
     expect(combustion.ok && combustion.activity).toBe('variable');
     if (combustion.ok) expect(combustion.module.kind).toBe('candle-jar');
+    const heat = UNITS[4]!;
+    expect(heat.ok && heat.activity).toBe('variable');
+    if (heat.ok) expect(heat.module.kind).toBe('insulated-cup');
   });
 
   it('schema 검증에 실패한 단원이 있어도 다른 단원은 로드된다', () => {
@@ -74,6 +78,16 @@ describe('연소 단원 로드', () => {
     const units = buildRegistry([gasesJson, broken]);
     expect(units.map((u) => u.ok)).toEqual([true, false]);
     if (!units[1]!.ok) expect(units[1]!.issues.join()).toContain('jarMl');
+  });
+});
+
+describe('보온 컵 단원 로드', () => {
+  it('모듈 validate에 실패하면 오류 항목이 되고 다른 단원은 계속 쓸 수 있다', () => {
+    const broken = clone(heatJson);
+    broken.experiments[0].variables.find((v: { key: string }) => v.key === 'waterMl').options[0].value = 1000;
+    const units = buildRegistry([gasesJson, broken]);
+    expect(units.map((u) => u.ok)).toEqual([true, false]);
+    if (!units[1]!.ok) expect(units[1]!.issues.join()).toContain('waterMl');
   });
 });
 

@@ -11,6 +11,7 @@ import gasesJson from '../../../content/units/g4-gases/manifest.json';
 import solutionJson from '../../../content/units/g5-solution/manifest.json';
 import acidBaseJson from '../../../content/units/g6-acid-base/manifest.json';
 import combustionJson from '../../../content/units/g6-combustion/manifest.json';
+import heatJson from '../../../content/units/g5-heat/manifest.json';
 import { MODULES } from './modules';
 import { classifyModule } from './modules/indicator-classify';
 import type { AnyModule, ClassifyModule } from './modules/types';
@@ -60,7 +61,7 @@ export function buildRegistry(
   return raws.map((raw, i) => loadUnit(raw, i, modules));
 }
 
-export const UNITS: UnitEntry[] = buildRegistry([gasesJson, solutionJson, acidBaseJson, combustionJson]);
+export const UNITS: UnitEntry[] = buildRegistry([gasesJson, solutionJson, acidBaseJson, combustionJson, heatJson]);
 
 export type Route = { page: 'list' } | { page: 'unit'; unitId: string };
 

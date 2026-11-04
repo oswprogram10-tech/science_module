@@ -3,6 +3,7 @@ import manifestJson from '../../../content/units/g5-solution/manifest.json';
 import gasesJson from '../../../content/units/g4-gases/manifest.json';
 import acidBaseJson from '../../../content/units/g6-acid-base/manifest.json';
 import combustionJson from '../../../content/units/g6-combustion/manifest.json';
+import heatJson from '../../../content/units/g5-heat/manifest.json';
 import {
   ManifestError,
   isVariableExperiment,
@@ -151,8 +152,8 @@ describe('활동 유형 union (module 기준)', () => {
 describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
   const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
-  it('네 매니페스트가 모두 검증을 통과한다', () => {
-    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson]) expect(() => parseManifest(j)).not.toThrow();
+  it('다섯 매니페스트가 모두 검증을 통과한다', () => {
+    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson]) expect(() => parseManifest(j)).not.toThrow();
   });
 
   it('연소 매니페스트의 점검표와 경고 문구를 읽는다', () => {
@@ -160,6 +161,13 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     expect(e.module).toBe('candle-jar');
     expect(e.safetyChecklist).toHaveLength(3);
     expect(e.safetyMessages).toEqual({ NO_GOGGLES: '불을 다루기 전에 보안경을 먼저 착용해 주세요!' });
+  });
+
+  it('보온 컵 매니페스트의 점검표와 경고 문구 네 가지를 읽는다', () => {
+    const e = parseManifest(heatJson).experiments[0] as VariableExperiment;
+    expect(e.module).toBe('insulated-cup');
+    expect(e.safetyChecklist).toHaveLength(3);
+    expect(Object.keys(e.safetyMessages ?? {}).sort()).toEqual(['FOOD', 'NO_GLOVES', 'NO_GOGGLES', 'SPILL']);
   });
 
   it('두 필드는 없어도 된다', () => {

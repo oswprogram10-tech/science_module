@@ -29,6 +29,8 @@ pnpm e2e            # 브라우저 자동 테스트 (Playwright)
 | `#/unit/g4-gases` | 4학년 여러 가지 기체 (주사기 속 기체의 부피) |
 | `#/unit/g5-solution` | 5학년 용해와 용액 |
 | `#/unit/g6-acid-base` | 6학년 산과 염기 (지시약으로 용액 분류하기) |
+| `#/unit/g6-combustion` | 6학년 물질의 연소 (집기병으로 덮은 촛불) |
+| `#/unit/g5-heat` | 5학년 열과 우리 생활 (보온 컵 설계) |
 
 산과 염기: 보안경 실제 감지는 모의 감지기로 대체, 모델은 스파이크 S2 이후. 주소 앞에 `?dev=1`을 붙이면(`/?dev=1#/unit/g6-acid-base`) 모의 안전 상황 버튼이 나타납니다.
 
@@ -39,11 +41,12 @@ pnpm e2e            # 브라우저 자동 테스트 (Playwright)
 ## 구조
 | 경로 | 설명 |
 |---|---|
-| `content/units/g4-gases/manifest.json`, `content/units/g5-solution/manifest.json`, `content/units/g6-acid-base/manifest.json` | 단원 매니페스트 (변인, 게이트웨이, 튜터 탐침 질문) |
+| `content/units/g4-gases/manifest.json`, `content/units/g5-solution/manifest.json`, `content/units/g6-acid-base/manifest.json`, `content/units/g6-combustion/manifest.json`, `content/units/g5-heat/manifest.json` | 단원 매니페스트 (변인, 게이트웨이, 튜터 탐침 질문) |
 | `packages/schema` | `@sci/schema` zod 스키마 |
 | `packages/runtime` | `@sci/runtime` 시행 관리, 타임라인, 플레이헤드 |
 | `packages/gateway` | `@sci/gateway` 실행 조건, 시행 비교, 구조적 피드백, 조사 |
-| `packages/engines/matter` | `@sci/engine-matter` 용해 모델, 기체 모델, 지시약 분류 |
+| `packages/engines/matter` | `@sci/engine-matter` 용해 모델, 기체 모델, 지시약 분류, 연소 모델 |
+| `packages/engines/physics` | `@sci/engine-physics` 보온 컵 모델(뉴턴 냉각 법칙) |
 | `packages/vision` | `@sci/vision` 색 변환·평균색·색표 매칭, 안전 감지기 인터페이스와 모의 감지기 |
 | `packages/sensors` | `@sci/sensors` 센서 인터페이스와 Mock 드라이버 |
 | `packages/tutor` | `@sci/tutor` 규칙 기반 탐침 질문과 출력 가드 |

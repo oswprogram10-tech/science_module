@@ -39,9 +39,9 @@
   | 바깥 공기 열전달 계수 h | 10 W/m²K |
 
 - **옆면 열저항 R_side (m²K/W)**: `1/h_side + layers × r(wrap)`
-  - 재료 1겹당 r: paper 0.002, cotton 0.125, bubble 0.10, foil 0.0, none 0(겹 수 무시)
+  - 재료 1겹당 r: paper 0.002, cotton 0.125, bubble 0.10, foil 0.02(포일과 컵 사이 얇은 공기층 근사), none 0(겹 수 무시)
   - h_side는 10이 기본이고, foil만 6이다(복사를 막는 효과를 근사).
-  - foil 2겹은 1겹과 같다(r=0이고 h_side 6은 겹 수와 무관).
+  - (구현 후 변경) 처음엔 foil r=0이었으나, 그러면 열화상에서 포일 컵 바깥이 맨 컵과 똑같이 60 °C로 보여 덜 식는 결과와 모순돼 r=0.02로 바꿨다. 포일 1겹 식은 정도 5.4 °C, 바깥 55.7 °C.
 - **윗면 U_top (W/m²K)**: lid on이면 1/(1/10 + 0.05), off이면 25(김이 나며 빠져나가는 열까지 포함한 근사).
 - **전체 손실과 온도**
   - UA = A_side / R_side + A_top × U_top
@@ -65,7 +65,7 @@
 - 기준(감싸지 않음, 1겹, 뚜껑 없음, 200 mL): τ ≈ 2853초, 10분 뒤 dropC ≈ 7.6 °C(±0.1). 실제 값을 고정한다.
 - 식은 정도 순서: none ≥ paper > foil > bubble > cotton. 나머지 조건은 기준과 같게 둔다.
 - 종이와 감싸지 않음의 차이는 0.3 °C 이하다(얇은 종이는 효과가 작다).
-- wrap = none이면 layers 1·2 결과가 똑같다. foil도 1·2겹 결과가 같다.
+- wrap = none이면 layers 1·2 결과가 똑같다. 포일 컵 바깥 온도는 맨 컵보다 낮다.
 - 뚜껑을 덮으면 dropC가 줄어든다.
 - 물 100 mL는 200 mL보다 dropC가 크다.
 - 모든 샘플에서 waterC는 단조 감소하고 roomC보다 크다. surfaceSideC는 roomC와 waterC 사이에 있다.

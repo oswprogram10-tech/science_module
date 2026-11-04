@@ -304,3 +304,62 @@ describe('g6-combustion 매니페스트 probe', () => {
     }
   });
 });
+
+// ---------- 열과 우리 생활(보온 컵) 매니페스트 ----------
+import heatJson from '../../../content/units/g5-heat/manifest.json';
+
+describe('g5-heat 매니페스트 probe', () => {
+  const h = parseManifest(heatJson).experiments[0]! as VariableExperiment;
+  const hLabels = Object.fromEntries(h.variables.map((v) => [v.key, v.label]));
+  const hKeys = h.variables.map((v) => v.key);
+  const hGuard = { forbiddenAnswers: h.tutor.forbiddenAnswers, limits: h.limits };
+  const hCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: hLabels, ivKey: 'wrap', ...x });
+  const fair = (iv: string): Partial<ProbeContext> => ({
+    ivKey: iv,
+    lastAnalysis: { kind: 'fair-test', changed: [iv] },
+    prediction: 'same',
+    observed: 'same',
+  });
+
+  it('iv별 fair-test 질문을 고른다', () => {
+    expect(selectProbe(hCtx(fair('wrap')), h.tutor.probes, hGuard)).toContain('열화상 화면에서 컵 바깥의 색');
+    expect(selectProbe(hCtx(fair('lid')), h.tutor.probes, hGuard)).toContain('김이 나는 모습');
+    expect(selectProbe(hCtx(fair('layers')), h.tutor.probes, hGuard)).toContain('겹 수만 바꾸었을 때 결과가 달라졌나요?');
+    expect(selectProbe(hCtx(fair('waterMl')), h.tutor.probes, hGuard)).toContain('물의 양만 바꾸었을 때 물이 식은 정도');
+  });
+
+  it('모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+    let n = 0;
+    for (const probe of h.tutor.probes) {
+      for (const iv of hKeys) {
+        for (const changed of [...hKeys.map((k) => [k]), hKeys]) {
+          const text = renderProbe(probe.text, { iv: hLabels[iv]!, changed: changed.map((k) => hLabels[k]!) });
+          expect(guardOutput(text, hGuard).ok, text).toBe(true);
+          expect(text).not.toMatch(/[{}]|\(를\)|\(가\)|\(과\)/);
+          n++;
+        }
+      }
+    }
+    expect(n).toBe(h.tutor.probes.length * hKeys.length * (hKeys.length + 1));
+  });
+
+  it('금지 구절을 담은 문장은 실제로 막는다', () => {
+    for (const f of h.tutor.forbiddenAnswers) expect(guardOutput(`${f}요`, hGuard).ok, f).toBe(false);
+  });
+
+  it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+    const situations: Partial<ProbeContext>[] = [
+      {},
+      { lastAnalysis: { kind: 'first-trial', changed: [] } },
+      { lastAnalysis: { kind: 'confounded', changed: ['wrap', 'lid'] } },
+      { lastAnalysis: { kind: 'iv-unchanged', changed: ['lid'] } },
+      { lastAnalysis: { kind: 'repeat', changed: [] } },
+      { ...fair('wrap'), prediction: 'increase', observed: 'decrease' },
+    ];
+    for (const s of situations) {
+      const text = selectProbe(hCtx(s), h.tutor.probes, hGuard);
+      expect(text).not.toBe(FALLBACK_PROBE);
+      expect(guardOutput(text, hGuard).ok, text).toBe(true);
+    }
+  });
+});

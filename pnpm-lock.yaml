@@ -20,6 +20,9 @@ importers:
       '@sci/engine-matter':
         specifier: workspace:*
         version: link:../../packages/engines/matter
+      '@sci/engine-physics':
+        specifier: workspace:*
+        version: link:../../packages/engines/physics
       '@sci/gateway':
         specifier: workspace:*
         version: link:../../packages/gateway
@@ -74,6 +77,12 @@ importers:
         version: 8.3.5(@types/node@22.20.5)
 
   packages/engines/matter:
+    dependencies:
+      '@sci/schema':
+        specifier: workspace:*
+        version: link:../../schema
+
+  packages/engines/physics:
     dependencies:
       '@sci/schema':
         specifier: workspace:*

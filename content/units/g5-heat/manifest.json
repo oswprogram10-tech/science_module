@@ -1,0 +1,106 @@
+{
+  "id": "g5-heat",
+  "title": "열과 우리 생활",
+  "grade": 5,
+  "standards": ["6과07-04"],
+  "engine": "physics",
+  "experiments": [
+    {
+      "id": "insulated-cup",
+      "module": "insulated-cup",
+      "title": "물이 덜 식는 보온 컵 만들기",
+      "question": "따뜻한 물이 담긴 컵을 무엇으로, 어떻게 감싸면 물이 덜 식을까?",
+      "predictionPrompt": "예측: 10분 동안 물이 식은 정도는?",
+      "variables": [
+        {
+          "key": "wrap",
+          "label": "감싸는 재료",
+          "type": "choice",
+          "options": [
+            { "value": "none", "label": "감싸지 않음" },
+            { "value": "paper", "label": "종이" },
+            { "value": "cotton", "label": "솜" },
+            { "value": "bubble", "label": "에어캡(뽁뽁이)" },
+            { "value": "foil", "label": "알루미늄 포일" }
+          ],
+          "default": "none"
+        },
+        {
+          "key": "layers",
+          "label": "감싸는 겹 수",
+          "type": "choice",
+          "unit": "겹",
+          "options": [
+            { "value": 1, "label": "1겹" },
+            { "value": 2, "label": "2겹" }
+          ],
+          "default": 1
+        },
+        {
+          "key": "lid",
+          "label": "뚜껑",
+          "type": "choice",
+          "options": [
+            { "value": "off", "label": "뚜껑 없음" },
+            { "value": "on", "label": "뚜껑 덮음" }
+          ],
+          "default": "off"
+        },
+        {
+          "key": "waterMl",
+          "label": "물의 양",
+          "type": "choice",
+          "unit": "mL",
+          "options": [
+            { "value": 100, "label": "100 mL" },
+            { "value": 200, "label": "200 mL" }
+          ],
+          "default": 200
+        }
+      ],
+      "dependent": [
+        { "key": "dropC", "label": "물이 식은 정도", "unit": "°C" },
+        { "key": "endC", "label": "10분 뒤 물의 온도", "unit": "°C" }
+      ],
+      "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
+      "safety": ["hot-water"],
+      "safetyChecklist": [
+        "뜨거운 물은 선생님이 따라 주세요.",
+        "컵을 옮길 때는 받침을 잡고 천천히 옮겨요.",
+        "뜨거운 물이 담긴 컵 주변에서 장난치지 않아요."
+      ],
+      "safetyMessages": {
+        "NO_GOGGLES": "뜨거운 물을 다룰 때는 보안경을 착용해 주세요!",
+        "NO_GLOVES": "뜨거운 컵은 장갑을 끼고 받침을 잡아 옮겨 주세요!",
+        "SPILL": "물이 쏟아졌어요. 손대지 말고 선생님께 바로 알려 주세요!",
+        "FOOD": "실험대 위에서는 음식을 먹지 않아요!"
+      },
+      "safetyNotices": [],
+      "limits": ["열량", "비열", "열전도율", "칼로리", "분자"],
+      "params": { "startC": 60, "roomC": 20, "durationS": 600 },
+      "tutor": {
+        "forbiddenAnswers": [
+          "솜으로 감싸면 덜 식",
+          "에어캡으로 감싸면 덜 식",
+          "뚜껑을 덮으면 덜 식",
+          "두껍게 감쌀수록 덜 식",
+          "물의 양이 많을수록 덜 식",
+          "공기가 열의 이동을 막",
+          "종이는 효과가 적"
+        ],
+        "probes": [
+          { "when": "before-run", "text": "{iv}을(를) 바꾸면 물이 식은 정도가 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?" },
+          { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?" },
+          { "when": "confounded", "text": "{changed}이(가) 함께 바뀌었어요. 식은 정도가 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
+          { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },
+          { "when": "repeat", "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
+          { "when": "fair-test", "text": "{iv}만 바꾸었을 때 물이 식은 정도는 어떻게 달라졌나요? 그래프의 기울기도 비교해 볼까요?" },
+          { "when": "fair-test", "iv": "wrap", "text": "감싸는 재료만 바꾸었을 때 열화상 화면에서 컵 바깥의 색은 어떻게 달랐나요? 그 차이는 무엇을 뜻할까요?" },
+          { "when": "fair-test", "iv": "lid", "text": "뚜껑만 바꾸었을 때 김이 나는 모습과 식은 정도를 함께 비교해 볼까요? 열은 어디로 빠져나갔을까요?" },
+          { "when": "fair-test", "iv": "layers", "text": "겹 수만 바꾸었을 때 결과가 달라졌나요? 어떤 재료로 감쌌는지와 함께 생각해 볼까요?" },
+          { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 그래프와 열화상 화면의 어느 부분을 보면 그 까닭을 찾을 수 있을까요?" }
+        ]
+      }
+    }
+  ]
+}
