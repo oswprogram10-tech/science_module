@@ -28,6 +28,8 @@ export interface GraphMarker {
   /** 그래프 x축 위치(x축 단위. 기본은 초) */
   t: number;
   label: string;
+  /** 'left'이면 라벨을 언제나 선의 왼쪽에 쓴다(기본: 자리가 모자랄 때만). 선이 라벨 오른쪽을 지나가는 그래프용. */
+  labelSide?: 'left';
 }
 
 export interface GraphSeries {

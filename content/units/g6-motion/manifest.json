@@ -1,0 +1,157 @@
+{
+  "id": "g6-motion",
+  "title": "물체의 운동",
+  "grade": 6,
+  "standards": [
+    "6과02-02"
+  ],
+  "engine": "physics",
+  "experiments": [
+    {
+      "id": "ramp-cart",
+      "module": "ramp-cart",
+      "title": "출발 높이에 따른 수레의 속력 비교하기",
+      "question": "수레를 놓는 높이를 바꾸면 수레의 빠르기는 어떻게 달라질까?",
+      "predictionPrompt": "예측: 수레의 속력은?",
+      "variables": [
+        {
+          "key": "heightCm",
+          "label": "출발 높이",
+          "type": "choice",
+          "unit": "cm",
+          "options": [
+            {
+              "value": 10,
+              "label": "10 cm"
+            },
+            {
+              "value": 20,
+              "label": "20 cm"
+            },
+            {
+              "value": 40,
+              "label": "40 cm"
+            }
+          ],
+          "default": 20
+        },
+        {
+          "key": "floor",
+          "label": "바닥",
+          "type": "choice",
+          "options": [
+            {
+              "value": "wood",
+              "label": "나무 판"
+            },
+            {
+              "value": "towel",
+              "label": "수건을 깐 바닥"
+            }
+          ],
+          "default": "wood"
+        },
+        {
+          "key": "load",
+          "label": "수레에 실은 추",
+          "type": "choice",
+          "unit": "개",
+          "options": [
+            {
+              "value": 0,
+              "label": "없음"
+            },
+            {
+              "value": 2,
+              "label": "2개"
+            }
+          ],
+          "default": 0
+        }
+      ],
+      "dependent": [
+        {
+          "key": "timeS",
+          "label": "1 m 가는 데 걸린 시간",
+          "unit": "초"
+        },
+        {
+          "key": "speed",
+          "label": "속력",
+          "unit": "m/s"
+        }
+      ],
+      "gateway": {
+        "mode": "open",
+        "requirePrediction": true,
+        "requireSingleIV": true
+      },
+      "safety": [],
+      "safetyNotices": [],
+      "limits": [
+        "가속도",
+        "운동 에너지",
+        "위치 에너지",
+        "에너지 보존",
+        "마찰 계수",
+        "관성"
+      ],
+      "params": {
+        "durationS": 1.2
+      },
+      "tutor": {
+        "forbiddenAnswers": [
+          "높은 곳에서 출발할수록 빠르",
+          "높을수록 속력이 크",
+          "수건 바닥에서는 느려",
+          "무게는 빠르기와 관계없",
+          "추를 실어도 속력은 같",
+          "높은 곳에서 출발할수록 빨라",
+          "높은 곳에서 출발할수록 빨리",
+          "높을수록 속력이 커",
+          "높을수록 빨라"
+        ],
+        "probes": [
+          {
+            "when": "before-run",
+            "text": "{iv}을(를) 바꾸면 수레의 속력이 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?"
+          },
+          {
+            "when": "first-trial",
+            "text": "이번 결과를 기준으로 삼을 거예요. 걸린 시간으로 속력을 직접 계산해 보고, 다음 시행에서는 무엇만 바꿔 볼까요?"
+          },
+          {
+            "when": "confounded",
+            "text": "{changed}이(가) 함께 바뀌었어요. 속력이 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?"
+          },
+          {
+            "when": "iv-unchanged",
+            "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?"
+          },
+          {
+            "when": "repeat",
+            "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?"
+          },
+          {
+            "when": "fair-test",
+            "text": "{iv}만 바꾸었을 때 걸린 시간과 속력은 어떻게 달라졌나요? 그래프에서 두 선의 기울기도 비교해 볼까요?"
+          },
+          {
+            "when": "fair-test",
+            "iv": "heightCm",
+            "text": "출발 높이만 바꾸었어요. 같은 1 m를 가는 데 걸린 시간이 어떻게 달랐나요? 시간이 짧으면 속력은 어떻게 될까요?"
+          },
+          {
+            "when": "fair-test",
+            "iv": "load",
+            "text": "실은 추만 바꾸었을 때 걸린 시간이 달라졌나요? 처음 예상과 비교해 볼까요?"
+          },
+          {
+            "when": "prediction-mismatch",
+            "text": "예측과 결과가 달랐네요. 위치 그래프에서 1 m에 먼저 닿은 선이 어느 것인지 볼까요?"
+          }
+        ]
+      }
+    }
+  ]
+}

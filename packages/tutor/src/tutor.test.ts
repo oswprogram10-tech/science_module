@@ -1366,3 +1366,106 @@ describe('g4-magnet 매니페스트 probe', () => {
     }
   });
 });
+
+
+// ---------- 물체의 운동(출발 높이와 수레의 속력) 매니페스트 ----------
+import motionJson from '../../../content/units/g6-motion/manifest.json';
+
+describe('g6-motion 매니페스트 probe', () => {
+  const e = parseManifest(motionJson).experiments[0]! as VariableExperiment;
+  const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+  const eKeys = e.variables.map((v) => v.key);
+  const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+  const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: 'heightCm', ...x });
+  const fair = (iv: string): Partial<ProbeContext> => ({
+    ivKey: iv,
+    lastAnalysis: { kind: 'fair-test', changed: [iv] },
+    prediction: 'same',
+    observed: 'same',
+  });
+  const HEIGHT_Q = '출발 높이만 바꾸었어요. 같은 1 m를 가는 데 걸린 시간이 어떻게 달랐나요? 시간이 짧으면 속력은 어떻게 될까요?';
+
+  it('iv별 fair-test 질문을 고른다', () => {
+    expect(selectProbe(eCtx(fair('heightCm')), e.tutor.probes, eGuard)).toBe(HEIGHT_Q);
+    expect(selectProbe(eCtx(fair('load')), e.tutor.probes, eGuard)).toContain('실은 추만 바꾸었을 때 걸린 시간이 달라졌나요?');
+    // 바닥은 전용 질문이 없어 공통 fair-test 질문을 쓴다
+    expect(selectProbe(eCtx(fair('floor')), e.tutor.probes, eGuard)).toContain('바닥만 바꾸었을 때 걸린 시간과 속력은 어떻게 달라졌나요?');
+  });
+
+  it('높이 전용 질문 "시간이 짧으면 속력은 어떻게 될까요?"는 질문이라 가드에 걸리지 않는다 (오검출 없음)', () => {
+    const p = e.tutor.probes.find((x) => x.iv === 'heightCm')!;
+    expect(p.text).toContain('시간이 짧으면 속력은 어떻게 될까요?');
+    expect(guardOutput(p.text, eGuard).ok, p.text).toBe(true);
+    for (const f of e.tutor.forbiddenAnswers) expect(p.text).not.toContain(f);
+  });
+
+  it('예측과 결과가 다르면 위치 그래프에서 1 m에 먼저 닿은 선을 보라고 한다', () => {
+    const text = selectProbe(eCtx({ ...fair('heightCm'), prediction: 'decrease', observed: 'increase' }), e.tutor.probes, eGuard);
+    expect(text).toContain('1 m에 먼저 닿은 선');
+  });
+
+  it('모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+    let n = 0;
+    for (const probe of e.tutor.probes) {
+      for (const iv of eKeys) {
+        for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+          const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+          expect(text).not.toMatch(/[{}]/);
+          expect(text).not.toMatch(/(을\(를\)|이\(가\)|와\(과\)|은\(는\))/);
+          n++;
+        }
+      }
+    }
+    expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+  });
+
+  it('질문 문장은 금지 구절·limits 용어와 겹치지 않는다', () => {
+    for (const probe of e.tutor.probes) {
+      for (const f of e.tutor.forbiddenAnswers) expect(probe.text, probe.text).not.toContain(f);
+      for (const l of e.limits) expect(probe.text, probe.text).not.toContain(l);
+    }
+  });
+
+  it('규칙을 말하는 문장과 금지 구절·limits 용어를 담은 문장은 막는다', () => {
+    for (const rule of ['높은 곳에서 출발할수록 빠르다', '높을수록 속력이 크다', '수건 바닥에서는 느려져요', '무게는 빠르기와 관계없어요', '추를 실어도 속력은 같아요']) {
+      expect(guardOutput(rule, eGuard).ok, rule).toBe(false);
+    }
+    for (const f of e.tutor.forbiddenAnswers) expect(guardOutput(`${f}요`, eGuard).ok, f).toBe(false);
+    for (const l of e.limits) expect(guardOutput(`${l}이에요`, eGuard).ok, l).toBe(false);
+  });
+
+  it('화면에 보이는 글에는 가속도·에너지·마찰 계수가 없다', () => {
+    const shown = [
+      e.title,
+      e.question,
+      e.predictionPrompt,
+      ...e.variables.flatMap((v) => [v.label, v.unit ?? '', ...v.options.map((o) => o.label)]),
+      ...e.dependent.flatMap((d) => [d.label, d.unit ?? '']),
+      ...e.tutor.probes.map((p) => p.text),
+      '속력은 간 거리를 걸린 시간으로 나누어 구해요.',
+      '이동 거리 1 m',
+      '1 m에 닿으면 계산해요',
+    ];
+    for (const text of shown) {
+      for (const l of e.limits) expect(text, text).not.toContain(l);
+      expect(text, text).not.toMatch(/가속도|에너지|마찰 계수/);
+    }
+  });
+
+  it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+    const situations: Partial<ProbeContext>[] = [
+      {},
+      { lastAnalysis: { kind: 'first-trial', changed: [] } },
+      { lastAnalysis: { kind: 'confounded', changed: ['heightCm', 'floor'] } },
+      { lastAnalysis: { kind: 'iv-unchanged', changed: ['load'] } },
+      { lastAnalysis: { kind: 'repeat', changed: [] } },
+      ...eKeys.flatMap((k) => [fair(k), { ...fair(k), prediction: 'increase' as const, observed: 'same' as const }]),
+    ];
+    for (const s of situations) {
+      const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+      expect(text).not.toBe(FALLBACK_PROBE);
+      expect(guardOutput(text, eGuard).ok, text).toBe(true);
+    }
+  });
+});

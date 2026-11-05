@@ -6,7 +6,7 @@ export interface SensorReading {
   stale?: boolean;
 }
 
-export type SensorKind = 'temperature' | 'scale' | 'pressure' | 'oxygen' | 'carbonDioxide' | 'light' | 'humidity' | 'pulse' | 'tilt' | 'sound' | 'distance';
+export type SensorKind = 'temperature' | 'scale' | 'pressure' | 'oxygen' | 'carbonDioxide' | 'light' | 'humidity' | 'pulse' | 'tilt' | 'sound' | 'distance' | 'speed';
 
 export interface SensorDriver {
   id: string;
@@ -88,6 +88,7 @@ export const PULSE_NOISE_BPM = 1;
 export const TILT_NOISE_DEG = 0.1;
 export const SOUND_NOISE_LEVEL = 0.2;
 export const DISTANCE_NOISE_CM = 0.05;
+export const SPEED_NOISE_MS = 0.01;
 export const BEAKER_G = 100;
 
 /** 값 = source() + 시드 고정 잡음(±0.2 °C), 소수 첫째 자리. */
@@ -201,6 +202,16 @@ export class MockDistanceDriver extends MockDriver {
   unit = 'cm';
   protected measure() {
     return roundTo(Math.max(0, this.source() + (this.rng() * 2 - 1) * DISTANCE_NOISE_CM), 2);
+  }
+}
+
+/** 가상 속력 센서: 값 = source()(m/s) + 시드 고정 잡음(±0.01 m/s), 0 이상, 소수 둘째 자리. */
+export class MockSpeedDriver extends MockDriver {
+  id = 'mock-speed';
+  kind = 'speed' as const;
+  unit = 'm/s';
+  protected measure() {
+    return roundTo(Math.max(0, this.source() + (this.rng() * 2 - 1) * SPEED_NOISE_MS), 2);
   }
 }
 

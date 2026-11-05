@@ -16,6 +16,7 @@ import bodyJson from '../../../content/units/g5-body/manifest.json';
 import forceJson from '../../../content/units/g3-force/manifest.json';
 import soundJson from '../../../content/units/g3-sound/manifest.json';
 import magnetJson from '../../../content/units/g4-magnet/manifest.json';
+import motionJson from '../../../content/units/g6-motion/manifest.json';
 import animalJson from '../../../content/units/g3-animal/manifest.json';
 import plantlifeJson from '../../../content/units/g3-plantlife/manifest.json';
 import earthJson from '../../../content/units/g6-earth-motion/manifest.json';
@@ -173,7 +174,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
   const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
   it('아홉 매니페스트가 모두 검증을 통과한다', () => {
-    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, forceJson, soundJson, magnetJson]) expect(() => parseManifest(j)).not.toThrow();
+    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, forceJson, soundJson, magnetJson, motionJson]) expect(() => parseManifest(j)).not.toThrow();
   });
 
   it('연소 매니페스트의 점검표와 경고 문구를 읽는다', () => {
@@ -370,6 +371,24 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     expect(e.limits).toEqual(['자기력', '자기장', '자기력선', '투자율', '강자성', 'N극과 S극의 세기']);
     expect(e.tutor.forbiddenAnswers).toHaveLength(6);
     expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['gapCm', 'between']);
+  });
+
+  it('물체의 운동 매니페스트의 변인, 측정, 금지 구절, 한계 용어, 탐침을 읽는다', () => {
+    const m = parseManifest(motionJson);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g6-motion', 6, 'physics', ['6과02-02']]);
+    const e = m.experiments[0] as VariableExperiment;
+    expect(e.module).toBe('ramp-cart');
+    expect(e.safety).toEqual([]);
+    expect(e.variables.map((v) => v.key)).toEqual(['heightCm', 'floor', 'load']);
+    expect(e.variables[0]!.options.map((o) => o.value)).toEqual([10, 20, 40]);
+    expect(e.variables[1]!.options.map((o) => o.value)).toEqual(['wood', 'towel']);
+    expect(e.variables[2]!.options.map((o) => o.value)).toEqual([0, 2]);
+    expect(e.variables.map((v) => v.default)).toEqual([20, 'wood', 0]);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['timeS', '초'], ['speed', 'm/s']]);
+    expect(e.params).toEqual({ durationS: 1.2 });
+    expect(e.limits).toEqual(['가속도', '운동 에너지', '위치 에너지', '에너지 보존', '마찰 계수', '관성']);
+    expect(e.tutor.forbiddenAnswers).toHaveLength(9);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['heightCm', 'load']);
   });
 
   it('두 필드는 없어도 된다', () => {

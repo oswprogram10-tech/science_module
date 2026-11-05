@@ -848,6 +848,40 @@ for (const scheme of ['light', 'dark'] as const) {
   });
 }
 
+// ---- g6-motion ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`g6-motion ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 처음, 실행 뒤(20 cm), 40 cm와 앞 시행, 수건·추 2개`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g6-motion');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '출발 높이');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('1.2초 · 출발선에서 1.50 m · 1 m까지 0.55초')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await setValue(page, '출발 높이', '40 cm');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('1.2초 · 출발선에서 1.50 m · 1 m까지 0.38초')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await page.reload();
+    await setValue(page, '바닥', '수건을 깐 바닥');
+    await setValue(page, '수레에 실은 추', '2개');
+    await setValue(page, '출발 높이', '10 cm');
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '바닥');
+    await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('1.2초 · 출발선에서 1.17 m · 1 m까지 0.95초')).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+}
+
 // ---- 수업 연결 ----
 
 for (const scheme of ['light', 'dark'] as const) {

@@ -48,7 +48,7 @@ const render = (unit: (typeof variableUnits)[number], mod: AnyModule, trial: Any
   );
 
 describe('GraphView', () => {
-  const existing = variableUnits.filter((u) => u.module.kind !== 'electromagnet' && u.module.kind !== 'magma-cooling' && u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration' && u.module.kind !== 'food-web' && u.module.kind !== 'mold-growth' && u.module.kind !== 'exercise-body' && u.module.kind !== 'lever-balance' && u.module.kind !== 'string-sound' && u.module.kind !== 'magnet-distance');
+  const existing = variableUnits.filter((u) => u.module.kind !== 'electromagnet' && u.module.kind !== 'magma-cooling' && u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration' && u.module.kind !== 'food-web' && u.module.kind !== 'mold-growth' && u.module.kind !== 'exercise-body' && u.module.kind !== 'lever-balance' && u.module.kind !== 'string-sound' && u.module.kind !== 'magnet-distance' && u.module.kind !== 'ramp-cart');
 
   it('기존 단원은 모든 조건에서 최댓값이 처음 값 또는 마지막 값이다 (y축 범위를 모든 표본의 최댓값으로 잡아도 달라지지 않는다)', () => {
     expect(existing.length).toBeGreaterThanOrEqual(5);
@@ -142,6 +142,16 @@ describe('markers: 시행에서 계산하는 함수 형태', () => {
     expect(far[1]!).toBe(far[0]!);
   });
 
+  it("labelSide: 'left'이면 자리가 넉넉해도 라벨을 선의 왼쪽에 쓰고, 없으면 지금처럼 오른쪽에 쓴다", () => {
+    const unit = land();
+    const mk = (labelSide?: 'left'): AnyModule => ({ ...unit.module, graph: { ...unit.module.graph, markers: [{ t: 1, label: '표식', labelSide }] } });
+    const trial = trialOf(unit, base);
+    expect(render(unit, mk('left'), trial)).toMatch(/<text x="[\d.]+" y="[\d.]+" text-anchor="end"[^>]*>표식</);
+    const plain = render(unit, mk(), trial);
+    expect(plain).not.toMatch(/text-anchor="end"[^>]*>표식</);
+    expect(plain).toBe(render(unit, { ...unit.module, graph: { ...unit.module.graph, markers: [{ t: 1, label: '표식' }] } }, trial));
+  });
+
   it('고정 배열도 지원한다', () => {
     const unit = land();
     const fixed: AnyModule = { ...unit.module, graph: { ...unit.module.graph, markers: [{ t: 5, label: '고정 표식' }] } };
@@ -171,7 +181,7 @@ describe('markers: 시행에서 계산하는 함수 형태', () => {
 });
 
 describe('x축 라벨·눈금(xLabel, xTicks, xTickFormat)', () => {
-  const existing = variableUnits.filter((u) => u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration' && u.module.kind !== 'food-web' && u.module.kind !== 'mold-growth' && u.module.kind !== 'exercise-body' && u.module.kind !== 'lever-balance' && u.module.kind !== 'string-sound' && u.module.kind !== 'magnet-distance');
+  const existing = variableUnits.filter((u) => u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration' && u.module.kind !== 'food-web' && u.module.kind !== 'mold-growth' && u.module.kind !== 'exercise-body' && u.module.kind !== 'lever-balance' && u.module.kind !== 'string-sound' && u.module.kind !== 'magnet-distance' && u.module.kind !== 'ramp-cart');
   const seasons = () => variableUnits.find((u) => u.id === 'g6-seasons')!;
   const base = { season: 'summer', tiltDeg: 23.44, stickCm: 10 };
 
@@ -228,9 +238,9 @@ describe('여러 선(graph.series)과 y축 눈금(graph.yTicks)', () => {
   const SERIES_UNITS = ['g4-ecosystem', 'g5-body'];
   const others = variableUnits.filter((u) => !SERIES_UNITS.includes(u.id));
   // yTicks로 축을 고정한 단원. 이 단원들은 'series: undefined는 그림을 바꾸지 않는다' 비교에서 yTicks를 남긴다.
-  const FIXED_Y = ['g4-ecosystem', 'g4-microbe', 'g5-body', 'g3-force', 'g3-sound', 'g4-magnet'];
+  const FIXED_Y = ['g4-ecosystem', 'g4-microbe', 'g5-body', 'g3-force', 'g3-sound', 'g4-magnet', 'g6-motion'];
 
-  it('series를 쓰는 모듈은 먹이 관계와 우리 몸뿐이고, yTicks는 먹이 관계·곰팡이·우리 몸·막대 수평 잡기·줄 소리만 쓴다', () => {
+  it('series를 쓰는 모듈은 먹이 관계와 우리 몸뿐이고, yTicks는 먹이 관계·곰팡이·우리 몸·막대 수평 잡기·줄 소리·자석·수레만 쓴다', () => {
     expect(variableUnits.filter((u) => u.module.graph.series !== undefined).map((u) => u.id)).toEqual(SERIES_UNITS);
     expect(variableUnits.filter((u) => u.module.graph.yTicks !== undefined).map((u) => u.id).sort()).toEqual([...FIXED_Y].sort());
   });

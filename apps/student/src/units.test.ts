@@ -14,7 +14,7 @@ const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
 describe('단원 레지스트리', () => {
   it('열 단원이 모두 로드된다', () => {
-    expect(UNITS.map((u) => u.id)).toEqual(['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat', 'g5-light', 'g6-electricity', 'g4-land', 'g6-earth-motion', 'g6-seasons', 'g3-lifecycle', 'g6-plant', 'g4-ecosystem', 'g4-microbe', 'g5-body', 'g3-animal', 'g3-plantlife', 'g3-force', 'g3-sound', 'g4-magnet']);
+    expect(UNITS.map((u) => u.id)).toEqual(['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat', 'g5-light', 'g6-electricity', 'g4-land', 'g6-earth-motion', 'g6-seasons', 'g3-lifecycle', 'g6-plant', 'g4-ecosystem', 'g4-microbe', 'g5-body', 'g3-animal', 'g3-plantlife', 'g3-force', 'g3-sound', 'g4-magnet', 'g6-motion']);
     expect(UNITS.every((u) => u.ok)).toBe(true);
     const gases = UNITS[0]!;
     if (gases.ok) expect(gases.module.kind).toBe('gas-syringe');
@@ -74,6 +74,9 @@ describe('단원 레지스트리', () => {
     const magnet = UNITS[19]!;
     expect(magnet.ok && magnet.activity).toBe('variable');
     if (magnet.ok) expect(magnet.module.kind).toBe('magnet-distance');
+    const motion = UNITS[20]!;
+    expect(motion.ok && motion.activity).toBe('variable');
+    if (motion.ok) expect(motion.module.kind).toBe('ramp-cart');
   });
 
   it('카드 분류 매니페스트가 깨져도 다른 단원은 로드된다', () => {

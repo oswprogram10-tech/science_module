@@ -92,7 +92,7 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
     const x = sx(m.t);
     const w = labelW(m.label);
     const nextX = i + 1 < markers.length ? sx(markers[i + 1]!.t) : Infinity;
-    const flip = x + 3 + w > W - M.r || x + 3 + w > nextX - 2;
+    const flip = m.labelSide === 'left' || x + 3 + w > W - M.r || x + 3 + w > nextX - 2;
     const left = flip ? x - 3 - w : x + 3;
     const prev = acc[acc.length - 1];
     const row = prev && left < prev.right ? prev.row + 1 : 0;
