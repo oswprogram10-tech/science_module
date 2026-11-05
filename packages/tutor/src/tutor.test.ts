@@ -1585,3 +1585,133 @@ describe('g4-water-state 매니페스트 probe', () => {
     }
   });
 });
+
+// ---------- 혼합물의 분리(소금과 모래) 매니페스트 ----------
+import mixtureJson from '../../../content/units/g5-mixture/manifest.json';
+
+describe('g5-mixture 매니페스트 probe', () => {
+  const e = parseManifest(mixtureJson).experiments[0]! as VariableExperiment;
+  const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+  const eKeys = e.variables.map((v) => v.key);
+  const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+  const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: 'waterMl', ...x });
+  const fair = (iv: string): Partial<ProbeContext> => ({
+    ivKey: iv,
+    lastAnalysis: { kind: 'fair-test', changed: [iv] },
+    prediction: 'same',
+    observed: 'same',
+  });
+
+  it('iv별 fair-test 질문을 고른다', () => {
+    expect(selectProbe(eCtx(fair('waterMl')), e.tutor.probes, eGuard)).toContain('녹이는 동안 비커 바닥에 남은 것은 무엇이었나요?');
+    expect(selectProbe(eCtx(fair('filter')), e.tutor.probes, eGuard)).toContain('얻은 소금의 양은 같았는데, 증발 접시 위 가루는 어떻게 달랐나요?');
+    // 젓는 도구는 전용 질문이 없어 공통 fair-test 질문을 쓴다
+    expect(selectProbe(eCtx(fair('stirrer')), e.tutor.probes, eGuard)).toContain('젓는 도구만 바꾸었을 때 얻은 소금과 섞인 모래는 각각 어떻게 되었나요?');
+  });
+
+  it('거르기 질문 "얻은 소금의 양은 같았는데"는 결과 서술이지만 가드에 걸리지 않는다 (오검출 없음)', () => {
+    const text = selectProbe(eCtx(fair('filter')), e.tutor.probes, eGuard);
+    expect(text).toContain('얻은 소금의 양은 같았는데');
+    expect(guardOutput(text, eGuard).ok, text).toBe(true);
+  });
+
+  it('예측과 결과가 다르면 그래프에서 접시 위 고체가 늘기 시작한 때를 보라고 한다', () => {
+    const text = selectProbe(eCtx({ ...fair('waterMl'), prediction: 'increase', observed: 'decrease' }), e.tutor.probes, eGuard);
+    expect(text).toContain('접시 위 고체가 언제부터 늘기 시작했는지');
+  });
+
+  it('모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+    let n = 0;
+    for (const probe of e.tutor.probes) {
+      for (const iv of eKeys) {
+        for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+          const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+          expect(text).not.toMatch(/[{}]/);
+          expect(text).not.toMatch(/(을\(를\)|이\(가\)|와\(과\)|은\(는\))/);
+          n++;
+        }
+      }
+    }
+    expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+  });
+
+  it('질문 문장은 금지 구절·limits 용어와 겹치지 않는다', () => {
+    for (const probe of e.tutor.probes) {
+      for (const f of e.tutor.forbiddenAnswers) expect(probe.text, probe.text).not.toContain(f);
+      for (const l of e.limits) expect(probe.text, probe.text).not.toContain(l);
+    }
+  });
+
+  it('금지 구절은 활용형(녹지 않아·더 많이 얻·섞이지 않아·물에 녹고 모래는)까지 막는다', () => {
+    for (const answer of [
+      '물이 적으면 소금이 다 녹지 않아요',
+      '소금이 다 녹지 않아서 덜 얻어요',
+      '다 녹지 않아',
+      '물을 많이 넣으면 소금을 더 많이 얻어요',
+      '소금을 더 많이 얻을 수 있어요',
+      '거름종이로 걸러야 모래가 섞이지 않아요',
+      '모래가 섞이지 않아요',
+      '모래가 섞이지 않았어요',
+      '소금은 물에 녹고 모래는 녹지 않아요',
+      '소금은 물에 녹고 모래는 안 녹아요',
+      '모래는 물에 녹지 않아요',
+      '젓는 도구는 관계없어요',
+      '젓는 도구는 상관없어요',
+      '젓는 도구는 결과에 영향이 없어요',
+    ]) {
+      expect(guardOutput(answer, eGuard).ok, answer).toBe(false);
+    }
+    for (const l of e.limits) expect(guardOutput(`${l}이에요`, eGuard).ok, l).toBe(false);
+  });
+
+  it('질문과 화면에 보이는 글은 금지 구절·limits 용어와 겹치지 않는다', () => {
+    const shown = [
+      e.title,
+      e.question,
+      e.predictionPrompt,
+      ...e.variables.flatMap((v) => [v.label, v.unit ?? '', ...v.options.map((o) => o.label)]),
+      ...e.dependent.flatMap((d) => [d.label, d.unit ?? '']),
+      ...(e.safetyChecklist ?? []),
+      ...Object.values(e.safetyMessages ?? {}),
+      '녹은 소금 알갱이는 아주 작아서 거름종이 구멍을 지나가요.',
+      '윗물을 따르면 가라앉지 않은 모래 알갱이도 함께 넘어갈 수 있어요.',
+      '⚠ 증발 접시와 알코올램프는 아주 뜨거워요. 선생님과 함께 다뤄요.',
+      '녹은 소금',
+      '녹지 않은 소금',
+      '모래',
+      '거름종이',
+      '비커 속 확대',
+      '1 녹이기 (0~3분)',
+      '2 거르기 (3~8분)',
+      '2 따르기 (3~8분)',
+      '3 증발시키기 (8~20분)',
+      '깔때기·거름종이',
+      '윗물만 따르기',
+      '받는 비커',
+      '증발 접시',
+      '알코올램프',
+      '12.0분 · 증발시키기 · 접시 위 가루 6.5 g',
+      '접시 위 가루(g)',
+      '거르기 시작',
+      '가열 시작',
+    ];
+    for (const text of shown) expect(guardOutput(text, eGuard).ok, text).toBe(true);
+  });
+
+  it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+    const situations: Partial<ProbeContext>[] = [
+      {},
+      { lastAnalysis: { kind: 'first-trial', changed: [] } },
+      { lastAnalysis: { kind: 'confounded', changed: ['waterMl', 'filter'] } },
+      { lastAnalysis: { kind: 'iv-unchanged', changed: ['stirrer'] } },
+      { lastAnalysis: { kind: 'repeat', changed: [] } },
+      ...eKeys.flatMap((k) => [fair(k), { ...fair(k), prediction: 'increase' as const, observed: 'same' as const }]),
+    ];
+    for (const s of situations) {
+      const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+      expect(text).not.toBe(FALLBACK_PROBE);
+      expect(guardOutput(text, eGuard).ok, text).toBe(true);
+    }
+  });
+});

@@ -18,6 +18,7 @@ import { stringSoundModule } from './string-sound';
 import { magnetDistanceModule } from './magnet-distance';
 import { rampCartModule } from './ramp-cart';
 import { freezeMeltModule } from './freeze-melt';
+import { saltSandModule } from './salt-sand';
 
 export const MODULES: Record<ModuleKind, AnyModule> = {
   dissolution: dissolutionModule,
@@ -38,4 +39,5 @@ export const MODULES: Record<ModuleKind, AnyModule> = {
   'magnet-distance': magnetDistanceModule,
   'ramp-cart': rampCartModule,
   'freeze-melt': freezeMeltModule,
+  'salt-sand': saltSandModule,
 };

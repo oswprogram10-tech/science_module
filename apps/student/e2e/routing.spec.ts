@@ -1,13 +1,13 @@
 import { test, expect } from './helpers';
 
-test('단원 목록은 3·4·5·6학년으로 묶인 카드 23개를 보여 준다', async ({ page }) => {
+test('단원 목록은 3·4·5·6학년으로 묶인 카드 24개를 보여 준다', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1, name: '과학 실험 단원 목록' })).toBeVisible();
   for (const g of ['3학년', '4학년', '5학년', '6학년']) {
     await expect(page.getByRole('heading', { level: 2, name: g })).toBeVisible();
   }
   const cards = page.getByRole('button', { name: /탐구 질문:/ });
-  await expect(cards).toHaveCount(23);
+  await expect(cards).toHaveCount(24);
   const grade3 = page.getByRole('region', { name: '3학년' }).getByRole('button');
   await expect(grade3).toHaveCount(6);
   await expect(grade3.nth(0)).toContainText('생물의 한살이');
@@ -25,11 +25,12 @@ test('단원 목록은 3·4·5·6학년으로 묶인 카드 23개를 보여 준�
   await expect(grade4.nth(4)).toContainText('자석의 이용');
   await expect(grade4.nth(5)).toContainText('물의 상태 변화');
   const grade5 = page.getByRole('region', { name: '5학년' }).getByRole('button');
-  await expect(grade5).toHaveCount(4);
+  await expect(grade5).toHaveCount(5);
   await expect(grade5.nth(0)).toContainText('용해와 용액');
   await expect(grade5.nth(1)).toContainText('열과 우리 생활');
   await expect(grade5.nth(2)).toContainText('빛의 성질');
   await expect(grade5.nth(3)).toContainText('우리 몸의 구조와 기능');
+  await expect(grade5.nth(4)).toContainText('혼합물의 분리');
   const grade6 = page.getByRole('region', { name: '6학년' }).getByRole('button');
   await expect(grade6).toHaveCount(7);
   await expect(grade6.nth(0)).toContainText('산과 염기');
@@ -65,6 +66,7 @@ for (const [grade, title, id] of [
   ['6학년', '물체의 운동', 'g6-motion'],
   ['3학년', '물체와 물질', 'g3-material'],
   ['4학년', '물의 상태 변화', 'g4-water-state'],
+  ['5학년', '혼합물의 분리', 'g5-mixture'],
 ] as const) {
   test(`${title} 카드를 누르면 #/unit/${id}로 가고 단원 목록으로 돌아온다`, async ({ page }) => {
     await page.goto('/');

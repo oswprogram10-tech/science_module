@@ -5,3 +5,4 @@ export * from './gas';
 export * from './indicator';
 export * from './combustion';
 export * from './phase';
+export * from './separation';

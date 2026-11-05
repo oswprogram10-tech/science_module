@@ -51,6 +51,7 @@ pnpm e2e            # 브라우저 자동 테스트 (Playwright)
 | `#/unit/g6-seasons` | 6학년 계절의 변화 (계절·자전축 기울기·막대 길이에 따른 태양 남중 고도, 그림자, 낮의 길이) |
 | `#/unit/g6-motion` | 6학년 물체의 운동 (수레를 놓는 높이·바닥·수레에 실은 추에 따른 1 m 가는 데 걸린 시간과 속력, 느린 화면의 잔상 점과 "속력 계산해 보기", 가상 속력 센서) |
 | `#/unit/g4-water-state` | 4학년 물의 상태 변화 (물 얼리기·얼음 녹이기, 처음 물의 양, 시험관 종류에 따른 부피 변화와 무게(처음 → 나중), 시험관 높이 표시와 전자저울, "알갱이 보기"(알갱이 수는 그대로, 얼음일 때 간격이 조금 넓은 육각 무늬), 가상 온도계·전자저울) |
+| `#/unit/g5-mixture` | 5학년 혼합물의 분리 (소금+모래 혼합물을 녹이고 거르고 증발시키기, 넣는 물의 양·거르는 방법·젓는 도구에 따른 얻은 소금과 섞인 모래, 단계 세 칸 그림과 "알갱이 보기"(녹은 소금·녹지 않은 소금·모래·거름종이 구멍), 가상 전자저울: 증발 접시. 체·자석 분리는 확장 과제) |
 
 산과 염기: 보안경 실제 감지는 모의 감지기로 대체, 모델은 스파이크 S2 이후. 주소 앞에 `?dev=1`을 붙이면(`/?dev=1#/unit/g6-acid-base`) 모의 안전 상황 버튼이 나타납니다.
 
@@ -61,7 +62,7 @@ pnpm e2e            # 브라우저 자동 테스트 (Playwright)
 
 | 활동 유형 | `module` | 흐름 | 화면 |
 |---|---|---|---|
-| 변인 실험 | `dissolution`, `gas-syringe`, `candle-jar`, `insulated-cup`, `convex-lens`, `electromagnet`, `magma-cooling`, `sun-angle`, `germination`, `transpiration`, `food-web`, `mold-growth`, `exercise-body`, `lever-balance`, `string-sound`, `magnet-distance`, `ramp-cart`, `freeze-melt` | 바꿀 조건(조작변인) 고르기 → 예측 → 실행 → 시행 비교와 구조적 피드백 | `Lab`(`App.tsx`) |
+| 변인 실험 | `dissolution`, `gas-syringe`, `candle-jar`, `insulated-cup`, `convex-lens`, `electromagnet`, `magma-cooling`, `sun-angle`, `germination`, `transpiration`, `food-web`, `mold-growth`, `exercise-body`, `lever-balance`, `string-sound`, `magnet-distance`, `ramp-cart`, `freeze-melt`, `salt-sand` | 바꿀 조건(조작변인) 고르기 → 예측 → 실행 → 시행 비교와 구조적 피드백 | `Lab`(`App.tsx`) |
 | 분류 활동 | `indicator-classify` | 시험 → 관찰한 근거로 무리에 넣기 → 관찰과 분류가 맞는지 확인 | `ClassifyLab` |
 | 관찰 과제 | `sky-observation` | 예측 → 시각·달 슬라이더와 조건 토글로 두 시점 화면 관찰 → 관찰 기록 → 예측과 관찰 비교 | `ObserveLab` |
 

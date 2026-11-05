@@ -962,6 +962,42 @@ for (const scheme of ['light', 'dark'] as const) {
   });
 }
 
+// ---- g5-mixture ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`g5-mixture ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 처음, 점검표, 실행 뒤(50 mL), 20 mL와 앞 시행, 따르기`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g5-mixture');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '넣는 물의 양');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(page.getByRole('dialog', { name: '안전 점검표' })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await confirmSafetyDialog(page);
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('20.0분 · 증발시키기 · 접시 위 가루 9.0 g')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await setValue(page, '넣는 물의 양', '20 mL');
+    await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('20.0분 · 증발시키기 · 접시 위 가루 6.5 g')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await page.reload();
+    await setValue(page, '거르는 방법', '거름종이 없이 윗물만 따르기');
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '거르는 방법');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await confirmSafetyDialog(page);
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('20.0분 · 증발시키기 · 접시 위 가루 10.5 g')).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+}
+
 // ---- 수업 연결 ----
 
 for (const scheme of ['light', 'dark'] as const) {
