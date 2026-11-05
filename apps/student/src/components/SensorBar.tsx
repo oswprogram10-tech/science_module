@@ -67,6 +67,8 @@ export function SensorBar({ specs }: { specs: SensorSpec[] }) {
   // (시험) 실물 온도 센서가 연결되면 첫 가상 온도계 자리에 실측값을 보여 준다. 시뮬레이션 계산에는 쓰지 않는다.
   const tempIndex = dev ? specs.findIndex((s) => s.kind === 'temperature') : -1;
   const realShown = tempIndex >= 0 && real.status === 'connected';
+  // 센서가 없는 단원은 막대를 그리지 않는다(모의 센서 배지만 남지 않게).
+  if (specs.length === 0) return null;
   return (
     <div className="sensors" role="group" aria-label="센서">
       <span className="badge">모의 센서</span>

@@ -21,6 +21,7 @@ import { freezeMeltModule } from './freeze-melt';
 import { saltSandModule } from './salt-sand';
 import { streamTableModule } from './stream-table';
 import { landSeaBreezeModule } from './land-sea-breeze';
+import { infectionSpreadModule } from './infection-spread';
 
 export const MODULES: Record<ModuleKind, AnyModule> = {
   dissolution: dissolutionModule,
@@ -44,4 +45,5 @@ export const MODULES: Record<ModuleKind, AnyModule> = {
   'salt-sand': saltSandModule,
   'stream-table': streamTableModule,
   'land-sea-breeze': landSeaBreezeModule,
+  'infection-spread': infectionSpreadModule,
 };

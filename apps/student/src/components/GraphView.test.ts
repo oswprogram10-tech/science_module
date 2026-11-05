@@ -181,7 +181,7 @@ describe('markers: 시행에서 계산하는 함수 형태', () => {
 });
 
 describe('x축 라벨·눈금(xLabel, xTicks, xTickFormat)', () => {
-  const existing = variableUnits.filter((u) => u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration' && u.module.kind !== 'food-web' && u.module.kind !== 'mold-growth' && u.module.kind !== 'exercise-body' && u.module.kind !== 'lever-balance' && u.module.kind !== 'string-sound' && u.module.kind !== 'magnet-distance' && u.module.kind !== 'ramp-cart' && u.module.kind !== 'freeze-melt' && u.module.kind !== 'salt-sand' && u.module.kind !== 'stream-table' && u.module.kind !== 'land-sea-breeze');
+  const existing = variableUnits.filter((u) => u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration' && u.module.kind !== 'food-web' && u.module.kind !== 'mold-growth' && u.module.kind !== 'exercise-body' && u.module.kind !== 'lever-balance' && u.module.kind !== 'string-sound' && u.module.kind !== 'magnet-distance' && u.module.kind !== 'ramp-cart' && u.module.kind !== 'freeze-melt' && u.module.kind !== 'salt-sand' && u.module.kind !== 'stream-table' && u.module.kind !== 'land-sea-breeze' && u.module.kind !== 'infection-spread');
   const seasons = () => variableUnits.find((u) => u.id === 'g6-seasons')!;
   const base = { season: 'summer', tiltDeg: 23.44, stickCm: 10 };
 
@@ -235,12 +235,12 @@ describe('여러 선(graph.series)과 y축 눈금(graph.yTicks)', () => {
   const foodWeb = () => variableUnits.find((u) => u.id === 'g4-ecosystem')!;
   const base = { rabbits0: 10, foxes0: 2, rain: 'normal', furColor: 'white' };
   // series로 여러 선을 그리는 단원: 먹이 관계(세 선)와 우리 몸(맥박·호흡 두 선)
-  const SERIES_UNITS = ['g4-ecosystem', 'g5-body', 'g3-earth-sea', 'g5-weather'];
+  const SERIES_UNITS = ['g4-ecosystem', 'g5-body', 'g3-earth-sea', 'g5-weather', 'g3-health'];
   const others = variableUnits.filter((u) => !SERIES_UNITS.includes(u.id));
   // yTicks로 축을 고정한 단원. 이 단원들은 'series: undefined는 그림을 바꾸지 않는다' 비교에서 yTicks를 남긴다.
-  const FIXED_Y = ['g4-ecosystem', 'g4-microbe', 'g5-body', 'g3-force', 'g3-sound', 'g4-magnet', 'g6-motion', 'g4-water-state', 'g5-mixture', 'g3-earth-sea', 'g5-weather'];
+  const FIXED_Y = ['g4-ecosystem', 'g4-microbe', 'g5-body', 'g3-force', 'g3-sound', 'g4-magnet', 'g6-motion', 'g4-water-state', 'g5-mixture', 'g3-earth-sea', 'g5-weather', 'g3-health'];
 
-  it('series를 쓰는 모듈은 먹이 관계·우리 몸·지구와 바다·날씨와 우리 생활뿐이고, yTicks는 먹이 관계·곰팡이·우리 몸·막대 수평 잡기·줄 소리·자석·수레·물의 상태 변화·혼합물의 분리·지구와 바다·날씨와 우리 생활만 쓴다', () => {
+  it('series를 쓰는 모듈은 먹이 관계·우리 몸·지구와 바다·날씨와 우리 생활·감염병과 건강한 생활뿐이고, yTicks는 먹이 관계·곰팡이·우리 몸·막대 수평 잡기·줄 소리·자석·수레·물의 상태 변화·혼합물의 분리·지구와 바다·날씨와 우리 생활·감염병과 건강한 생활만 쓴다', () => {
     expect(variableUnits.filter((u) => u.module.graph.series !== undefined).map((u) => u.id)).toEqual(SERIES_UNITS);
     expect(variableUnits.filter((u) => u.module.graph.yTicks !== undefined).map((u) => u.id).sort()).toEqual([...FIXED_Y].sort());
   });

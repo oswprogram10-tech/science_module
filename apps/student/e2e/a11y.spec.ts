@@ -1128,6 +1128,31 @@ for (const scheme of ['light', 'dark'] as const) {
   });
 }
 
+// ---- g3-health ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`g3-health ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 처음, 실행 뒤(기준), 마스크·자주 씻음·8명`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g3-health');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '마스크');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('20일째 · 지금 아픈 사람 3명 · 지금까지 감염 12명')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    // '씀'은 '안 씀'에도 들어 있어 글자가 같은 버튼만 고른다.
+    await page.getByRole('group', { name: '마스크', exact: true }).getByRole('button', { name: '씀', exact: true }).click();
+    await setValue(page, '손 씻기', '자주 씻음');
+    await setValue(page, '하루에 가까이 만나는 친구 수', '8명');
+    await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+  });
+}
+
 // ---- 수업 연결 ----
 
 for (const scheme of ['light', 'dark'] as const) {

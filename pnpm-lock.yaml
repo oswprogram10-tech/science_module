@@ -78,6 +78,9 @@ importers:
       '@sci/engine-physics':
         specifier: workspace:*
         version: link:../../packages/engines/physics
+      '@sci/engine-ssi':
+        specifier: workspace:*
+        version: link:../../packages/engines/ssi
       '@sci/gateway':
         specifier: workspace:*
         version: link:../../packages/gateway
@@ -193,6 +196,12 @@ importers:
         version: link:../../schema
 
   packages/engines/physics:
+    dependencies:
+      '@sci/schema':
+        specifier: workspace:*
+        version: link:../../schema
+
+  packages/engines/ssi:
     dependencies:
       '@sci/schema':
         specifier: workspace:*

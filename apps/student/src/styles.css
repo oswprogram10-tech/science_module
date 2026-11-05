@@ -305,3 +305,13 @@ button.unit-card:hover { border-color:var(--accent); }
   .sort-card { grid-template-columns: auto; grid-template-areas:"icon" "name" "dots" "count"; justify-items:center; text-align:center; }
   .sort-card.has-sub { grid-template-areas:"icon" "name" "sub" "dots" "count"; }
 }
+
+/* 교실 그림: 색과 무늬(빈 원·채운 원+점·원+체크)를 함께 써서 구분한다. 어두운 화면에서도 대비를 지킨다. */
+:root { --pd-healthy:#1f5f9e; --pd-sick:#c2410c; --pd-rec:#15803d; --pd-rec-fill:#dcfce7; --shield-wash:#1d4ed8; --shield-mask:#6d28d9; }
+@media (prefers-color-scheme: dark) { :root { --pd-healthy:#8cc4f5; --pd-sick:#fb923c; --pd-rec:#4ade80; --pd-rec-fill:#14532d; --shield-wash:#3b82f6; --shield-mask:#a78bfa; } }
+.pd-healthy { fill:none; stroke:var(--pd-healthy); stroke-width:2.5; }
+.pd-sick { fill:var(--pd-sick); stroke:var(--pd-sick); stroke-width:2; }
+.pd-recovered { fill:var(--pd-rec-fill); stroke:var(--pd-rec); stroke-width:2.5; }
+.pd-check { fill:none; stroke:var(--pd-rec); stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+.shield-wash { fill:var(--shield-wash); stroke:var(--fg); stroke-width:1; }
+.shield-mask { fill:var(--shield-mask); stroke:var(--fg); stroke-width:1; }

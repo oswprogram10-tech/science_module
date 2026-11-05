@@ -2068,3 +2068,166 @@ describe('g5-weather 매니페스트 probe', () => {
     }
   });
 });
+
+// ---------- 감염병과 건강한 생활(우리 반 감염 전파) 매니페스트 ----------
+import healthJson from '../../../content/units/g3-health/manifest.json';
+
+describe('g3-health 매니페스트 probe', () => {
+  const e = parseManifest(healthJson).experiments[0]! as VariableExperiment;
+  const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+  const eKeys = e.variables.map((v) => v.key);
+  const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+  const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: 'wash', ...x });
+  const fair = (iv: string): Partial<ProbeContext> => ({
+    ivKey: iv,
+    lastAnalysis: { kind: 'fair-test', changed: [iv] },
+    prediction: 'same',
+    observed: 'same',
+  });
+
+  it('iv별 fair-test 질문을 고른다', () => {
+    expect(selectProbe(eCtx(fair('contacts')), e.tutor.probes, eGuard)).toContain('교실 그림에서 아픈 친구가 늘어나는 빠르기는 어땠나요?');
+    expect(selectProbe(eCtx(fair('seat')), e.tutor.probes, eGuard)).toContain('이 계산이 자리를 어떻게 다루는지 생각해 볼까요?');
+    // 손 씻기·마스크는 전용 질문이 없어 공통 fair-test 질문(그래프의 두 선, 가장 높은 곳)을 쓴다
+    for (const iv of ['wash', 'mask']) expect(selectProbe(eCtx(fair(iv)), e.tutor.probes, eGuard)).toContain('그래프의 두 선은 어떻게 달라졌나요? 가장 높은 곳이 언제였는지도 볼까요?');
+  });
+
+  it('실행 전 질문은 감염된 사람 수를 예측하게 하고, 예측과 결과가 다르면 두 선을 나누어 보게 한다', () => {
+    expect(selectProbe(eCtx({}), e.tutor.probes, eGuard)).toContain('감염된 사람 수가 어떻게 될지 예측해 볼까요?');
+    const text = selectProbe(eCtx({ ...fair('wash'), prediction: 'increase', observed: 'same' }), e.tutor.probes, eGuard);
+    expect(text).toContain('지금 아픈 사람 선과 지금까지 감염된 사람 선을 나누어 볼까요?');
+  });
+
+  it('모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+    let n = 0;
+    for (const probe of e.tutor.probes) {
+      for (const iv of eKeys) {
+        for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+          const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+          expect(text).not.toMatch(/[{}]/);
+          expect(text).not.toMatch(/(을\(를\)|이\(가\)|와\(과\)|은\(는\))/);
+          n++;
+        }
+      }
+    }
+    expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+  });
+
+  it('질문 문장은 금지 구절·limits 용어와 겹치지 않는다', () => {
+    for (const probe of e.tutor.probes) {
+      for (const f of e.tutor.forbiddenAnswers) expect(probe.text, probe.text).not.toContain(f);
+      for (const l of e.limits) expect(probe.text, probe.text).not.toContain(l);
+    }
+  });
+
+  it('금지 구절은 사양의 다섯 가지와 활용형까지 막는다', () => {
+    for (const answer of [
+      // 사양의 다섯 가지
+      '손을 자주 씻으면 덜 퍼져요',
+      '마스크를 쓰면 덜 퍼져요',
+      '만나는 사람이 많을수록 많이 퍼져요',
+      '자리는 관계없어요',
+      '여러 습관을 함께 지키면 효과가 더 커요',
+      // 손 씻기
+      '손을 자주 씻으면 덜 퍼진다',
+      '손을 자주 씻으면 적게 퍼져요',
+      '손을 자주 씻으면 줄어들어요',
+      '손을 씻으면 덜 퍼져요',
+      '손 씻기를 자주 하면 덜 퍼져요',
+      '손 씻기를 하면 적게 퍼져요',
+      '손 씻기는 퍼지는 것을 줄여요',
+      '자주 씻으면 덜 퍼져',
+      // 마스크
+      '마스크를 쓰면 적게 퍼져요',
+      '마스크를 쓰면 훨씬 덜 퍼져요',
+      '마스크를 쓰면 잘 안 퍼져요',
+      '마스크를 쓰면 감염이 줄어요',
+      '마스크는 퍼지는 것을 줄여요',
+      // 만나는 사람 수
+      '많이 만날수록 많이 퍼져요',
+      '많이 만날수록 빨리 퍼져요',
+      '많이 만나면 많이 퍼져요',
+      '만나는 사람이 많을수록 빨리 퍼져요',
+      '만나는 사람이 많을수록 더 많이 퍼져요',
+      '만나는 친구가 많을수록 많이 퍼져요',
+      '만나는 친구 수가 많을수록 빨리 퍼져요',
+      '친구를 많이 만날수록 퍼져요',
+      // 자리
+      '자리는 상관없어요',
+      '자리는 영향이 없어요',
+      '자리는 결과에 영향을 주지 않아요',
+      '자리와 관계없이 같아요',
+      '자리가 달라도 같아요',
+      '자리는 중요하지 않아요',
+      // 함께 지키기
+      '함께 지키면 더 효과가 있어요',
+      '함께 지키면 효과가 더 커져요',
+      '함께 지키면 더 적게 퍼져요',
+      '함께 지키면 훨씬 줄어요',
+      '여러 습관을 같이 지키면 좋아요',
+      '같이 지키면 효과가 더 커요',
+      '둘 다 지키면 효과가 더 커요',
+      '함께 하면 더 효과가 있어요',
+    ]) {
+      expect(guardOutput(answer, eGuard).ok, answer).toBe(false);
+    }
+    for (const l of e.limits) expect(guardOutput(`${l}이에요`, eGuard).ok, l).toBe(false);
+  });
+
+  it('질문과 화면에 보이는 글은 금지 구절·limits 용어와 겹치지 않는다', () => {
+    const shown = [
+      e.title,
+      e.question,
+      e.predictionPrompt,
+      ...e.variables.flatMap((v) => [v.label, v.unit ?? '', ...v.options.map((o) => o.label)]),
+      ...e.dependent.flatMap((d) => [d.label, d.unit ?? '']),
+      '이 숫자는 공부를 위해 만든 가상 반의 계산이에요. 실제 병의 예측이 아니에요.',
+      '만날 때마다 병이 옮을 수 있는 기회가 생겨요.',
+      '0일째 · 지금 아픈 사람 1명 · 지금까지 감염 1명',
+      '20일째 · 지금 아픈 사람 3명 · 지금까지 감염 12명',
+      '눈으로 보기: 교실',
+      '옮겨 가는 길 보기',
+      '칠판 (앞)',
+      '건강',
+      '아픔',
+      '나음',
+      '만남',
+      '손 씻기',
+      '마스크',
+      '사람 수(명)',
+      '날짜(일)',
+      '지금 아픈 사람(명)',
+      '지금까지 감염된 사람(명)',
+      '20일 동안 감염된 사람(명)',
+      '가장 많이 아팠던 날의 아픈 사람(명)',
+      '가상 반의 자리 6칸씩 5줄에 앉은 사람 30명. 건강 18명, 아픔 3명, 나음 9명.',
+      '아픈 친구 한 명과 하루에 가까이 만나는 친구 8명을 선으로 이은 그림. 손 씻기 자주 씻음, 마스크 씀.',
+      '결과: 줄어들었다',
+      '결과: 늘어났다',
+      '결과: 변하지 않았다',
+    ];
+    for (const text of shown) expect(guardOutput(text, eGuard).ok, text).toBe(true);
+  });
+
+  it('탓하는 표현이 없다', () => {
+    const all = [e.title, e.question, e.predictionPrompt, ...e.tutor.probes.map((p) => p.text)].join(' ');
+    expect(all).not.toMatch(/탓|잘못|퍼뜨|옮긴 사람|감염시/);
+  });
+
+  it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+    const situations: Partial<ProbeContext>[] = [
+      {},
+      { lastAnalysis: { kind: 'first-trial', changed: [] } },
+      { lastAnalysis: { kind: 'confounded', changed: ['wash', 'mask'] } },
+      { lastAnalysis: { kind: 'iv-unchanged', changed: ['seat'] } },
+      { lastAnalysis: { kind: 'repeat', changed: [] } },
+      ...eKeys.flatMap((k) => [fair(k), { ...fair(k), prediction: 'increase' as const, observed: 'same' as const }]),
+    ];
+    for (const s of situations) {
+      const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+      expect(text).not.toBe(FALLBACK_PROBE);
+      expect(guardOutput(text, eGuard).ok, text).toBe(true);
+    }
+  });
+});

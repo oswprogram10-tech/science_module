@@ -22,6 +22,7 @@ import waterStateJson from '../../../content/units/g4-water-state/manifest.json'
 import mixtureJson from '../../../content/units/g5-mixture/manifest.json';
 import earthSeaJson from '../../../content/units/g3-earth-sea/manifest.json';
 import weatherJson from '../../../content/units/g5-weather/manifest.json';
+import healthJson from '../../../content/units/g3-health/manifest.json';
 import animalJson from '../../../content/units/g3-animal/manifest.json';
 import plantlifeJson from '../../../content/units/g3-plantlife/manifest.json';
 import earthJson from '../../../content/units/g6-earth-motion/manifest.json';
@@ -181,7 +182,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
   const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
   it('아홉 매니페스트가 모두 검증을 통과한다', () => {
-    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, forceJson, soundJson, magnetJson, motionJson, waterStateJson, mixtureJson, earthSeaJson, weatherJson]) expect(() => parseManifest(j)).not.toThrow();
+    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, forceJson, soundJson, magnetJson, motionJson, waterStateJson, mixtureJson, earthSeaJson, weatherJson, healthJson]) expect(() => parseManifest(j)).not.toThrow();
   });
 
   it('연소 매니페스트의 점검표와 경고 문구를 읽는다', () => {
@@ -473,6 +474,23 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     expect(e.params).toEqual({ totalMin: 10 });
     expect(e.limits).toEqual(['비열', '대류', '해풍', '육풍', '기압 경도력', '열용량']);
     expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['phase', 'bowl']);
+  });
+
+  it('감염병과 건강한 생활 매니페스트의 변인, 측정, 안전 없음, 한계 용어, 탐침을 읽는다', () => {
+    const m = parseManifest(healthJson);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-health', 3, 'ssi', ['4과16-01']]);
+    const e = m.experiments[0] as VariableExperiment;
+    expect(e.module).toBe('infection-spread');
+    expect(e.safety).toEqual([]);
+    expect(e.safetyChecklist).toBeUndefined();
+    expect(e.safetyNotices).toEqual([]);
+    expect(e.variables.map((v) => v.key)).toEqual(['wash', 'mask', 'contacts', 'seat']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([['rarely', 'often'], ['off', 'on'], [4, 8], ['front', 'back']]);
+    expect(e.variables.map((v) => v.default)).toEqual(['rarely', 'off', 4, 'front']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['total', '명'], ['peak', '명']]);
+    expect(e.params).toEqual({ days: 20 });
+    expect(e.limits).toEqual(['기초 감염 재생산수', '잠복기', '치명률', '집단 면역', '백신 효능']);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['contacts', 'seat']);
   });
 
   it('두 필드는 없어도 된다', () => {

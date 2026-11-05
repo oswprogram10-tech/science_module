@@ -23,6 +23,7 @@
     "@sci/engine-life": "workspace:*",
     "@sci/engine-matter": "workspace:*",
     "@sci/engine-physics": "workspace:*",
+    "@sci/engine-ssi": "workspace:*",
     "@sci/classroom": "workspace:*",
     "@sci/gateway": "workspace:*",
     "@sci/runtime": "workspace:*",
