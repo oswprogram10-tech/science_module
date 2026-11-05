@@ -51,6 +51,11 @@ const KIND_TEXT: Record<Activity, Record<string, string>> = {
     'tree-split-empty': '나누었더니 한쪽으로 모두 모임',
     'tree-next-node': '한 무리를 나누고 다음 무리를 고르는 중',
     'tree-finished': '더 나눌 수 없을 때까지 나눔',
+    'order-check-unplaced': '칸에 놓지 않은 표본이 있음',
+    'order-check-unobserved': '높이를 확인하지 않은 표본이 있음',
+    'order-check-inconsistent': '쌓인 차례가 채집 높이와 다름',
+    'order-check-complete': '쌓인 차례를 맞게 놓음',
+    'order-finished': '쌓인 차례와 그때의 환경을 모두 알아냄',
   },
 };
 

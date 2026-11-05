@@ -285,7 +285,7 @@ describe('튜터 전수 가드 (사양 §2)', () => {
 });
 
 describe('피드백 전수 가드', () => {
-  const truth = (card: string, f: string) => exp.cards.find((c) => c.key === card)!.features[f]!;
+  const truth = (card: string, f: string) => exp.cards.find((c) => c.key === card)!.features[f] as string;
   it('모든 확인 결과의 피드백이 가드를 통과한다', () => {
     const results: Array<ReturnType<typeof check>['checked']> = [];
     for (const crit of exp.criteria) {

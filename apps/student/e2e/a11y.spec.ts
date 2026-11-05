@@ -25,6 +25,12 @@ import {
   materialFinishCriterion,
   materialObserveButton,
   materialSortAll,
+  strataCard,
+  strataFill,
+  strataFinishEnv,
+  strataObserveButton,
+  strataOrderCheck,
+  strataSlotButton,
   sortFinishCriterion,
   sortObserveButton,
   treeNode,
@@ -696,6 +702,40 @@ for (const scheme of ['light', 'dark'] as const) {
     await expect(page.getByText('관찰한 특징과 분류가 서로 잘 맞아요.')).toBeVisible();
     await materialFinishCriterion(page, 'bends');
     await expect(page.getByText('두 가지 기준으로 분류했어요!')).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+}
+
+// ---- g5-strata ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`g5-strata ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 처음, 화석 그림, 어긋난 순서 확인, 환경 칸, 완료 뒤`, async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g5-strata');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+
+    await strataCard(page, '석회암').click();
+    await strataObserveButton(page, '높이 확인하기').click();
+    await strataObserveButton(page, '알갱이 살펴보기').click();
+    await strataObserveButton(page, '화석 살펴보기').click();
+    await expect(page.getByTestId('fossil-shape')).toHaveCount(1);
+    await expectNoSeriousViolations(page);
+
+    await strataFill(page, ['역암', '이암', '사암', '석회암', '셰일']);
+    await strataOrderCheck(page).click();
+    await expect(page.getByText('사암, 이암은 이웃한 칸의 표본과 채집한 높이를 견주어 보면 차례가 맞지 않아요.')).toBeVisible();
+    await expectNoSeriousViolations(page);
+
+    await strataCard(page, '사암').click();
+    await strataSlotButton(page, 2).click();
+    await strataOrderCheck(page).click();
+    await expect(page.getByRole('button', { name: '환경 확인하기' })).toBeVisible();
+    await expectNoSeriousViolations(page);
+
+    await strataFinishEnv(page);
+    await expect(page.getByText('지층의 차례와 그때의 환경을 모두 알아냈어요!')).toBeVisible();
     await expectNoSeriousViolations(page);
   });
 }

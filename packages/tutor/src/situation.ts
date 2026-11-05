@@ -44,6 +44,8 @@ export function observeWhen(s: {
 /**
  * 카드 분류 활동의 튜터 상황 키. 위에서부터 첫 규칙을 적용한다:
  * (트리) 한쪽이 빈 노드의 확인 → 완료를 끝낸 확인 결과 → (트리) 나눈 노드의 확인 → 확인 결과 → 기준 없음 → 카드 없음 → 관찰 전 → 분류 중.
+ * 순서 놓기(`order`)는 별도 규칙이다: 완료 -> 순서 확인을 끝낸 뒤라면 followUp 확인 결과(없으면 `order-check-complete`)
+ * -> 순서 확인 결과(`order-check-*`) -> 카드 없음 -> 높이 관찰 전 -> 놓는 중.
  * 트리에서 `tree-next-node`는 나눈 노드의 확인이 끝났고 아직 완료 전일 때이며, 어느 무리가 남았는지는 가리지 않는다.
  */
 export function cardSortWhen(
@@ -61,8 +63,25 @@ export function cardSortWhen(
     treeSplitEmpty?: boolean;
     /** 트리일 때만(true). 이 값이 있으면 트리로 본다. */
     tree?: boolean;
+    /** 순서 놓기일 때만. 이 값이 있으면 순서 놓기로 본다(criterion은 쓰지 않는다). */
+    order?: {
+      /** 순서 확인 결과의 종류(없으면 null). */
+      orderCheck: string | null;
+      /** 순서를 맞춘 뒤 무리 나누기 확인 결과의 종류(없으면 null). */
+      followUpCheck: string | null;
+      /** 높이처럼 순서의 근거가 되는 특징 key. */
+      feature: string;
+    };
   },
 ): CardSortProbeWhen {
+  if (s.order) {
+    const o = s.order;
+    if (s.finished) return 'finished';
+    if (o.orderCheck === 'check-complete') return (o.followUpCheck ?? 'order-check-complete') as CardSortProbeWhen;
+    if (o.orderCheck) return `order-${o.orderCheck}` as CardSortProbeWhen;
+    if (!s.selected) return 'pick-card';
+    return s.observed.includes(o.feature) ? 'sorting' : 'before-observe';
+  }
   if (s.tree && s.checkKind === 'check-complete') {
     if (s.treeSplitEmpty) return 'tree-split-empty';
     return s.finished ? 'finished' : 'tree-next-node';

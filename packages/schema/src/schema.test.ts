@@ -17,6 +17,7 @@ import forceJson from '../../../content/units/g3-force/manifest.json';
 import soundJson from '../../../content/units/g3-sound/manifest.json';
 import magnetJson from '../../../content/units/g4-magnet/manifest.json';
 import motionJson from '../../../content/units/g6-motion/manifest.json';
+import strataJson from '../../../content/units/g5-strata/manifest.json';
 import waterStateJson from '../../../content/units/g4-water-state/manifest.json';
 import mixtureJson from '../../../content/units/g5-mixture/manifest.json';
 import earthSeaJson from '../../../content/units/g3-earth-sea/manifest.json';
@@ -583,7 +584,7 @@ describe('카드 분류 활동 (card-sort)', () => {
 
   it('모르는 layout을 거부한다', () => {
     const bad = clone(animalJson);
-    bad.experiments[0].layout = 'order';
+    bad.experiments[0].layout = 'grid';
     expect(() => parseManifest(bad)).toThrow(ManifestError);
   });
 
@@ -626,5 +627,68 @@ describe('카드 분류 활동 (card-sort)', () => {
     const badProbe = clone(animalJson);
     badProbe.experiments[0].tutor.probes[0].when = 'before-test';
     expect(() => parseManifest(badProbe)).toThrow(ManifestError);
+  });
+});
+
+describe('카드 분류 순서 놓기 (layout: order)', () => {
+  const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
+  const edit = (fn: (x: any) => void) => {
+    const m = clone(strataJson);
+    fn(m.experiments[0]);
+    return m;
+  };
+  const t = parseManifest(strataJson).experiments[0] as CardSortExperiment;
+
+  it('지층과 화석 매니페스트가 검증을 통과한다', () => {
+    expect(isCardSortExperiment(t)).toBe(true);
+    expect(t.layout).toBe('order');
+    expect(t.orderBy).toEqual({ feature: 'height', direction: 'ascending' });
+    expect(t.initialOrder).toEqual(['shale', 'sandstone', 'conglomerate', 'limestone', 'mudstone']);
+    expect(t.followUp?.evidenceFeature).toBe('fossil');
+    expect(t.criteria).toEqual([]);
+    expect(typeof t.cards[0]!.features.height).toBe('number');
+  });
+
+  it('initialOrder 누락을 거부한다', () => {
+    expect(() => parseManifest(edit((x) => delete x.initialOrder))).toThrow(ManifestError);
+  });
+  it('initialOrder의 중복·누락·모르는 카드를 거부한다', () => {
+    expect(() => parseManifest(edit((x) => (x.initialOrder = ['shale', 'shale', 'conglomerate', 'limestone', 'mudstone'])))).toThrow(ManifestError);
+    expect(() => parseManifest(edit((x) => x.initialOrder.pop()))).toThrow(ManifestError);
+    expect(() => parseManifest(edit((x) => (x.initialOrder[0] = 'granite')))).toThrow(ManifestError);
+  });
+  it('orderBy 누락, 모르는 특징, 숫자가 아닌 값을 거부한다', () => {
+    expect(() => parseManifest(edit((x) => delete x.orderBy))).toThrow(ManifestError);
+    expect(() => parseManifest(edit((x) => (x.orderBy.feature = 'weight')))).toThrow(ManifestError);
+    expect(() => parseManifest(edit((x) => (x.cards[1].features.height = '1.5')))).toThrow(ManifestError);
+    expect(() => parseManifest(edit((x) => (x.orderBy.direction = 'sideways')))).toThrow(ManifestError);
+  });
+  it('followUp은 선택이지만 있으면 객관적 기준이어야 한다', () => {
+    expect(() => parseManifest(edit((x) => delete x.followUp))).not.toThrow();
+    expect(() => parseManifest(edit((x) => (x.followUp.objective = false)))).toThrow(ManifestError);
+    expect(() => parseManifest(edit((x) => delete x.followUp.feature))).toThrow(ManifestError);
+  });
+  it('order가 아니면 orderBy·initialOrder·followUp을 거부하고 기준이 1개 이상 있어야 한다', () => {
+    const tree = clone(plantlifeJson);
+    tree.experiments[0].orderBy = { feature: 'serrated', direction: 'ascending' };
+    expect(() => parseManifest(tree)).toThrow(ManifestError);
+    const noCriteria = clone(animalJson);
+    noCriteria.experiments[0].criteria = [];
+    expect(() => parseManifest(noCriteria)).toThrow(ManifestError);
+  });
+  it('probe when에 order-check-* 네 가지가 있다', () => {
+    const whens = t.tutor.probes.map((p) => p.when);
+    for (const w of ['order-check-unplaced', 'order-check-unobserved', 'order-check-inconsistent', 'order-check-complete']) expect(whens).toContain(w);
+    expect(() => parseManifest(edit((x) => (x.tutor.probes[0].when = 'order-check-zzz')))).toThrow(ManifestError);
+  });
+  it('특징값 숫자를 허용해도 빈 문자열은 거부한다(기존 단원은 문자열 그대로)', () => {
+    expect(() => parseManifest(edit((x) => (x.cards[0].features.grain = '')))).toThrow(ManifestError);
+    const animal = parseManifest(animalJson).experiments[0] as CardSortExperiment;
+    expect(animal.cards.every((c) => Object.values(c.features).every((v) => typeof v === 'string'))).toBe(true);
+  });
+  it('안내 문구와 배경 지식은 선택 필드이고 빈 문자열을 거부한다', () => {
+    expect(() => parseManifest(edit((x) => { delete x.notice; delete x.background; }))).not.toThrow();
+    expect(() => parseManifest(edit((x) => (x.notice = '')))).toThrow(ManifestError);
+    expect(() => parseManifest(edit((x) => (x.background.text = '')))).toThrow(ManifestError);
   });
 });

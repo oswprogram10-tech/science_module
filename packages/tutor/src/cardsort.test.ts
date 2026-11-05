@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { parseManifest, type CardSortExperiment } from '@sci/schema';
 import animalJson from '../../../content/units/g3-animal/manifest.json';
 import materialJson from '../../../content/units/g3-material/manifest.json';
+import strataJson from '../../../content/units/g5-strata/manifest.json';
+import * as os from '../../../apps/student/src/modules/card-sort/orderStore';
 import * as cs from '../../../apps/student/src/modules/card-sort/cardSortStore';
-import { buildTutorInput, fromCardSortState, situationOf } from './context';
+import { buildTutorInput, fromCardSortState, fromOrderState, situationOf } from './context';
 import { cardSortWhen } from './situation';
 
 const animal = parseManifest(animalJson);
@@ -78,8 +80,69 @@ describe('TutorState: 물체와 물질 (정답을 담지 않는다)', () => {
   it('튜터 상황은 앱 저장소와 같다', () => {
     let s = cs.chooseCriterion(cs.createInitialState(), mexp, 'hard');
     for (const c of mexp.cards) s = cs.observe(s, mexp, c.key, 'hard');
-    for (const c of mexp.cards) s = cs.place(s, mexp, c.key, c.key === 'foil' ? 'yes' : c.features.hard!);
+    for (const c of mexp.cards) s = cs.place(s, mexp, c.key, c.key === 'foil' ? 'yes' : c.features.hard as string);
     s = cs.check(s, mexp);
     expect(situationOf(fromCardSortState(mexp, s, 'g3-material'), mexp)).toBe('check-inconsistent');
+  });
+});
+
+describe('TutorState: 지층과 화석 (정답을 담지 않는다)', () => {
+  const strata = parseManifest(strataJson);
+  const sexp = strata.experiments[0] as CardSortExperiment;
+  const KEYS = sexp.cards.map((c) => c.key);
+  const info = { title: strata.title, grade: strata.grade };
+  const text = (s: os.OrderLabState) => buildTutorInput(sexp, fromOrderState(sexp, s, 'g5-strata'), '왜요?', info);
+
+  it('칸에 놓은 카드와 학생이 한 활동만 담고 높이·관찰 문장·화석 이름이 들어가지 않는다', () => {
+    let s = os.createInitialOrderState(sexp);
+    for (const c of KEYS) s = os.observe(s, sexp, c, 'height');
+    s = os.observe(s, sexp, 'sandstone', 'fossil');
+    KEYS.forEach((c, i) => (s = os.placeInSlot(s, c, i)));
+    s = os.select(s, sexp, 'sandstone');
+    const t = text(s);
+    expect(t).toBe(text(s));
+    expect(t).toContain('[쌓인 차례(먼저 → 나중)] 1번째 역암 · 2번째 사암 · 3번째 이암 · 4번째 석회암 · 5번째 셰일');
+    expect(t).toContain('- 사암: 관찰 채집 높이, 화석');
+    for (const bad of ['0.5', '1.5', '4.5', '조개', '고사리', '산호', '나뭇잎', 'clam', 'sea', 'land', 'gravel']) expect(t, bad).not.toContain(bad);
+    for (const c of sexp.cards) for (const o of Object.values(c.observations)) expect(t).not.toContain(o);
+  });
+  it('튜터 상황은 앱 저장소와 같다', () => {
+    let s = os.createInitialOrderState(sexp);
+    for (const c of KEYS) s = os.observe(s, sexp, c, 'height');
+    KEYS.forEach((c, i) => (s = os.placeInSlot(s, c, i)));
+    s = os.checkOrder(os.placeInSlot(s, 'sandstone', 2), sexp);
+    expect(situationOf(fromOrderState(sexp, s, 'g5-strata'), sexp)).toBe('order-check-inconsistent');
+    expect(os.orderTutorSituation(s, sexp).when).toBe('order-check-inconsistent');
+    expect(text(s)).toContain('[순서 확인 결과] 역암 문제 없음 · 사암 다시 비교 필요 · 이암 다시 비교 필요');
+    s = os.checkOrder(os.placeInSlot(s, 'sandstone', 1), sexp);
+    expect(situationOf(fromOrderState(sexp, s, 'g5-strata'), sexp)).toBe('order-check-complete');
+    for (const c of KEYS) s = os.followUpPlace(s, sexp, c, String(sexp.cards.find((x) => x.key === c)!.features.env));
+    s = os.checkFollowUp(s, sexp);
+    expect(situationOf(fromOrderState(sexp, s, 'g5-strata'), sexp)).toBe('check-unobserved');
+    expect(text(s)).toContain('[무리 확인 결과]');
+    for (const c of KEYS) s = os.observe(s, sexp, c, 'fossil');
+    s = os.checkFollowUp(s, sexp);
+    expect(situationOf(fromOrderState(sexp, s, 'g5-strata'), sexp)).toBe('finished');
+    expect(fromOrderState(sexp, s, 'g5-strata').order!.finished).toBe(true);
+  });
+  it('cardSortWhen 순서 놓기 규칙', () => {
+    const base = { criterion: null, selected: null, observed: [] as string[], checkKind: null, finished: false };
+    const order = (orderCheck: string | null, followUpCheck: string | null = null) => ({ orderCheck, followUpCheck, feature: 'height' });
+    expect(cardSortWhen(sexp, { ...base, order: order(null) })).toBe('pick-card');
+    expect(cardSortWhen(sexp, { ...base, selected: 'shale', order: order(null) })).toBe('before-observe');
+    expect(cardSortWhen(sexp, { ...base, selected: 'shale', observed: ['grain', 'fossil'], order: order(null) })).toBe('before-observe');
+    expect(cardSortWhen(sexp, { ...base, selected: 'shale', observed: ['height'], order: order(null) })).toBe('sorting');
+    expect(cardSortWhen(sexp, { ...base, order: order('check-unplaced') })).toBe('order-check-unplaced');
+    expect(cardSortWhen(sexp, { ...base, order: order('check-unobserved') })).toBe('order-check-unobserved');
+    expect(cardSortWhen(sexp, { ...base, order: order('check-inconsistent') })).toBe('order-check-inconsistent');
+    expect(cardSortWhen(sexp, { ...base, order: order('check-complete') })).toBe('order-check-complete');
+    expect(cardSortWhen(sexp, { ...base, order: order('check-complete', 'check-unplaced') })).toBe('check-unplaced');
+    expect(cardSortWhen(sexp, { ...base, order: order('check-complete', 'check-unobserved') })).toBe('check-unobserved');
+    expect(cardSortWhen(sexp, { ...base, order: order('check-complete', 'check-inconsistent') })).toBe('check-inconsistent');
+    expect(cardSortWhen(sexp, { ...base, finished: true, order: order('check-complete', 'check-complete') })).toBe('finished');
+  });
+  it('잘못된 활동 종류의 상태는 거부한다', () => {
+    const t = fromOrderState(sexp, os.createInitialOrderState(sexp), 'g5-strata');
+    expect(() => situationOf(t, { ...sexp, module: 'sky-observation' } as never)).toThrow();
   });
 });

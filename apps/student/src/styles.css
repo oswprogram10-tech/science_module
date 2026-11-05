@@ -280,6 +280,20 @@ button.unit-card:hover { border-color:var(--accent); }
 .obs-list li { display:flex; flex-direction:column; border-left:4px solid var(--accent); padding-left:8px; }
 .sort-progress p { margin:0 0 4px; }
 .sort-progress .finish { font-weight:700; min-height:1.3em; }
+/* 순서 놓기 (지층과 화석) */
+.order-notice { margin:6px 0 0; font-weight:700; border-left:4px solid var(--accent); padding-left:8px; }
+.order-background { border:2px solid var(--line); border-radius:8px; padding:8px; margin-bottom:10px; background:var(--bg); }
+.order-background h2 { margin:0 0 4px; font-size:1rem; }
+.order-background p { margin:0; }
+.order-slots { list-style:none; margin:0 0 8px; padding:0; display:flex; flex-direction:column-reverse; gap:6px; }
+.order-slot { display:grid; grid-template-columns:5.2rem minmax(0,1fr); gap:8px; align-items:center; }
+.order-edge { font-size:.9rem; font-weight:700; text-align:right; }
+.order-slot-body { border:2px dashed var(--line); border-radius:8px; padding:6px; display:flex; flex-direction:column; gap:6px; min-width:0; }
+.order-slot.filled .order-slot-body { border-style:solid; }
+.order-empty { min-height:1.6em; font-size:.9rem; }
+.order-env { font-weight:700; border-left:4px solid var(--accent); padding-left:6px; }
+.order-chip span { flex:1 1 auto; }
+.strata-fossil { animation:mat-in .35s ease-out; }
 @media (max-width: 1100px) {
   .sort-layout { grid-template-columns: 1fr; }
 }

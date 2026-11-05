@@ -354,3 +354,50 @@ export async function materialFinishCriterion(page: Page, key: MaterialCriterion
   await materialSortAll(page, key);
   await sortCheckButton(page).click();
 }
+
+// ---- 지층과 화석(카드 분류 order) ----
+
+/** 정답 순서(먼저 쌓인 층 -> 나중에 쌓인 층). 테스트가 정답을 알고 있어야 올바른 순서를 재현할 수 있다. */
+export const STRATA_ORDER = ['역암', '사암', '이암', '석회암', '셰일'] as const;
+export type StrataCard = (typeof STRATA_ORDER)[number];
+/** 처음 더미 순서(고정). */
+export const STRATA_PILE = ['셰일', '사암', '역암', '석회암', '이암'] as const;
+export const STRATA_ENV: Record<StrataCard, string> = { 역암: '화석이 없어 알 수 없음', 사암: '바다', 이암: '육지', 석회암: '바다', 셰일: '육지' };
+
+/** 카드 버튼. 접근 가능한 이름은 "이름 관찰 n/3"이다. */
+export const strataCard = (page: Page, card: StrataCard) => page.getByRole('button', { name: new RegExp(`^${card} 관찰 \\d/3$`) });
+export const strataObserveButton = (page: Page, action: '높이 확인하기' | '알갱이 살펴보기' | '화석 살펴보기') =>
+  page.getByRole('region', { name: '돋보기' }).getByRole('button', { name: action, exact: true });
+export const strataSlotButton = (page: Page, n: number) => page.getByRole('button', { name: `${n}번째로 쌓인 층에 놓기`, exact: true });
+export const strataOrderCheck = (page: Page) => page.getByRole('button', { name: '쌓인 차례 확인하기' });
+export const strataEnvCheck = (page: Page) => page.getByRole('button', { name: '환경 확인하기' });
+export const strataEnvPut = (page: Page, group: string) => page.getByRole('button', { name: `${group}에 넣기`, exact: true });
+export const strataProgress = (page: Page) => page.getByRole('region', { name: '진행 상황' });
+
+/** 카드를 고르고(관찰할 특징이 있으면 살펴본 뒤) 칸에 놓는다. n은 1부터. */
+export async function strataPlace(page: Page, card: StrataCard, n: number, observe: Array<'높이 확인하기' | '알갱이 살펴보기' | '화석 살펴보기'> = ['높이 확인하기']) {
+  await strataCard(page, card).click();
+  for (const a of observe) await strataObserveButton(page, a).click();
+  await strataSlotButton(page, n).click();
+}
+
+/** 다섯 칸을 order(표본 이름 5개, 먼저 쌓인 칸부터)대로 채운다. */
+export async function strataFill(page: Page, order: readonly StrataCard[] = STRATA_ORDER, observe: Array<'높이 확인하기' | '알갱이 살펴보기' | '화석 살펴보기'> = ['높이 확인하기']) {
+  for (const [i, card] of order.entries()) await strataPlace(page, card, i + 1, observe);
+}
+
+/** 순서를 맞게 놓고 확인해 followUp이 열리게 한다. */
+export async function strataFinishOrder(page: Page) {
+  await strataFill(page);
+  await strataOrderCheck(page).click();
+}
+
+/** followUp: 화석을 살펴보고 환경 무리에 넣은 뒤 확인한다. override는 일부러 다른 무리에 넣을 표본. */
+export async function strataFinishEnv(page: Page, override: Partial<Record<StrataCard, string>> = {}) {
+  for (const card of STRATA_ORDER) {
+    await strataCard(page, card).click();
+    await strataObserveButton(page, '화석 살펴보기').click();
+    await strataEnvPut(page, override[card] ?? STRATA_ENV[card]).click();
+  }
+  await strataEnvCheck(page).click();
+}

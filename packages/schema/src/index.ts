@@ -251,6 +251,10 @@ export const cardSortProbeWhenSchema = z.enum([
   'check-complete',
   'tree-split-empty',
   'tree-next-node',
+  'order-check-unplaced',
+  'order-check-unobserved',
+  'order-check-inconsistent',
+  'order-check-complete',
   'finished',
 ]);
 
@@ -264,8 +268,8 @@ export const cardSortTutorConfigSchema = z.object({
   probes: z.array(cardSortProbeSchema).min(1),
 });
 
-/** 카드 배치 형태. 무리 나누기(groups)와 두 갈래 트리(tree)가 있고, 나중에 'order'를 더한다. */
-export const cardSortLayoutSchema = z.enum(['groups', 'tree']);
+/** 카드 배치 형태. 무리 나누기(groups), 두 갈래 트리(tree), 순서 놓기(order)가 있다. */
+export const cardSortLayoutSchema = z.enum(['groups', 'tree', 'order']);
 
 export const sortFeatureSchema = z.object({
   key: z.string().min(1),
@@ -279,6 +283,11 @@ export const sortCriterionSchema = z.object({
   label: z.string().min(1),
   /** 객관적 기준이 보는 특징. 주관적 기준에는 없다. */
   feature: z.string().min(1).optional(),
+  /**
+   * 판정에서 "관찰했는가"를 따질 특징. 없으면 feature이다. 판정 기준 특징과 관찰 근거 특징이 다를 때만 둔다
+   * (예: 환경(env)은 화석(fossil)을 관찰해서 추리한다).
+   */
+  evidenceFeature: z.string().min(1).optional(),
   objective: z.boolean(),
   /** 무리. 객관적 기준에서는 value가 특징값과 1:1로 대응한다. */
   groups: z.array(z.object({ value: z.string().min(1), label: z.string().min(1) })).min(2),
@@ -292,9 +301,15 @@ export const sortCardSchema = z.object({
   /** 그림 key. 학생 앱이 key별 그림을 그린다. */
   icon: z.string().min(1),
   /** 특징 key -> 특징값. 화면에 드러내지 않는다. */
-  features: z.record(z.string(), z.string().min(1)),
+  features: z.record(z.string(), z.union([z.string().min(1), z.number()])),
   /** 특징 key -> 관찰 문장(보이는 사실만). */
   observations: z.record(z.string(), z.string().min(1)),
+});
+
+/** 순서 놓기(order)의 정렬 기준. 카드의 이 특징값(숫자)이 작은 것부터(ascending) 또는 큰 것부터(descending) 놓는다. */
+export const orderBySchema = z.object({
+  feature: z.string().min(1),
+  direction: z.enum(['ascending', 'descending']),
 });
 
 export const cardSortExperimentSchema = z.object({
@@ -302,7 +317,18 @@ export const cardSortExperimentSchema = z.object({
   module: z.literal(CARD_SORT_MODULE),
   layout: cardSortLayoutSchema,
   features: z.array(sortFeatureSchema).min(1),
-  criteria: z.array(sortCriterionSchema).min(1),
+  /** 순서 놓기(order)에서는 비워 둘 수 있다. 다른 배치에서는 1개 이상. */
+  criteria: z.array(sortCriterionSchema),
+  /** order일 때 필수. */
+  orderBy: orderBySchema.optional(),
+  /** order일 때 필수. 처음 더미 순서(카드 key를 한 번씩). */
+  initialOrder: z.array(z.string().min(1)).optional(),
+  /** order에서 순서를 맞춘 뒤 이어서 하는 무리 나누기 한 단계(선택). */
+  followUp: sortCriterionSchema.optional(),
+  /** 처음부터 보이는 안내 문구(활동의 전제. 예: 지층이 뒤집히지 않았다). 없으면 보이지 않는다. */
+  notice: z.string().min(1).optional(),
+  /** 항상 보이는 배경 지식 카드. 카드별 정답은 말하지 않는 일반 지식만 담는다. */
+  background: z.object({ title: z.string().min(1), text: z.string().min(1) }).optional(),
   cards: z.array(sortCardSchema).min(1),
   safetyChecklist: z.array(z.string().min(1)).default([]),
   tutor: cardSortTutorConfigSchema,
@@ -311,7 +337,35 @@ export const cardSortExperimentSchema = z.object({
     e.layout !== 'tree' ||
     e.criteria.every((c) => c.groups.length === 2 && c.groups[0]!.value === 'yes' && c.groups[1]!.value === 'no'),
   { message: '트리에서는 모든 기준의 무리가 정확히 예(yes)·아니요(no) 둘이어야 합니다.', path: ['criteria'] },
-);
+).refine((e) => e.layout === 'order' || e.criteria.length >= 1, {
+  message: '분류 기준이 1개 이상 있어야 합니다.',
+  path: ['criteria'],
+}).refine((e) => e.layout === 'order' || (!e.orderBy && !e.initialOrder && !e.followUp), {
+  message: 'orderBy, initialOrder, followUp은 순서 놓기(order)에서만 씁니다.',
+  path: ['layout'],
+}).refine((e) => e.layout !== 'order' || !!e.orderBy, {
+  message: '순서 놓기에는 orderBy가 필요합니다.',
+  path: ['orderBy'],
+}).refine(
+  (e) =>
+    e.layout !== 'order' ||
+    !e.orderBy ||
+    (e.features.some((f) => f.key === e.orderBy!.feature) &&
+      e.cards.every((c) => typeof c.features[e.orderBy!.feature] === 'number')),
+  { message: 'orderBy 특징은 features에 있어야 하고 모든 카드에 숫자값이 있어야 합니다.', path: ['orderBy'] },
+).refine(
+  (e) => {
+    if (e.layout !== 'order') return true;
+    const ids = e.initialOrder;
+    if (!ids) return false;
+    const keys = e.cards.map((c) => c.key);
+    return ids.length === keys.length && new Set(ids).size === ids.length && keys.every((k) => ids.includes(k));
+  },
+  { message: '순서 놓기의 initialOrder는 모든 카드 key를 한 번씩 포함해야 합니다.', path: ['initialOrder'] },
+).refine((e) => !e.followUp || (e.followUp.objective && !!e.followUp.feature), {
+  message: 'followUp은 특징(feature)이 있는 객관적 기준이어야 합니다.',
+  path: ['followUp'],
+});
 
 export const experimentSchema = z.discriminatedUnion('module', [
   variableExperimentSchema,
@@ -349,6 +403,7 @@ export type ObservationProbeWhen = z.infer<typeof observationProbeWhenSchema>;
 export type CardSortExperiment = z.infer<typeof cardSortExperimentSchema>;
 export type CardSortProbe = z.infer<typeof cardSortProbeSchema>;
 export type CardSortProbeWhen = z.infer<typeof cardSortProbeWhenSchema>;
+export type OrderBy = z.infer<typeof orderBySchema>;
 export type SortFeature = z.infer<typeof sortFeatureSchema>;
 export type SortCriterion = z.infer<typeof sortCriterionSchema>;
 export type SortCard = z.infer<typeof sortCardSchema>;

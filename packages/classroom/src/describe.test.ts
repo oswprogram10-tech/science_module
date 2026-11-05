@@ -19,6 +19,14 @@ describe('describeSituation', () => {
     expect(describeSituation({ activity: 'card-sort', lastKind: 'tree-finished', mismatch: false })).toBe('더 나눌 수 없을 때까지 나눔');
     expect(describeSituation({ activity: 'card-sort', lastKind: 'finished', mismatch: false })).toBe('두 가지 기준으로 분류함');
   });
+  it('카드 분류 순서 놓기 상황 키', () => {
+    const d = (lastKind: string) => describeSituation({ activity: 'card-sort', lastKind, mismatch: false });
+    expect(d('order-check-unplaced')).toBe('칸에 놓지 않은 표본이 있음');
+    expect(d('order-check-unobserved')).toBe('높이를 확인하지 않은 표본이 있음');
+    expect(d('order-check-inconsistent')).toBe('쌓인 차례가 채집 높이와 다름');
+    expect(d('order-check-complete')).toBe('쌓인 차례를 맞게 놓음');
+    expect(d('order-finished')).toBe('쌓인 차례와 그때의 환경을 모두 알아냄');
+  });
   it('모르는 키나 없는 값은 null', () => {
     expect(describeSituation({ activity: 'classify', lastKind: 'zzz', mismatch: false })).toBeNull();
     expect(describeSituation({ mismatch: false })).toBeNull();

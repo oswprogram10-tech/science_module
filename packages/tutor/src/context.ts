@@ -6,7 +6,16 @@ import {
   type Prediction,
 } from '@sci/gateway';
 import { indicatorColor, type CheckKind } from '@sci/engine-matter';
-import { createSortState, isEmptySplit, isFinished, isTreeFinished, splitCount, type TreeState } from '@sci/cardsort';
+import {
+  createSortState,
+  isEmptySplit,
+  isFinished,
+  isOrderFinished,
+  isTreeFinished,
+  splitCount,
+  type OrderState,
+  type TreeState,
+} from '@sci/cardsort';
 import {
   isCardSortExperiment,
   isClassificationExperiment,
@@ -91,6 +100,19 @@ export type TutorState =
       check: { kind: string; items: { card: string; status: string }[] } | null;
       /** 트리 배치일 때만. criterion·placement·check는 지금 나누는 노드의 것이다. */
       tree?: { finished: boolean; splitEmpty: boolean; splits: number; nodeCards: string[] };
+      /**
+       * 순서 놓기일 때만. check는 순서 확인 결과이고 criterion·placement·completed는 쓰지 않는다.
+       * 칸에 놓은 카드와 followUp(무리 나누기)에서 학생이 한 활동만 담는다.
+       */
+      order?: {
+        /** 칸(먼저 쌓인 칸부터)에 놓은 카드 key. 빈 칸은 null. */
+        slots: (string | null)[];
+        finished: boolean;
+        followUp: {
+          placement: Record<string, string | null>;
+          check: { kind: string; items: { card: string; status: string }[] } | null;
+        };
+      };
     };
 
 export interface UnitInfo {
@@ -150,6 +172,20 @@ export function situationOf(state: TutorState, experiment: Experiment): string {
   if (state.kind === 'card-sort') {
     const exp = cardSortExp(experiment);
     const sel = state.selected;
+    if (state.order) {
+      return cardSortWhen(exp, {
+        criterion: null,
+        selected: sel,
+        observed: sel ? (state.observed[sel] ?? []) : [],
+        checkKind: state.check?.kind ?? null,
+        finished: state.order.finished,
+        order: {
+          orderCheck: state.check?.kind ?? null,
+          followUpCheck: state.order.followUp.check?.kind ?? null,
+          feature: exp.orderBy?.feature ?? '',
+        },
+      });
+    }
     return cardSortWhen(exp, {
       criterion: state.criterion,
       selected: sel,
@@ -269,7 +305,43 @@ const SORT_STATUS_NAME: Record<string, string> = {
   unplaced: '무리에 안 넣음',
 };
 
+function orderBody(exp: CardSortExperiment, state: Extract<TutorState, { kind: 'card-sort' }>): string[] {
+  const order = state.order!;
+  const cardLabel = (key: string | null | undefined) => exp.cards.find((c) => c.key === key)?.label ?? key ?? '';
+  const featureLabel = (key: string) => exp.features.find((f) => f.key === key)?.label ?? key;
+  const groupLabel = (key: string) => exp.followUp?.groups.find((g) => g.value === key)?.label ?? key;
+  const lines = [
+    `[쌓인 차례(먼저 → 나중)] ${order.slots.map((k, i) => `${i + 1}번째 ${k ? cardLabel(k) : '(비어 있음)'}`).join(JOIN)}`,
+    `[고른 카드] ${state.selected ? cardLabel(state.selected) : '(없음)'}`,
+    '[카드별 기록]',
+  ];
+  // 학생이 한 활동(관찰·놓기)만 적는다. 카드의 특징값(높이 등)이나 알맞은 칸·무리는 쓰지 않는다.
+  let any = false;
+  for (const c of exp.cards) {
+    const seen = state.observed[c.key] ?? [];
+    const placed = order.followUp.placement[c.key] ?? null;
+    if (seen.length === 0 && placed === null && state.selected !== c.key) continue;
+    any = true;
+    lines.push(
+      `- ${c.label}: ${seen.length > 0 ? `관찰 ${seen.map(featureLabel).join(', ')}` : '관찰 없음'}${placed ? `${JOIN}넣은 무리 ${groupLabel(placed)}` : ''}`,
+    );
+  }
+  if (!any) lines.push('(아직 없음)');
+  if (state.check) {
+    lines.push(
+      `[순서 확인 결과] ${state.check.items.map((i) => `${cardLabel(i.card)} ${SORT_STATUS_NAME[i.status] ?? i.status}`).join(JOIN)}`,
+    );
+  }
+  if (order.followUp.check) {
+    lines.push(
+      `[무리 확인 결과] ${order.followUp.check.items.map((i) => `${cardLabel(i.card)} ${SORT_STATUS_NAME[i.status] ?? i.status}`).join(JOIN)}`,
+    );
+  }
+  return lines;
+}
+
 function cardSortBody(exp: CardSortExperiment, state: Extract<TutorState, { kind: 'card-sort' }>): string[] {
+  if (state.order) return orderBody(exp, state);
   const cardLabel = (key: string | null | undefined) => exp.cards.find((c) => c.key === key)?.label ?? key ?? '';
   const crit = exp.criteria.find((c) => c.key === state.criterion);
   const featureLabel = (key: string) => exp.features.find((f) => f.key === key)?.label ?? key;
@@ -575,6 +647,47 @@ export function fromTreeState(
       splitEmpty: isEmptySplit(treeState, node.id),
       splits: splitCount(treeState),
       nodeCards: [...node.cards],
+    },
+  };
+}
+
+/** 순서 놓기 상태(앱 저장소). 칸에 놓은 카드와 followUp을 카드 분류 상태 모양으로 옮긴다. */
+export interface OrderStateLike extends Pick<OrderState, 'slots' | 'observed' | 'checked' | 'followUp'> {
+  selected: string | null;
+}
+
+export function fromOrderState(
+  experiment: CardSortExperiment,
+  orderState: OrderStateLike,
+  unitId: string,
+): Extract<TutorState, { kind: 'card-sort' }> {
+  const base = fromCardSortState(
+    experiment,
+    {
+      selected: orderState.selected,
+      criterion: null,
+      observed: orderState.observed,
+      placement: {},
+      completed: [],
+      checked: orderState.checked,
+    },
+    unitId,
+  );
+  const placement: Record<string, string | null> = {};
+  for (const c of experiment.cards) {
+    const placed = orderState.followUp.placement[c.key];
+    if (placed !== undefined) placement[c.key] = placed;
+  }
+  const fc = orderState.followUp.checked;
+  return {
+    ...base,
+    order: {
+      slots: [...orderState.slots],
+      finished: isOrderFinished(orderState, experiment),
+      followUp: {
+        placement,
+        check: fc ? { kind: fc.kind, items: fc.items.map((i) => ({ card: i.card, status: i.status })) } : null,
+      },
     },
   };
 }

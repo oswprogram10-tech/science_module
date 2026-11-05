@@ -23,7 +23,7 @@ import { ANIMAL_ICON_KEYS } from './AnimalIcons';
 const exp = parseManifest(animalJson).experiments[0] as CardSortExperiment;
 const guard = { forbiddenAnswers: exp.tutor.forbiddenAnswers, limits: exp.limits };
 const ALL = exp.cards.map((c) => c.key);
-const truth = (card: string, f: string) => exp.cards.find((c) => c.key === card)!.features[f]!;
+const truth = (card: string, f: string) => exp.cards.find((c) => c.key === card)!.features[f] as string;
 
 function observeAll(s: CardSortState, f: string) {
   return ALL.reduce((cur, c) => observe(cur, exp, c, f), s);

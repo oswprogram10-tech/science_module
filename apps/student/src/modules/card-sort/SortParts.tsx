@@ -4,6 +4,7 @@ import { MemoryRecorder, buildStatement, toExtensions } from '@sci/xapi';
 import { ANIMAL_ICON_KEYS, AnimalIcon } from './AnimalIcons';
 import { LEAF_ICON_KEYS, LeafIcon } from './LeafIcons';
 import { MATERIAL_ICON_KEYS, MaterialIcon } from './MaterialIcons';
+import { STRATA_ICON_KEYS, StrataIcon } from './StrataIcons';
 
 /** 무리 나누기와 트리 화면이 함께 쓰는 조각들: 카드 그림, 카드 버튼, 돋보기와 관찰 기록, xAPI 기록. */
 
@@ -31,10 +32,11 @@ export function useSortEmit(unitId: string, expId: string) {
 
 /**
  * 카드 그림. 물체 그림 key면 물체, 잎 그림 key면 잎, 아니면 동물 그림.
- * shown은 시험해 본 특징 key들이다(물체 그림만 쓰며, 그 특징의 결과 그림이 겹쳐진다).
+ * shown은 시험해 본 특징 key들이다(물체 그림과 암석 그림만 쓰며, 그 특징의 결과 그림이 겹쳐진다).
  */
 export function CardIcon({ icon, size, shown }: { icon: string; size: number; shown?: string[] }) {
   if (MATERIAL_ICON_KEYS.includes(icon)) return <MaterialIcon icon={icon} size={size} shown={shown} />;
+  if (STRATA_ICON_KEYS.includes(icon)) return <StrataIcon icon={icon} size={size} shown={shown} />;
   return LEAF_ICON_KEYS.includes(icon) && !ANIMAL_ICON_KEYS.includes(icon) ? (
     <LeafIcon icon={icon} size={size} />
   ) : (

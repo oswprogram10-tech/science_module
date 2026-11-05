@@ -14,7 +14,7 @@ const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
 describe('단원 레지스트리', () => {
   it('열 단원이 모두 로드된다', () => {
-    expect(UNITS.map((u) => u.id)).toEqual(['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat', 'g5-light', 'g6-electricity', 'g4-land', 'g6-earth-motion', 'g6-seasons', 'g3-lifecycle', 'g6-plant', 'g4-ecosystem', 'g4-microbe', 'g5-body', 'g3-animal', 'g3-plantlife', 'g3-force', 'g3-sound', 'g4-magnet', 'g6-motion', 'g3-material', 'g4-water-state', 'g5-mixture', 'g3-earth-sea', 'g4-night-sky']);
+    expect(UNITS.map((u) => u.id)).toEqual(['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat', 'g5-light', 'g6-electricity', 'g4-land', 'g6-earth-motion', 'g6-seasons', 'g3-lifecycle', 'g6-plant', 'g4-ecosystem', 'g4-microbe', 'g5-body', 'g3-animal', 'g3-plantlife', 'g3-force', 'g3-sound', 'g4-magnet', 'g6-motion', 'g3-material', 'g4-water-state', 'g5-mixture', 'g3-earth-sea', 'g4-night-sky', 'g5-strata']);
     expect(UNITS.every((u) => u.ok)).toBe(true);
     const gases = UNITS[0]!;
     if (gases.ok) expect(gases.module.kind).toBe('gas-syringe');
@@ -89,6 +89,9 @@ describe('단원 레지스트리', () => {
     const night = UNITS[25]!;
     expect(night.ok && night.activity).toBe('observe');
     if (night.ok) expect(night.module.kind).toBe('sky-observation');
+    const strata = UNITS[26]!;
+    expect(strata.ok && strata.activity).toBe('card-sort');
+    if (strata.ok && strata.activity === 'card-sort') expect(strata.experiment.layout).toBe('order');
     const material = UNITS[21]!;
     expect(material.ok && material.activity).toBe('card-sort');
     if (material.ok && material.activity === 'card-sort') expect(material.experiment.layout).toBe('groups');

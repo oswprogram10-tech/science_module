@@ -15,14 +15,22 @@ import {
 } from './cardSortStore';
 import { cardSortFeedback } from './feedback';
 import { CardButton, Magnifier, useSortEmit } from './SortParts';
+import { OrderSortLab } from './OrderSortLab';
 import { TreeSortLab } from './TreeSortLab';
 import { useClassroomStatus } from '../../classroom/bus';
 
 export const CRITERION_CHANGED_NOTICE = '기준을 바꾸어서 카드를 다시 나눠요.';
 
-/** 카드 분류 활동. layout에 따라 무리 나누기(groups)나 두 갈래 트리(tree) 화면을 그린다. */
+/** 카드 분류 활동. layout에 따라 무리 나누기(groups), 두 갈래 트리(tree), 순서 놓기(order) 화면을 그린다. */
 export function CardSortLab(props: { unitId: string; title: string; experiment: CardSortExperiment }) {
-  return props.experiment.layout === 'tree' ? <TreeSortLab {...props} /> : <GroupsSortLab {...props} />;
+  switch (props.experiment.layout) {
+    case 'tree':
+      return <TreeSortLab {...props} />;
+    case 'order':
+      return <OrderSortLab {...props} />;
+    default:
+      return <GroupsSortLab {...props} />;
+  }
 }
 
 function GroupsSortLab({

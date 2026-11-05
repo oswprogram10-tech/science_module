@@ -16,7 +16,7 @@ import {
 
 const exp = parseManifest(animalJson).experiments[0] as CardSortExperiment;
 const ALL = exp.cards.map((c) => c.key);
-const feat = (card: string, f: string) => exp.cards.find((c) => c.key === card)!.features[f];
+const feat = (card: string, f: string) => exp.cards.find((c) => c.key === card)!.features[f] as string | undefined;
 
 /** 모든 카드의 특징을 관찰하고 특징값 그대로 무리에 넣은 상태(기준 하나). */
 function fullyDone(criterion: string, base: SortState = createSortState()): SortState {

@@ -1,4 +1,5 @@
 import type { CardSortExperiment, SortCriterion } from '@sci/schema';
+import { validateOrderExperiment } from './order';
 
 /**
  * 카드 분류 활동의 판정 로직. 단원과 무관한 순수 함수이고 난수가 없다. React를 쓰지 않는다.
@@ -102,11 +103,12 @@ export function judgeCards(
   if (cards.some((k) => placed(k) === null)) {
     return { kind: 'check-unplaced', items: items((k) => (placed(k) === null ? 'unplaced' : 'ok')) };
   }
-  const seen = (k: string) => observedFor(observed, k, crit.feature);
+  // 판정 기준 특징과 관찰 근거 특징이 다르면(예: 환경은 화석을 보고 추리) 근거 특징을 관찰했는지 따진다.
+  const seen = (k: string) => observedFor(observed, k, crit.evidenceFeature ?? crit.feature);
   if (cards.some((k) => !seen(k))) {
     return { kind: 'check-unobserved', items: items((k) => (seen(k) ? 'ok' : 'unobserved')) };
   }
-  const mismatch = (k: string) => exp.cards.find((c) => c.key === k)!.features[crit.feature!] !== placed(k);
+  const mismatch = (k: string) => String(exp.cards.find((c) => c.key === k)!.features[crit.feature!]) !== placed(k);
   if (cards.some(mismatch)) {
     return { kind: 'check-inconsistent', items: items((k) => (mismatch(k) ? 'inconsistent' : 'ok')) };
   }
@@ -133,6 +135,7 @@ export function isFinished(state: SortState, exp: CardSortExperiment): boolean {
 
 /** 매니페스트의 일관성 검사. 문제 문장 목록(없으면 빈 배열). */
 export function validateCardSortExperiment(exp: CardSortExperiment): string[] {
+  if (exp.layout === 'order') return validateOrderExperiment(exp);
   const issues: string[] = [];
   const featureKeys = new Set(exp.features.map((f) => f.key));
   const dup = (what: string, keys: string[]) => {
@@ -179,3 +182,4 @@ export function validateCardSortExperiment(exp: CardSortExperiment): string[] {
 }
 
 export * from './tree';
+export * from './order';
