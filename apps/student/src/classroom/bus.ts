@@ -11,7 +11,7 @@ export type SafetyKind = 'NO_GOGGLES' | 'NO_GLOVES' | 'SPILL' | 'FOOD';
 /** 서버로 보낼 진행 요약. 튜터 대화·카메라·센서 값은 들어 있지 않다. */
 export interface StatusReport {
   unitId?: string;
-  activity?: 'variable' | 'classify' | 'observe' | 'card-sort';
+  activity?: 'variable' | 'classify' | 'observe' | 'card-sort' | 'portfolio';
   phase: 'designing' | 'running' | 'reviewing' | 'idle';
   trials: number;
   lastKind?: string;

@@ -18,7 +18,7 @@ export const SAFETY_TYPES = ['NO_GOGGLES', 'NO_GLOVES', 'SPILL', 'FOOD'] as cons
 export const safetyTypeSchema = z.enum(SAFETY_TYPES);
 export type SafetyType = z.infer<typeof safetyTypeSchema>;
 
-export const activitySchema = z.enum(['variable', 'classify', 'observe', 'card-sort']);
+export const activitySchema = z.enum(['variable', 'classify', 'observe', 'card-sort', 'portfolio']);
 export type Activity = z.infer<typeof activitySchema>;
 export const phaseSchema = z.enum(['designing', 'running', 'reviewing', 'idle']);
 export type Phase = z.infer<typeof phaseSchema>;

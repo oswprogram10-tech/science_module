@@ -2,6 +2,7 @@ import { Suspense, useMemo } from 'react';
 import { classroomUrl } from '../classroom/config';
 import { ErrorBoundary } from '../classroom/ErrorBoundary';
 import { LazyControl } from '../classroom/lazy';
+import { LogbookCard } from '../logbook/LogbookCard';
 import type { UnitEntry } from '../units';
 
 export function UnitList({ units, hrefOf }: { units: UnitEntry[]; hrefOf: (id: string) => string }) {
@@ -25,6 +26,7 @@ export function UnitList({ units, hrefOf }: { units: UnitEntry[]; hrefOf: (id: s
         )}
       </header>
       <main className="unit-list">
+        <LogbookCard />
         {grades.map((grade) => (
           <section key={grade} aria-labelledby={`grade-${grade}`}>
             <h2 id={`grade-${grade}`}>{grade}학년</h2>

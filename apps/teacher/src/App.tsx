@@ -257,7 +257,7 @@ function GroupCard({ entry, now, onAck }: { entry: Entry; now: number; onAck: (t
           <p className="unit">{title ?? PHASE_LABEL.idle}</p>
           <p className="meta">
             {g.phase ? PHASE_LABEL[g.phase] : ''}
-            {g.activity ? ` · 시행 ${g.trials}회` : ''}
+            {g.activity ? (g.activity === 'portfolio' ? ` · ${g.trials}단계` : ` · 시행 ${g.trials}회`) : ''}
           </p>
           {sentence && <p className="situation">{sentence}</p>}
           {g.safetyLocked && <p className="locked-tag">🔒 안전 경고로 실험이 잠겨 있어요</p>}

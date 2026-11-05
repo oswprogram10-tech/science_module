@@ -37,6 +37,13 @@ const KIND_TEXT: Record<Activity, Record<string, string>> = {
     'record-match': '관찰을 잘 기록함',
     'prediction-mismatch': '예측과 다른 결과',
   },
+  // 진로 활동은 어느 단계를 보고 있는지만 알린다. 글·고른 직업은 보내지 않는다.
+  portfolio: {
+    'stage-1': '내 탐구 기록을 보는 중',
+    'stage-2': '관심 영역을 고르는 중',
+    'stage-3': '직업 카드를 살펴보는 중',
+    'stage-4': '진로 탐색 카드를 쓰는 중',
+  },
   'card-sort': {
     'choose-criterion': '분류 기준을 고르기 전',
     'pick-card': '카드를 고르는 중',

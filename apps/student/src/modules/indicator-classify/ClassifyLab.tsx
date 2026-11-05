@@ -29,6 +29,7 @@ import { SafetyAlertBanner } from '../../components/safety/SafetyAlertBanner';
 import { SafetyDialog } from '../../components/safety/SafetyDialog';
 import { devMode } from '../../components/safety/devMode';
 import { reportSafety, reportSafetyClear, useClassroomStatus } from '../../classroom/bus';
+import { logbook } from '../../logbook';
 import { HAZARD_NOTICE, SAFETY_MESSAGES, speak } from '../../components/safety/safetyMessages';
 
 const ACTOR_ID = 'anon-student-001';
@@ -141,6 +142,7 @@ export function ClassifyLab({
     const counts: Record<string, number> = {};
     for (const i of next.checked.items) counts[i.status] = (counts[i.status] ?? 0) + 1;
     emit('checked', { kind: next.checked.kind, ...counts });
+    if (next.checked.kind === 'check-complete') logbook.noteClassifyComplete(unitId);
   };
 
   const onReading = (r: ColorReading, source: ReadSource) => {

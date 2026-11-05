@@ -1,7 +1,7 @@
 # 과학 실험 학습 도구 (수직 슬라이스 v0): 4학년 「여러 가지 기체」, 5학년 「용해와 용액」, 6학년 「산과 염기」
 
 실물 센서 없이 모의(Mock) 센서로 끝까지 동작하는 웹 실험 앱입니다.
-사양은 `docs/specs/g6-earth-motion-mvp.md`(지구의 운동, 관찰 과제와 땅·우주 두 시점 동기화), `docs/specs/g6-acid-base-mvp.md`(산과 염기, 분류 활동·색 판독·안전 감시), `docs/specs/g5-solution-mvp.md`(용해와 용액), `docs/specs/g4-gases-mvp.md`(다단원 구조와 여러 가지 기체), 전체 계획은 `docs/DEVELOPMENT_PLAN.md`를 보세요.
+사양은 `docs/specs/g6-career-mvp.md`(과학과 나의 진로, 탐구 기록장과 포트폴리오), `docs/specs/g6-earth-motion-mvp.md`(지구의 운동, 관찰 과제와 땅·우주 두 시점 동기화), `docs/specs/g6-acid-base-mvp.md`(산과 염기, 분류 활동·색 판독·안전 감시), `docs/specs/g5-solution-mvp.md`(용해와 용액), `docs/specs/g4-gases-mvp.md`(다단원 구조와 여러 가지 기체), 전체 계획은 `docs/DEVELOPMENT_PLAN.md`를 보세요.
 
 ## 준비물
 - Node.js 22 이상
@@ -32,6 +32,7 @@ pnpm e2e            # 브라우저 자동 테스트 (Playwright)
 | `#/unit/g5-solution` | 5학년 용해와 용액 |
 | `#/unit/g6-acid-base` | 6학년 산과 염기 (지시약으로 용액 분류하기) |
 | `#/unit/g6-combustion` | 6학년 물질의 연소 (집기병으로 덮은 촛불) |
+| `#/unit/g6-career` | 6학년 과학과 나의 진로 (탐구 기록장의 내 기록으로 관심 영역과 직업 카드 살펴보기, 진로 탐색 카드 쓰기) |
 | `#/unit/g5-heat` | 5학년 열과 우리 생활 (보온 컵 설계) |
 | `#/unit/g5-light` | 5학년 빛의 성질 (볼록 렌즈로 햇빛 모으기) |
 | `#/unit/g6-electricity` | 6학년 전기의 이용 (전자석의 세기) |
@@ -64,14 +65,17 @@ pnpm e2e            # 브라우저 자동 테스트 (Playwright)
 
 알 수 없는 단원 id는 목록으로 돌아갑니다. 매니페스트가 잘못된 단원은 목록에 오류로 표시되고, 다른 단원은 계속 쓸 수 있습니다. 단원을 바꾸면 시행 기록은 새로 시작합니다.
 
-### 활동 유형 세 가지
-단원은 매니페스트의 `module`에 따라 세 가지 활동 유형 중 하나로 동작합니다.
+### 활동 유형
+단원은 매니페스트의 `module`에 따라 다음 활동 유형 중 하나로 동작합니다.
 
 | 활동 유형 | `module` | 흐름 | 화면 |
 |---|---|---|---|
 | 변인 실험 | `dissolution`, `gas-syringe`, `candle-jar`, `insulated-cup`, `convex-lens`, `electromagnet`, `magma-cooling`, `sun-angle`, `germination`, `transpiration`, `food-web`, `mold-growth`, `exercise-body`, `lever-balance`, `string-sound`, `magnet-distance`, `ramp-cart`, `freeze-melt`, `salt-sand`, `stream-table`, `land-sea-breeze` | 바꿀 조건(조작변인) 고르기 → 예측 → 실행 → 시행 비교와 구조적 피드백 | `Lab`(`App.tsx`) |
 | 분류 활동 | `indicator-classify` | 시험 → 관찰한 근거로 무리에 넣기 → 관찰과 분류가 맞는지 확인 | `ClassifyLab` |
 | 관찰 과제 | `sky-observation` | 예측 → 시각·달 슬라이더와 조건 토글로 두 시점 화면 관찰 → 관찰 기록 → 예측과 관찰 비교 | `ObserveLab` |
+| 진로 포트폴리오 | `career-portfolio` | 내 탐구 기록 → 관심 영역 고르기(1~2개) → 직업 카드(15장) → 나의 진로 탐색 카드 쓰기·인쇄 | `PortfolioLab` |
+
+**탐구 기록장**: 6학년 「과학과 나의 진로」(`#/unit/g6-career`)는 앞 단원의 탐구 기록을 보여 주려고 단원 목록의 "탐구 기록장" 카드를 둡니다. **기본은 꺼짐**이고, 학생이 안내 대화 상자(무엇을 남기는지, 이 기기에만 남고 서버·선생님 화면으로 보내지 않는다는 것, 언제든 모두 지울 수 있다는 것, 같은 기기를 쓰는 친구가 볼 수 있다는 것)를 읽고 켜야 기록됩니다. `localStorage` 키 `sci-bridge.logbook.v1` 한 곳(200 KB 상한)에 단원·활동 종류·날짜·짧은 요약과 진로 카드 글만 남기고, 이름·가명 ID·교실 코드·시행별 값·튜터 대화·심박 실측값은 남기지 않습니다(`apps/student/src/logbook/`). 학생이 쓴 글이 기기에 남으므로 학교 적용 전에 법무 검토가 필요합니다(`docs/DEVELOPMENT_PLAN.md` D11, `docs/app-packaging.md`). 직업 카드 15장과 영역별 단원 배정은 교사 검수 대상입니다.
 
 관찰 과제 단원(지구의 운동)은 과제 5개로 이루어지고, 과제마다 정답은 매니페스트에 쓰지 않고 천체 모델(`packages/engines/earth/src/astro.ts`, 서울 위도 37.5°N 근사)에서 계산합니다. 모델은 교사 검수 대상입니다.
 

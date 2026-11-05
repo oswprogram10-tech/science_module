@@ -18,6 +18,7 @@ import {
   treeTutorSituation,
 } from './treeStore';
 import { useClassroomStatus } from '../../classroom/bus';
+import { logbook } from '../../logbook';
 
 export const TREE_CRITERION_CHANGED_NOTICE = '질문을 바꾸어서 아래 무리를 다시 나눠요.';
 export const TREE_NO_QUESTION = '질문을 골라 주세요';
@@ -100,6 +101,8 @@ export function TreeSortLab({
       splits: splitCount(next),
       ...counts,
     });
+    const doneNodes = Object.values(next.nodes).filter((n) => n.checked?.kind === 'check-complete').length;
+    logbook.noteCardSort(unitId, doneNodes, isTreeFinished(next, exp));
   };
 
   // 튜터

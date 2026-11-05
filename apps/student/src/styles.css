@@ -320,3 +320,65 @@ button.unit-card:hover { border-color:var(--accent); }
 .limits { align-self:stretch; margin:6px 0 0; font-size:0.9rem; }
 .limits summary { cursor:pointer; font-weight:600; min-height:24px; }
 .limits p { margin:4px 0 0; }
+
+/* 탐구 기록장 카드(단원 목록) */
+.logbook-card { background:var(--card); border:2px solid var(--line); border-radius:10px; padding:12px; }
+.logbook-card p { margin:4px 0; }
+.logbook-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+.logbook-msg { min-height:1.2em; font-weight:700; }
+.logbook-warn { margin:6px 0; padding:8px; border:2px solid var(--warn); border-radius:8px; background:var(--changed); font-weight:700; }
+.modal-actions { flex-wrap:wrap; }
+.muted { opacity:.85; }
+
+/* 진로 포트폴리오 */
+.career-main { display:flex; flex-direction:column; gap:12px; min-width:0; }
+.career-steps ol { list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:8px; }
+.career-steps button { display:inline-flex; align-items:center; gap:6px; }
+.step-n { display:inline-flex; align-items:center; justify-content:center; width:1.6em; height:1.6em; border:2px solid currentColor; border-radius:50%; font-weight:700; font-size:.85rem; }
+.career-stage { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; display:flex; flex-direction:column; gap:10px; min-width:0; }
+.career-stage h3, .career-stage h4 { margin:0; font-size:1rem; }
+.area-records, .skill-bars, .skill-checks, .area-pick ul, .job-cards { list-style:none; margin:0; padding:0; }
+.area-records { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:10px; }
+.area-record { border:1px solid var(--line); border-radius:8px; padding:8px; }
+.area-record ul { margin:4px 0 0; padding-left:1.2rem; }
+.skill-bars { display:flex; flex-direction:column; gap:8px; }
+.skill-bars li { display:grid; grid-template-columns:minmax(9rem, 12rem) 1fr 4rem; gap:8px; align-items:center; }
+.skill-bars .bar-fill { display:block; min-width:0; }
+.skill-count { font-weight:700; text-align:right; }
+.career-empty { border:2px dashed var(--line); border-radius:8px; padding:10px; }
+.career-empty p { margin:4px 0; }
+.stage-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+.stage-actions .run { width:auto; margin-top:0; }
+.area-pick { border:1px solid var(--line); border-radius:8px; padding:8px; margin:0; }
+.area-choice { padding:0 8px; border:2px solid var(--line); border-radius:8px; flex-wrap:wrap; }
+.area-choice.checked { border-color:var(--accent); }
+.area-choice.is-disabled { opacity:.7; cursor:default; }
+.job-cards { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:10px; }
+.job-card { border:2px solid var(--line); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:6px; background:var(--bg); min-width:0; }
+.job-card p { margin:0; }
+.job-head { display:flex; gap:10px; align-items:center; }
+.job-icon { flex:none; color:var(--accent); }
+.done-mark { font-weight:700; color:var(--accent); }
+.job-units { display:flex; gap:6px; flex-wrap:wrap; }
+.career .field { display:flex; flex-direction:column; gap:6px; border:0; padding:0; margin:0; }
+.career .field legend { padding:0; font-weight:700; }
+.career .field > label { font-weight:700; }
+.career select, .career input[type=text], .career textarea { font:inherit; min-height:44px; padding:6px 8px; background:var(--card); color:var(--fg); border:2px solid var(--line); border-radius:8px; max-width:100%; box-sizing:border-box; }
+.career select:focus-visible, .career input:focus-visible, .career textarea:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+.skill-checks { display:flex; flex-wrap:wrap; gap:4px 16px; }
+.print-only { display:none; }
+.save-msg { min-height:1.2em; margin:4px 0 0; font-weight:700; }
+@media (max-width: 560px) {
+  .skill-bars li { grid-template-columns:1fr 3.5rem; }
+  .skill-bars .bar-track { grid-column:1 / -1; grid-row:2; }
+}
+@media print {
+  .no-print, .back, .tag.no-print { display:none !important; }
+  .print-only { display:inline !important; }
+  .career select, .career input[type=text] { display:none !important; }
+  .career .print-value { font-weight:700; }
+  body { background:#fff; color:#000; }
+  .career-stage, .box { border:0; padding:0; background:#fff; }
+  .career-card textarea { border:1px solid #000; background:#fff; color:#000; }
+  .career .app, .app.career { max-width:none; padding:0; }
+}

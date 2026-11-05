@@ -27,6 +27,12 @@ describe('describeSituation', () => {
     expect(d('order-check-complete')).toBe('쌓인 차례를 맞게 놓음');
     expect(d('order-finished')).toBe('쌓인 차례와 그때의 환경을 모두 알아냄');
   });
+  it('진로 활동은 단계만 말한다', () => {
+    const d = (lastKind: string) => describeSituation({ activity: 'portfolio', lastKind, mismatch: false });
+    expect(d('stage-1')).toBe('내 탐구 기록을 보는 중');
+    expect(d('stage-4')).toBe('진로 탐색 카드를 쓰는 중');
+    expect(d('stage-9')).toBeNull();
+  });
   it('모르는 키나 없는 값은 null', () => {
     expect(describeSituation({ activity: 'classify', lastKind: 'zzz', mismatch: false })).toBeNull();
     expect(describeSituation({ mismatch: false })).toBeNull();

@@ -2,6 +2,7 @@ import {
   ManifestError,
   isCardSortExperiment,
   isObservationExperiment,
+  isPortfolioExperiment,
   isVariableExperiment,
   parseManifest,
   type CardSortExperiment,
@@ -9,6 +10,7 @@ import {
   type Manifest,
   type ModuleKind,
   type ObservationExperiment,
+  type PortfolioExperiment,
   type VariableExperiment,
 } from '@sci/schema';
 import gasesJson from '../../../content/units/g4-gases/manifest.json';
@@ -42,17 +44,20 @@ import energyJson from '../../../content/units/g5-energy/manifest.json';
 import nightSkyJson from '../../../content/units/g4-night-sky/manifest.json';
 import materialJson from '../../../content/units/g3-material/manifest.json';
 import strataJson from '../../../content/units/g5-strata/manifest.json';
+import careerJson from '../../../content/units/g6-career/manifest.json';
 import { MODULES } from './modules';
 import { classifyModule } from './modules/indicator-classify';
 import { observeModule } from './modules/sky-observation';
 import { cardSortModule } from './modules/card-sort';
-import type { AnyModule, CardSortModule, ClassifyModule, ObserveModule } from './modules/types';
+import { portfolioModule } from './modules/career-portfolio';
+import type { AnyModule, CardSortModule, ClassifyModule, ObserveModule, PortfolioModule } from './modules/types';
 
 export type UnitEntry =
   | { ok: true; activity: 'variable'; id: string; manifest: Manifest; experiment: VariableExperiment; module: AnyModule }
   | { ok: true; activity: 'classify'; id: string; manifest: Manifest; experiment: ClassificationExperiment; module: ClassifyModule }
   | { ok: true; activity: 'observe'; id: string; manifest: Manifest; experiment: ObservationExperiment; module: ObserveModule }
   | { ok: true; activity: 'card-sort'; id: string; manifest: Manifest; experiment: CardSortExperiment; module: CardSortModule }
+  | { ok: true; activity: 'portfolio'; id: string; manifest: Manifest; experiment: PortfolioExperiment; module: PortfolioModule }
   | { ok: false; id: string; title: string; issues: string[] };
 
 /** 매니페스트 하나를 schema 검증과 모듈 validate에 통과시킨다. 실패하면 오류 항목을 돌려준다. */
@@ -74,7 +79,9 @@ export function loadUnit(
           ? observeModule.validate(exp)
           : isCardSortExperiment(exp)
             ? cardSortModule.validate(exp)
-            : classifyModule.validate(exp);
+            : isPortfolioExperiment(exp)
+              ? portfolioModule.validate(exp)
+              : classifyModule.validate(exp);
       for (const msg of msgs) issues.push(`${exp.id}: ${msg}`);
     }
     if (issues.length > 0) return { ok: false, id: manifest.id, title: manifest.title, issues };
@@ -84,6 +91,9 @@ export function loadUnit(
     }
     if (isCardSortExperiment(experiment)) {
       return { ok: true, activity: 'card-sort', id: manifest.id, manifest, experiment, module: cardSortModule };
+    }
+    if (isPortfolioExperiment(experiment)) {
+      return { ok: true, activity: 'portfolio', id: manifest.id, manifest, experiment, module: portfolioModule };
     }
     if (!isVariableExperiment(experiment)) {
       return { ok: true, activity: 'classify', id: manifest.id, manifest, experiment, module: classifyModule };
@@ -107,7 +117,7 @@ export function buildRegistry(
   return raws.map((raw, i) => loadUnit(raw, i, modules));
 }
 
-export const UNITS: UnitEntry[] = buildRegistry([gasesJson, solutionJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, earthMotionJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, animalJson, plantlifeJson, forceJson, soundJson, magnetJson, motionJson, materialJson, waterStateJson, mixtureJson, earthSeaJson, nightSkyJson, strataJson, weatherJson, healthJson, climateJson, energyJson]);
+export const UNITS: UnitEntry[] = buildRegistry([gasesJson, solutionJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, earthMotionJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, animalJson, plantlifeJson, forceJson, soundJson, magnetJson, motionJson, materialJson, waterStateJson, mixtureJson, earthSeaJson, nightSkyJson, strataJson, weatherJson, healthJson, climateJson, energyJson, careerJson]);
 
 export type Route = { page: 'list' } | { page: 'unit'; unitId: string };
 

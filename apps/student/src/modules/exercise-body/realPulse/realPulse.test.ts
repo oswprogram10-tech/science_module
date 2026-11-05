@@ -311,7 +311,7 @@ describe('블루투스 심박 센서', () => {
 
 describe('H2: 실측값을 다루는 코드는 어디에도 쓰거나 보내지 않는다', () => {
   // 주석을 뺀 코드에 저장소·네트워크·로그·주소를 만지는 말이 없어야 한다.
-  const FORBIDDEN = ['localStorage', 'sessionStorage', 'indexedDB', 'caches', 'console', 'location', 'history', 'fetch', 'WebSocket', 'XMLHttpRequest', 'sendBeacon', 'xapi', 'recorder', 'classroom', 'postMessage', 'BroadcastChannel', 'document.cookie'];
+  const FORBIDDEN = ['localStorage', 'sessionStorage', 'indexedDB', 'caches', 'console', 'location', 'history', 'fetch', 'WebSocket', 'XMLHttpRequest', 'sendBeacon', 'xapi', 'recorder', 'classroom', 'postMessage', 'BroadcastChannel', 'document.cookie', 'logbook'];
   const dir = __dirname;
   const files = readdirSync(dir).filter((f) => /\.tsx?$/.test(f) && !/\.test\./.test(f));
 

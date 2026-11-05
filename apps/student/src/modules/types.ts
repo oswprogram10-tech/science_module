@@ -2,7 +2,7 @@ import type { ComponentType } from 'react';
 import type { Values } from '@sci/gateway';
 import type { Trial } from '@sci/runtime';
 import type { SensorKind } from '@sci/sensors';
-import type { CardSortExperiment, ClassificationExperiment, ObservationExperiment, VariableExperiment as Experiment, ModuleKind } from '@sci/schema';
+import type { CardSortExperiment, ClassificationExperiment, ObservationExperiment, PortfolioExperiment, VariableExperiment as Experiment, ModuleKind } from '@sci/schema';
 
 /** 화면이 그리는 데 필요한 값. values는 화면에 보이는 시행(없으면 현재 선택)의 조건이다. */
 export interface ViewProps<S extends { t: number }> {
@@ -104,4 +104,10 @@ export interface ObserveModule {
 export interface CardSortModule {
   kind: 'card-sort';
   validate(exp: CardSortExperiment): string[];
+}
+
+/** 진로 포트폴리오 활동 모듈. 화면은 PortfolioLab이 그리고, 모듈은 매니페스트 검증만 맡는다. */
+export interface PortfolioModule {
+  kind: 'career-portfolio';
+  validate(exp: PortfolioExperiment): string[];
 }

@@ -367,11 +367,74 @@ export const cardSortExperimentSchema = z.object({
   path: ['followUp'],
 });
 
+// ---- 진로 포트폴리오 활동 ----
+
+export const PORTFOLIO_MODULE = 'career-portfolio' as const;
+
+/** 진로 활동의 튜터 질문은 네 단계마다 하나씩 있다. */
+export const PORTFOLIO_STAGES = ['stage-1', 'stage-2', 'stage-3', 'stage-4'] as const;
+export const portfolioProbeWhenSchema = z.enum(PORTFOLIO_STAGES);
+
+export const portfolioProbeSchema = z.object({
+  when: portfolioProbeWhenSchema,
+  text: z.string().min(1),
+});
+
+/** 정답 누설 개념이 없는 활동이라 forbiddenAnswers는 빈 배열이어도 된다(다른 활동도 같은 형태). */
+export const portfolioTutorConfigSchema = z.object({
+  forbiddenAnswers: z.array(z.string().min(1)),
+  probes: z.array(portfolioProbeSchema).min(1),
+});
+
+export const portfolioAreaSchema = z.object({
+  key: z.string().min(1),
+  label: z.string().min(1),
+  /** 이 영역에 속하는 단원 id. 영역끼리 겹치지 않는다. */
+  units: z.array(z.string().min(1)),
+});
+
+export const portfolioSkillSchema = z.object({
+  key: z.string().min(1),
+  label: z.string().min(1),
+});
+
+export const portfolioJobSchema = z.object({
+  key: z.string().min(1),
+  label: z.string().min(1),
+  area: z.string().min(1),
+  /** 하는 일 한 문장. 성별 중립으로 쓴다("이 일을 하는 사람은 …"). */
+  does: z.string().min(1),
+  /** 쓰이는 탐구 능력 key (2~3개). */
+  skills: z.array(z.string().min(1)),
+  /** 관련 단원 id (1~3개). */
+  units: z.array(z.string().min(1)),
+  /** 그림 key. 사람 그림 없이 도구 아이콘만 쓴다. */
+  icon: z.string().min(1),
+});
+
+/** 나의 진로 탐색 카드(4단계)의 칸 이름. */
+export const portfolioPromptsSchema = z.object({
+  job: z.string().min(1),
+  skills: z.string().min(1),
+  more: z.string().min(1),
+});
+
+export const portfolioExperimentSchema = z.object({
+  ...commonShape,
+  module: z.literal(PORTFOLIO_MODULE),
+  areas: z.array(portfolioAreaSchema).min(1),
+  skills: z.array(portfolioSkillSchema).min(1),
+  jobs: z.array(portfolioJobSchema).min(1),
+  prompts: portfolioPromptsSchema,
+  tutor: portfolioTutorConfigSchema,
+});
+
 export const experimentSchema = z.discriminatedUnion('module', [
   variableExperimentSchema,
   classificationExperimentSchema,
   observationExperimentSchema,
   cardSortExperimentSchema,
+  portfolioExperimentSchema,
 ]);
 
 export const manifestSchema = z.object({
@@ -407,7 +470,13 @@ export type OrderBy = z.infer<typeof orderBySchema>;
 export type SortFeature = z.infer<typeof sortFeatureSchema>;
 export type SortCriterion = z.infer<typeof sortCriterionSchema>;
 export type SortCard = z.infer<typeof sortCardSchema>;
-export type Experiment = VariableExperiment | ClassificationExperiment | ObservationExperiment | CardSortExperiment;
+export type PortfolioExperiment = z.infer<typeof portfolioExperimentSchema>;
+export type PortfolioArea = z.infer<typeof portfolioAreaSchema>;
+export type PortfolioSkill = z.infer<typeof portfolioSkillSchema>;
+export type PortfolioJob = z.infer<typeof portfolioJobSchema>;
+export type PortfolioProbe = z.infer<typeof portfolioProbeSchema>;
+export type PortfolioStage = (typeof PORTFOLIO_STAGES)[number];
+export type Experiment = VariableExperiment | ClassificationExperiment | ObservationExperiment | CardSortExperiment | PortfolioExperiment;
 export type ClassifyProbe = z.infer<typeof classifyProbeSchema>;
 export type ClassifyProbeWhen = z.infer<typeof classifyProbeWhenSchema>;
 export type ColorDef = z.infer<typeof colorDefSchema>;
@@ -417,12 +486,13 @@ export type ClassifyIndicator = z.infer<typeof indicatorSchema>;
 export type Manifest = z.infer<typeof manifestSchema>;
 
 export const isVariableExperiment = (e: Experiment): e is VariableExperiment =>
-  e.module !== CLASSIFY_MODULE && e.module !== OBSERVE_MODULE && e.module !== CARD_SORT_MODULE;
+  e.module !== CLASSIFY_MODULE && e.module !== OBSERVE_MODULE && e.module !== CARD_SORT_MODULE && e.module !== PORTFOLIO_MODULE;
 export const isClassificationExperiment = (e: Experiment): e is ClassificationExperiment =>
   e.module === CLASSIFY_MODULE;
 
 export const isObservationExperiment = (e: Experiment): e is ObservationExperiment => e.module === OBSERVE_MODULE;
 export const isCardSortExperiment = (e: Experiment): e is CardSortExperiment => e.module === CARD_SORT_MODULE;
+export const isPortfolioExperiment = (e: Experiment): e is PortfolioExperiment => e.module === PORTFOLIO_MODULE;
 
 export class ManifestError extends Error {
   readonly issues: string[];
@@ -443,3 +513,5 @@ export function parseManifest(input: unknown): Manifest {
   }
   return result.data;
 }
+
+export * from './portfolio';

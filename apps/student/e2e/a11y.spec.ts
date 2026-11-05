@@ -1264,3 +1264,62 @@ for (const scheme of ['light', 'dark'] as const) {
     await expectNoSeriousViolations(page);
   });
 }
+
+// ---- 탐구 기록장과 g6-career(진로) ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  const label = scheme === 'light' ? '밝게' : '어둡게';
+
+  test(`탐구 기록장 카드와 켜기·끄기 대화 상자(${label})`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.goto('/');
+    await expect(page.getByRole('region', { name: '탐구 기록장' })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await page.getByRole('button', { name: '기록장 켜기' }).click();
+    await expect(page.getByRole('dialog', { name: '탐구 기록장을 켤까요?' })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await page.getByRole('button', { name: '켤게요' }).click();
+    await expectNoSeriousViolations(page);
+    await page.getByRole('button', { name: '기록장 끄기' }).click();
+    await expect(page.getByRole('dialog', { name: '기록장을 끌까요?' })).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+
+  test(`g6-career 네 단계(${label})`, async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.goto('/');
+    await page.getByRole('button', { name: '기록장 켜기' }).click();
+    await page.getByRole('dialog').getByRole('button', { name: '켤게요' }).click();
+    await gotoUnit(page, 'g4-gases');
+    await selectIV(page, '피스톤을 누르는 힘');
+    await predict(page, '줄어든다');
+    await runTrial(page);
+    await setValue(page, '피스톤을 누르는 힘', '세게 누름');
+    await predict(page, '줄어든다');
+    await runTrial(page);
+    await page.goto('/#/unit/g6-career');
+    const step = (n: number) => page.getByRole('navigation', { name: '진로 탐색 단계' }).getByRole('button', { name: new RegExp(`^${n} `) });
+    await expect(page.getByRole('heading', { level: 1, name: '과학과 나의 진로' })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await step(2).click();
+    await page.getByRole('checkbox', { name: /물질/ }).check();
+    await expectNoSeriousViolations(page);
+    await step(3).click();
+    await page.getByRole('button', { name: '다른 영역도 보기' }).click();
+    await expectNoSeriousViolations(page);
+    await step(4).click();
+    await page.getByLabel('관심 있는 직업').selectOption('vet');
+    await page.getByRole('checkbox', { name: '관찰하고 기록하기' }).check();
+    await page.getByLabel('더 알아보고 싶은 것', { exact: false }).fill('동물의 마음을 어떻게 알 수 있을까요?');
+    await page.getByRole('button', { name: '저장하기' }).click();
+    await expectNoSeriousViolations(page);
+  });
+
+  test(`g6-career 기록장이 꺼진 처음 화면(${label})`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.goto('/#/unit/g6-career');
+    await expect(page.getByText('기록이 없어요')).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+}

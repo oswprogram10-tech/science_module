@@ -274,7 +274,7 @@ export function generateScenarios(unitId: string, unit: UnitData): Scenario[] {
   const drafts: Draft[] = [];
   for (const exp of unit.manifest.experiments as Experiment[]) {
     if (exp.module === 'indicator-classify') drafts.push(...genClassify(unitId, exp));
-    else if (exp.module === 'sky-observation' || exp.module === 'card-sort') continue; // 관찰·카드 분류 활동은 이번 대표 단원에 없다.
+    else if (exp.module === 'sky-observation' || exp.module === 'card-sort' || exp.module === 'career-portfolio') continue; // 관찰·카드 분류·진로 활동은 이번 대표 단원에 없다.
     else drafts.push(...genVariable(unitId, exp));
   }
   return drafts.map((d, i) => ({

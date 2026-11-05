@@ -18,6 +18,7 @@ import { CardButton, Magnifier, useSortEmit } from './SortParts';
 import { OrderSortLab } from './OrderSortLab';
 import { TreeSortLab } from './TreeSortLab';
 import { useClassroomStatus } from '../../classroom/bus';
+import { logbook } from '../../logbook';
 
 export const CRITERION_CHANGED_NOTICE = '기준을 바꾸어서 카드를 다시 나눠요.';
 
@@ -94,6 +95,7 @@ function GroupsSortLab({
     const counts: Record<string, number> = {};
     for (const i of next.checked.items) counts[i.status] = (counts[i.status] ?? 0) + 1;
     emit('checked', { kind: next.checked.kind, criterion: next.criterion, ...counts });
+    logbook.noteCardSort(unitId, next.completed.length, isFinished(next, exp));
   };
 
   // 튜터

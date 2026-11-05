@@ -13,6 +13,8 @@ import type { VariableExperiment } from '@sci/schema';
 import { MockSafetyDetector, type SafetyEvent, type SafetyEventType } from '@sci/vision';
 import { ClassifyLab } from './modules/indicator-classify/ClassifyLab';
 import { CardSortLab } from './modules/card-sort/CardSortLab';
+import { PortfolioLab } from './modules/career-portfolio/PortfolioLab';
+import { logbook } from './logbook';
 import { ObserveLab } from './modules/sky-observation/ObserveLab';
 import { readPlaybackSeconds } from './playback';
 import { UNITS, parseRoute, unitHash, type UnitEntry } from './units';
@@ -79,6 +81,9 @@ function Routes() {
     if (unit.activity === 'card-sort') {
       return <CardSortLab key={unit.id} unitId={unit.id} title={unit.manifest.title} experiment={unit.experiment} />;
     }
+    if (unit.activity === 'portfolio') {
+      return <PortfolioLab key={unit.id} unitId={unit.id} title={unit.manifest.title} experiment={unit.experiment} unitTitles={UNIT_TITLES} />;
+    }
     if (unit.activity === 'observe') {
       return <ObserveLab key={unit.id} unitId={unit.id} title={unit.manifest.title} experiment={unit.experiment} />;
     }
@@ -86,6 +91,11 @@ function Routes() {
   }
   return <UnitList units={UNITS} hrefOf={unitHash} />;
 }
+
+/** 진로 활동이 "준비 중"을 가려내는 데 쓰는 단원 id -> 이름. */
+const UNIT_TITLES: Record<string, string> = Object.fromEntries(
+  UNITS.flatMap((u) => (u.ok ? [[u.id, u.manifest.title] as const] : [])),
+);
 
 const ACTOR_ID = 'anon-student-001';
 const activityId = (unitId: string, expId: string) => `https://sci-bridge.local/activities/${unitId}/${expId}`;
@@ -233,6 +243,21 @@ function Lab({
         });
         emit('experimented', {
           extensions: toExtensions({ trial: trial.index, kind: trial.analysis.kind, ...trial.result }),
+        });
+        // 탐구 기록장(학생이 켰을 때만 기록한다): 시행별 값이 아니라 요약만 남긴다.
+        const prevTrial = snap.trials[trial.index - 2];
+        const observedNow =
+          trial.analysis.kind === 'fair-test' && prevTrial
+            ? observedOutcome(
+                prevTrial.result[mod.metric.resultKey],
+                trial.result[mod.metric.resultKey],
+                mod.metric.sameThreshold(experiment),
+              )
+            : null;
+        logbook.noteVariableTrial(unitId, {
+          iv: trial.ivKey,
+          fair: trial.analysis.kind === 'fair-test',
+          ...(trial.prediction ? { predictionMatched: observedNow === trial.prediction } : {}),
         });
         setRunError(null);
       }

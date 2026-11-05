@@ -20,6 +20,7 @@ import { createStore } from './cardSortStore';
 import { followUpFeedback, orderFeedback } from './feedback';
 import { CardButton, Magnifier, useSortEmit } from './SortParts';
 import { useClassroomStatus } from '../../classroom/bus';
+import { logbook } from '../../logbook';
 
 export const ORDER_FINISHED_TEXT = '지층의 차례와 그때의 환경을 모두 알아냈어요!';
 export const ORDER_EARLIEST = '먼저 쌓임';
@@ -30,6 +31,11 @@ export const ORDER_LATEST = '나중에 쌓임';
  * 순서가 맞으면 같은 표본으로 followUp 무리 나누기(예: 그때의 환경)를 이어서 한다.
  * 정답 칸 번호, 특징값, 관찰하지 않은 문장은 화면과 DOM 속성에 나타나지 않는다.
  */
+/** 끝낸 기준 수: 순서 맞추기와 이어서 하는 무리 나누기 중 확인을 통과한 것. */
+function orderCriteriaDone(s: { checked: { kind: string } | null; followUp: { checked: { kind: string } | null } }): number {
+  return (s.checked?.kind === 'check-complete' ? 1 : 0) + (s.followUp.checked?.kind === 'check-complete' ? 1 : 0);
+}
+
 export function OrderSortLab({
   unitId,
   title,
@@ -89,6 +95,7 @@ export function OrderSortLab({
     const next = store.update((s) => checkOrder(s, exp));
     if (!next.checked) return;
     emit('order-checked', { kind: next.checked.kind, ...counts(next.checked.items) });
+    logbook.noteCardSort(unitId, orderCriteriaDone(next), isOrderFinished(next, exp));
   };
 
   const onFollowUp = (card: string, group: string | null) => {
@@ -103,6 +110,7 @@ export function OrderSortLab({
     if (!checked) return;
     emit('followup-checked', { kind: checked.kind, criterion: followUp?.key, ...counts(checked.items) });
     if (isOrderFinished(next, exp)) emit('finished');
+    logbook.noteCardSort(unitId, orderCriteriaDone(next), isOrderFinished(next, exp));
   };
 
   // 튜터

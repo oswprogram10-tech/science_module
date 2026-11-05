@@ -5,6 +5,7 @@ import { renderAndGuard } from '@sci/tutor';
 import { MemoryRecorder, buildStatement, toExtensions } from '@sci/xapi';
 import { readPlaybackSeconds } from '../../playback';
 import { useClassroomStatus, usePaused } from '../../classroom/bus';
+import { logbook } from '../../logbook';
 import { GroundView } from './GroundView';
 import { NorthSkyView } from './NorthSkyView';
 import { SolarSystemView } from './SolarSystemView';
@@ -166,6 +167,8 @@ export function ObserveLab({
       matchesModel: recordMatchesModel(exp, cur.task, cur.ts),
     });
     if (!isCompleted(before, task.id)) emit('task-completed', { task: task.id });
+    // 탐구 기록장(학생이 켰을 때만): 어떤 과제를 기록했는지와 모델과 맞았는지만 남긴다.
+    logbook.noteObservation(unitId, task.id, recordMatchesModel(exp, cur.task, cur.ts) === true);
   };
 
   // ---- 화면 값 ----

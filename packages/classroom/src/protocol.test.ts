@@ -34,6 +34,12 @@ describe('클라이언트 메시지', () => {
     expect(parseClientMessage(j({ t: 'safety', type: 'NO_GOGGLES', at: 1700000000000 }))).not.toBeNull();
     expect(parseClientMessage(j({ t: 'safetyClear', type: 'FOOD' }))).not.toBeNull();
   });
+  it('진로 활동은 단계만 받고, 글·직업 같은 다른 필드는 거부한다', () => {
+    const base = { t: 'status', unitId: 'g6-career', activity: 'portfolio', phase: 'running', trials: 3, lastKind: 'stage-3', safetyLocked: false };
+    expect(parseClientMessage(j(base))).toMatchObject({ activity: 'portfolio', trials: 3 });
+    expect(parseClientMessage(j({ ...base, job: 'vet' }))).toBeNull();
+    expect(parseClientMessage(j({ ...base, text: '궁금한 것' }))).toBeNull();
+  });
   it('정상 교사 메시지', () => {
     expect(parseClientMessage(j({ t: 'create' }))).not.toBeNull();
     expect(parseClientMessage(j({ t: 'create', secret: 'pw' }))).toMatchObject({ secret: 'pw' });
