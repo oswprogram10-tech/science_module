@@ -2386,3 +2386,91 @@ describe('g4-climate 매니페스트 probe', () => {
     }
   });
 });
+
+// ---------- 자원과 에너지(태양광 패널) 매니페스트 ----------
+import energyJson from '../../../content/units/g5-energy/manifest.json';
+
+describe('g5-energy 매니페스트 probe', () => {
+  const e = parseManifest(energyJson).experiments[0]! as VariableExperiment;
+  const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+  const eKeys = e.variables.map((v) => v.key);
+  const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+  const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: 'tilt', ...x });
+  const fair = (iv: string): Partial<ProbeContext> => ({ ivKey: iv, lastAnalysis: { kind: 'fair-test', changed: [iv] }, prediction: 'same', observed: 'same' });
+
+  it('iv별 fair-test 질문을 고른다', () => {
+    expect(selectProbe(eCtx(fair('tilt')), e.tutor.probes, eGuard)).toContain('세 가지 각도를 모두 해 보았나요?');
+    expect(selectProbe(eCtx(fair('frame')), e.tutor.probes, eGuard)).toContain('테두리 색만 바꾸었을 때 결과가 달라졌나요?');
+    expect(selectProbe(eCtx(fair('weather')), e.tutor.probes, eGuard)).toContain('만든 전기와 프로펠러 그래프는 어떻게 달라졌나요?');
+  });
+
+  it('실행 전 질문과 예측 불일치 질문', () => {
+    expect(selectProbe(eCtx({}), e.tutor.probes, eGuard)).toContain('만든 전기의 양이 어떻게 될지 예측해 볼까요?');
+    const text = selectProbe(eCtx({ ...fair('tilt'), prediction: 'decrease', observed: 'increase' }), e.tutor.probes, eGuard);
+    expect(text).toContain('빛줄기의 간격을 볼까요?');
+  });
+
+  it('모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+    let n = 0;
+    for (const probe of e.tutor.probes) {
+      for (const iv of eKeys) {
+        for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+          const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+          expect(text).not.toMatch(/[{}]/);
+          expect(text).not.toMatch(/(을\(를\)|이\(가\)|와\(과\)|은\(는\))/);
+          n++;
+        }
+      }
+    }
+    expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+  });
+
+  it('질문 문장은 금지 구절·limits 용어와 겹치지 않는다', () => {
+    for (const probe of e.tutor.probes) {
+      for (const f of e.tutor.forbiddenAnswers) expect(probe.text, probe.text).not.toContain(f);
+      for (const l of e.limits) expect(probe.text, probe.text).not.toContain(l);
+    }
+  });
+
+  it('금지 구절은 사양의 다섯 가지와 활용형까지 막는다', () => {
+    for (const answer of [
+      '30°일 때 가장 많이 만들어요', '30도일 때 가장 많이 만들어요', '30°에서 제일 많이 만들어요', '30도에서 가장 많이 만들어요', '30°가 가장 많이 만들어요',
+      '빛이 똑바로 닿을수록 많이 만들어요', '똑바로 닿을수록 많이 만들어요', '똑바로 닿으면 더 많이 만들어요', '수직으로 닿을수록 많아요', '빛이 강할수록 많아요',
+      '흐린 날에는 적게 만들어요', '흐린 날은 적게 만들어요', '흐린 날은 전기가 줄어요', '흐리면 적게 만들어요', '구름이 끼면 줄어요', '맑은 날에 더 많이 만들어요',
+      '그늘이 지면 줄어요', '그늘이 지면 적게 만들어요', '그늘이 생기면 줄어들어요', '그늘이 있으면 덜 만들어요', '가려지면 줄어요', '그늘 때문에 줄어요',
+      '테두리 색은 관계없어요', '테두리 색은 상관없어요', '테두리 색은 영향이 없어요', '테두리 색과 관계없이 같아요', '테두리 색이 달라도 같아요', '테두리는 관계없어요',
+    ]) expect(guardOutput(answer, eGuard).ok, answer).toBe(false);
+    for (const l of e.limits) expect(guardOutput(`${l}이에요`, eGuard).ok, l).toBe(false);
+  });
+
+  it('질문과 화면에 보이는 글은 금지 구절·limits 용어와 겹치지 않는다', () => {
+    const shown = [
+      e.title, e.question, e.predictionPrompt,
+      ...e.variables.flatMap((v) => [v.label, v.unit ?? '', ...v.options.map((o) => o.label)]),
+      ...e.dependent.flatMap((d) => [d.label, d.unit ?? '']),
+      ...(e.safetyChecklist ?? []), ...Object.values(e.safetyMessages ?? {}),
+      '⚠ 태양을 직접 보지 않아요.',
+      '같은 넓이에 닿는 빛줄기가 많을수록 전기를 많이 만들어요.',
+      '실제 패널은 일부만 가려져도 더 많이 줄 수 있어요. 태양 높이는 계절과 시각에 따라 달라져요.',
+      '모형의 한계', '실험하면 패널이 만든 전기의 양을 볼 수 있어요.', '실험하면 햇빛이 패널에 닿는 모습을 볼 수 있어요.',
+      '60.0초 · 만든 전기 433 mW · 돈 횟수 104번',
+      '눈으로 보기', '빛이 닿는 모습 보기', '태양', '그늘', '나무', '프로펠러', '햇빛', '패널', '가상 전력계', '프로펠러가 돈 횟수(번)', '시간(초)',
+      '만든 전기(mW)', '1분 동안 돈 횟수(번)', '결과: 늘어났다', '결과: 줄어들었다', '결과: 변하지 않았다',
+    ];
+    for (const text of shown) expect(guardOutput(text, eGuard).ok, text).toBe(true);
+  });
+
+  it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+    const situations: Partial<ProbeContext>[] = [
+      {}, { lastAnalysis: { kind: 'first-trial', changed: [] } }, { lastAnalysis: { kind: 'confounded', changed: ['tilt', 'weather'] } },
+      { lastAnalysis: { kind: 'iv-unchanged', changed: ['frame'] } }, { lastAnalysis: { kind: 'repeat', changed: [] } },
+      ...eKeys.flatMap((k) => [fair(k), { ...fair(k), prediction: 'decrease' as const, observed: 'increase' as const }]),
+    ];
+    for (const s of situations) {
+      const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+      expect(text).not.toBe(FALLBACK_PROBE);
+      expect(guardOutput(text, eGuard).ok, text).toBe(true);
+    }
+  });
+});

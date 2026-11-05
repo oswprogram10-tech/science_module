@@ -56,7 +56,7 @@ export const tutorConfigSchema = z.object({
 });
 
 /** 변인 실험(조작변인을 바꿔 수치를 비교하는 활동)의 모듈 종류. */
-export const moduleKindSchema = z.enum(['dissolution', 'gas-syringe', 'candle-jar', 'insulated-cup', 'convex-lens', 'electromagnet', 'magma-cooling', 'sun-angle', 'germination', 'transpiration', 'food-web', 'mold-growth', 'exercise-body', 'lever-balance', 'string-sound', 'magnet-distance', 'ramp-cart', 'freeze-melt', 'salt-sand', 'stream-table', 'land-sea-breeze', 'infection-spread', 'greenhouse-bottle']);
+export const moduleKindSchema = z.enum(['dissolution', 'gas-syringe', 'candle-jar', 'insulated-cup', 'convex-lens', 'electromagnet', 'magma-cooling', 'sun-angle', 'germination', 'transpiration', 'food-web', 'mold-growth', 'exercise-body', 'lever-balance', 'string-sound', 'magnet-distance', 'ramp-cart', 'freeze-melt', 'salt-sand', 'stream-table', 'land-sea-breeze', 'infection-spread', 'greenhouse-bottle', 'solar-panel']);
 
 export const safetyNoticeSchema = z.object({
   key: z.string().min(1),

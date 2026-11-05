@@ -6,7 +6,7 @@ export interface SensorReading {
   stale?: boolean;
 }
 
-export type SensorKind = 'temperature' | 'scale' | 'pressure' | 'oxygen' | 'carbonDioxide' | 'light' | 'humidity' | 'pulse' | 'tilt' | 'sound' | 'distance' | 'speed';
+export type SensorKind = 'temperature' | 'scale' | 'pressure' | 'oxygen' | 'carbonDioxide' | 'light' | 'humidity' | 'pulse' | 'tilt' | 'sound' | 'distance' | 'speed' | 'power';
 
 export interface SensorDriver {
   id: string;
@@ -89,6 +89,7 @@ export const TILT_NOISE_DEG = 0.1;
 export const SOUND_NOISE_LEVEL = 0.2;
 export const DISTANCE_NOISE_CM = 0.05;
 export const SPEED_NOISE_MS = 0.01;
+export const POWER_NOISE_MW = 0.4;
 export const BEAKER_G = 100;
 
 /** 값 = source() + 시드 고정 잡음(±0.2 °C), 소수 첫째 자리. */
@@ -212,6 +213,16 @@ export class MockSpeedDriver extends MockDriver {
   unit = 'm/s';
   protected measure() {
     return roundTo(Math.max(0, this.source() + (this.rng() * 2 - 1) * SPEED_NOISE_MS), 2);
+  }
+}
+
+/** 가상 전력계: 값 = source()(mW) + 시드 고정 잡음(±0.4 mW), 0 이상, 정수. source가 정수면 값은 source와 같다. */
+export class MockPowerDriver extends MockDriver {
+  id = 'mock-power';
+  kind = 'power' as const;
+  unit = 'mW';
+  protected measure() {
+    return Math.max(0, Math.round(this.source() + (this.rng() * 2 - 1) * POWER_NOISE_MW));
   }
 }
 

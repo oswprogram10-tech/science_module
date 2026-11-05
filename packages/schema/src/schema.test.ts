@@ -24,6 +24,7 @@ import earthSeaJson from '../../../content/units/g3-earth-sea/manifest.json';
 import weatherJson from '../../../content/units/g5-weather/manifest.json';
 import healthJson from '../../../content/units/g3-health/manifest.json';
 import climateJson from '../../../content/units/g4-climate/manifest.json';
+import energyJson from '../../../content/units/g5-energy/manifest.json';
 import animalJson from '../../../content/units/g3-animal/manifest.json';
 import plantlifeJson from '../../../content/units/g3-plantlife/manifest.json';
 import earthJson from '../../../content/units/g6-earth-motion/manifest.json';
@@ -183,7 +184,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
   const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
   it('아홉 매니페스트가 모두 검증을 통과한다', () => {
-    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, forceJson, soundJson, magnetJson, motionJson, waterStateJson, mixtureJson, earthSeaJson, weatherJson, healthJson, climateJson]) expect(() => parseManifest(j)).not.toThrow();
+    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, forceJson, soundJson, magnetJson, motionJson, waterStateJson, mixtureJson, earthSeaJson, weatherJson, healthJson, climateJson, energyJson]) expect(() => parseManifest(j)).not.toThrow();
   });
 
   it('연소 매니페스트의 점검표와 경고 문구를 읽는다', () => {
@@ -510,6 +511,23 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     expect(e.params).toEqual({ totalMin: 20 });
     expect(e.limits).toEqual(['복사 평형', '적외선 흡수', '복사 강제력', '탄소 순환', 'ppm']);
     expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['air', 'cap']);
+  });
+
+  it('자원과 에너지 매니페스트의 변인, 측정, 안전, 한계 용어, 탐침을 읽는다', () => {
+    const m = parseManifest(energyJson);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g5-energy', 5, 'ssi', ['6과18-02']]);
+    const e = m.experiments[0] as VariableExperiment;
+    expect(e.module).toBe('solar-panel');
+    expect(e.safety).toEqual(['sun']);
+    expect(e.safetyChecklist).toHaveLength(3);
+    expect(Object.keys(e.safetyMessages!).sort()).toEqual(['FOOD', 'NO_GLOVES', 'NO_GOGGLES', 'SPILL']);
+    expect(e.variables.map((v) => v.key)).toEqual(['tilt', 'weather', 'shade', 'frame']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([[0, 30, 60], ['sunny', 'cloudy'], ['none', 'half'], ['black', 'silver']]);
+    expect(e.variables.map((v) => v.default)).toEqual([0, 'sunny', 'none', 'black']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['power', 'mW'], ['turns', '번']]);
+    expect(e.params).toEqual({ totalS: 60, sunAltDeg: 60 });
+    expect(e.limits).toEqual(['효율', '입사각', '일사량', '광전 효과', '바이패스 다이오드']);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['tilt', 'frame']);
   });
 
   it('두 필드는 없어도 된다', () => {

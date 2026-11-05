@@ -1189,6 +1189,43 @@ for (const scheme of ['light', 'dark'] as const) {
   });
 }
 
+// ---- g5-energy ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`g5-energy ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 처음, 점검표, 실행 뒤(기준), 30°, 흐림·그늘과 "모형의 한계" 펼침`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g5-energy');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '패널 기울기');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(page.getByRole('dialog', { name: '안전 점검표' })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await confirmSafetyDialog(page);
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('60.0초 · 만든 전기 433 mW · 돈 횟수 104번')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await setValue(page, '패널 기울기', '30°');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('60.0초 · 만든 전기 500 mW · 돈 횟수 120번')).toBeVisible();
+    await page.getByText('모형의 한계', { exact: true }).click();
+    await expectNoSeriousViolations(page);
+    await page.reload();
+    await selectIV(page, '날씨');
+    await setValue(page, '날씨', '흐린 날');
+    await setValue(page, '그늘', '패널 절반을 가림');
+    await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await confirmSafetyDialog(page);
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('60.0초 · 만든 전기 65 mW · 돈 횟수 16번')).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+}
+
 // ---- 수업 연결 ----
 
 for (const scheme of ['light', 'dark'] as const) {
