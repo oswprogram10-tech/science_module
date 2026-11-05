@@ -11,14 +11,19 @@ import {
   raSun,
   southConstellationAt,
   southConstellationAt9pm,
+  skyAngularDistanceDeg,
+  starMotionDeg,
   starPosition,
+  starTaskPositions,
   sunDeclination,
   sunPosition,
   validateSkyObservation,
 } from './astro';
 import earthJson from '../../../../content/units/g6-earth-motion/manifest.json';
+import nightSkyJson from '../../../../content/units/g4-night-sky/manifest.json';
 
 const exp = parseManifest(earthJson).experiments[0] as ObservationExperiment;
+const nightExp = parseManifest(nightSkyJson).experiments[0] as ObservationExperiment;
 
 describe('태양 위치 (서울, 위도 37.5°N)', () => {
   it('정오 고도: 춘분 52.5, 하지 75.9, 동지 29.1', () => {
@@ -140,7 +145,7 @@ describe('answerFor: 모델에서 계산한 과제 정답', () => {
 
   it('모든 규칙이 매니페스트의 선택지 안에서 답한다', () => {
     for (const rule of observationAnswerSchema.options) {
-      const tasks = exp.tasks.filter((t) => t.answer === rule);
+      const tasks = [...exp.tasks, ...nightExp.tasks].filter((t) => t.answer === rule);
       expect(tasks.length, rule).toBeGreaterThan(0);
       for (const t of tasks) {
         for (const combo of controlCombos(t.controls)) {
@@ -163,6 +168,10 @@ describe('매니페스트 검사', () => {
     expect(validateSkyObservation(exp)).toEqual([]);
   });
 
+  it('밤하늘 관찰 매니페스트도 문제가 없다(모든 조작 조합의 모델 결과가 선택지에 있다)', () => {
+    expect(validateSkyObservation(nightExp)).toEqual([]);
+  });
+
   it('선택지에 없는 모델 결과, 빠진 질문, 겹치는 id를 찾아낸다', () => {
     const bad = JSON.parse(JSON.stringify(exp)) as ObservationExperiment;
     bad.tasks[1]!.options = [{ value: 'day', label: '낮이에요' }, { value: 'x', label: 'x' }];
@@ -174,5 +183,40 @@ describe('매니페스트 검사', () => {
     expect(issues.some((i) => i.includes('star-path') && i.includes('prediction-mismatch'))).toBe(true);
     expect(issues.some((i) => i.includes('겹칩니다'))).toBe(true);
     expect(issues.some((i) => i.includes('latDeg'))).toBe(true);
+  });
+});
+
+describe('밤하늘 관찰의 새 정답 규칙 네 개', () => {
+  it('결과: 목성 11, 해왕성 30, 길잡이 별 polaris, 북극성 nearly-still', () => {
+    expect(answerFor('jupiter-earth-size', {})).toBe('11');
+    expect(answerFor('neptune-distance', {})).toBe('30');
+    expect(answerFor('pointer-star-target', {})).toBe('polaris');
+    expect(answerFor('polaris-motion', {})).toBe('nearly-still');
+  });
+
+  it('결과는 모두 문자열이고 조작(compare, rotation)이 있어도 같다', () => {
+    for (const compare of ['size', 'distance']) {
+      expect(answerFor('jupiter-earth-size', { compare })).toBe('11');
+      expect(answerFor('neptune-distance', { compare })).toBe('30');
+    }
+    for (const rotation of ['forward', 'reverse']) {
+      expect(answerFor('polaris-motion', { rotation })).toBe('nearly-still');
+      expect(typeof answerFor('polaris-motion', { rotation })).toBe('string');
+    }
+  });
+
+  it('북극성은 밤 9시 → 자정에 1° 미만(≈0.56°), 북두칠성 두베는 20° 이상 움직인다(역방향 자전도 같다)', () => {
+    expect(starMotionDeg('polaris')).toBeLessThan(1);
+    expect(starMotionDeg('polaris')).toBeCloseTo(0.56, 1);
+    expect(starMotionDeg('polaris', { rotation: 'reverse' })).toBeLessThan(1);
+    expect(starMotionDeg('dubhe')).toBeGreaterThanOrEqual(20);
+    expect(starMotionDeg('dubhe', { rotation: 'reverse' })).toBeGreaterThanOrEqual(20);
+  });
+
+  it('별 과제의 두 위치 사이 각거리는 starMotionDeg와 같고, 두베는 밤 9시 → 자정에 높아진다', () => {
+    const [a, b] = starTaskPositions('dubhe');
+    expect(skyAngularDistanceDeg(a, b)).toBeCloseTo(starMotionDeg('dubhe'), 6);
+    expect(skyAngularDistanceDeg(a, a)).toBeCloseTo(0, 6);
+    expect(b.altDeg).toBeGreaterThan(a.altDeg);
   });
 });

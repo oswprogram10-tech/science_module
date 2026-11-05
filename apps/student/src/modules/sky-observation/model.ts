@@ -33,7 +33,7 @@ const paramDay = (exp: ObservationExperiment): number => {
 
 /** 과제의 처음 시각. 별 과제와 계절 과제는 밤 9시, 나머지는 정오. */
 export function defaultHour(task: ObservationTask): number {
-  if (task.view === 'revolution') return NIGHT_HOUR;
+  if (task.view === 'revolution' || task.view === 'north-sky') return NIGHT_HOUR;
   return task.answer === 'star-path-direction' ? STAR_TASK_START_HOUR : 12;
 }
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import manifestJson from '../../../content/units/g5-solution/manifest.json';
 import { parseManifest, type ClassificationExperiment, type ObservationExperiment, type VariableExperiment } from '@sci/schema';
 import earthMotionJson from '../../../content/units/g6-earth-motion/manifest.json';
+import nightSkyJson from '../../../content/units/g4-night-sky/manifest.json';
 import {
   FALLBACK_PROBE,
   guardOutput,
@@ -580,6 +581,74 @@ describe('지구의 운동 과제 probe 전수 검사', () => {
   it('금지 문장과 limits 용어는 실제로 가드에 걸린다', () => {
     for (const phrase of o.tutor.forbiddenAnswers) expect(guardOutput(phrase, oGuard).ok).toBe(false);
     for (const l of o.limits) expect(guardOutput(`${l}이에요`, oGuard).ok, l).toBe(false);
+  });
+});
+
+// ---------- 밤하늘 관찰(관찰 활동 재사용) 매니페스트 ----------
+describe('밤하늘 관찰 과제 probe 전수 검사', () => {
+  const n = parseManifest(nightSkyJson).experiments[0]! as ObservationExperiment;
+  const nGuard = { forbiddenAnswers: n.tutor.forbiddenAnswers, limits: n.limits };
+  const WHENS = ['before-observe', 'observing', 'record-mismatch', 'record-match', 'prediction-mismatch'] as const;
+
+  it('과제 4개 × 5가지 when이 모두 있고 가드를 통과하며 폴백이 아니고 그대로 출력된다', () => {
+    let count = 0;
+    expect(n.tasks).toHaveLength(4);
+    for (const task of n.tasks) {
+      expect(task.probes.map((p) => p.when).sort(), task.id).toEqual([...WHENS].sort());
+      for (const when of WHENS) {
+        const probe = task.probes.find((p) => p.when === when)!;
+        const out = renderAndGuard(when, {}, task.probes, nGuard);
+        expect(out, `${task.id}/${when}`).not.toBe(FALLBACK_PROBE);
+        expect(out).toBe(probe.text);
+        expect(guardOutput(probe.text, nGuard).ok, `${task.id}/${when}: ${probe.text}`).toBe(true);
+        expect(out).not.toMatch(/\{|\}|\(를\)|\(는\)|\(가\)/);
+        count++;
+      }
+    }
+    expect(count).toBe(20);
+  });
+
+  it('모든 probe는 질문형이고, 어려운 용어(limits)와 정답 문장이 없다', () => {
+    for (const task of n.tasks) {
+      for (const probe of task.probes) {
+        expect(probe.text.endsWith('?'), `${task.id}/${probe.when}: ${probe.text}`).toBe(true);
+        for (const l of n.limits) expect(probe.text, `${task.id}/${probe.when}`).not.toContain(l);
+        for (const f of n.tutor.forbiddenAnswers) expect(probe.text, `${task.id}/${probe.when}`).not.toContain(f);
+      }
+    }
+  });
+
+  it('금지 문장과 limits 용어는 실제로 가드에 걸린다', () => {
+    for (const phrase of n.tutor.forbiddenAnswers) expect(guardOutput(phrase, nGuard).ok, phrase).toBe(false);
+    for (const l of n.limits) expect(guardOutput(`${l}이에요`, nGuard).ok, l).toBe(false);
+  });
+
+  it('활용형·조사가 붙은 정답 문장도 가드에 걸린다', () => {
+    const inflected = [
+      '목성은 지구보다 약 11배',
+      '목성은 지구보다 11배예요',
+      '목성은 지구보다 약 11배 커요',
+      '목성의 지름은 지구의 약 11배예요',
+      '목성은 약 11배 큽니다',
+      '해왕성까지 약 30칸이에요',
+      '해왕성까지 30칸쯤 돼요',
+      '해왕성은 약 30칸 떨어져 있어요',
+      '30칸쯤 될 거예요',
+      '북극성은 거의 움직이지 않아요',
+      '북극성은 움직이지 않는 것처럼 보여요',
+      '북극성은 거의 제자리에 있어요',
+      '거의 제자리에 있어요',
+      '5배만큼 늘이면 북극성에 닿아요',
+      '5배 늘이면 북극성이에요',
+      '가장 큰 행성은 목성이에요',
+      '목성이 가장 큰 행성이에요',
+    ];
+    for (const text of inflected) expect(guardOutput(text, nGuard).ok, text).toBe(false);
+  });
+
+  it('렌더 단계에서도 정답 문장이 든 probe는 폴백으로 바뀐다', () => {
+    const bad = [{ when: 'record-match', text: '목성은 지구보다 약 11배 커요.' }];
+    expect(renderAndGuard('record-match', {}, bad, nGuard)).toBe(FALLBACK_PROBE);
   });
 });
 

@@ -193,6 +193,10 @@ export const observationAnswerSchema = z.enum([
   'star-path-direction',
   'constellation-changes',
   'winter-constellation',
+  'jupiter-earth-size',
+  'neptune-distance',
+  'pointer-star-target',
+  'polaris-motion',
 ]);
 
 export const observationControlSchema = z
@@ -212,7 +216,7 @@ export const observationTaskSchema = z.object({
   title: z.string().min(1),
   question: z.string().min(1),
   options: z.array(optionSchema).min(2).max(5),
-  view: z.enum(['rotation', 'revolution']),
+  view: z.enum(['rotation', 'revolution', 'solar-system', 'north-sky']),
   controls: z.array(observationControlSchema).optional(),
   answer: observationAnswerSchema,
   probes: z.array(observationProbeSchema),

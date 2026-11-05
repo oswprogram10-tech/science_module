@@ -1,6 +1,7 @@
 import type { ObservationExperiment, ObservationProbeWhen, ObservationTask } from '@sci/schema';
 import { observeWhen } from '@sci/tutor';
 import { DEFAULT_MONTH, defaultHour, modelAnswer, type Controls } from './model';
+import { NORTH_HOUR_MAX, NORTH_HOUR_MIN } from './nightModel';
 
 export type Value = string | number;
 
@@ -18,6 +19,9 @@ export interface TaskState {
   /** 시각·달 슬라이더나 조건 토글을 한 번 이상 움직였는가. */
   observed: boolean;
   recorded: Recorded | null;
+  /** 북쪽 하늘 보기의 "길잡이 선 보기"와 "별 자취 남기기" 토글. */
+  guide: boolean;
+  trailOn: boolean;
 }
 
 export interface ObserveState {
@@ -39,13 +43,21 @@ function initialTask(task: ObservationTask): TaskState {
     month: DEFAULT_MONTH,
     observed: false,
     recorded: null,
+    guide: false,
+    trailOn: false,
   };
 }
+
+/** 지나온 시각(점선·별 자취)을 모으는 과제인가. */
+const keepsTrail = (task: ObservationTask): boolean => task.view === 'rotation' || task.view === 'north-sky';
+
+/** 시각 슬라이더가 있는 과제의 범위. */
+const hourRange = (task: ObservationTask): [number, number] => (task.view === 'north-sky' ? [NORTH_HOUR_MIN, NORTH_HOUR_MAX] : [0, 24]);
 
 export function createInitialState(exp: ObservationExperiment): ObserveState {
   const tasks = Object.fromEntries(exp.tasks.map((t) => [t.id, initialTask(t)]));
   const first = exp.tasks[0]!;
-  return { selected: first.id, tasks, trail: first.view === 'rotation' ? [tasks[first.id]!.hour] : [] };
+  return { selected: first.id, tasks, trail: keepsTrail(first) ? [tasks[first.id]!.hour] : [] };
 }
 
 /** 선택한 과제와 그 상태. */
@@ -63,7 +75,7 @@ export function select(state: ObserveState, exp: ObservationExperiment, taskId: 
   const task = taskOf(exp, taskId);
   if (!task || taskId === state.selected) return state;
   const ts = state.tasks[taskId]!;
-  return { ...state, selected: taskId, trail: task.view === 'rotation' ? [ts.hour] : [] };
+  return { ...state, selected: taskId, trail: keepsTrail(task) ? [ts.hour] : [] };
 }
 
 /** 예측을 고른다(바꿔도 된다). 선택지에 없는 값은 무시한다. */
@@ -83,13 +95,23 @@ export const canRecord = (state: ObserveState, exp: ObservationExperiment): bool
   return ts.prediction !== null && ts.observed;
 };
 
-/** rotation 과제의 시각(0~24시, 0.5시 단위). 막혀 있거나 값이 그대로면 상태를 바꾸지 않는다. */
+/** 시각 슬라이더가 있는 과제(rotation 0~24시, north-sky 오후 7시~새벽 3시)의 시각, 0.5시 단위. 막혀 있거나 값이 그대로면 상태를 바꾸지 않는다. */
 export function setHour(state: ObserveState, exp: ObservationExperiment, hour: number): ObserveState {
   const { task, ts } = current(state, exp);
-  if (task.view !== 'rotation' || ts.prediction === null || !Number.isFinite(hour)) return state;
-  const h = quantizeHour(hour);
+  if (!keepsTrail(task) || ts.prediction === null || !Number.isFinite(hour)) return state;
+  const [lo, hi] = hourRange(task);
+  const h = Math.min(hi, Math.max(lo, Math.round(hour * 2) / 2));
   if (h === ts.hour) return state;
-  const trail = state.trail.includes(h) ? state.trail : [...state.trail, h];
+  // 북쪽 하늘 보기는 건너뛴 시각의 별 자취도 이어서 남긴다.
+  const stops: number[] = [];
+  if (task.view === 'north-sky') {
+    const dir = h > ts.hour ? 1 : -1;
+    for (let x = ts.hour + dir * 0.5; dir > 0 ? x <= h : x >= h; x += dir * 0.5) stops.push(x);
+  } else {
+    stops.push(h);
+  }
+  const trail = [...state.trail];
+  for (const x of stops) if (!trail.includes(x)) trail.push(x);
   return { ...withTask(state, task.id, { hour: h, observed: true }), trail };
 }
 
@@ -110,8 +132,22 @@ export function setControl(state: ObserveState, exp: ObservationExperiment, key:
   if (ts.controls[key] === value) return state;
   return {
     ...withTask(state, task.id, { controls: { ...ts.controls, [key]: value }, observed: true }),
-    trail: task.view === 'rotation' ? [ts.hour] : [],
+    trail: keepsTrail(task) ? [ts.hour] : [],
   };
+}
+
+/** 북쪽 하늘 보기의 토글("길잡이 선 보기", "별 자취 남기기"). 예측 전에는 바꿀 수 없고, 바꾸면 관찰한 것으로 친다. */
+export function setSkyToggle(state: ObserveState, exp: ObservationExperiment, key: 'guide' | 'trailOn', on: boolean): ObserveState {
+  const { task, ts } = current(state, exp);
+  if (task.view !== 'north-sky' || ts.prediction === null || ts[key] === on) return state;
+  return withTask(state, task.id, { [key]: on, observed: true });
+}
+
+/** 태양계 모형 보기에서 "크기 비교"나 "거리 비교"를 눌러 살펴본 것으로 친다(이미 고른 쪽을 눌러도 된다). */
+export function touchView(state: ObserveState, exp: ObservationExperiment): ObserveState {
+  const { task, ts } = current(state, exp);
+  if (task.view !== 'solar-system' || ts.prediction === null || ts.observed) return state;
+  return withTask(state, task.id, { observed: true });
 }
 
 /** 관찰한 것을 기록한다. 같은 선택지를 다시 눌러도 그 시점의 조건으로 다시 기록한다. */

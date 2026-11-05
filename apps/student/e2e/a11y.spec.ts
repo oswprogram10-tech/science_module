@@ -1029,6 +1029,30 @@ for (const scheme of ['light', 'dark'] as const) {
   });
 }
 
+// ---- g4-night-sky ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`g4-night-sky ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 처음, 거리 비교, 북쪽 하늘(길잡이 선·별 자취), 기록 뒤`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g4-night-sky');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await earthPick(page, '행성의 크기 비교', '약 2배');
+    await page.getByRole('button', { name: '거리 비교', exact: true }).click();
+    await expectNoSeriousViolations(page);
+    await page.getByRole('button', { name: '크기 비교', exact: true }).click();
+    await region(page, '관찰 기록').getByRole('button', { name: '약 11배', exact: true }).click();
+    await expectNoSeriousViolations(page);
+    await earthPick(page, '북극성 찾기', '직녀성');
+    await page.getByRole('button', { name: '길잡이 선 보기' }).click();
+    await page.getByRole('button', { name: '별 자취 남기기' }).click();
+    await earthSlider(page, '시각').fill('24');
+    await expectNoSeriousViolations(page);
+    await region(page, '관찰 기록').getByRole('button', { name: '북극성', exact: true }).click();
+    await expectNoSeriousViolations(page);
+  });
+}
+
 // ---- 수업 연결 ----
 
 for (const scheme of ['light', 'dark'] as const) {

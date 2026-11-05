@@ -6,9 +6,12 @@ import { MemoryRecorder, buildStatement, toExtensions } from '@sci/xapi';
 import { readPlaybackSeconds } from '../../playback';
 import { useClassroomStatus, usePaused } from '../../classroom/bus';
 import { GroundView } from './GroundView';
+import { NorthSkyView } from './NorthSkyView';
+import { SolarSystemView } from './SolarSystemView';
 import { RevolutionSpaceView, RotationSpaceView } from './SpaceView';
 import { feedbackText } from './feedback';
 import { dayFor, formatHour, groundScene, rotationOf, sunTrail } from './model';
+import { NORTH_HOUR_MAX, NORTH_HOUR_MIN, compareOf, isNightView, nightLabel, northScene, solarScene } from './nightModel';
 import {
   canObserve,
   canRecord,
@@ -24,6 +27,8 @@ import {
   setControl,
   setHour,
   setMonth,
+  setSkyToggle,
+  touchView,
   tutorSituation,
   type Value,
 } from './observeStore';
@@ -96,15 +101,17 @@ export function ObserveLab({
   // 재생: 하루를 daySeconds초에 돌린다. 끝나거나 화면에서 사라지면 반드시 멈춘다.
   const hourRef = useRef(ts.hour);
   hourRef.current = ts.hour;
+  const hourLo = task.view === 'north-sky' ? NORTH_HOUR_MIN : 0;
+  const hourHi = task.view === 'north-sky' ? NORTH_HOUR_MAX : 24;
   useEffect(() => {
     if (!playing || paused) return;
-    const start = hourRef.current >= 24 ? 0 : hourRef.current;
+    const start = hourRef.current >= hourHi ? hourLo : hourRef.current;
     const t0 = performance.now();
     let id = 0;
     const frame = () => {
-      const h = Math.min(24, start + ((performance.now() - t0) / 1000) * (24 / daySeconds));
+      const h = Math.min(hourHi, start + ((performance.now() - t0) / 1000) * ((hourHi - hourLo) / daySeconds));
       onHour(h);
-      if (h >= 24) {
+      if (h >= hourHi) {
         setPlaying(false);
         return;
       }
@@ -112,7 +119,7 @@ export function ObserveLab({
     };
     id = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(id);
-  }, [playing, paused, daySeconds, onHour]);
+  }, [playing, paused, daySeconds, onHour, hourLo, hourHi]);
 
   const onSelectTask = (id: string) => {
     setPlaying(false);
@@ -133,11 +140,19 @@ export function ObserveLab({
 
   const onControl = (key: string, value: Value) => {
     const before = store.getState();
-    const after = store.update((s) => setControl(s, exp, key, value));
+    let after = store.update((s) => setControl(s, exp, key, value));
+    // 태양계 모형 보기는 이미 고른 쪽을 눌러도 살펴본 것으로 친다.
+    if (task.view === 'solar-system') after = store.update((s) => touchView(s, exp));
     if (after !== before) {
       setPlaying(false);
       noteObserved(before.tasks[before.selected]!.observed, { kind: 'control', control: key, value: String(value) });
     }
+  };
+
+  const onSkyToggle = (key: 'guide' | 'trailOn', on: boolean) => {
+    const before = store.getState();
+    const after = store.update((s) => setSkyToggle(s, exp, key, on));
+    if (after !== before) noteObserved(before.tasks[before.selected]!.observed, { kind: 'toggle', toggle: key, value: String(on) });
   };
 
   const onRecord = (value: Value) => {
@@ -187,6 +202,25 @@ export function ObserveLab({
   const feedback = feedbackText(feedbackKind(state, exp));
   const showAntipode = task.answer === 'antipode-day-night';
 
+  // 새 보기: 정답이 되는 숫자는 기록이 모델 결과와 같을 때만 보여 준다.
+  const night = isNightView(task);
+  const revealed = recordMatchesModel(exp, task, ts) === true;
+  const solar = task.view === 'solar-system' ? solarScene(task.answer, !revealed, compareOf(ts.controls)) : null;
+  const north = task.view === 'north-sky' ? northScene(exp, ts, state.trail, ts.guide) : null;
+  const nightCaption = solar
+    ? compareOf(ts.controls) === 'size'
+      ? '크기 비교 · 지구 지름을 10 px로 그렸어요'
+      : '거리 비교 · 태양에서 지구까지가 1칸이에요'
+    : north
+      ? `${north.timeLabel} · 북쪽 하늘`
+      : '';
+  const recordHint =
+    task.view === 'solar-system'
+      ? '크기 비교나 거리 비교를 눌러 관찰하면 기록할 수 있어요.'
+      : task.view === 'north-sky'
+        ? '시각을 바꾸거나 길잡이 선·별 자취를 켜서 관찰하면 기록할 수 있어요.'
+        : '시각이나 달, 조건을 한 번 바꾸어 관찰하면 기록할 수 있어요.';
+
   return (
     <div className="app">
       <header className="top">
@@ -224,6 +258,15 @@ export function ObserveLab({
 
         <div className="center">
           <div className="observe-views">
+            {night ? (
+              <figure className="view observe-view">
+                <figcaption>{task.view === 'solar-system' ? '태양계 모형 보기' : '북쪽 하늘 보기'}</figcaption>
+                {solar && <SolarSystemView scene={solar} compare={compareOf(ts.controls)} />}
+                {north && <NorthSkyView scene={north} showTrail={ts.trailOn} />}
+                <p className="view-note" data-testid="night-caption">{nightCaption}</p>
+              </figure>
+            ) : (
+              <>
             <figure className="view observe-view">
               <figcaption>땅에서 보기</figcaption>
               <GroundView scene={scene} trail={trail} />
@@ -240,6 +283,8 @@ export function ObserveLab({
                 {task.view === 'rotation' ? `북극 위에서 본 모습 · ${scene.timeLabel}` : `${ts.month}월 15일 · 밤 9시`}
               </p>
             </figure>
+              </>
+            )}
           </div>
 
           <section className="panel" aria-label="관찰하기">
@@ -273,6 +318,55 @@ export function ObserveLab({
                   </button>
                 )}
               </div>
+            ) : task.view === 'north-sky' ? (
+              <>
+                <div className="slider-row">
+                  <span id="slider-label" className="slider-name">시각</span>
+                  <input
+                    type="range"
+                    min={NORTH_HOUR_MIN}
+                    max={NORTH_HOUR_MAX}
+                    step={0.5}
+                    value={ts.hour}
+                    disabled={!enabled}
+                    aria-labelledby="slider-label"
+                    aria-valuetext={nightLabel(ts.hour)}
+                    onChange={(e) => {
+                      setPlaying(false);
+                      onHour(Number(e.target.value));
+                    }}
+                  />
+                  <span className="slider-value" aria-hidden="true">{nightLabel(ts.hour)}</span>
+                  {!reduced && (
+                    <button type="button" className="secondary play" disabled={!enabled} onClick={() => setPlaying((p) => !p)}>
+                      {playing ? '⏸ 멈추기' : '▶ 재생'}
+                    </button>
+                  )}
+                </div>
+                <fieldset className="plain control-group" disabled={!enabled}>
+                  <legend>보기 도우미</legend>
+                  <div className="choices">
+                    <button
+                      type="button"
+                      className={ts.guide ? 'selected' : ''}
+                      aria-pressed={ts.guide}
+                      onClick={() => onSkyToggle('guide', !ts.guide)}
+                    >
+                      길잡이 선 보기
+                    </button>
+                    <button
+                      type="button"
+                      className={ts.trailOn ? 'selected' : ''}
+                      aria-pressed={ts.trailOn}
+                      onClick={() => onSkyToggle('trailOn', !ts.trailOn)}
+                    >
+                      별 자취 남기기
+                    </button>
+                  </div>
+                </fieldset>
+              </>
+            ) : task.view === 'solar-system' ? (
+              <p className="hint">크기 비교와 거리 비교를 눌러 가며 살펴보세요.</p>
             ) : (
               <>
                 <div className="slider-row">
@@ -355,7 +449,7 @@ export function ObserveLab({
             </fieldset>
             {!recordable && (
               <p className="hint">
-                {enabled ? '시각이나 달, 조건을 한 번 바꾸어 관찰하면 기록할 수 있어요.' : '예측을 고르고 관찰한 뒤에 기록할 수 있어요.'}
+                {enabled ? recordHint : '예측을 고르고 관찰한 뒤에 기록할 수 있어요.'}
               </p>
             )}
             <p className="compare" data-testid="compare" aria-live="polite">

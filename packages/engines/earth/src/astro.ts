@@ -1,4 +1,6 @@
 import type { ObservationAnswerRule, ObservationExperiment } from '@sci/schema';
+import { northStar, pointerStarKey, type NorthStarKey } from './northSky';
+import { distanceCells, sizeRatio } from './solar';
 
 /**
  * 천체 근사 모델(교사 검수 대상). 관측 위치는 서울(위도 37.5°N)이다.
@@ -221,6 +223,35 @@ function directionFromAz(a: number, b: number): 'east-to-west' | 'west-to-east' 
   return diff > 0 ? 'east-to-west' : 'west-to-east';
 }
 
+/** 같은 하늘 위의 두 점(고도·방위각) 사이 각거리(°). */
+export function skyAngularDistanceDeg(a: SkyPoint, b: SkyPoint): number {
+  const v = (p: SkyPoint): [number, number, number] => {
+    const alt = p.altDeg * RAD;
+    const az = p.azDeg * RAD;
+    return [Math.cos(alt) * Math.cos(az), Math.cos(alt) * Math.sin(az), Math.sin(alt)];
+  };
+  const [x1, y1, z1] = v(a);
+  const [x2, y2, z2] = v(b);
+  return Math.acos(Math.max(-1, Math.min(1, x1 * x2 + y1 * y2 + z1 * z2))) * DEG;
+}
+
+/** 별 과제의 두 시각(오후 9시와 자정)의 하늘 위치. */
+export function starTaskPositions(key: NorthStarKey, controls: AnswerControls = {}, latDeg: number = SEOUL_LAT_DEG): [SkyPoint, SkyPoint] {
+  const star = northStar(key);
+  const rotation = rotationOf(controls);
+  const at = (hour: number) => starPosition({ raHours: star.ra, decDeg: star.dec, hour, dayOfYear: STAR_TASK_DAY, latDeg, rotation });
+  return [at(STAR_TASK_START_HOUR), at(24)];
+}
+
+/** 오후 9시부터 자정까지 그 별이 하늘에서 움직인 각도(°). */
+export function starMotionDeg(key: NorthStarKey, controls: AnswerControls = {}, latDeg: number = SEOUL_LAT_DEG): number {
+  const [a, b] = starTaskPositions(key, controls, latDeg);
+  return skyAngularDistanceDeg(a, b);
+}
+
+/** 이 각도(°)보다 적게 움직이면 거의 움직이지 않는 것으로 본다. */
+export const STILL_THRESHOLD_DEG = 1;
+
 /** 모델에서 계산한 과제 정답. 같은 규칙·조건이면 항상 같은 값을 돌려준다. */
 export function answerFor(rule: ObservationAnswerRule, controls: AnswerControls = {}, opts: AnswerOptions = {}): string {
   const latDeg = opts.latDeg ?? SEOUL_LAT_DEG;
@@ -247,6 +278,18 @@ export function answerFor(rule: ObservationAnswerRule, controls: AnswerControls 
     }
     case 'winter-constellation':
       return southConstellationAt9pm(dayOfMonth15(1));
+    case 'jupiter-earth-size':
+      return String(Math.round(sizeRatio('jupiter')));
+    case 'neptune-distance':
+      return String(Math.round(distanceCells('neptune')));
+    case 'pointer-star-target':
+      return pointerStarKey();
+    case 'polaris-motion': {
+      if (starMotionDeg('polaris', controls, latDeg) < STILL_THRESHOLD_DEG) return 'nearly-still';
+      const [a, b] = starTaskPositions('polaris', controls, latDeg);
+      const dir = directionFromAz(a.azDeg, b.azDeg);
+      return dir === 'still' ? 'nearly-still' : dir;
+    }
   }
 }
 
