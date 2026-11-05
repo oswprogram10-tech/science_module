@@ -55,6 +55,7 @@ pnpm e2e            # 브라우저 자동 테스트 (Playwright)
 | `#/unit/g5-mixture` | 5학년 혼합물의 분리 (소금+모래 혼합물을 녹이고 거르고 증발시키기, 넣는 물의 양·거르는 방법·젓는 도구에 따른 얻은 소금과 섞인 모래, 단계 세 칸 그림과 "알갱이 보기"(녹은 소금·녹지 않은 소금·모래·거름종이 구멍), 가상 전자저울: 증발 접시. 체·자석 분리는 확장 과제) |
 | `#/unit/g3-earth-sea` | 3학년 지구와 바다 (흙 언덕 위쪽에 물을 붓는 흐르는 물 실험 상자, 언덕의 기울기·흘려보내는 물의 양·물을 붓는 그릇에 따른 깎인 흙과 쌓인 흙, 옆에서 본 상자 그림(깎인 곳의 골·쌓인 곳의 부채꼴 흙 더미·물받이)과 "흙 알갱이 보기"(작은 알갱이는 떠서, 큰 알갱이는 굴러서 옮겨지고 붓기가 끝나면 멈춰 쌓임), 두 선 그래프(깎인 흙 실선·쌓인 흙 점선), 가상 전자저울: 쌓인 흙. 안전 점검표 없음) |
 | `#/unit/g4-night-sky` | 4학년 밤하늘 관찰 (지구의 운동과 같은 관찰 과제 활동을 재사용: 태양계 모형 보기의 크기 비교·거리 비교(정답이 되는 목성 배수·해왕성 칸 수는 기록 전 "?")와 북쪽 하늘 보기의 길잡이 선·별 자취로 북극성 찾기와 밤 동안의 움직임) |
+| `#/unit/g5-weather` | 5학년 날씨와 우리 생활 (모래와 물을 나란히 둔 투명 상자에 전등을 켠 낮 10분·끈 뒤 10분(밤은 같은 거리의 낮이 끝난 상태에서 시작), 전등과의 거리·그릇에 따른 모래 온도·물 온도·온도 차(모래 − 물)와 바람 방향(바다 → 육지·육지 → 바다·거의 없음), 향 연기가 바람 쪽으로 기울고 밤이면 어두워지는 상자 그림, "공기의 움직임 보기"(따뜻한 쪽에서 올라가고 바닥 근처는 차가운 쪽에서 따뜻한 쪽으로 도는 화살표), 두 선 그래프(모래 실선·물 점선) 15~40 °C 고정, 가상 온도계 두 개(모래·물), 전등·향 안전 점검표) |
 
 산과 염기: 보안경 실제 감지는 모의 감지기로 대체, 모델은 스파이크 S2 이후. 주소 앞에 `?dev=1`을 붙이면(`/?dev=1#/unit/g6-acid-base`) 모의 안전 상황 버튼이 나타납니다.
 
@@ -65,7 +66,7 @@ pnpm e2e            # 브라우저 자동 테스트 (Playwright)
 
 | 활동 유형 | `module` | 흐름 | 화면 |
 |---|---|---|---|
-| 변인 실험 | `dissolution`, `gas-syringe`, `candle-jar`, `insulated-cup`, `convex-lens`, `electromagnet`, `magma-cooling`, `sun-angle`, `germination`, `transpiration`, `food-web`, `mold-growth`, `exercise-body`, `lever-balance`, `string-sound`, `magnet-distance`, `ramp-cart`, `freeze-melt`, `salt-sand`, `stream-table` | 바꿀 조건(조작변인) 고르기 → 예측 → 실행 → 시행 비교와 구조적 피드백 | `Lab`(`App.tsx`) |
+| 변인 실험 | `dissolution`, `gas-syringe`, `candle-jar`, `insulated-cup`, `convex-lens`, `electromagnet`, `magma-cooling`, `sun-angle`, `germination`, `transpiration`, `food-web`, `mold-growth`, `exercise-body`, `lever-balance`, `string-sound`, `magnet-distance`, `ramp-cart`, `freeze-melt`, `salt-sand`, `stream-table`, `land-sea-breeze` | 바꿀 조건(조작변인) 고르기 → 예측 → 실행 → 시행 비교와 구조적 피드백 | `Lab`(`App.tsx`) |
 | 분류 활동 | `indicator-classify` | 시험 → 관찰한 근거로 무리에 넣기 → 관찰과 분류가 맞는지 확인 | `ClassifyLab` |
 | 관찰 과제 | `sky-observation` | 예측 → 시각·달 슬라이더와 조건 토글로 두 시점 화면 관찰 → 관찰 기록 → 예측과 관찰 비교 | `ObserveLab` |
 

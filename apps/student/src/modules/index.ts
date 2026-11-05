@@ -20,6 +20,7 @@ import { rampCartModule } from './ramp-cart';
 import { freezeMeltModule } from './freeze-melt';
 import { saltSandModule } from './salt-sand';
 import { streamTableModule } from './stream-table';
+import { landSeaBreezeModule } from './land-sea-breeze';
 
 export const MODULES: Record<ModuleKind, AnyModule> = {
   dissolution: dissolutionModule,
@@ -42,4 +43,5 @@ export const MODULES: Record<ModuleKind, AnyModule> = {
   'freeze-melt': freezeMeltModule,
   'salt-sand': saltSandModule,
   'stream-table': streamTableModule,
+  'land-sea-breeze': landSeaBreezeModule,
 };

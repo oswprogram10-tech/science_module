@@ -1093,6 +1093,41 @@ for (const scheme of ['light', 'dark'] as const) {
   });
 }
 
+// ---- g5-weather ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`g5-weather ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 처음, 점검표, 실행 뒤(낮 20 cm), 밤과 앞 시행, 40 cm`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g5-weather');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '때');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(page.getByRole('dialog', { name: '안전 점검표' })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await confirmSafetyDialog(page);
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('10.0분 · 모래 34.7 °C · 물 26.3 °C · 바람: 바다 → 육지')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await setValue(page, '때', '밤');
+    await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('10.0분 · 모래 21.2 °C · 물 23.8 °C · 바람: 육지 → 바다')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await page.reload();
+    await setValue(page, '전등과의 거리', '40 cm');
+    await selectIV(page, '전등과의 거리');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await confirmSafetyDialog(page);
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('10.0분 · 모래 23.7 °C · 물 21.6 °C · 바람: 바다 → 육지')).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+}
+
 // ---- 수업 연결 ----
 
 for (const scheme of ['light', 'dark'] as const) {

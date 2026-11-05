@@ -29,6 +29,8 @@ button:focus-visible, input:focus-visible { outline:3px solid var(--accent); out
 .tag { font-size:.8rem; padding:2px 8px; border-radius:99px; border:1px solid var(--line); }
 .warning { background:var(--changed); border:2px solid var(--warn); border-radius:8px; padding:8px; margin:8px 0; }
 .predict { padding:8px 0; }
+/* 예측 문구는 문장이라 길면 줄을 바꾼다(변인 이름표는 한 줄 유지). */
+.predict > .variable-label { white-space:normal; display:block; }
 .run { width:100%; margin-top:8px; background:var(--accent); color:var(--on-accent); border-color:var(--accent); font-weight:700; }
 .run:disabled { background:var(--line); color:var(--fg); border-color:var(--line); }
 .reasons { margin:6px 0; padding-left:1.2rem; color:var(--warn); min-height:1.2em; }

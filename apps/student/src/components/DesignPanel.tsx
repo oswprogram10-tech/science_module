@@ -32,6 +32,8 @@ const ALWAYS_NOTICE: Record<string, string> = {
   'freeze-melt:cold': '⚠ 소금 얼음물은 아주 차가워요. 맨손으로 오래 만지지 않아요.',
   // 증발 접시와 알코올램프는 뜨겁다. 다른 단원이 `heat`를 쓸 때를 생각해 모듈 이름을 붙인 키로 둔다.
   'salt-sand:heat': '⚠ 증발 접시와 알코올램프는 아주 뜨거워요. 선생님과 함께 다뤄요.',
+  // 전등과 향은 뜨겁고 불씨가 있다. 다른 단원이 `fire`를 쓸 때를 생각해 모듈 이름을 붙인 키로 둔다.
+  'land-sea-breeze:fire': '⚠ 향과 전등은 선생님과 함께 다뤄요.',
 };
 
 const PREDICTION_ICON: Record<Prediction, string> = { increase: '▲', decrease: '▼', same: '＝' };

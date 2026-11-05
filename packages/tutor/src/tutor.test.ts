@@ -1911,3 +1911,160 @@ describe('g3-earth-sea 매니페스트 probe', () => {
     }
   });
 });
+
+// ---------- 날씨와 우리 생활(바닷가 낮과 밤의 바람) 매니페스트 ----------
+import weatherJson from '../../../content/units/g5-weather/manifest.json';
+
+describe('g5-weather 매니페스트 probe', () => {
+  const e = parseManifest(weatherJson).experiments[0]! as VariableExperiment;
+  const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+  const eKeys = e.variables.map((v) => v.key);
+  const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+  const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: 'phase', ...x });
+  const fair = (iv: string): Partial<ProbeContext> => ({
+    ivKey: iv,
+    lastAnalysis: { kind: 'fair-test', changed: [iv] },
+    prediction: 'same',
+    observed: 'same',
+  });
+
+  it('iv별 fair-test 질문을 고른다', () => {
+    expect(selectProbe(eCtx(fair('phase')), e.tutor.probes, eGuard)).toContain('어느 쪽이 더 따뜻했나요?');
+    expect(selectProbe(eCtx(fair('phase')), e.tutor.probes, eGuard)).toContain('화살표가 위로 올라가는 곳은 어디였나요?');
+    expect(selectProbe(eCtx(fair('bowl')), e.tutor.probes, eGuard)).toContain('그릇만 바꾸었을 때 결과가 달라졌나요?');
+    // 전등과의 거리는 전용 질문이 없어 공통 fair-test 질문(두 온도 선과 향 연기)을 쓴다
+    expect(selectProbe(eCtx(fair('lampCm')), e.tutor.probes, eGuard)).toContain('전등과의 거리만 바꾸었을 때 두 온도 선과 향 연기의 방향은 어떻게 달라졌나요?');
+  });
+
+  it('실행 전 질문은 향 연기가 어느 쪽으로 흐를지 예측하게 하고, 예측과 결과가 다르면 두 선이 벌어지는 빠르기를 비교하게 한다', () => {
+    expect(selectProbe(eCtx({}), e.tutor.probes, eGuard)).toContain('향 연기는 어느 쪽으로 흐를까요?');
+    const text = selectProbe(eCtx({ ...fair('phase'), prediction: 'increase', observed: 'same' }), e.tutor.probes, eGuard);
+    expect(text).toContain('두 선이 벌어지는 빠르기');
+  });
+
+  it('모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+    let n = 0;
+    for (const probe of e.tutor.probes) {
+      for (const iv of eKeys) {
+        for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+          const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+          expect(text).not.toMatch(/[{}]/);
+          expect(text).not.toMatch(/(을\(를\)|이\(가\)|와\(과\)|은\(는\))/);
+          n++;
+        }
+      }
+    }
+    expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+  });
+
+  it('질문 문장은 금지 구절·limits 용어와 겹치지 않는다', () => {
+    for (const probe of e.tutor.probes) {
+      for (const f of e.tutor.forbiddenAnswers) expect(probe.text, probe.text).not.toContain(f);
+      for (const l of e.limits) expect(probe.text, probe.text).not.toContain(l);
+    }
+  });
+
+  it('금지 구절은 사양의 여섯 가지와 활용형(더 빨리 데워져·빨리 뜨거워·더 빨리 식어·바다에서 육지로 불어 등)까지 막는다', () => {
+    for (const answer of [
+      '모래가 물보다 빨리 데워져요',
+      '모래가 더 빨리 데워져요',
+      '모래가 빨리 데워져요',
+      '모래는 물보다 빨리 데워진다',
+      '모래가 빨리 뜨거워져요',
+      '모래가 더 빨리 뜨거워져요',
+      '모래가 물보다 빨리 뜨거워져요',
+      '모래가 물보다 빨리 식어요',
+      '모래가 더 빨리 식어요',
+      '모래가 빨리 식어요',
+      '모래는 빨리 식는다',
+      '물은 천천히 데워져요',
+      '물은 천천히 식어요',
+      '물이 모래보다 천천히 식어요',
+      '육지가 바다보다 빨리 데워져요',
+      '낮에는 바다에서 육지로 바람이 불어요',
+      '낮에는 바다에서 육지로 불어요',
+      '밤에는 육지에서 바다로 바람이 불어요',
+      '바다에서 육지로 불어요',
+      '육지에서 바다로 불어요',
+      '바람이 바다에서 육지로 불어요',
+      '바람이 육지에서 바다로 불어요',
+      '따뜻한 공기가 위로 올라가요',
+      '따뜻한 공기는 위로 올라가요',
+      '따뜻한 공기는 위로 떠올라요',
+      '공기가 위로 올라가요',
+      '공기는 위로 올라간다',
+      '그릇은 관계없어요',
+      '그릇은 상관없어요',
+      '그릇은 결과에 영향을 주지 않아요',
+      '그릇은 영향이 없어요',
+      '그릇과 관계없이 같아요',
+      '그릇이 달라도 같아요',
+    ]) {
+      expect(guardOutput(answer, eGuard).ok, answer).toBe(false);
+    }
+    for (const l of e.limits) expect(guardOutput(`${l}이에요`, eGuard).ok, l).toBe(false);
+  });
+
+  it('질문과 화면에 보이는 글은 금지 구절·limits 용어와 겹치지 않는다', () => {
+    const shown = [
+      e.title,
+      e.question,
+      e.predictionPrompt,
+      ...e.variables.flatMap((v) => [v.label, v.unit ?? '', ...v.options.map((o) => o.label)]),
+      ...e.dependent.flatMap((d) => [d.label, d.unit ?? '']),
+      ...(e.safetyChecklist ?? []),
+      ...Object.values(e.safetyMessages ?? {}),
+      '⚠ 향과 전등은 선생님과 함께 다뤄요.',
+      '실험하면 모래와 물의 온도, 향 연기가 흐르는 방향을 볼 수 있어요.',
+      '10.0분 · 모래 34.7 °C · 물 26.3 °C · 바람: 바다 → 육지',
+      '10.0분 · 모래 21.2 °C · 물 23.8 °C · 바람: 육지 → 바다',
+      '0.0분 · 모래 20.0 °C · 물 20.0 °C · 바람: 거의 없음',
+      '낮',
+      '밤',
+      '모래 (육지)',
+      '물 (바다)',
+      '20 cm',
+      '40 cm',
+      '? °C',
+      '공기의 움직임 보기',
+      '따뜻한 쪽',
+      '차가운 쪽',
+      '바닥 근처 바람',
+      '육지 (모래)',
+      '바다 (물)',
+      '땅 가까이에서는 공기가 차가운 쪽에서 따뜻한 쪽으로 옮겨 가요.',
+      '두 쪽의 온도가 같아서 공기가 한쪽으로 움직이지 않아요.',
+      '실험하면 공기가 어느 쪽으로 움직이는지 볼 수 있어요.',
+      '바다 → 육지',
+      '육지 → 바다',
+      '거의 없음',
+      '온도(°C)',
+      '모래 온도(°C)',
+      '물 온도(°C)',
+      '가상 온도계: 모래',
+      '가상 온도계: 물',
+      '모래 온도',
+      '물 온도',
+      '온도 차(°C)',
+      '바람 방향',
+    ];
+    for (const text of shown) expect(guardOutput(text, eGuard).ok, text).toBe(true);
+  });
+
+  it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+    const situations: Partial<ProbeContext>[] = [
+      {},
+      { lastAnalysis: { kind: 'first-trial', changed: [] } },
+      { lastAnalysis: { kind: 'confounded', changed: ['phase', 'lampCm'] } },
+      { lastAnalysis: { kind: 'iv-unchanged', changed: ['bowl'] } },
+      { lastAnalysis: { kind: 'repeat', changed: [] } },
+      ...eKeys.flatMap((k) => [fair(k), { ...fair(k), prediction: 'increase' as const, observed: 'same' as const }]),
+    ];
+    for (const s of situations) {
+      const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+      expect(text).not.toBe(FALLBACK_PROBE);
+      expect(guardOutput(text, eGuard).ok, text).toBe(true);
+    }
+  });
+});
