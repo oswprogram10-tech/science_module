@@ -924,6 +924,44 @@ for (const scheme of ['light', 'dark'] as const) {
   });
 }
 
+// ---- g4-water-state ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`g4-water-state ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 처음, 점검표, 실행 뒤(얼리기 10 mL), 녹이기와 앞 시행, 녹이기 20 mL 플라스틱`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g4-water-state');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '과정');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(page.getByRole('dialog', { name: '안전 점검표' })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await confirmSafetyDialog(page);
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('30.0분 · 부피 10.9 mL · 무게 10.0 g')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await setValue(page, '과정', '얼음 녹이기');
+    await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('30.0분 · 부피 10.0 mL · 무게 10.0 g')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await page.reload();
+    await setValue(page, '과정', '얼음 녹이기');
+    await setValue(page, '처음 물의 양', '20 mL');
+    await setValue(page, '시험관 종류', '플라스틱 시험관');
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '처음 물의 양');
+    await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await confirmSafetyDialog(page);
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('30.0분 · 부피 20.0 mL · 무게 20.0 g')).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+}
+
 // ---- 수업 연결 ----
 
 for (const scheme of ['light', 'dark'] as const) {

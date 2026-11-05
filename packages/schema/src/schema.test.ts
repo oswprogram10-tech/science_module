@@ -17,6 +17,7 @@ import forceJson from '../../../content/units/g3-force/manifest.json';
 import soundJson from '../../../content/units/g3-sound/manifest.json';
 import magnetJson from '../../../content/units/g4-magnet/manifest.json';
 import motionJson from '../../../content/units/g6-motion/manifest.json';
+import waterStateJson from '../../../content/units/g4-water-state/manifest.json';
 import animalJson from '../../../content/units/g3-animal/manifest.json';
 import plantlifeJson from '../../../content/units/g3-plantlife/manifest.json';
 import earthJson from '../../../content/units/g6-earth-motion/manifest.json';
@@ -174,7 +175,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
   const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
   it('아홉 매니페스트가 모두 검증을 통과한다', () => {
-    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, forceJson, soundJson, magnetJson, motionJson]) expect(() => parseManifest(j)).not.toThrow();
+    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, forceJson, soundJson, magnetJson, motionJson, waterStateJson]) expect(() => parseManifest(j)).not.toThrow();
   });
 
   it('연소 매니페스트의 점검표와 경고 문구를 읽는다', () => {
@@ -389,6 +390,25 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     expect(e.limits).toEqual(['가속도', '운동 에너지', '위치 에너지', '에너지 보존', '마찰 계수', '관성']);
     expect(e.tutor.forbiddenAnswers).toHaveLength(9);
     expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['heightCm', 'load']);
+  });
+
+  it('물의 상태 변화 매니페스트의 변인, 측정, 안전, 금지 구절, 한계 용어, 탐침을 읽는다', () => {
+    const m = parseManifest(waterStateJson);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-water-state', 4, 'matter', ['4과10-01']]);
+    const e = m.experiments[0] as VariableExperiment;
+    expect(e.module).toBe('freeze-melt');
+    expect(e.safety).toEqual(['cold']);
+    expect(e.safetyChecklist).toHaveLength(3);
+    expect(Object.keys(e.safetyMessages ?? {}).sort()).toEqual(['FOOD', 'NO_GLOVES', 'NO_GOGGLES', 'SPILL']);
+    expect(e.variables.map((v) => v.key)).toEqual(['process', 'startMl', 'tube']);
+    expect(e.variables[0]!.options.map((o) => o.value)).toEqual(['freeze', 'melt']);
+    expect(e.variables[1]!.options.map((o) => o.value)).toEqual([10, 20]);
+    expect(e.variables[2]!.options.map((o) => o.value)).toEqual(['glass', 'plastic']);
+    expect(e.variables.map((v) => v.default)).toEqual(['freeze', 10, 'glass']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['dV', 'mL'], ['volumeEnd', 'mL']]);
+    expect(e.params).toEqual({ totalMin: 30 });
+    expect(e.limits).toEqual(['밀도', '분자', '수소 결합', '잠열', '응고점', '녹는점']);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['process', 'tube']);
   });
 
   it('두 필드는 없어도 된다', () => {

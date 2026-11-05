@@ -17,6 +17,7 @@ import { leverBalanceModule } from './lever-balance';
 import { stringSoundModule } from './string-sound';
 import { magnetDistanceModule } from './magnet-distance';
 import { rampCartModule } from './ramp-cart';
+import { freezeMeltModule } from './freeze-melt';
 
 export const MODULES: Record<ModuleKind, AnyModule> = {
   dissolution: dissolutionModule,
@@ -36,4 +37,5 @@ export const MODULES: Record<ModuleKind, AnyModule> = {
   'string-sound': stringSoundModule,
   'magnet-distance': magnetDistanceModule,
   'ramp-cart': rampCartModule,
+  'freeze-melt': freezeMeltModule,
 };

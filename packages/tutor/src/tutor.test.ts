@@ -1469,3 +1469,119 @@ describe('g6-motion 매니페스트 probe', () => {
     }
   });
 });
+
+// ---------- 물의 상태 변화(물이 얼 때와 얼음이 녹을 때) 매니페스트 ----------
+import waterStateJson from '../../../content/units/g4-water-state/manifest.json';
+
+describe('g4-water-state 매니페스트 probe', () => {
+  const e = parseManifest(waterStateJson).experiments[0]! as VariableExperiment;
+  const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+  const eKeys = e.variables.map((v) => v.key);
+  const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+  const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: 'process', ...x });
+  const fair = (iv: string): Partial<ProbeContext> => ({
+    ivKey: iv,
+    lastAnalysis: { kind: 'fair-test', changed: [iv] },
+    prediction: 'same',
+    observed: 'same',
+  });
+
+  it('iv별 fair-test 질문을 고른다', () => {
+    expect(selectProbe(eCtx(fair('process')), e.tutor.probes, eGuard)).toContain('과정만 바꾸었어요. 얼리기와 녹이기에서 시험관 속 높이 표시는 어떻게 달랐나요?');
+    expect(selectProbe(eCtx(fair('tube')), e.tutor.probes, eGuard)).toContain('시험관 종류만 바꾸었을 때 결과가 달라졌나요?');
+    // 처음 양은 전용 질문이 없어 공통 fair-test 질문을 쓴다
+    expect(selectProbe(eCtx(fair('startMl')), e.tutor.probes, eGuard)).toContain('처음 물의 양만 바꾸었을 때 부피 변화와 무게는 각각 어떻게 되었나요?');
+  });
+
+  it('실행 전 질문 "무게는 어떻게 될 것 같나요?"는 질문이라 가드에 걸리지 않는다 (오검출 없음)', () => {
+    const text = selectProbe(eCtx({}), e.tutor.probes, eGuard);
+    expect(text).toContain('무게는 어떻게 될 것 같나요?');
+    expect(guardOutput(text, eGuard).ok, text).toBe(true);
+  });
+
+  it('예측과 결과가 다르면 그래프에서 부피가 변하기 시작한 때와 온도를 보라고 한다', () => {
+    const text = selectProbe(eCtx({ ...fair('process'), prediction: 'decrease', observed: 'increase' }), e.tutor.probes, eGuard);
+    expect(text).toContain('그때 온도는 얼마였는지');
+  });
+
+  it('모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+    let n = 0;
+    for (const probe of e.tutor.probes) {
+      for (const iv of eKeys) {
+        for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+          const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+          expect(text).not.toMatch(/[{}]/);
+          expect(text).not.toMatch(/(을\(를\)|이\(가\)|와\(과\)|은\(는\))/);
+          n++;
+        }
+      }
+    }
+    expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+  });
+
+  it('질문 문장은 금지 구절·limits 용어와 겹치지 않는다', () => {
+    for (const probe of e.tutor.probes) {
+      for (const f of e.tutor.forbiddenAnswers) expect(probe.text, probe.text).not.toContain(f);
+      for (const l of e.limits) expect(probe.text, probe.text).not.toContain(l);
+    }
+  });
+
+  it('금지 구절은 활용형(늘어나·커져·줄어들·같아·변하지)까지 막는다', () => {
+    for (const answer of [
+      '물이 얼면 부피가 늘어나요',
+      '물이 얼면 부피가 커져요',
+      '얼음이 녹으면 부피가 줄어들어요',
+      '얼음이 녹으면 부피가 줄어요',
+      '부피가 작아져요',
+      '무게는 변하지 않아요',
+      '무게가 변하지 않았어요',
+      '무게는 그대로예요',
+      '무게는 같아요',
+      '무게가 같았어요',
+      '물이 많을수록 부피가 더 많이 변해요',
+      '물이 많을수록 부피가 더 커져요',
+    ]) {
+      expect(guardOutput(answer, eGuard).ok, answer).toBe(false);
+    }
+    for (const l of e.limits) expect(guardOutput(`${l}이에요`, eGuard).ok, l).toBe(false);
+  });
+
+  it('질문과 화면에 보이는 글은 금지 구절·limits 용어와 겹치지 않는다', () => {
+    const shown = [
+      e.title,
+      e.question,
+      e.predictionPrompt,
+      ...e.variables.flatMap((v) => [v.label, v.unit ?? '', ...v.options.map((o) => o.label)]),
+      ...e.dependent.flatMap((d) => [d.label, d.unit ?? '']),
+      ...(e.safetyChecklist ?? []),
+      ...Object.values(e.safetyMessages ?? {}),
+      '얼음이 될 때 알갱이 수는 같고, 알갱이 사이가 조금 넓어져요.',
+      '⚠ 소금 얼음물은 아주 차가워요. 맨손으로 오래 만지지 않아요.',
+      '알갱이 수 18개',
+      '처음 높이',
+      '지금 높이',
+      '얼기 시작',
+      '다 얼었어요',
+      '녹기 시작',
+      '다 녹았어요',
+    ];
+    for (const text of shown) expect(guardOutput(text, eGuard).ok, text).toBe(true);
+  });
+
+  it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+    const situations: Partial<ProbeContext>[] = [
+      {},
+      { lastAnalysis: { kind: 'first-trial', changed: [] } },
+      { lastAnalysis: { kind: 'confounded', changed: ['process', 'tube'] } },
+      { lastAnalysis: { kind: 'iv-unchanged', changed: ['tube'] } },
+      { lastAnalysis: { kind: 'repeat', changed: [] } },
+      ...eKeys.flatMap((k) => [fair(k), { ...fair(k), prediction: 'increase' as const, observed: 'same' as const }]),
+    ];
+    for (const s of situations) {
+      const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+      expect(text).not.toBe(FALLBACK_PROBE);
+      expect(guardOutput(text, eGuard).ok, text).toBe(true);
+    }
+  });
+});
