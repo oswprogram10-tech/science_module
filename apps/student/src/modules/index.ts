@@ -19,6 +19,7 @@ import { magnetDistanceModule } from './magnet-distance';
 import { rampCartModule } from './ramp-cart';
 import { freezeMeltModule } from './freeze-melt';
 import { saltSandModule } from './salt-sand';
+import { streamTableModule } from './stream-table';
 
 export const MODULES: Record<ModuleKind, AnyModule> = {
   dissolution: dissolutionModule,
@@ -40,4 +41,5 @@ export const MODULES: Record<ModuleKind, AnyModule> = {
   'ramp-cart': rampCartModule,
   'freeze-melt': freezeMeltModule,
   'salt-sand': saltSandModule,
+  'stream-table': streamTableModule,
 };

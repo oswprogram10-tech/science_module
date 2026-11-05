@@ -1715,3 +1715,130 @@ describe('g5-mixture 매니페스트 probe', () => {
     }
   });
 });
+
+// ---------- 지구와 바다(흐르는 물) 매니페스트 ----------
+import earthSeaJson from '../../../content/units/g3-earth-sea/manifest.json';
+
+describe('g3-earth-sea 매니페스트 probe', () => {
+  const e = parseManifest(earthSeaJson).experiments[0]! as VariableExperiment;
+  const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+  const eKeys = e.variables.map((v) => v.key);
+  const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+  const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: 'slope', ...x });
+  const fair = (iv: string): Partial<ProbeContext> => ({
+    ivKey: iv,
+    lastAnalysis: { kind: 'fair-test', changed: [iv] },
+    prediction: 'same',
+    observed: 'same',
+  });
+
+  it('iv별 fair-test 질문을 고른다', () => {
+    expect(selectProbe(eCtx(fair('slope')), e.tutor.probes, eGuard)).toContain('물이 흐르는 빠르기는 어떻게 달라 보였나요?');
+    expect(selectProbe(eCtx(fair('vessel')), e.tutor.probes, eGuard)).toContain('그릇만 바꾸었을 때 결과가 달라졌나요?');
+    // 물의 양은 전용 질문이 없어 공통 fair-test 질문(두 선을 함께 보기)을 쓴다
+    expect(selectProbe(eCtx(fair('waterL')), e.tutor.probes, eGuard)).toContain('흘려보내는 물의 양만 바꾸었을 때 위쪽과 아래쪽 흙은 각각 어떻게 달라졌나요?');
+  });
+
+  it('예측과 결과가 다르면 깎인 흙과 쌓인 흙이 어디로 갔는지 그림에서 찾아보라고 한다', () => {
+    const text = selectProbe(eCtx({ ...fair('slope'), prediction: 'increase', observed: 'same' }), e.tutor.probes, eGuard);
+    expect(text).toContain('깎인 흙과 쌓인 흙은 각각 어디로 갔을지');
+  });
+
+  it('모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+    let n = 0;
+    for (const probe of e.tutor.probes) {
+      for (const iv of eKeys) {
+        for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+          const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+          expect(text).not.toMatch(/[{}]/);
+          expect(text).not.toMatch(/(을\(를\)|이\(가\)|와\(과\)|은\(는\))/);
+          n++;
+        }
+      }
+    }
+    expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+  });
+
+  it('질문 문장은 금지 구절·limits 용어와 겹치지 않는다', () => {
+    for (const probe of e.tutor.probes) {
+      for (const f of e.tutor.forbiddenAnswers) expect(probe.text, probe.text).not.toContain(f);
+      for (const l of e.limits) expect(probe.text, probe.text).not.toContain(l);
+    }
+  });
+
+  it('금지 구절은 사양의 네 가지와 활용형(가파를수록 많이 깎여·물이 많을수록 많이 깎여·더 많이 쌓여·낮은 곳에 쌓여)까지 막는다', () => {
+    for (const answer of [
+      '가파를수록 흙이 많이 깎여요',
+      '언덕이 가파를수록 흙이 많이 깎인다',
+      '가파를수록 많이 깎여요',
+      '가파를수록 더 많이 깎여요',
+      '가파를수록 흙이 더 많이 깎여요',
+      '가파를수록 많이 쌓여요',
+      '가파르면 흙이 많이 깎여요',
+      '경사가 급할수록 흙이 많아요',
+      '물이 많을수록 흙이 많이 깎여요',
+      '물이 많을수록 많이 깎여요',
+      '물이 많을수록 더 많이 깎여요',
+      '물이 많을수록 더 많이 쌓여요',
+      '물이 많으면 흙이 많이 깎여요',
+      '물의 양이 많을수록 흙이 달라져요',
+      '흙이 더 많이 쌓여요',
+      '더 많이 쌓여서 부채꼴이 돼요',
+      '높은 곳의 흙을 깎아 낮은 곳에 쌓아요',
+      '높은 곳의 흙을 깎아서 옮겨요',
+      '낮은 곳에 쌓여요',
+      '흙이 낮은 곳으로 옮겨져요',
+      '그릇은 관계없어요',
+      '그릇은 상관없어요',
+      '그릇은 결과에 영향을 주지 않아요',
+      '그릇은 영향이 없어요',
+      '그릇과 관계없이 같아요',
+      '그릇이 달라도 같아요',
+    ]) {
+      expect(guardOutput(answer, eGuard).ok, answer).toBe(false);
+    }
+    for (const l of e.limits) expect(guardOutput(`${l}이에요`, eGuard).ok, l).toBe(false);
+  });
+
+  it('질문과 화면에 보이는 글은 금지 구절·limits 용어와 겹치지 않는다', () => {
+    const shown = [
+      e.title,
+      e.question,
+      e.predictionPrompt,
+      ...e.variables.flatMap((v) => [v.label, v.unit ?? '', ...v.options.map((o) => o.label)]),
+      ...e.dependent.flatMap((d) => [d.label, d.unit ?? '']),
+      '실험하면 물이 흙 언덕을 어떻게 바꾸는지 볼 수 있어요.',
+      '60.0초 · 깎인 흙 100 g · 쌓인 흙 80 g',
+      '깎인 곳',
+      '쌓인 곳',
+      '물받이',
+      '물길 단면 확대',
+      '물',
+      '흙 알갱이',
+      '흐르는 물은 흙 알갱이를 함께 옮겨요.',
+      '흙의 양(g)',
+      '깎인 흙(g)',
+      '쌓인 흙(g)',
+      '붓기 끝',
+      '가상 전자저울: 쌓인 흙',
+    ];
+    for (const text of shown) expect(guardOutput(text, eGuard).ok, text).toBe(true);
+  });
+
+  it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+    const situations: Partial<ProbeContext>[] = [
+      {},
+      { lastAnalysis: { kind: 'first-trial', changed: [] } },
+      { lastAnalysis: { kind: 'confounded', changed: ['slope', 'waterL'] } },
+      { lastAnalysis: { kind: 'iv-unchanged', changed: ['vessel'] } },
+      { lastAnalysis: { kind: 'repeat', changed: [] } },
+      ...eKeys.flatMap((k) => [fair(k), { ...fair(k), prediction: 'increase' as const, observed: 'same' as const }]),
+    ];
+    for (const s of situations) {
+      const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+      expect(text).not.toBe(FALLBACK_PROBE);
+      expect(guardOutput(text, eGuard).ok, text).toBe(true);
+    }
+  });
+});

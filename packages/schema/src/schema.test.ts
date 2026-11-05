@@ -19,6 +19,7 @@ import magnetJson from '../../../content/units/g4-magnet/manifest.json';
 import motionJson from '../../../content/units/g6-motion/manifest.json';
 import waterStateJson from '../../../content/units/g4-water-state/manifest.json';
 import mixtureJson from '../../../content/units/g5-mixture/manifest.json';
+import earthSeaJson from '../../../content/units/g3-earth-sea/manifest.json';
 import animalJson from '../../../content/units/g3-animal/manifest.json';
 import plantlifeJson from '../../../content/units/g3-plantlife/manifest.json';
 import earthJson from '../../../content/units/g6-earth-motion/manifest.json';
@@ -176,7 +177,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
   const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
   it('아홉 매니페스트가 모두 검증을 통과한다', () => {
-    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, forceJson, soundJson, magnetJson, motionJson, waterStateJson, mixtureJson]) expect(() => parseManifest(j)).not.toThrow();
+    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, forceJson, soundJson, magnetJson, motionJson, waterStateJson, mixtureJson, earthSeaJson]) expect(() => parseManifest(j)).not.toThrow();
   });
 
   it('연소 매니페스트의 점검표와 경고 문구를 읽는다', () => {
@@ -429,6 +430,25 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     expect(e.params).toEqual({ totalMin: 20 });
     expect(e.limits).toEqual(['순도', '포화 용액', '재결정', '용해도 곡선', '여과액']);
     expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['waterMl', 'filter']);
+  });
+
+  it('지구와 바다 매니페스트의 변인, 측정, 안전 없음, 한계 용어, 탐침을 읽는다', () => {
+    const m = parseManifest(earthSeaJson);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-earth-sea', 3, 'earth', ['4과05-02']]);
+    const e = m.experiments[0] as VariableExperiment;
+    expect(e.module).toBe('stream-table');
+    expect(e.safety).toEqual([]);
+    expect(e.safetyChecklist).toBeUndefined();
+    expect(e.safetyNotices).toEqual([]);
+    expect(e.variables.map((v) => v.key)).toEqual(['slope', 'waterL', 'vessel']);
+    expect(e.variables[0]!.options.map((o) => o.value)).toEqual(['gentle', 'steep']);
+    expect(e.variables[1]!.options.map((o) => o.value)).toEqual([1, 2]);
+    expect(e.variables[2]!.options.map((o) => o.value)).toEqual(['cup', 'bottle']);
+    expect(e.variables.map((v) => v.default)).toEqual(['gentle', 1, 'cup']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['eroded', 'g'], ['deposited', 'g']]);
+    expect(e.params).toEqual({ totalS: 60 });
+    expect(e.limits).toEqual(['침식', '퇴적', '운반', '유속', '삼각주', '선상지']);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['slope', 'vessel']);
   });
 
   it('두 필드는 없어도 된다', () => {

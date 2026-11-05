@@ -1,0 +1,108 @@
+{
+  "id": "g3-earth-sea",
+  "title": "지구와 바다",
+  "grade": 3,
+  "standards": ["4과05-02"],
+  "engine": "earth",
+  "experiments": [
+    {
+      "id": "stream-table",
+      "module": "stream-table",
+      "title": "흐르는 물이 흙 언덕을 바꾸는 모습 알아보기",
+      "question": "흐르는 물은 흙 언덕을 어떻게 바꿀까?",
+      "predictionPrompt": "예측: 깎인 흙의 양은?",
+      "variables": [
+        {
+          "key": "slope",
+          "label": "언덕의 기울기",
+          "type": "choice",
+          "options": [
+            { "value": "gentle", "label": "완만하게" },
+            { "value": "steep", "label": "가파르게" }
+          ],
+          "default": "gentle"
+        },
+        {
+          "key": "waterL",
+          "label": "흘려보내는 물의 양",
+          "type": "choice",
+          "unit": "L",
+          "options": [
+            { "value": 1, "label": "1 L" },
+            { "value": 2, "label": "2 L" }
+          ],
+          "default": 1
+        },
+        {
+          "key": "vessel",
+          "label": "물을 붓는 그릇",
+          "type": "choice",
+          "options": [
+            { "value": "cup", "label": "컵" },
+            { "value": "bottle", "label": "페트병" }
+          ],
+          "default": "cup"
+        }
+      ],
+      "dependent": [
+        { "key": "eroded", "label": "깎인 흙", "unit": "g" },
+        { "key": "deposited", "label": "쌓인 흙", "unit": "g" }
+      ],
+      "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
+      "safety": [],
+      "safetyNotices": [],
+      "limits": ["침식", "퇴적", "운반", "유속", "삼각주", "선상지"],
+      "params": { "totalS": 60 },
+      "tutor": {
+        "forbiddenAnswers": [
+          "가파를수록 흙이 많이 깎",
+          "물이 많을수록 흙이 많이 깎",
+          "높은 곳의 흙을 깎아 낮은 곳에 쌓",
+          "그릇은 관계없",
+          "가파를수록 많이 깎",
+          "가파를수록 더 많이 깎",
+          "가파를수록 흙이 더 많이 깎",
+          "가파를수록 많이 쌓",
+          "가파를수록 더 많이 쌓",
+          "가파를수록 흙이 많이 쌓",
+          "가파르면 많이 깎",
+          "가파르면 흙이 많이 깎",
+          "경사가 급할수록",
+          "경사가 가파를수록",
+          "물이 많을수록 많이 깎",
+          "물이 많을수록 더 많이 깎",
+          "물이 많을수록 흙이 더 많이 깎",
+          "물이 많을수록 많이 쌓",
+          "물이 많을수록 더 많이 쌓",
+          "물이 많을수록 흙이 많이 쌓",
+          "물이 많으면 많이 깎",
+          "물이 많으면 흙이 많이 깎",
+          "물의 양이 많을수록",
+          "많이 깎여",
+          "더 많이 깎",
+          "더 많이 쌓",
+          "많이 쌓여",
+          "높은 곳의 흙을 깎",
+          "낮은 곳에 쌓",
+          "낮은 곳으로 옮겨",
+          "그릇은 상관없",
+          "그릇은 결과에 영향",
+          "그릇은 영향이 없",
+          "그릇과 관계없",
+          "그릇이 달라도"
+        ],
+        "probes": [
+          { "when": "before-run", "text": "{iv}을(를) 바꾸면 깎이는 흙의 양이 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?" },
+          { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?" },
+          { "when": "confounded", "text": "{changed}이(가) 함께 바뀌었어요. 결과가 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
+          { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },
+          { "when": "repeat", "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
+          { "when": "fair-test", "text": "{iv}만 바꾸었을 때 위쪽과 아래쪽 흙은 각각 어떻게 달라졌나요? 그래프의 두 선을 함께 볼까요?" },
+          { "when": "fair-test", "iv": "slope", "text": "기울기만 바꾸었어요. 물이 흐르는 빠르기는 어떻게 달라 보였나요? 흙 알갱이 그림도 살펴볼까요?" },
+          { "when": "fair-test", "iv": "vessel", "text": "그릇만 바꾸었을 때 결과가 달라졌나요? 이 결과로 무엇을 알 수 있을까요?" },
+          { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 깎인 흙과 쌓인 흙은 각각 어디로 갔을지 그림에서 찾아볼까요?" }
+        ]
+      }
+    }
+  ]
+}

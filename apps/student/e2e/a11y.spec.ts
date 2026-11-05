@@ -998,6 +998,37 @@ for (const scheme of ['light', 'dark'] as const) {
   });
 }
 
+// ---- g3-earth-sea ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`g3-earth-sea ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 처음, 실행 뒤(20·16), 가파르게(50·40)와 앞 시행, 2 L`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g3-earth-sea');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '언덕의 기울기');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('60.0초 · 깎인 흙 20 g · 쌓인 흙 16 g')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await setValue(page, '언덕의 기울기', '가파르게');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('60.0초 · 깎인 흙 50 g · 쌓인 흙 40 g')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await page.reload();
+    await setValue(page, '흘려보내는 물의 양', '2 L');
+    await selectIV(page, '흘려보내는 물의 양');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('60.0초 · 깎인 흙 40 g · 쌓인 흙 32 g')).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+}
+
 // ---- 수업 연결 ----
 
 for (const scheme of ['light', 'dark'] as const) {
