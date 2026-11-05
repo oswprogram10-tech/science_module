@@ -258,6 +258,11 @@ button.unit-card:hover { border-color:var(--accent); }
 .sort-card { width:100%; display:grid; grid-template-columns:auto minmax(0,1fr); grid-template-areas:"icon name" "icon dots" "icon count"; column-gap:8px; align-items:center; text-align:left; padding:6px 8px; }
 .sort-card .animal-icon { grid-area:icon; color:var(--fg); }
 .sort-card-name { grid-area:name; font-weight:700; }
+.sort-card.has-sub { grid-template-areas:"icon name" "icon sub" "icon dots" "icon count"; }
+.sort-card-sub { grid-area:sub; font-size:.85rem; }
+.sort-card.has-sub:not(.small) { grid-template-columns:auto; grid-template-areas:"icon" "name" "sub" "dots" "count"; justify-items:center; text-align:center; row-gap:2px; }
+.mat-result { animation:mat-in .35s ease-out; }
+@keyframes mat-in { from { opacity:0; } to { opacity:1; } }
 .obs-dots { grid-area:dots; display:flex; gap:4px; }
 .dot { width:10px; height:10px; border-radius:50%; border:2px solid var(--fg); background:transparent; }
 .dot.on { background:var(--accent); border-color:var(--accent); }
@@ -282,4 +287,5 @@ button.unit-card:hover { border-color:var(--accent); }
   .magnifier { grid-template-columns: 1fr; }
   .sort-pile { grid-template-columns: 1fr 1fr; }
   .sort-card { grid-template-columns: auto; grid-template-areas:"icon" "name" "dots" "count"; justify-items:center; text-align:center; }
+  .sort-card.has-sub { grid-template-areas:"icon" "name" "sub" "dots" "count"; }
 }

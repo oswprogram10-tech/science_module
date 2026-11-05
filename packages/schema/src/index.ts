@@ -266,6 +266,8 @@ export const cardSortLayoutSchema = z.enum(['groups', 'tree']);
 export const sortFeatureSchema = z.object({
   key: z.string().min(1),
   label: z.string().min(1),
+  /** 돋보기 버튼 문구(예: "구부려 보기"). 없으면 "{label} 살펴보기". */
+  action: z.string().min(1).optional(),
 });
 
 export const sortCriterionSchema = z.object({
@@ -281,6 +283,8 @@ export const sortCriterionSchema = z.object({
 export const sortCardSchema = z.object({
   key: z.string().min(1),
   label: z.string().min(1),
+  /** 카드 이름 아래에 덧붙이는 짧은 말(예: 물체를 이루는 물질 "금속"). 없으면 보이지 않는다. */
+  sublabel: z.string().min(1).optional(),
   /** 그림 key. 학생 앱이 key별 그림을 그린다. */
   icon: z.string().min(1),
   /** 특징 key -> 특징값. 화면에 드러내지 않는다. */

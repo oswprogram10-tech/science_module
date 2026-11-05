@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseManifest, type CardSortExperiment } from '@sci/schema';
 import animalJson from '../../../content/units/g3-animal/manifest.json';
+import materialJson from '../../../content/units/g3-material/manifest.json';
 import * as cs from '../../../apps/student/src/modules/card-sort/cardSortStore';
 import { buildTutorInput, fromCardSortState, situationOf } from './context';
 import { cardSortWhen } from './situation';
@@ -55,5 +56,30 @@ describe('TutorState: card-sort', () => {
   it('다른 활동의 상태를 넘기면 거부한다', () => {
     const t = fromCardSortState(exp, cs.createInitialState(), 'g3-animal');
     expect(() => situationOf(t, { ...exp, module: 'sky-observation' } as never)).toThrow();
+  });
+});
+
+describe('TutorState: 물체와 물질 (정답을 담지 않는다)', () => {
+  const material = parseManifest(materialJson);
+  const mexp = material.experiments[0] as CardSortExperiment;
+  it('입력 문장에 카드의 특징값, 관찰 문장, 물질 이름이 들어가지 않는다', () => {
+    let s = cs.chooseCriterion(cs.createInitialState(), mexp, 'hard');
+    s = cs.observe(cs.select(s, mexp, 'foil'), mexp, 'foil', 'hard');
+    s = cs.place(s, mexp, 'foil', 'yes');
+    const t = fromCardSortState(mexp, s, 'g3-material');
+    const text = buildTutorInput(mexp, t, '왜요?', { title: material.title, grade: material.grade });
+    expect(text).toBe(buildTutorInput(mexp, t, '왜요?', { title: material.title, grade: material.grade }));
+    expect(text).toContain('[분류 기준] 손으로 눌러도 모양이 그대로인가요?');
+    expect(text).toContain('- 알루미늄 포일: 관찰 단단함 · 넣은 무리 그대로이다');
+    expect(text).not.toContain('금속');
+    expect(text).not.toContain('구겨져요');
+    expect(text).not.toContain('모양이 변한다');
+  });
+  it('튜터 상황은 앱 저장소와 같다', () => {
+    let s = cs.chooseCriterion(cs.createInitialState(), mexp, 'hard');
+    for (const c of mexp.cards) s = cs.observe(s, mexp, c.key, 'hard');
+    for (const c of mexp.cards) s = cs.place(s, mexp, c.key, c.key === 'foil' ? 'yes' : c.features.hard!);
+    s = cs.check(s, mexp);
+    expect(situationOf(fromCardSortState(mexp, s, 'g3-material'), mexp)).toBe('check-inconsistent');
   });
 });

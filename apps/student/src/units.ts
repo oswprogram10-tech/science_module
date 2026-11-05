@@ -32,6 +32,7 @@ import forceJson from '../../../content/units/g3-force/manifest.json';
 import soundJson from '../../../content/units/g3-sound/manifest.json';
 import magnetJson from '../../../content/units/g4-magnet/manifest.json';
 import motionJson from '../../../content/units/g6-motion/manifest.json';
+import materialJson from '../../../content/units/g3-material/manifest.json';
 import { MODULES } from './modules';
 import { classifyModule } from './modules/indicator-classify';
 import { observeModule } from './modules/sky-observation';
@@ -97,7 +98,7 @@ export function buildRegistry(
   return raws.map((raw, i) => loadUnit(raw, i, modules));
 }
 
-export const UNITS: UnitEntry[] = buildRegistry([gasesJson, solutionJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, earthMotionJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, animalJson, plantlifeJson, forceJson, soundJson, magnetJson, motionJson]);
+export const UNITS: UnitEntry[] = buildRegistry([gasesJson, solutionJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, earthMotionJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, animalJson, plantlifeJson, forceJson, soundJson, magnetJson, motionJson, materialJson]);
 
 export type Route = { page: 'list' } | { page: 'unit'; unitId: string };
 

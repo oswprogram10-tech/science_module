@@ -300,3 +300,57 @@ export async function treeFinish(page: Page) {
   await treeSplit(page, 'r/no', 'serrated', ['단풍나무', '국화', '벚나무', '동백나무', '감나무', '라일락']);
   await treeSplit(page, 'r/no/yes', 'lobed', ['단풍나무', '국화', '벚나무', '동백나무']);
 }
+
+// ---- 물체와 물질(카드 분류 groups, 카드 이름 아래에 물질 이름) ----
+
+export const MATERIAL_CARDS = ['쇠못', '유리구슬', '나무 블록', '플라스틱 자', '고무줄', '종이', '면 손수건', '알루미늄 포일'] as const;
+export type MaterialCard = (typeof MATERIAL_CARDS)[number];
+export type MaterialCriterionKey = 'hard' | 'bends' | 'absorbs';
+export const MATERIAL_CRITERION_LABEL: Record<MaterialCriterionKey, string> = {
+  hard: '손으로 눌러도 모양이 그대로인가요?',
+  bends: '손으로 구부리면 휘어지나요?',
+  absorbs: '물을 떨어뜨리면 빨아들이나요?',
+};
+/** 돋보기 버튼 문구(매니페스트 features[].action). */
+export const MATERIAL_ACTION: Record<MaterialCriterionKey, string> = { hard: '눌러 보기', bends: '구부려 보기', absorbs: '물 떨어뜨려 보기' };
+/** 카드를 시험 결과에 맞게 넣을 무리(테스트가 정답을 알고 있어야 올바른 분류를 재현할 수 있다). */
+export const MATERIAL_GROUP: Record<MaterialCriterionKey, Record<MaterialCard, string>> = {
+  hard: {
+    쇠못: '그대로이다', 유리구슬: '그대로이다', '나무 블록': '그대로이다', '플라스틱 자': '그대로이다',
+    고무줄: '모양이 변한다', 종이: '모양이 변한다', '면 손수건': '모양이 변한다', '알루미늄 포일': '모양이 변한다',
+  },
+  bends: {
+    쇠못: '휘어지지 않는다', 유리구슬: '휘어지지 않는다', '나무 블록': '휘어지지 않는다', '플라스틱 자': '휘어진다',
+    고무줄: '휘어진다', 종이: '휘어진다', '면 손수건': '휘어진다', '알루미늄 포일': '휘어진다',
+  },
+  absorbs: {
+    쇠못: '빨아들이지 않는다', 유리구슬: '빨아들이지 않는다', '나무 블록': '빨아들인다', '플라스틱 자': '빨아들이지 않는다',
+    고무줄: '빨아들이지 않는다', 종이: '빨아들인다', '면 손수건': '빨아들인다', '알루미늄 포일': '빨아들이지 않는다',
+  },
+};
+
+/** 카드 버튼. 접근 가능한 이름은 "이름 물질 관찰 n/3"이다. */
+export const materialCard = (page: Page, card: MaterialCard) =>
+  page.getByRole('button', { name: new RegExp(`^${card} \\S+ 관찰 \\d/3$`) });
+export const materialObserveButton = (page: Page, key: MaterialCriterionKey) =>
+  page.getByRole('region', { name: '돋보기' }).getByRole('button', { name: MATERIAL_ACTION[key], exact: true });
+
+/** 8장을 모두 시험해 나눈다. override는 일부러 다른 무리에 넣을 카드. */
+export async function materialSortAll(
+  page: Page,
+  key: MaterialCriterionKey,
+  opts: { observe?: boolean; override?: Partial<Record<MaterialCard, string>> } = {},
+) {
+  for (const card of MATERIAL_CARDS) {
+    await materialCard(page, card).click();
+    if (opts.observe !== false) await materialObserveButton(page, key).click();
+    await sortPutButton(page, opts.override?.[card] ?? MATERIAL_GROUP[key][card]).click();
+  }
+}
+
+/** 기준 하나를 시험 결과에 맞게 끝낸다(고르기 -> 시험 -> 넣기 -> 확인). */
+export async function materialFinishCriterion(page: Page, key: MaterialCriterionKey) {
+  await sortChoose(page, MATERIAL_CRITERION_LABEL[key]);
+  await materialSortAll(page, key);
+  await sortCheckButton(page).click();
+}

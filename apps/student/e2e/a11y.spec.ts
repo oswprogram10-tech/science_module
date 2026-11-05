@@ -20,6 +20,11 @@ import {
   sortCheckButton,
   sortChoose,
   sortAll,
+  sortPutButton,
+  materialCard,
+  materialFinishCriterion,
+  materialObserveButton,
+  materialSortAll,
   sortFinishCriterion,
   sortObserveButton,
   treeNode,
@@ -654,6 +659,43 @@ for (const scheme of ['light', 'dark'] as const) {
     await expectNoSeriousViolations(page);
 
     await sortChoose(page, '귀여운가요?');
+    await expectNoSeriousViolations(page);
+  });
+}
+
+// ---- g3-material ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`g3-material ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 처음, 시험 결과 그림, 다시 비교하기, 두 기준을 끝낸 뒤`, async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g3-material');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+
+    await sortChoose(page, '손으로 눌러도 모양이 그대로인가요?');
+    await materialCard(page, '알루미늄 포일').click();
+    await materialObserveButton(page, 'hard').click();
+    await materialObserveButton(page, 'bends').click();
+    await materialObserveButton(page, 'absorbs').click();
+    await expect(page.locator('svg .mat-result')).not.toHaveCount(0);
+    await expectNoSeriousViolations(page);
+    await materialCard(page, '나무 블록').click();
+    await materialObserveButton(page, 'absorbs').click();
+    await expect(page.locator('svg .mat-stain')).toHaveCount(1);
+    await expectNoSeriousViolations(page);
+
+    await materialSortAll(page, 'hard', { override: { '알루미늄 포일': '그대로이다' } });
+    await sortCheckButton(page).click();
+    await expect(page.getByText('알루미늄 포일은 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?')).toBeVisible();
+    await expectNoSeriousViolations(page);
+
+    await materialCard(page, '알루미늄 포일').click();
+    await sortPutButton(page, '모양이 변한다').click();
+    await sortCheckButton(page).click();
+    await expect(page.getByText('관찰한 특징과 분류가 서로 잘 맞아요.')).toBeVisible();
+    await materialFinishCriterion(page, 'bends');
+    await expect(page.getByText('두 가지 기준으로 분류했어요!')).toBeVisible();
     await expectNoSeriousViolations(page);
   });
 }

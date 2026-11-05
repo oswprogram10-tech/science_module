@@ -140,6 +140,7 @@ function GroupsSortLab({
               <li key={c.key}>
                 <CardButton
                   label={c.label}
+                  sublabel={c.sublabel}
                   icon={c.icon}
                   count={(state.observed[c.key] ?? []).length}
                   total={featureCount}
@@ -172,6 +173,7 @@ function GroupsSortLab({
                           <li key={c.key} className="sort-placed">
                             <CardButton
                               label={c.label}
+                              sublabel={c.sublabel}
                               icon={c.icon}
                               count={(state.observed[c.key] ?? []).length}
                               total={featureCount}
