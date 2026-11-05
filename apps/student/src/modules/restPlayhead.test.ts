@@ -21,7 +21,7 @@ describe('restPlayhead: 숫자 또는 (실험, 시행) => 숫자', () => {
       expect(restPlayheadOf(unit.module, unit.experiment, trialOf({})), unit.id).toBe(r);
     }
     const nums = Object.fromEntries(variableUnits.filter((u) => typeof u.module.restPlayhead === 'number').map((u) => [u.id, u.module.restPlayhead]));
-    expect(nums).toMatchObject({ 'g3-lifecycle': 7, 'g4-ecosystem': 60, 'g6-plant': 48, 'g4-microbe': 7, 'g3-force': 1, 'g3-sound': 20, 'g4-magnet': 6, 'g6-motion': 1.2, 'g4-water-state': 30, 'g5-mixture': 20, 'g3-earth-sea': 60, 'g5-weather': 10, 'g3-health': 20 });
+    expect(nums).toMatchObject({ 'g3-lifecycle': 7, 'g4-ecosystem': 60, 'g6-plant': 48, 'g4-microbe': 7, 'g3-force': 1, 'g3-sound': 20, 'g4-magnet': 6, 'g6-motion': 1.2, 'g4-water-state': 30, 'g5-mixture': 20, 'g3-earth-sea': 60, 'g5-weather': 10, 'g3-health': 20, 'g4-climate': 20 });
   });
 
   it('우리 몸은 시행의 운동 시간에 따라 운동이 끝난 순간(쉬는 1분 + 운동 시간)이다', () => {

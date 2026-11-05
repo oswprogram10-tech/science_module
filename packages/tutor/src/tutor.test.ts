@@ -2231,3 +2231,158 @@ describe('g3-health 매니페스트 probe', () => {
     }
   });
 });
+
+// ---------- 기후변화와 우리 생활(온실 모형) 매니페스트 ----------
+import climateJson from '../../../content/units/g4-climate/manifest.json';
+
+describe('g4-climate 매니페스트 probe', () => {
+  const e = parseManifest(climateJson).experiments[0]! as VariableExperiment;
+  const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+  const eKeys = e.variables.map((v) => v.key);
+  const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+  const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: 'cover', ...x });
+  const fair = (iv: string): Partial<ProbeContext> => ({
+    ivKey: iv,
+    lastAnalysis: { kind: 'fair-test', changed: [iv] },
+    prediction: 'same',
+    observed: 'same',
+  });
+
+  it('iv별 fair-test 질문을 고른다', () => {
+    expect(selectProbe(eCtx(fair('air')), e.tutor.probes, eGuard)).toContain('덮개를 바꾸었을 때와 비교하면 차이가 컸나요, 작았나요?');
+    expect(selectProbe(eCtx(fair('cap')), e.tutor.probes, eGuard)).toContain('뚜껑 색만 바꾸었을 때 결과가 달라졌나요?');
+    expect(selectProbe(eCtx(fair('cover')), e.tutor.probes, eGuard)).toContain('오른 온도는 얼마나 달라졌나요? 그래프의 앞 시행 선과 비교해 볼까요?');
+  });
+
+  it('실행 전 질문은 병 속 온도를 예측하게 하고, 예측과 결과가 다르면 열이 드나드는 모습을 보게 한다', () => {
+    expect(selectProbe(eCtx({}), e.tutor.probes, eGuard)).toContain('병 속 온도가 어떻게 될지 예측해 볼까요?');
+    const text = selectProbe(eCtx({ ...fair('cover'), prediction: 'decrease', observed: 'increase' }), e.tutor.probes, eGuard);
+    expect(text).toContain('열이 드나드는 모습 그림에서 빠져나가는 화살표를 살펴볼까요?');
+  });
+
+  it('모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+    let n = 0;
+    for (const probe of e.tutor.probes) {
+      for (const iv of eKeys) {
+        for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+          const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+          expect(text).not.toMatch(/[{}]/);
+          expect(text).not.toMatch(/(을\(를\)|이\(가\)|와\(과\)|은\(는\))/);
+          n++;
+        }
+      }
+    }
+    expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+  });
+
+  it('질문 문장은 금지 구절·limits 용어와 겹치지 않는다', () => {
+    for (const probe of e.tutor.probes) {
+      for (const f of e.tutor.forbiddenAnswers) expect(probe.text, probe.text).not.toContain(f);
+      for (const l of e.limits) expect(probe.text, probe.text).not.toContain(l);
+    }
+  });
+
+  it('금지 구절은 사양의 네 가지와 활용형까지 막는다', () => {
+    for (const answer of [
+      // 사양의 네 가지
+      '덮개를 씌우면 온도가 더 올라요',
+      '이산화 탄소가 많으면 온도가 더 올라요',
+      '열이 빠져나가지 못하기 때문이에요',
+      '뚜껑 색은 관계없어요',
+      // 덮개
+      '덮개를 씌우면 더 올라요',
+      '덮개를 씌우면 온도가 올라간다',
+      '덮개를 씌우면 온도가 높아요',
+      '덮개를 씌우면 온도가 높아진다',
+      '덮개를 씌우면 온도가 더 높아요',
+      '덮개를 씌우면 더 높아져요',
+      '덮개를 씌우면 훨씬 뜨거워요',
+      '덮개를 씌우면 더 따뜻해요',
+      '덮개를 씌울수록 온도가 올라요',
+      '덮개를 씌운 병이 더 뜨거워요',
+      '덮개가 있으면 온도가 올라요',
+      '덮개가 있으면 더 올라요',
+      // 이산화 탄소
+      '이산화 탄소가 많으면 더 올라요',
+      '이산화 탄소가 많으면 온도가 높아요',
+      '이산화 탄소가 많을수록 온도가 올라요',
+      '이산화 탄소를 넣으면 온도가 올라요',
+      '이산화 탄소를 더 넣으면 더 따뜻해요',
+      '이산화 탄소가 늘어나면 온도가 올라가요',
+      // 열의 이동
+      '열이 빠져나가지 못해서 올라가요',
+      '열이 빠져나가지 못하니까 올라가요',
+      '열이 빠져나가지 않아서 더 올라가요',
+      '열이 안 빠져나가요',
+      '열이 못 빠져나가요',
+      '열이 갇혀서 올라가요',
+      '열을 가둬요',
+      '비닐이 열이 빠져나가는 것을 막아요',
+      // 뚜껑 색
+      '뚜껑 색은 상관없어요',
+      '뚜껑 색은 영향이 없어요',
+      '뚜껑 색은 결과에 영향을 주지 않아요',
+      '뚜껑 색과 관계없이 같아요',
+      '뚜껑 색이 달라도 같아요',
+      '뚜껑 색은 중요하지 않아요',
+      '뚜껑은 관계없어요',
+    ]) {
+      expect(guardOutput(answer, eGuard).ok, answer).toBe(false);
+    }
+    for (const l of e.limits) expect(guardOutput(`${l}이에요`, eGuard).ok, l).toBe(false);
+  });
+
+  it('질문과 화면에 보이는 글은 금지 구절·limits 용어와 겹치지 않는다', () => {
+    const shown = [
+      e.title,
+      e.question,
+      e.predictionPrompt,
+      ...e.variables.flatMap((v) => [v.label, v.unit ?? '', ...v.options.map((o) => o.label)]),
+      ...e.dependent.flatMap((d) => [d.label, d.unit ?? '']),
+      ...(e.safetyChecklist ?? []),
+      ...Object.values(e.safetyMessages ?? {}),
+      '⚠ 전등 갓은 뜨거워요. 이산화 탄소는 선생님이 넣어 줘요.',
+      '공기층은 담요처럼 열이 빠져나가는 것을 늦춰요.',
+      '실제 지구는 병보다 훨씬 크고, 바다·구름·숲 같은 많은 것이 함께 영향을 줘요.',
+      '모형의 한계',
+      '실험하면 병 속 온도가 어떻게 달라지는지 볼 수 있어요.',
+      '실험하면 빛과 열이 드나드는 모습을 볼 수 있어요.',
+      '20.0분 · 병 속 27.8 °C (처음보다 +5.8 °C)',
+      '눈으로 보기',
+      '열이 드나드는 모습 보기',
+      '들어오는 빛',
+      '빠져나가는 열',
+      '되돌아오는 열',
+      '이산화 탄소 +',
+      '투명 비닐',
+      '흰색 뚜껑',
+      '파란색 뚜껑',
+      '가상 온도계: 병 속',
+      '병 속 온도(°C)',
+      '시간(분)',
+      '오른 온도(°C)',
+      '20분 뒤 온도(°C)',
+      '결과: 늘어났다',
+      '결과: 줄어들었다',
+      '결과: 변하지 않았다',
+    ];
+    for (const text of shown) expect(guardOutput(text, eGuard).ok, text).toBe(true);
+  });
+
+  it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+    const situations: Partial<ProbeContext>[] = [
+      {},
+      { lastAnalysis: { kind: 'first-trial', changed: [] } },
+      { lastAnalysis: { kind: 'confounded', changed: ['cover', 'air'] } },
+      { lastAnalysis: { kind: 'iv-unchanged', changed: ['cap'] } },
+      { lastAnalysis: { kind: 'repeat', changed: [] } },
+      ...eKeys.flatMap((k) => [fair(k), { ...fair(k), prediction: 'decrease' as const, observed: 'increase' as const }]),
+    ];
+    for (const s of situations) {
+      const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+      expect(text).not.toBe(FALLBACK_PROBE);
+      expect(guardOutput(text, eGuard).ok, text).toBe(true);
+    }
+  });
+});

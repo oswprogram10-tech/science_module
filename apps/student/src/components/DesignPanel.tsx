@@ -34,6 +34,8 @@ const ALWAYS_NOTICE: Record<string, string> = {
   'salt-sand:heat': '⚠ 증발 접시와 알코올램프는 아주 뜨거워요. 선생님과 함께 다뤄요.',
   // 전등과 향은 뜨겁고 불씨가 있다. 다른 단원이 `fire`를 쓸 때를 생각해 모듈 이름을 붙인 키로 둔다.
   'land-sea-breeze:fire': '⚠ 향과 전등은 선생님과 함께 다뤄요.',
+  // 전등 갓은 뜨겁고 이산화 탄소는 선생님이 넣는다. 다른 단원이 `heat`를 쓸 때를 생각해 모듈 이름을 붙인 키로 둔다.
+  'greenhouse-bottle:heat': '⚠ 전등 갓은 뜨거워요. 이산화 탄소는 선생님이 넣어 줘요.',
 };
 
 const PREDICTION_ICON: Record<Prediction, string> = { increase: '▲', decrease: '▼', same: '＝' };

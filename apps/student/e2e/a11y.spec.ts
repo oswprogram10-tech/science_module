@@ -1153,6 +1153,42 @@ for (const scheme of ['light', 'dark'] as const) {
   });
 }
 
+// ---- g4-climate ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`g4-climate ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 처음, 점검표, 실행 뒤(기준), 덮개 씌움·이산화 탄소와 "모형의 한계" 펼침`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g4-climate');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '투명 비닐 덮개');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(page.getByRole('dialog', { name: '안전 점검표' })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await confirmSafetyDialog(page);
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('20.0분 · 병 속 27.8 °C (처음보다 +5.8 °C)')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await setValue(page, '투명 비닐 덮개', '씌움');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('20.0분 · 병 속 31.6 °C (처음보다 +9.6 °C)')).toBeVisible();
+    await page.getByText('모형의 한계', { exact: true }).click();
+    await expectNoSeriousViolations(page);
+    await page.reload();
+    await selectIV(page, '병 속 공기');
+    await setValue(page, '병 속 공기', '이산화 탄소를 더 넣은 공기');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await confirmSafetyDialog(page);
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('20.0분 · 병 속 29.2 °C (처음보다 +7.2 °C)')).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+}
+
 // ---- 수업 연결 ----
 
 for (const scheme of ['light', 'dark'] as const) {

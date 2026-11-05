@@ -1,13 +1,13 @@
 import { test, expect } from './helpers';
 
-test('단원 목록은 3·4·5·6학년으로 묶인 카드 29개를 보여 준다', async ({ page }) => {
+test('단원 목록은 3·4·5·6학년으로 묶인 카드 30개를 보여 준다', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1, name: '과학 실험 단원 목록' })).toBeVisible();
   for (const g of ['3학년', '4학년', '5학년', '6학년']) {
     await expect(page.getByRole('heading', { level: 2, name: g })).toBeVisible();
   }
   const cards = page.getByRole('button', { name: /탐구 질문:/ });
-  await expect(cards).toHaveCount(29);
+  await expect(cards).toHaveCount(30);
   const grade3 = page.getByRole('region', { name: '3학년' }).getByRole('button');
   await expect(grade3).toHaveCount(8);
   await expect(grade3.nth(0)).toContainText('생물의 한살이');
@@ -19,7 +19,7 @@ test('단원 목록은 3·4·5·6학년으로 묶인 카드 29개를 보여 준�
   await expect(grade3.nth(6)).toContainText('지구와 바다');
   await expect(grade3.nth(7)).toContainText('감염병과 건강한 생활');
   const grade4 = page.getByRole('region', { name: '4학년' }).getByRole('button');
-  await expect(grade4).toHaveCount(7);
+  await expect(grade4).toHaveCount(8);
   await expect(grade4.nth(0)).toContainText('여러 가지 기체');
   await expect(grade4.nth(1)).toContainText('땅의 변화');
   await expect(grade4.nth(2)).toContainText('생물과 환경');
@@ -27,6 +27,7 @@ test('단원 목록은 3·4·5·6학년으로 묶인 카드 29개를 보여 준�
   await expect(grade4.nth(4)).toContainText('자석의 이용');
   await expect(grade4.nth(5)).toContainText('물의 상태 변화');
   await expect(grade4.nth(6)).toContainText('밤하늘 관찰');
+  await expect(grade4.nth(7)).toContainText('기후변화와 우리 생활');
   const grade5 = page.getByRole('region', { name: '5학년' }).getByRole('button');
   await expect(grade5).toHaveCount(7);
   await expect(grade5.nth(0)).toContainText('용해와 용액');
@@ -77,6 +78,7 @@ for (const [grade, title, id] of [
   ['5학년', '지층과 화석', 'g5-strata'],
   ['5학년', '날씨와 우리 생활', 'g5-weather'],
   ['3학년', '감염병과 건강한 생활', 'g3-health'],
+  ['4학년', '기후변화와 우리 생활', 'g4-climate'],
 ] as const) {
   test(`${title} 카드를 누르면 #/unit/${id}로 가고 단원 목록으로 돌아온다`, async ({ page }) => {
     await page.goto('/');

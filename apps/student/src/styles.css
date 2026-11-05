@@ -315,3 +315,8 @@ button.unit-card:hover { border-color:var(--accent); }
 .pd-check { fill:none; stroke:var(--pd-rec); stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
 .shield-wash { fill:var(--shield-wash); stroke:var(--fg); stroke-width:1; }
 .shield-mask { fill:var(--shield-mask); stroke:var(--fg); stroke-width:1; }
+
+/* 온실 모형: "모형의 한계" 접힘 글 */
+.limits { align-self:stretch; margin:6px 0 0; font-size:0.9rem; }
+.limits summary { cursor:pointer; font-weight:600; min-height:24px; }
+.limits p { margin:4px 0 0; }
