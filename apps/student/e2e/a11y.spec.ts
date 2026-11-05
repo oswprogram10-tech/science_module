@@ -774,6 +774,39 @@ for (const scheme of ['light', 'dark'] as const) {
   });
 }
 
+// ---- g3-sound ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`g3-sound ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 처음, 실행 뒤(약하게 20 cm), 15 cm와 앞 시행, 세게`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g3-sound');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '떨리는 줄의 길이');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('1초 동안 330번 떨려요 · 소리의 크기 62.0')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await setValue(page, '떨리는 줄의 길이', '15 cm');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('1초 동안 440번 떨려요 · 소리의 크기 62.0')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await page.reload();
+    await setValue(page, '튕기는 세기', '세게');
+    await setValue(page, '고무줄 색', '노란색');
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '튕기는 세기');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('1초 동안 330번 떨려요 · 소리의 크기 70.0')).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+}
+
 // ---- 수업 연결 ----
 
 for (const scheme of ['light', 'dark'] as const) {

@@ -48,7 +48,7 @@ const render = (unit: (typeof variableUnits)[number], mod: AnyModule, trial: Any
   );
 
 describe('GraphView', () => {
-  const existing = variableUnits.filter((u) => u.module.kind !== 'electromagnet' && u.module.kind !== 'magma-cooling' && u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration' && u.module.kind !== 'food-web' && u.module.kind !== 'mold-growth' && u.module.kind !== 'exercise-body' && u.module.kind !== 'lever-balance');
+  const existing = variableUnits.filter((u) => u.module.kind !== 'electromagnet' && u.module.kind !== 'magma-cooling' && u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration' && u.module.kind !== 'food-web' && u.module.kind !== 'mold-growth' && u.module.kind !== 'exercise-body' && u.module.kind !== 'lever-balance' && u.module.kind !== 'string-sound');
 
   it('기존 단원은 모든 조건에서 최댓값이 처음 값 또는 마지막 값이다 (y축 범위를 모든 표본의 최댓값으로 잡아도 달라지지 않는다)', () => {
     expect(existing.length).toBeGreaterThanOrEqual(5);
@@ -171,7 +171,7 @@ describe('markers: 시행에서 계산하는 함수 형태', () => {
 });
 
 describe('x축 라벨·눈금(xLabel, xTicks, xTickFormat)', () => {
-  const existing = variableUnits.filter((u) => u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration' && u.module.kind !== 'food-web' && u.module.kind !== 'mold-growth' && u.module.kind !== 'exercise-body' && u.module.kind !== 'lever-balance');
+  const existing = variableUnits.filter((u) => u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration' && u.module.kind !== 'food-web' && u.module.kind !== 'mold-growth' && u.module.kind !== 'exercise-body' && u.module.kind !== 'lever-balance' && u.module.kind !== 'string-sound');
   const seasons = () => variableUnits.find((u) => u.id === 'g6-seasons')!;
   const base = { season: 'summer', tiltDeg: 23.44, stickCm: 10 };
 
@@ -228,9 +228,9 @@ describe('여러 선(graph.series)과 y축 눈금(graph.yTicks)', () => {
   const SERIES_UNITS = ['g4-ecosystem', 'g5-body'];
   const others = variableUnits.filter((u) => !SERIES_UNITS.includes(u.id));
   // yTicks로 축을 고정한 단원. 이 단원들은 'series: undefined는 그림을 바꾸지 않는다' 비교에서 yTicks를 남긴다.
-  const FIXED_Y = ['g4-ecosystem', 'g4-microbe', 'g5-body', 'g3-force'];
+  const FIXED_Y = ['g4-ecosystem', 'g4-microbe', 'g5-body', 'g3-force', 'g3-sound'];
 
-  it('series를 쓰는 모듈은 먹이 관계와 우리 몸뿐이고, yTicks는 먹이 관계·곰팡이·우리 몸·막대 수평 잡기만 쓴다', () => {
+  it('series를 쓰는 모듈은 먹이 관계와 우리 몸뿐이고, yTicks는 먹이 관계·곰팡이·우리 몸·막대 수평 잡기·줄 소리만 쓴다', () => {
     expect(variableUnits.filter((u) => u.module.graph.series !== undefined).map((u) => u.id)).toEqual(SERIES_UNITS);
     expect(variableUnits.filter((u) => u.module.graph.yTicks !== undefined).map((u) => u.id).sort()).toEqual([...FIXED_Y].sort());
   });
@@ -254,6 +254,52 @@ describe('여러 선(graph.series)과 y축 눈금(graph.yTicks)', () => {
       expect(html).toContain('오른쪽 끝 높이(cm)');
       expect(html).not.toContain('graph-marker');
     }
+  });
+
+  it('줄 소리 그래프는 y축 −1~1(눈금 −1·−0.5·0·0.5·1)을 고정하고, 0에 가로선을 긋고, 세기에 따라 축이 변하지 않는다', () => {
+    const unit = variableUnits.find((u) => u.id === 'g3-sound')!;
+    for (const values of combos(unit)) {
+      const html = render(unit, unit.module, trialOf(unit, values));
+      const yTicks = [...html.matchAll(/text-anchor="end"[^>]*>([^<]+)</g)].map((m) => m[1]);
+      expect(yTicks, JSON.stringify(values)).toEqual(['−1', '−0.5', '0', '0.5', '1']);
+      const xTicks = [...html.matchAll(/<text x="([\d.]+)" y="(\d+)" text-anchor="middle">([\d.]+)<\/text>/g)].filter((m) => Number(m[2]) > 200).map((m) => m[3]);
+      expect(xTicks).toEqual(['0', '5', '10', '15', '20']);
+      expect(html).toContain('시간(1000분의 1초)');
+      expect(html).toContain('줄의 떨림');
+      // 0 가로선: y = 가운데(−1이 아래, 1이 위이므로 눈금 0의 y와 같다)
+      const zero = /<line data-testid="zero-line" x1="44" x2="308" y1="([\d.]+)" y2="([\d.]+)"/.exec(html)!;
+      expect(zero[1]).toBe(zero[2]);
+      expect(Number(zero[1])).toBeCloseTo((14 + 202) / 2, 6);
+      // 파형의 점은 모두 틀 안(y 14~202)에 있고, 꼭짓점이 위·아래에 모두 있다
+      const pts = [...(/<polyline points="([^"]+)" fill="none" stroke="#1f6fb5"/.exec(html)![1]!.matchAll(/([\d.]+),([\d.]+)/g))].map((m) => Number(m[2]));
+      expect(Math.min(...pts)).toBeGreaterThanOrEqual(14 - 1e-6);
+      expect(Math.max(...pts)).toBeLessThanOrEqual(202 + 1e-6);
+      const A = values.strength === 'strong' ? 1 : 0.4;
+      expect(Math.min(...pts)).toBeLessThan(108 - 94 * A * 0.9);
+      expect(Math.max(...pts)).toBeGreaterThan(108 + 94 * A * 0.9);
+      // 점 개수는 MAX_POINTS(160) 이하로 줄여 그린다
+      expect(pts.length).toBeLessThanOrEqual(161);
+    }
+  });
+
+  it('y가 음수인 축 지원은 줄 소리뿐이다: 다른 단원의 그림에는 0 가로선과 유니코드 빼기 기호가 없다', () => {
+    for (const unit of variableUnits) {
+      if (unit.id === 'g3-sound') continue;
+      const html = render(unit, unit.module, trialOf(unit, combos(unit)[0]!));
+      expect(html, unit.id).not.toContain('zero-line');
+      expect(html, unit.id).not.toContain('−');
+    }
+    // 실험 전(시행 없음)에는 줄 소리도 틀과 안내만 그린다
+    const sound = variableUnits.find((u) => u.id === 'g3-sound')!;
+    const empty = render(sound, sound.module, undefined);
+    expect(empty).not.toContain('zero-line');
+  });
+
+  it('정수가 아닌 고정 눈금은 소수 한 자리로, 정수 눈금은 지금처럼 소수 없이 쓴다', () => {
+    const sound = variableUnits.find((u) => u.id === 'g3-sound')!;
+    const mixed: AnyModule = { ...sound.module, graph: { ...sound.module.graph, yMin: 0, yTicks: [0, 1, 2] } };
+    const html = render(sound, mixed, trialOf(sound, combos(sound)[0]!));
+    expect([...html.matchAll(/text-anchor="end"[^>]*>([^<]+)</g)].map((m) => m[1])).toEqual(['0', '1', '2']);
   });
 
   it('series가 없는 단원은 선 하나만 그리고 범례가 없다', () => {

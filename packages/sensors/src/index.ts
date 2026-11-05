@@ -6,7 +6,7 @@ export interface SensorReading {
   stale?: boolean;
 }
 
-export type SensorKind = 'temperature' | 'scale' | 'pressure' | 'oxygen' | 'carbonDioxide' | 'light' | 'humidity' | 'pulse' | 'tilt';
+export type SensorKind = 'temperature' | 'scale' | 'pressure' | 'oxygen' | 'carbonDioxide' | 'light' | 'humidity' | 'pulse' | 'tilt' | 'sound';
 
 export interface SensorDriver {
   id: string;
@@ -86,6 +86,7 @@ export const LIGHT_NOISE_PCT = 0.5;
 export const HUMIDITY_NOISE_PCT = 0.5;
 export const PULSE_NOISE_BPM = 1;
 export const TILT_NOISE_DEG = 0.1;
+export const SOUND_NOISE_LEVEL = 0.2;
 export const BEAKER_G = 100;
 
 /** 값 = source() + 시드 고정 잡음(±0.2 °C), 소수 첫째 자리. */
@@ -179,6 +180,16 @@ export class MockTiltDriver extends MockDriver {
   unit = '°';
   protected measure() {
     return roundTo(this.source() + (this.rng() * 2 - 1) * TILT_NOISE_DEG, 1);
+  }
+}
+
+/** 가상 소리 센서: 값 = source()(눈금) + 시드 고정 잡음(±0.2 눈금), 0 이상, 소수 첫째 자리. 단위 "눈금"은 화면 글자이다. */
+export class MockSoundDriver extends MockDriver {
+  id = 'mock-sound';
+  kind = 'sound' as const;
+  unit = '눈금';
+  protected measure() {
+    return roundTo(Math.max(0, this.source() + (this.rng() * 2 - 1) * SOUND_NOISE_LEVEL), 1);
   }
 }
 

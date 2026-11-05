@@ -1,12 +1,12 @@
 import { useMemo, useRef } from 'react';
-import { MockGasDriver, MockHumidityDriver, MockLightDriver, MockPressureDriver, MockPulseDriver, MockScaleDriver, MockTemperatureDriver, MockTiltDriver, type SensorDriver, type SensorKind, type SensorReading } from '@sci/sensors';
+import { MockGasDriver, MockHumidityDriver, MockLightDriver, MockPressureDriver, MockPulseDriver, MockScaleDriver, MockSoundDriver, MockTemperatureDriver, MockTiltDriver, type SensorDriver, type SensorKind, type SensorReading } from '@sci/sensors';
 import type { SensorSpec } from '../modules/types';
 import { devMode } from './safety/devMode';
 import { RealTemperatureControls, useRealTemperature } from './RealTemperature';
 
-const SEEDS: Record<SensorKind, number> = { temperature: 20250101, scale: 20250102, pressure: 20250103, oxygen: 20250104, carbonDioxide: 20250105, light: 20250106, humidity: 20250107, pulse: 20250108, tilt: 20250109 };
-const DECIMALS: Record<SensorKind, number> = { temperature: 1, scale: 2, pressure: 1, oxygen: 1, carbonDioxide: 1, light: 1, humidity: 1, pulse: 0, tilt: 1 };
-const ARIA: Record<SensorKind, string> = { temperature: '온도', scale: '무게', pressure: '압력', oxygen: '산소', carbonDioxide: '이산화 탄소', light: '빛 세기', humidity: '습도', pulse: '맥박', tilt: '기울기' };
+const SEEDS: Record<SensorKind, number> = { temperature: 20250101, scale: 20250102, pressure: 20250103, oxygen: 20250104, carbonDioxide: 20250105, light: 20250106, humidity: 20250107, pulse: 20250108, tilt: 20250109, sound: 20250110 };
+const DECIMALS: Record<SensorKind, number> = { temperature: 1, scale: 2, pressure: 1, oxygen: 1, carbonDioxide: 1, light: 1, humidity: 1, pulse: 0, tilt: 1, sound: 1 };
+const ARIA: Record<SensorKind, string> = { temperature: '온도', scale: '무게', pressure: '압력', oxygen: '산소', carbonDioxide: '이산화 탄소', light: '빛 세기', humidity: '습도', pulse: '맥박', tilt: '기울기', sound: '소리' };
 
 function makeDriver(kind: SensorKind, source: () => number): SensorDriver {
   switch (kind) {
@@ -24,6 +24,8 @@ function makeDriver(kind: SensorKind, source: () => number): SensorDriver {
       return new MockPulseDriver(source, SEEDS.pulse);
     case 'tilt':
       return new MockTiltDriver(source, SEEDS.tilt);
+    case 'sound':
+      return new MockSoundDriver(source, SEEDS.sound);
     case 'oxygen':
     case 'carbonDioxide':
       return new MockGasDriver(kind, source, SEEDS[kind]);

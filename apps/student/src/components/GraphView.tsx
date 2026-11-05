@@ -51,6 +51,8 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
   const { name: yName, unit: yUnit } = splitLabel(mod.graph.yLabel);
   const xLabel = mod.graph.xLabel ?? DEFAULT_X_LABEL;
   const { unit: xUnit } = splitLabel(xLabel);
+  // 단위가 숫자로 시작하면(1000분의 1초) 값과 띄어 읽는다.
+  const xUnitGap = /^\d/.test(xUnit) ? ' ' : '';
   const yMin = mod.graph.yMin ?? 0;
   const series = mod.graph.series;
   /** y축 범위용 최댓값: 모든 표본 중 가장 큰 값(올랐다가 내려오는 곡선도 담도록). 여러 선이면 모든 선 중에서. */
@@ -74,6 +76,8 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
   const yScale = fixedYTicks && fixedYTicks.length > 1
     ? { min: yMin, max: fixedYTicks[fixedYTicks.length - 1]!, step: 0, ticks: fixedYTicks, decimals: 0 }
     : yAxis(Math.max(yDataMax(trial), yDataMax(prev), mod.graph.integerTicks ? yMin + 4 : 0), yMin);
+  // 고정 눈금은 정수는 정수대로, 0.5 같은 눈금만 소수 한 자리로 쓴다. 음수는 유니코드 빼기 기호(−)로 쓴다.
+  const yTickText = (g: number) => (fixedYTicks && fixedYTicks.length > 1 ? formatTick(g, Number.isInteger(g) ? 0 : 1) : formatTick(g, yScale.decimals)).replace('-', '−');
   const xMax = xScale.max;
   const markerSpec = mod.graph.markers;
   const markers =
@@ -150,8 +154,8 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
         'aria-valuemax': r1(duration),
         'aria-valuenow': r1(playhead),
         'aria-valuetext': series
-          ? `${r1(playhead)}${xUnit}, ${series.map((x) => `${x.label} ${r1(sampleAt(trial, playhead, mod.interpolate)[x.key])}`).join(', ')}`
-          : `${r1(playhead)}${xUnit}, ${yName} ${r1(sampleAt(trial, playhead, mod.interpolate)[sampleKey])}${yUnit ? ` ${yUnit}` : ''}`,
+          ? `${r1(playhead)}${xUnitGap}${xUnit}, ${series.map((x) => `${x.label} ${r1(sampleAt(trial, playhead, mod.interpolate)[x.key])}`).join(', ')}`
+          : `${r1(playhead)}${xUnitGap}${xUnit}, ${yName} ${r1(sampleAt(trial, playhead, mod.interpolate)[sampleKey])}${yUnit ? ` ${yUnit}` : ''}`,
         'aria-disabled': playing ? true : undefined,
         onKeyDown,
       }
@@ -191,11 +195,12 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
               <g key={`y${g}`}>
                 <line x1={M.l} x2={W - M.r} y1={sy(g)} y2={sy(g)} stroke="currentColor" opacity="0.12" />
                 <line x1={M.l - 4} x2={M.l} y1={sy(g)} y2={sy(g)} stroke="#666" />
-                <text x={M.l - 7} y={sy(g) + 3} textAnchor="end">{formatTick(g, yScale.decimals)}</text>
+                <text x={M.l - 7} y={sy(g) + 3} textAnchor="end">{yTickText(g)}</text>
               </g>
             ))}
           </g>
         )}
+        {trial && yMin < 0 && <line data-testid="zero-line" x1={M.l} x2={W - M.r} y1={sy(0)} y2={sy(0)} stroke="currentColor" strokeWidth="1" opacity="0.45" />}
         <text x={(M.l + W - M.r) / 2} y={H - 6} textAnchor="middle" fontSize="11" fill="currentColor">{xLabel}</text>
         <text transform={`translate(11 ${(M.t + H - M.b) / 2}) rotate(-90)`} textAnchor="middle" fontSize="11" fill="currentColor">{mod.graph.yLabel}</text>
         {placedMarkers.map(({ m, row, flip, spill }) => (

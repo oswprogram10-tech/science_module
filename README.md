@@ -44,6 +44,7 @@ pnpm e2e            # 브라우저 자동 테스트 (Playwright)
 | `#/unit/g3-animal` | 3학년 동물의 생활 (카드 8장을 사는 곳·다리·날개 관찰로 분류, 주관적 기준 구별, 객관적 기준 2가지 완료) |
 | `#/unit/g3-plantlife` | 3학년 식물의 생활 (잎 카드 8장을 "예/아니요" 질문으로 두 갈래씩 거듭 나누는 트리, 조상 질문은 다시 못 고름, 더 나눌 수 없을 때까지 나누면 완료) |
 | `#/unit/g3-force` | 3학년 힘과 우리 생활 (오른쪽 추의 수·거리·모양에 따른 막대의 기울어진 쪽과 오른쪽 끝의 높이, 느린 화면과 "돌리려는 정도 보기") |
+| `#/unit/g3-sound` | 3학년 소리의 성질 (줄을 튕기는 세기·줄의 길이·고무줄 색에 따른 1초 동안 떨린 횟수와 소리의 크기, 느린 화면의 떨림 모양 그래프와 "공기 알갱이 보기", 가상 소리 센서) |
 | `#/unit/g5-body` | 5학년 우리 몸의 구조와 기능 (운동 종류·시간·손목에 따른 운동 직후 맥박·호흡과 원래 맥박으로 돌아오는 시간, 심장·폐·혈관 보기, 선택 기능 "내 맥박 재기") |
 | `#/unit/g6-seasons` | 6학년 계절의 변화 (계절·자전축 기울기·막대 길이에 따른 태양 남중 고도, 그림자, 낮의 길이) |
 
@@ -56,7 +57,7 @@ pnpm e2e            # 브라우저 자동 테스트 (Playwright)
 
 | 활동 유형 | `module` | 흐름 | 화면 |
 |---|---|---|---|
-| 변인 실험 | `dissolution`, `gas-syringe`, `candle-jar`, `insulated-cup`, `convex-lens`, `electromagnet`, `magma-cooling`, `sun-angle`, `germination`, `transpiration`, `food-web`, `mold-growth`, `exercise-body`, `lever-balance` | 바꿀 조건(조작변인) 고르기 → 예측 → 실행 → 시행 비교와 구조적 피드백 | `Lab`(`App.tsx`) |
+| 변인 실험 | `dissolution`, `gas-syringe`, `candle-jar`, `insulated-cup`, `convex-lens`, `electromagnet`, `magma-cooling`, `sun-angle`, `germination`, `transpiration`, `food-web`, `mold-growth`, `exercise-body`, `lever-balance`, `string-sound` | 바꿀 조건(조작변인) 고르기 → 예측 → 실행 → 시행 비교와 구조적 피드백 | `Lab`(`App.tsx`) |
 | 분류 활동 | `indicator-classify` | 시험 → 관찰한 근거로 무리에 넣기 → 관찰과 분류가 맞는지 확인 | `ClassifyLab` |
 | 관찰 과제 | `sky-observation` | 예측 → 시각·달 슬라이더와 조건 토글로 두 시점 화면 관찰 → 관찰 기록 → 예측과 관찰 비교 | `ObserveLab` |
 

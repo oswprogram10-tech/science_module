@@ -14,6 +14,7 @@ import ecosystemJson from '../../../content/units/g4-ecosystem/manifest.json';
 import microbeJson from '../../../content/units/g4-microbe/manifest.json';
 import bodyJson from '../../../content/units/g5-body/manifest.json';
 import forceJson from '../../../content/units/g3-force/manifest.json';
+import soundJson from '../../../content/units/g3-sound/manifest.json';
 import animalJson from '../../../content/units/g3-animal/manifest.json';
 import plantlifeJson from '../../../content/units/g3-plantlife/manifest.json';
 import earthJson from '../../../content/units/g6-earth-motion/manifest.json';
@@ -171,7 +172,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
   const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
   it('아홉 매니페스트가 모두 검증을 통과한다', () => {
-    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, forceJson]) expect(() => parseManifest(j)).not.toThrow();
+    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, forceJson, soundJson]) expect(() => parseManifest(j)).not.toThrow();
   });
 
   it('연소 매니페스트의 점검표와 경고 문구를 읽는다', () => {
@@ -328,6 +329,25 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     expect(e.params).toEqual({ durationS: 1 });
     expect(e.tutor.forbiddenAnswers).toHaveLength(6);
     expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['distance', 'count', 'shape']);
+  });
+
+  it('소리의 성질 매니페스트의 변인, 안전 종류, 금지 구절, 한계 용어, 탐침을 읽는다', () => {
+    const m = parseManifest(soundJson);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-sound', 3, 'physics', ['4과08-01']]);
+    const e = m.experiments[0] as VariableExperiment;
+    expect(e.module).toBe('string-sound');
+    expect(e.safety).toEqual([]);
+    expect(e.safetyChecklist).toBeUndefined();
+    expect(e.variables.map((v) => v.key)).toEqual(['strength', 'lengthCm', 'color']);
+    expect(e.variables[0]!.options.map((o) => o.value)).toEqual(['weak', 'strong']);
+    expect(e.variables[1]!.options.map((o) => o.value)).toEqual([15, 20, 30]);
+    expect(e.variables[2]!.options.map((o) => o.value)).toEqual(['red', 'yellow']);
+    expect(e.variables.map((v) => v.default)).toEqual(['weak', 20, 'red']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['freq', '번'], ['level', '눈금']]);
+    expect(e.params).toEqual({ windowMs: 20 });
+    expect(e.limits).toEqual(['진동수', '진폭', '헤르츠', '데시벨', '파장', '음파']);
+    expect(e.tutor.forbiddenAnswers).toHaveLength(5);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['strength', 'lengthCm']);
   });
 
   it('두 필드는 없어도 된다', () => {

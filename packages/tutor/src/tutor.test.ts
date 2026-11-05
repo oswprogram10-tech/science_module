@@ -1167,3 +1167,102 @@ describe('g3-force 매니페스트 probe', () => {
     }
   });
 });
+
+
+// ---------- 소리의 성질(줄을 튕겨 소리의 세기와 높낮이 알아보기) 매니페스트 ----------
+import soundJson from '../../../content/units/g3-sound/manifest.json';
+
+describe('g3-sound 매니페스트 probe', () => {
+  const e = parseManifest(soundJson).experiments[0]! as VariableExperiment;
+  const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+  const eKeys = e.variables.map((v) => v.key);
+  const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+  const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: 'lengthCm', ...x });
+  const fair = (iv: string): Partial<ProbeContext> => ({
+    ivKey: iv,
+    lastAnalysis: { kind: 'fair-test', changed: [iv] },
+    prediction: 'same',
+    observed: 'same',
+  });
+
+  it('iv별 fair-test 질문을 고른다', () => {
+    expect(selectProbe(eCtx(fair('strength')), e.tutor.probes, eGuard)).toContain('물결의 높이와 물결의 개수 가운데 무엇이 달라졌나요?');
+    expect(selectProbe(eCtx(fair('lengthCm')), e.tutor.probes, eGuard)).toContain('같은 시간 동안 물결이 몇 개 있었나요?');
+    // 색은 전용 질문이 없어 공통 fair-test 질문을 쓴다
+    expect(selectProbe(eCtx(fair('color')), e.tutor.probes, eGuard)).toContain('물결의 높이와 개수를 나누어 볼까요?');
+  });
+
+  it('예측과 결과가 다르면 흐린 선과 물결 개수를 비교하라고 한다', () => {
+    const text = selectProbe(eCtx({ ...fair('lengthCm'), prediction: 'decrease', observed: 'increase' }), e.tutor.probes, eGuard);
+    expect(text).toContain('흐린 선과 물결 개수');
+  });
+
+  it('모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+    let n = 0;
+    for (const probe of e.tutor.probes) {
+      for (const iv of eKeys) {
+        for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+          const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+          expect(text).not.toMatch(/[{}]/);
+          expect(text).not.toMatch(/(을\(를\)|이\(가\)|와\(과\)|은\(는\))/);
+          n++;
+        }
+      }
+    }
+    expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+  });
+
+  it('질문 문장은 금지 구절·limits 용어와 겹치지 않는다', () => {
+    for (const probe of e.tutor.probes) {
+      for (const f of e.tutor.forbiddenAnswers) expect(probe.text, probe.text).not.toContain(f);
+      for (const l of e.limits) expect(probe.text, probe.text).not.toContain(l);
+    }
+  });
+
+  it('오검출 없음: 전용 질문은 막히지 않고, 규칙을 말하는 문장은 막는다', () => {
+    for (const iv of ['strength', 'lengthCm']) {
+      const p = e.tutor.probes.find((x) => x.iv === iv)!;
+      expect(guardOutput(p.text, eGuard).ok, p.text).toBe(true);
+    }
+    for (const rule of ['세게 튕기면 소리가 커져요', '줄이 짧을수록 높은 소리가 나요', '짧은 줄이 더 빨리 떨려요', '세기는 높낮이와 관계없어요', '색은 관계없어요']) {
+      expect(guardOutput(rule, eGuard).ok, rule).toBe(false);
+    }
+  });
+
+  it('금지 구절을 담은 문장과 limits 용어를 담은 문장은 실제로 막는다', () => {
+    for (const f of e.tutor.forbiddenAnswers) expect(guardOutput(`${f}요`, eGuard).ok, f).toBe(false);
+    for (const l of e.limits) expect(guardOutput(`${l}이에요`, eGuard).ok, l).toBe(false);
+  });
+
+  it('화면에 보이는 글에는 진동수·진폭·Hz·dB·헤르츠·데시벨이 없다', () => {
+    const shown = [
+      e.title,
+      e.question,
+      e.predictionPrompt,
+      ...e.variables.flatMap((v) => [v.label, v.unit ?? '', ...v.options.map((o) => o.label)]),
+      ...e.dependent.flatMap((d) => [d.label, d.unit ?? '']),
+      ...e.tutor.probes.map((p) => p.text),
+    ];
+    for (const text of shown) {
+      for (const l of e.limits) expect(text, text).not.toContain(l);
+      expect(text, text).not.toMatch(/Hz|dB/i);
+    }
+  });
+
+  it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+    const situations: Partial<ProbeContext>[] = [
+      {},
+      { lastAnalysis: { kind: 'first-trial', changed: [] } },
+      { lastAnalysis: { kind: 'confounded', changed: ['strength', 'lengthCm'] } },
+      { lastAnalysis: { kind: 'iv-unchanged', changed: ['color'] } },
+      { lastAnalysis: { kind: 'repeat', changed: [] } },
+      ...eKeys.flatMap((k) => [fair(k), { ...fair(k), prediction: 'increase' as const, observed: 'same' as const }]),
+    ];
+    for (const s of situations) {
+      const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+      expect(text).not.toBe(FALLBACK_PROBE);
+      expect(guardOutput(text, eGuard).ok, text).toBe(true);
+    }
+  });
+});
