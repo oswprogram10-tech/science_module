@@ -26,6 +26,8 @@ const ALWAYS_NOTICE: Record<string, string> = {
   'mold-growth:microbe': '⚠ 곰팡이가 핀 음식은 먹거나 냄새를 맡지 않아요.',
   // 화면의 맥박은 가상 친구의 값이다. 다른 단원이 `exercise`를 쓸 때를 생각해 모듈 이름을 붙인 키로 둔다.
   'exercise-body:exercise': '⚠ 이 화면의 맥박은 가상 친구의 값이에요. 내 맥박은 손목을 짚어 직접 세어 봐요.',
+  // 자석 실험의 상시 문구. 다른 단원이 `magnet`을 쓸 때를 생각해 모듈 이름을 붙인 키로 둔다.
+  'magnet-distance:magnet': '⚠ 자석은 휴대 전화·카드와 떨어진 곳에서 써요.',
 };
 
 const PREDICTION_ICON: Record<Prediction, string> = { increase: '▲', decrease: '▼', same: '＝' };

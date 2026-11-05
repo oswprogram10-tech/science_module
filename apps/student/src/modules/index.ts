@@ -15,6 +15,7 @@ import { moldGrowthModule } from './mold-growth';
 import { exerciseBodyModule } from './exercise-body';
 import { leverBalanceModule } from './lever-balance';
 import { stringSoundModule } from './string-sound';
+import { magnetDistanceModule } from './magnet-distance';
 
 export const MODULES: Record<ModuleKind, AnyModule> = {
   dissolution: dissolutionModule,
@@ -32,4 +33,5 @@ export const MODULES: Record<ModuleKind, AnyModule> = {
   'exercise-body': exerciseBodyModule,
   'lever-balance': leverBalanceModule,
   'string-sound': stringSoundModule,
+  'magnet-distance': magnetDistanceModule,
 };

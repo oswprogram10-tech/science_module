@@ -15,6 +15,7 @@ import microbeJson from '../../../content/units/g4-microbe/manifest.json';
 import bodyJson from '../../../content/units/g5-body/manifest.json';
 import forceJson from '../../../content/units/g3-force/manifest.json';
 import soundJson from '../../../content/units/g3-sound/manifest.json';
+import magnetJson from '../../../content/units/g4-magnet/manifest.json';
 import animalJson from '../../../content/units/g3-animal/manifest.json';
 import plantlifeJson from '../../../content/units/g3-plantlife/manifest.json';
 import earthJson from '../../../content/units/g6-earth-motion/manifest.json';
@@ -172,7 +173,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
   const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
   it('아홉 매니페스트가 모두 검증을 통과한다', () => {
-    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, forceJson, soundJson]) expect(() => parseManifest(j)).not.toThrow();
+    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, forceJson, soundJson, magnetJson]) expect(() => parseManifest(j)).not.toThrow();
   });
 
   it('연소 매니페스트의 점검표와 경고 문구를 읽는다', () => {
@@ -348,6 +349,27 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     expect(e.limits).toEqual(['진동수', '진폭', '헤르츠', '데시벨', '파장', '음파']);
     expect(e.tutor.forbiddenAnswers).toHaveLength(5);
     expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['strength', 'lengthCm']);
+  });
+
+  it('자석의 이용 매니페스트의 변인, 안전 종류와 점검표, 금지 구절, 한계 용어, 탐침을 읽는다', () => {
+    const m = parseManifest(magnetJson);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-magnet', 4, 'physics', ['4과09-01']]);
+    const e = m.experiments[0] as VariableExperiment;
+    expect(e.module).toBe('magnet-distance');
+    expect(e.safety).toEqual(['magnet']);
+    expect(e.safetyChecklist).toHaveLength(3);
+    expect(Object.keys(e.safetyMessages ?? {})).toEqual(['NO_GOGGLES', 'NO_GLOVES', 'SPILL', 'FOOD']);
+    expect(e.safetyMessages?.NO_GOGGLES).not.toContain('보안경');
+    expect(e.variables.map((v) => v.key)).toEqual(['gapCm', 'magnets', 'between']);
+    expect(e.variables[0]!.options.map((o) => o.value)).toEqual([0, 0.5, 1, 2]);
+    expect(e.variables[1]!.options.map((o) => o.value)).toEqual([1, 2]);
+    expect(e.variables[2]!.options.map((o) => o.value)).toEqual(['none', 'paper', 'plastic', 'iron']);
+    expect(e.variables.map((v) => v.default)).toEqual([0.5, 1, 'none']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['clips', '개']]);
+    expect(e.params).toEqual({ totalS: 6 });
+    expect(e.limits).toEqual(['자기력', '자기장', '자기력선', '투자율', '강자성', 'N극과 S극의 세기']);
+    expect(e.tutor.forbiddenAnswers).toHaveLength(6);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['gapCm', 'between']);
   });
 
   it('두 필드는 없어도 된다', () => {

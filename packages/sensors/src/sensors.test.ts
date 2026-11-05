@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { simulateDissolution } from '@sci/engine-matter';
-import { MockGasDriver, MockHumidityDriver, MockLightDriver, MockPressureDriver, MockPulseDriver, MockScaleDriver, MockSoundDriver, MockTemperatureDriver, MockTiltDriver, mulberry32 } from './index';
+import { MockGasDriver, MockDistanceDriver, MockHumidityDriver, MockLightDriver, MockPressureDriver, MockPulseDriver, MockScaleDriver, MockSoundDriver, MockTemperatureDriver, MockTiltDriver, mulberry32 } from './index';
 
 describe('mulberry32', () => {
   it('같은 시드면 같은 수열', () => {
@@ -209,6 +209,24 @@ describe('MockSoundDriver', () => {
     expect(a.kind).toBe('sound');
     expect(a.id).toBe('mock-sound');
     const zero = new MockSoundDriver(() => 0, 7);
+    for (let i = 0; i < 50; i++) expect(zero.read().value).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('MockDistanceDriver', () => {
+  it('단위 cm, ±0.05 잡음, 소수 둘째 자리, 0 이상, 시드 재현', () => {
+    const a = new MockDistanceDriver(() => 2.5, 7);
+    const b = new MockDistanceDriver(() => 2.5, 7);
+    const ra = Array.from({ length: 50 }, () => a.read().value);
+    expect(ra).toEqual(Array.from({ length: 50 }, () => b.read().value));
+    for (const v of ra) {
+      expect(Math.abs(v - 2.5)).toBeLessThanOrEqual(0.05 + 1e-9);
+      expect(Math.round(v * 100) / 100).toBe(v);
+    }
+    expect(a.read().unit).toBe('cm');
+    expect(a.kind).toBe('distance');
+    expect(a.id).toBe('mock-distance');
+    const zero = new MockDistanceDriver(() => 0, 7);
     for (let i = 0; i < 50; i++) expect(zero.read().value).toBeGreaterThanOrEqual(0);
   });
 });

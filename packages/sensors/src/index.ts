@@ -6,7 +6,7 @@ export interface SensorReading {
   stale?: boolean;
 }
 
-export type SensorKind = 'temperature' | 'scale' | 'pressure' | 'oxygen' | 'carbonDioxide' | 'light' | 'humidity' | 'pulse' | 'tilt' | 'sound';
+export type SensorKind = 'temperature' | 'scale' | 'pressure' | 'oxygen' | 'carbonDioxide' | 'light' | 'humidity' | 'pulse' | 'tilt' | 'sound' | 'distance';
 
 export interface SensorDriver {
   id: string;
@@ -87,6 +87,7 @@ export const HUMIDITY_NOISE_PCT = 0.5;
 export const PULSE_NOISE_BPM = 1;
 export const TILT_NOISE_DEG = 0.1;
 export const SOUND_NOISE_LEVEL = 0.2;
+export const DISTANCE_NOISE_CM = 0.05;
 export const BEAKER_G = 100;
 
 /** 값 = source() + 시드 고정 잡음(±0.2 °C), 소수 첫째 자리. */
@@ -190,6 +191,16 @@ export class MockSoundDriver extends MockDriver {
   unit = '눈금';
   protected measure() {
     return roundTo(Math.max(0, this.source() + (this.rng() * 2 - 1) * SOUND_NOISE_LEVEL), 1);
+  }
+}
+
+/** 가상 거리 센서: 값 = source()(cm) + 시드 고정 잡음(±0.05 cm), 0 이상, 소수 둘째 자리. */
+export class MockDistanceDriver extends MockDriver {
+  id = 'mock-distance';
+  kind = 'distance' as const;
+  unit = 'cm';
+  protected measure() {
+    return roundTo(Math.max(0, this.source() + (this.rng() * 2 - 1) * DISTANCE_NOISE_CM), 2);
   }
 }
 

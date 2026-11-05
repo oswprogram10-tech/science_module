@@ -1266,3 +1266,103 @@ describe('g3-sound 매니페스트 probe', () => {
     }
   });
 });
+
+
+// ---------- 자석의 이용(자석과 클립 사이의 거리) 매니페스트 ----------
+import magnetJson from '../../../content/units/g4-magnet/manifest.json';
+
+describe('g4-magnet 매니페스트 probe', () => {
+  const e = parseManifest(magnetJson).experiments[0]! as VariableExperiment;
+  const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+  const eKeys = e.variables.map((v) => v.key);
+  const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+  const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: 'gapCm', ...x });
+  const fair = (iv: string): Partial<ProbeContext> => ({
+    ivKey: iv,
+    lastAnalysis: { kind: 'fair-test', changed: [iv] },
+    prediction: 'same',
+    observed: 'same',
+  });
+  const BETWEEN_Q = '사이에 둔 물체만 바꾸었어요. 어떤 물체를 두었을 때 클립이 끌려왔고, 어떤 물체일 때 달랐나요? 그 물체는 무엇으로 만들어졌을까요?';
+
+  it('iv별 fair-test 질문을 고른다', () => {
+    expect(selectProbe(eCtx(fair('gapCm')), e.tutor.probes, eGuard)).toContain("'자석의 힘이 미치는 곳' 그림에서 클립 더미는 어디쯤에 있었나요?");
+    expect(selectProbe(eCtx(fair('between')), e.tutor.probes, eGuard)).toBe(BETWEEN_Q);
+    // 자석의 수는 전용 질문이 없어 공통 fair-test 질문을 쓴다
+    expect(selectProbe(eCtx(fair('magnets')), e.tutor.probes, eGuard)).toContain('자석의 수만 바꾸었을 때 클립의 수는 어떻게 달라졌나요?');
+  });
+
+  it('사이 물체 전용 질문 "그 물체는 무엇으로 만들어졌을까요?"는 가드에 걸리지 않는다 (오검출 없음)', () => {
+    const p = e.tutor.probes.find((x) => x.iv === 'between')!;
+    expect(p.text).toContain('그 물체는 무엇으로 만들어졌을까요?');
+    expect(guardOutput(p.text, eGuard).ok, p.text).toBe(true);
+    for (const f of e.tutor.forbiddenAnswers) expect(p.text).not.toContain(f);
+  });
+
+  it('예측과 결과가 다르면 클립 수가 언제 늘었는지 살펴보라고 한다', () => {
+    const text = selectProbe(eCtx({ ...fair('gapCm'), prediction: 'decrease', observed: 'increase' }), e.tutor.probes, eGuard);
+    expect(text).toContain('자석이 내려오는 동안 클립 수가 언제 늘었는지');
+  });
+
+  it('모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+    let n = 0;
+    for (const probe of e.tutor.probes) {
+      for (const iv of eKeys) {
+        for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+          const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+          expect(text).not.toMatch(/[{}]/);
+          expect(text).not.toMatch(/(을\(를\)|이\(가\)|와\(과\)|은\(는\))/);
+          n++;
+        }
+      }
+    }
+    expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+  });
+
+  it('질문 문장은 금지 구절·limits 용어와 겹치지 않는다', () => {
+    for (const probe of e.tutor.probes) {
+      for (const f of e.tutor.forbiddenAnswers) expect(probe.text, probe.text).not.toContain(f);
+      for (const l of e.limits) expect(probe.text, probe.text).not.toContain(l);
+    }
+  });
+
+  it('규칙을 말하는 문장과 금지 구절·limits 용어를 담은 문장은 막는다', () => {
+    for (const rule of ['가까울수록 클립이 많이 붙어요', '멀수록 클립이 적게 붙어요', '자석을 겹치면 더 많이 붙어요', '종이는 자석의 힘을 막지 못해요', '철판이 자석의 힘을 막아요', '철판은 자석에 붙어 있어요']) {
+      expect(guardOutput(rule, eGuard).ok, rule).toBe(false);
+    }
+    for (const f of e.tutor.forbiddenAnswers) expect(guardOutput(`${f}요`, eGuard).ok, f).toBe(false);
+    for (const l of e.limits) expect(guardOutput(`${l}이에요`, eGuard).ok, l).toBe(false);
+  });
+
+  it('화면에 보이는 글에는 자기력·자기장·자기력선이 없다', () => {
+    const shown = [
+      e.title,
+      e.question,
+      e.predictionPrompt,
+      ...e.variables.flatMap((v) => [v.label, v.unit ?? '', ...v.options.map((o) => o.label)]),
+      ...e.dependent.flatMap((d) => [d.label, d.unit ?? '']),
+      ...(e.safetyChecklist ?? []),
+      ...e.tutor.probes.map((p) => p.text),
+      '자석의 힘은 자석에서 멀어질수록 약해져요.',
+      '⚠ 자석은 휴대 전화·카드와 떨어진 곳에서 써요.',
+    ];
+    for (const text of shown) for (const l of e.limits) expect(text, text).not.toContain(l);
+  });
+
+  it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+    const situations: Partial<ProbeContext>[] = [
+      {},
+      { lastAnalysis: { kind: 'first-trial', changed: [] } },
+      { lastAnalysis: { kind: 'confounded', changed: ['gapCm', 'between'] } },
+      { lastAnalysis: { kind: 'iv-unchanged', changed: ['magnets'] } },
+      { lastAnalysis: { kind: 'repeat', changed: [] } },
+      ...eKeys.flatMap((k) => [fair(k), { ...fair(k), prediction: 'increase' as const, observed: 'same' as const }]),
+    ];
+    for (const s of situations) {
+      const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+      expect(text).not.toBe(FALLBACK_PROBE);
+      expect(guardOutput(text, eGuard).ok, text).toBe(true);
+    }
+  });
+});

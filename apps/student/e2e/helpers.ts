@@ -59,7 +59,7 @@ export async function runTrial(page: Page) {
 export const resultRows = (page: Page) => page.locator('#results-table tbody tr');
 
 /** 센서 값 (aria-label: 온도/무게/압력/산소/이산화 탄소) */
-export const sensor = (page: Page, name: '온도' | '무게' | '압력' | '산소' | '이산화 탄소' | '빛 세기' | '습도' | '맥박' | '기울기' | '소리') => page.getByRole('status', { name, exact: true });
+export const sensor = (page: Page, name: '온도' | '무게' | '압력' | '산소' | '이산화 탄소' | '빛 세기' | '습도' | '맥박' | '기울기' | '소리' | '거리') => page.getByRole('status', { name, exact: true });
 
 /** 가로 스크롤이 없는지(문서 폭 <= 뷰포트 폭) */
 export async function scrollWidth(page: Page) {

@@ -807,6 +807,47 @@ for (const scheme of ['light', 'dark'] as const) {
   });
 }
 
+// ---- g4-magnet ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`g4-magnet ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 처음, 점검표, 실행 뒤(0.5 cm), 철판, 자석 2개 0 cm 종이`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g4-magnet');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '자석과 클립 사이의 거리');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(page.getByRole('dialog', { name: '안전 점검표' })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await confirmSafetyDialog(page);
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('6.0초 · 자석 높이 5.0 cm · 붙은 클립 5개')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await page.reload();
+    await setValue(page, '사이에 둔 물체', '얇은 철판');
+    await selectIV(page, '사이에 둔 물체');
+    await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await confirmSafetyDialog(page);
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('6.0초 · 자석 높이 5.0 cm · 붙은 클립 0개')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await page.reload();
+    await setValue(page, '자석의 수', '2개 (겹쳐서)');
+    await setValue(page, '자석과 클립 사이의 거리', '0 cm (닿게)');
+    await setValue(page, '사이에 둔 물체', '종이');
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '사이에 둔 물체');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await confirmSafetyDialog(page);
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('6.0초 · 자석 높이 5.0 cm · 붙은 클립 19개')).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+}
+
 // ---- 수업 연결 ----
 
 for (const scheme of ['light', 'dark'] as const) {
