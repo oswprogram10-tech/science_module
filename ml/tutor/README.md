@@ -13,7 +13,11 @@ templates/teacher-*.csv      교사용 CSV 양식(헤더 + 견본 한 줄)
 out/                         내보내기 결과(.gitignore)
 ```
 
-대표 단원: `g5-solution`(용해와 용액), `g4-gases`(여러 가지 기체), `g6-acid-base`(산과 염기).
+단원: 튜터가 있는 모든 단원 31개(진로 포트폴리오 `g6-career`만 뺀다). 목록은 `packages/tutor/src/datasetIo.ts`의 `TUTOR_UNITS`(학년 순, 같은 학년은 앱 목록 순서)이고, 시나리오·`data/<단원>/`·검증·가져오기(`--unit`)가 모두 이 목록을 따른다. 새 단원을 넣으려면 `TUTOR_UNITS`에 추가하고 `pnpm tutor:scenarios`로 시나리오를 만든 뒤 `data/<단원>/`에 빈 `sft.jsonl`, `pairs.jsonl`, `redteam.jsonl`을 둔다.
+
+시나리오 종류: 변인 실험(`genVariable`), 분류 활동(`genClassify`), 카드 분류(`genCardSort`: 무리 나누기·트리·순서 놓기), 관찰(`genObservation`: 과제마다 관찰 전·관찰 중·기록 불일치·기록 일치·예측 불일치). 단원마다 20개 안팎(15~25개)이다.
+
+견본(`source: "example"`)은 `g5-solution`, `g4-gases`, `g6-acid-base`에만 있다(`EXAMPLE_UNITS`). 나머지 단원은 빈 파일이며 교사 글이 가져와지면서 채워진다.
 
 ## 명령(저장소 루트에서)
 

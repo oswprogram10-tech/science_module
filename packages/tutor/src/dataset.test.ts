@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -15,42 +15,56 @@ import {
   type RedteamRecord,
   type SftRecord,
 } from './dataset';
-import { TUTOR_DIR, TUTOR_UNITS, appendRecords, loadDataset, strayDataDirs } from './datasetIo';
+import { EXAMPLE_UNITS, TUTOR_DIR, TUTOR_UNITS, appendRecords, dataFile, loadDataset, strayDataDirs } from './datasetIo';
 import { PROMPT_VERSION, TUTOR_SYSTEM } from './context';
 
-const ds = loadDataset();
+/** 저장소의 모든 튜터 단원. */
+const full = loadDataset();
+/** 견본이 있는 단원만(아래 검증기·가져오기·내보내기 시험은 견본 레코드를 재료로 쓴다). */
+const ds = loadDataset(TUTOR_DIR, EXAMPLE_UNITS);
 
 describe('저장소의 데이터셋 검증 (pnpm test에도 포함)', () => {
   it('모든 jsonl이 검증을 통과한다', () => {
-    expect(validateDataset(ds)).toEqual([]);
+    expect(validateDataset(full)).toEqual([]);
   });
-  it('대표 단원 폴더만 있다', () => {
+  it('튜터 단원 폴더만 있고, 단원마다 sft·pairs·redteam 파일이 있다', () => {
     expect(strayDataDirs()).toEqual([]);
-  });
-  it('견본은 단원마다 sft 8 · pairs 4 · redteam 6이고 모두 example/EX/미검수다', () => {
     for (const unit of TUTOR_UNITS) {
-      expect(ds.sft.filter((r) => r.unitId === unit)).toHaveLength(8);
-      expect(ds.pairs.filter((r) => r.unitId === unit)).toHaveLength(4);
-      expect(ds.redteam.filter((r) => r.unitId === unit)).toHaveLength(6);
+      for (const kind of ['sft', 'pairs', 'redteam'] as const) {
+        expect(existsSync(dataFile(TUTOR_DIR, unit, kind)), `${unit}/${kind}.jsonl`).toBe(true);
+      }
     }
-    for (const r of [...ds.sft, ...ds.pairs, ...ds.redteam]) {
+  });
+  it('견본은 EXAMPLE_UNITS의 단원마다 sft 8 · pairs 4 · redteam 6이고, 나머지 단원은 견본이 없다', () => {
+    for (const unit of TUTOR_UNITS) {
+      if (EXAMPLE_UNITS.includes(unit as (typeof EXAMPLE_UNITS)[number])) continue;
+      expect(full.sft.filter((r) => r.unitId === unit)).toHaveLength(0);
+      expect(full.pairs.filter((r) => r.unitId === unit)).toHaveLength(0);
+      expect(full.redteam.filter((r) => r.unitId === unit)).toHaveLength(0);
+    }
+    for (const unit of EXAMPLE_UNITS) {
+      expect(full.sft.filter((r) => r.unitId === unit)).toHaveLength(8);
+      expect(full.pairs.filter((r) => r.unitId === unit)).toHaveLength(4);
+      expect(full.redteam.filter((r) => r.unitId === unit)).toHaveLength(6);
+    }
+    for (const r of [...full.sft, ...full.pairs, ...full.redteam]) {
       expect([r.source, r.reviewed, r.author]).toEqual(['example', false, 'EX']);
     }
   });
   it('견본이 상황·나쁜 이유·유형을 고루 덮는다', () => {
-    expect(new Set(ds.pairs.map((r) => r.rejectedReason)).size).toBe(6);
-    expect(new Set(ds.redteam.map((r) => r.category)).size).toBe(6);
-    for (const unit of TUTOR_UNITS) {
-      expect(new Set(ds.redteam.filter((r) => r.unitId === unit).map((r) => r.category)).size).toBe(6);
+    expect(new Set(full.pairs.map((r) => r.rejectedReason)).size).toBe(6);
+    expect(new Set(full.redteam.map((r) => r.category)).size).toBe(6);
+    for (const unit of EXAMPLE_UNITS) {
+      expect(new Set(full.redteam.filter((r) => r.unitId === unit).map((r) => r.category)).size).toBe(6);
     }
   });
-  it('시나리오: 단원마다 20~30개, 입력이 비어 있지 않다', () => {
+  it('시나리오: 단원마다 15~25개, 입력이 비어 있지 않다', () => {
     for (const unit of TUTOR_UNITS) {
-      const list = ds.scenarios.filter((s) => s.unitId === unit);
-      expect(list.length).toBeGreaterThanOrEqual(20);
-      expect(list.length).toBeLessThanOrEqual(30);
+      const list = full.scenarios.filter((s) => s.unitId === unit);
+      expect(list.length, unit).toBeGreaterThanOrEqual(15);
+      expect(list.length, unit).toBeLessThanOrEqual(25);
     }
-    for (const s of ds.scenarios) expect(inputFor(ds, s, '').length).toBeGreaterThan(30);
+    for (const s of full.scenarios) expect(inputFor(full, s, '').length).toBeGreaterThan(30);
   });
 });
 
@@ -213,6 +227,28 @@ describe('importCsv', () => {
     expect(records[0] as RedteamRecord).toMatchObject({ category: 'ask-answer', mustNotContain: ['많이 녹는다', '늘어난다'] });
   });
 
+  it('견본이 없는 단원(카드 분류·관찰)도 시나리오 번호와 단원 검사로 가져온다', () => {
+    for (const [unit, num] of [['g3-animal', '12'], ['g3-plantlife', '20'], ['g5-strata', '22'], ['g6-earth-motion', '8']] as const) {
+      const csv = toCsv([
+        CSV_HEADERS.sft,
+        [num, '', '지금 살펴본 것을 어떻게 알아냈는지 말해 볼까요?', ''],
+        [`g5-solution-s003`, '', '무엇이 달라졌나요?', ''],
+      ]);
+      const { records, errors } = importCsv(csv, { unitId: unit, kind: 'sft', author: 'T03', existing: full });
+      expect(records, unit).toHaveLength(1);
+      expect(records[0]).toMatchObject({ id: `${unit}-sft-0001`, unitId: unit, scenarioId: `${unit}-s${num.padStart(3, '0')}` });
+      expect(errors.map((e) => e.row), unit).toEqual([3]);
+      expect(errors[0]!.reason).toContain('다른 단원');
+    }
+  });
+  it('가져온 레코드가 있는 데이터셋 전체가 검증을 통과한다(관찰 단원)', () => {
+    const csv = toCsv([CSV_HEADERS.sft, ['3', '', '어떤 점을 보고 그렇게 예측했나요?', '']]);
+    const { records, errors } = importCsv(csv, { unitId: 'g4-night-sky', kind: 'sft', author: 'T03', existing: full });
+    expect(errors).toEqual([]);
+    const d = structuredClone(full);
+    d.sft.push(...(records as SftRecord[]));
+    expect(validateDataset(d)).toEqual([]);
+  });
   it('헤더가 다르면 아무것도 가져오지 않는다', () => {
     const { records, errors } = importCsv('a,b\n1,2\n', { unitId, kind: 'sft', author: 'T03', existing });
     expect(records).toEqual([]);

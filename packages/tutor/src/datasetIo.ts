@@ -4,8 +4,20 @@ import { fileURLToPath } from 'node:url';
 import { parseManifest } from '@sci/schema';
 import type { AnyRecord, Dataset, PairRecord, RecordKind, RedteamRecord, Scenario, SftRecord, UnitData } from './dataset';
 
-/** 튜터 데이터를 다루는 대표 단원(사양 T5). */
-export const TUTOR_UNITS = ['g5-solution', 'g4-gases', 'g6-acid-base'] as const;
+/**
+ * 튜터 데이터를 다루는 단원: 튜터가 있는 모든 단원(답을 알려 줄 위험이 없는 g6-career 포트폴리오만 뺀다).
+ * 학년 순, 같은 학년은 앱 목록(apps/student/src/units.ts)의 순서다(테스트가 확인한다).
+ * 시나리오(scenarios/), 학습 레코드(data/<단원>/), 가져오기 검증이 모두 이 목록을 따른다.
+ */
+export const TUTOR_UNITS = [
+  'g3-lifecycle', 'g3-animal', 'g3-plantlife', 'g3-force', 'g3-sound', 'g3-material', 'g3-earth-sea', 'g3-health',
+  'g4-gases', 'g4-land', 'g4-ecosystem', 'g4-microbe', 'g4-magnet', 'g4-water-state', 'g4-night-sky', 'g4-climate',
+  'g5-solution', 'g5-heat', 'g5-light', 'g5-body', 'g5-mixture', 'g5-strata', 'g5-weather', 'g5-energy',
+  'g6-acid-base', 'g6-combustion', 'g6-electricity', 'g6-earth-motion', 'g6-seasons', 'g6-plant', 'g6-motion',
+] as const;
+
+/** 견본 레코드(source: "example")를 둔 단원. 나머지 단원은 빈 파일로 시작한다. */
+export const EXAMPLE_UNITS = ['g5-solution', 'g4-gases', 'g6-acid-base'] as const;
 
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 export const CONTENT_DIR = join(repoRoot, 'content', 'units');
@@ -52,7 +64,7 @@ export function loadDataset(dir: string = TUTOR_DIR, unitIds: readonly string[] 
   return ds;
 }
 
-/** data/ 아래에 있는데 대표 단원 목록에 없는 폴더(검증이 놓치지 않도록). */
+/** data/ 아래에 있는데 단원 목록에 없는 폴더(검증이 놓치지 않도록). */
 export function strayDataDirs(dir: string = TUTOR_DIR, unitIds: readonly string[] = TUTOR_UNITS): string[] {
   const root = join(dir, 'data');
   if (!existsSync(root)) return [];

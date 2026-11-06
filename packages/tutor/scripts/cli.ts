@@ -61,7 +61,7 @@ function scenarios() {
 
 function validate(): number {
   const stray = strayDataDirs();
-  const problems = [...stray.map((d) => `data/${d}: 대표 단원 목록에 없는 폴더입니다.`), ...validateDataset(loadDataset())];
+  const problems = [...stray.map((d) => `data/${d}: 튜터 단원 목록(TUTOR_UNITS)에 없는 폴더입니다.`), ...validateDataset(loadDataset())];
   if (problems.length > 0) {
     console.error(problems.join('\n'));
     console.error(`검증 실패: ${problems.length}건`);
@@ -102,7 +102,7 @@ function importData(): number {
     return 2;
   }
   if (!(TUTOR_UNITS as readonly string[]).includes(unitId)) {
-    console.error(`--unit은 ${TUTOR_UNITS.join(', ')} 중 하나여야 합니다.`);
+    console.error(`--unit은 튜터 단원 중 하나여야 합니다: ${TUTOR_UNITS.join(', ')}`);
     return 2;
   }
   const existing = loadDataset();
