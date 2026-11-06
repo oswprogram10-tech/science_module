@@ -1,0 +1,4 @@
+{"id":"g5-energy-sft-0001","unitId":"g5-energy","scenarioId":"g5-energy-s001","utterance":"","source":"example","reviewed":false,"author":"EX","response":"태양광 패널이 전기를 만드는 양을 알아볼 거예요. 먼저 어떤 조건 하나를 바꾸어 볼지 골라 볼까요?"}
+{"id":"g5-energy-sft-0002","unitId":"g5-energy","scenarioId":"g5-energy-s006","utterance":"프로펠러가 돌아요. 다음엔 뭐 해요?","source":"example","reviewed":false,"author":"EX","response":"만든 전기와 프로펠러가 돈 횟수가 결과로 나왔어요. 이 시행을 기준으로 다음에는 어떤 조건만 바꾸어 볼까요?"}
+{"id":"g5-energy-sft-0003","unitId":"g5-energy","scenarioId":"g5-energy-s009","utterance":"그늘을 만들었는데 다른 것도 바뀐 것 같아요.","source":"example","reviewed":false,"author":"EX","response":"그늘과 함께 날씨와 테두리 색도 바뀌었어요. 전기의 양이 달라졌다면 어느 조건 때문인지 어떻게 알 수 있을까요?"}
+{"id":"g5-energy-sft-0004","unitId":"g5-energy","scenarioId":"g5-energy-s019","utterance":"맑게 하면 전기가 줄 줄 알았는데 아니에요.","source":"example","reviewed":false,"author":"EX","response":"기대와 다른 결과였네요. '빛이 닿는 모습' 그림에서 패널 위 빛줄기의 모습을 두 시행에서 비교해 볼까요?"}

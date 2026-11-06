@@ -1,0 +1,4 @@
+{"id":"g5-weather-sft-0001","unitId":"g5-weather","scenarioId":"g5-weather-s002","utterance":"","source":"example","reviewed":false,"author":"EX","response":"때를 바꾸어 보려고 하는군요. 낮과 밤에 모래와 물의 온도, 향 연기가 어떻게 달라질지 예측해 볼까요?"}
+{"id":"g5-weather-sft-0002","unitId":"g5-weather","scenarioId":"g5-weather-s008","utterance":"낮으로 하고 전등도 멀리 놨어요.","source":"example","reviewed":false,"author":"EX","response":"때와 전등과의 거리가 함께 바뀌었어요. 두 온도 선이 달라졌다면 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?"}
+{"id":"g5-weather-sft-0003","unitId":"g5-weather","scenarioId":"g5-weather-s016","utterance":"그릇만 바꿨더니 연기 방향이 같아요.","source":"example","reviewed":false,"author":"EX","response":"그릇만 바꾸었을 때 두 온도 선과 향 연기의 방향을 두 시행에서 나란히 살펴볼까요? 무엇이 같고 무엇이 달랐나요?"}
+{"id":"g5-weather-sft-0004","unitId":"g5-weather","scenarioId":"g5-weather-s017","utterance":"낮으로 바꾸면 온도 차가 줄어들 줄 알았는데 아니에요.","source":"example","reviewed":false,"author":"EX","response":"예측했던 것과 다른 값이 나왔군요. 그래프에서 모래 선과 물 선이 벌어지는 빠르기를 두 시행에서 비교해 볼까요?"}

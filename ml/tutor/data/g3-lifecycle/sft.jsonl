@@ -1,0 +1,4 @@
+{"id":"g3-lifecycle-sft-0001","unitId":"g3-lifecycle","scenarioId":"g3-lifecycle-s002","utterance":"","source":"example","reviewed":false,"author":"EX","response":"물을 바꾸어 보려고 하는군요. 물을 준 씨앗과 주지 않은 씨앗에서 싹 튼 수가 어떻게 다를지 예측해 볼까요?"}
+{"id":"g3-lifecycle-sft-0002","unitId":"g3-lifecycle","scenarioId":"g3-lifecycle-s005","utterance":"싹이 몇 개 텄어요. 다음엔 뭐 해요?","source":"example","reviewed":false,"author":"EX","response":"7일째 싹 튼 씨앗 수가 결과표에 나와 있어요. 이 결과를 기준으로 삼아 다음에는 어떤 조건 하나만 바꾸어 볼까요?"}
+{"id":"g3-lifecycle-sft-0003","unitId":"g3-lifecycle","scenarioId":"g3-lifecycle-s007","utterance":"따뜻하게 하고 상자도 덮어 봤어요.","source":"example","reviewed":false,"author":"EX","response":"온도와 빛이 함께 바뀌었어요. 싹 튼 수가 달라졌다면 어느 조건 때문인지 어떻게 가려낼 수 있을까요?"}
+{"id":"g3-lifecycle-sft-0004","unitId":"g3-lifecycle","scenarioId":"g3-lifecycle-s019","utterance":"어? 밝게 하면 더 많이 틀 줄 알았는데 아니에요.","source":"example","reviewed":false,"author":"EX","response":"처음 생각했던 것과 다른 결과가 나왔네요. 날마다 바뀌는 그래프에서 두 시행의 싹 튼 수를 나란히 비교해 볼까요?"}

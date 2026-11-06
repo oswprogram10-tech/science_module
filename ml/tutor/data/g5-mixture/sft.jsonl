@@ -1,0 +1,4 @@
+{"id":"g5-mixture-sft-0001","unitId":"g5-mixture","scenarioId":"g5-mixture-s002","utterance":"","source":"example","reviewed":false,"author":"EX","response":"넣는 물의 양을 바꾸어 보려고 하는군요. 물의 양이 달라지면 얻는 소금이 어떻게 될지 예측해 볼까요?"}
+{"id":"g5-mixture-sft-0002","unitId":"g5-mixture","scenarioId":"g5-mixture-s009","utterance":"젓가락으로 바꿨는데 다른 것도 바뀌었어요.","source":"example","reviewed":false,"author":"EX","response":"젓는 도구를 알아보려 했는데 물의 양과 거르는 방법도 바뀌었어요. 도구의 영향만 보려면 어떤 칸을 되돌려야 할까요?"}
+{"id":"g5-mixture-sft-0003","unitId":"g5-mixture","scenarioId":"g5-mixture-s016","utterance":"젓가락으로 저었는데 숫자가 비슷해요.","source":"example","reviewed":false,"author":"EX","response":"젓는 도구만 바꾸었을 때 얻은 소금과 섞인 모래를 두 시행에서 각각 읽어 볼까요? 어떤 점이 같고 다른가요?"}
+{"id":"g5-mixture-sft-0004","unitId":"g5-mixture","scenarioId":"g5-mixture-s019","utterance":"유리 막대로 하면 소금이 더 나올 줄 알았는데 달라요.","source":"example","reviewed":false,"author":"EX","response":"예상과 다르게 나왔네요. 그래프에서 증발 접시 위 고체가 늘기 시작하는 때를 두 시행에서 비교해 볼까요?"}

@@ -17,7 +17,7 @@ out/                         내보내기 결과(.gitignore)
 
 시나리오 종류: 변인 실험(`genVariable`), 분류 활동(`genClassify`), 카드 분류(`genCardSort`: 무리 나누기·트리·순서 놓기), 관찰(`genObservation`: 과제마다 관찰 전·관찰 중·기록 불일치·기록 일치·예측 불일치). 단원마다 20개 안팎(15~25개)이다.
 
-견본(`source: "example"`)은 `g5-solution`, `g4-gases`, `g6-acid-base`에만 있다(`EXAMPLE_UNITS`). 나머지 단원은 빈 파일이며 교사 글이 가져와지면서 채워진다.
+견본(`source: "example"`)은 31개 단원 모두에 있다. 대표 단원 `g5-solution`, `g4-gases`, `g6-acid-base`(`RICH_EXAMPLE_UNITS`)는 sft 8 · pairs 4 · redteam 6개, 나머지 단원은 sft 4 · pairs 2 · redteam 3개다. 교사 글은 견본 뒤에 이어서 가져와진다.
 
 ## 명령(저장소 루트에서)
 

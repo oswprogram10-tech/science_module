@@ -1,0 +1,4 @@
+{"id":"g5-strata-sft-0001","unitId":"g5-strata","scenarioId":"g5-strata-s001","utterance":"","source":"example","reviewed":false,"author":"EX","response":"표본이 다섯 개 있어요. 어떤 표본부터 살펴보고 싶은지, 그 까닭과 함께 말해 볼까요?"}
+{"id":"g5-strata-sft-0002","unitId":"g5-strata","scenarioId":"g5-strata-s004","utterance":"역암은 알갱이가 커서 맨 아래일 것 같아요.","source":"example","reviewed":false,"author":"EX","response":"알갱이가 큰 것을 보고 생각했군요. 칸에 놓기 전에 역암을 채집한 높이를 먼저 확인해 볼까요?"}
+{"id":"g5-strata-sft-0003","unitId":"g5-strata","scenarioId":"g5-strata-s011","utterance":"순서 확인에서 다시 하래요.","source":"example","reviewed":false,"author":"EX","response":"채집한 높이와 놓은 칸이 어긋난 표본이 있다고 해요. 높이 표시를 표본마다 다시 읽고 칸의 차례와 견주어 볼까요?"}
+{"id":"g5-strata-sft-0004","unitId":"g5-strata","scenarioId":"g5-strata-s021","utterance":"화석 보고 나눴는데 안 맞는대요.","source":"example","reviewed":false,"author":"EX","response":"화석이 보여 주는 것과 다른 무리에 넣은 표본이 있다고 해요. 표본마다 화석 관찰 내용과 넣은 무리를 다시 견주어 볼까요?"}

@@ -15,13 +15,13 @@ import {
   type RedteamRecord,
   type SftRecord,
 } from './dataset';
-import { EXAMPLE_UNITS, TUTOR_DIR, TUTOR_UNITS, appendRecords, dataFile, loadDataset, strayDataDirs } from './datasetIo';
+import { RICH_EXAMPLE_UNITS, TUTOR_DIR, TUTOR_UNITS, appendRecords, dataFile, loadDataset, strayDataDirs } from './datasetIo';
 import { PROMPT_VERSION, TUTOR_SYSTEM } from './context';
 
 /** 저장소의 모든 튜터 단원. */
 const full = loadDataset();
-/** 견본이 있는 단원만(아래 검증기·가져오기·내보내기 시험은 견본 레코드를 재료로 쓴다). */
-const ds = loadDataset(TUTOR_DIR, EXAMPLE_UNITS);
+/** 견본이 가장 풍부한 대표 단원 3개만(아래 검증기·가져오기·내보내기 시험은 이 견본 레코드를 재료로 쓴다). */
+const ds = loadDataset(TUTOR_DIR, RICH_EXAMPLE_UNITS);
 
 describe('저장소의 데이터셋 검증 (pnpm test에도 포함)', () => {
   it('모든 jsonl이 검증을 통과한다', () => {
@@ -35,17 +35,12 @@ describe('저장소의 데이터셋 검증 (pnpm test에도 포함)', () => {
       }
     }
   });
-  it('견본은 EXAMPLE_UNITS의 단원마다 sft 8 · pairs 4 · redteam 6이고, 나머지 단원은 견본이 없다', () => {
+  it('견본: 대표 3개 단원은 sft 8 · pairs 4 · redteam 6, 나머지 단원은 sft 4 · pairs 2 · redteam 3', () => {
     for (const unit of TUTOR_UNITS) {
-      if (EXAMPLE_UNITS.includes(unit as (typeof EXAMPLE_UNITS)[number])) continue;
-      expect(full.sft.filter((r) => r.unitId === unit)).toHaveLength(0);
-      expect(full.pairs.filter((r) => r.unitId === unit)).toHaveLength(0);
-      expect(full.redteam.filter((r) => r.unitId === unit)).toHaveLength(0);
-    }
-    for (const unit of EXAMPLE_UNITS) {
-      expect(full.sft.filter((r) => r.unitId === unit)).toHaveLength(8);
-      expect(full.pairs.filter((r) => r.unitId === unit)).toHaveLength(4);
-      expect(full.redteam.filter((r) => r.unitId === unit)).toHaveLength(6);
+      const rich = RICH_EXAMPLE_UNITS.includes(unit as (typeof RICH_EXAMPLE_UNITS)[number]);
+      expect(full.sft.filter((r) => r.unitId === unit), `${unit} sft`).toHaveLength(rich ? 8 : 4);
+      expect(full.pairs.filter((r) => r.unitId === unit), `${unit} pairs`).toHaveLength(rich ? 4 : 2);
+      expect(full.redteam.filter((r) => r.unitId === unit), `${unit} redteam`).toHaveLength(rich ? 6 : 3);
     }
     for (const r of [...full.sft, ...full.pairs, ...full.redteam]) {
       expect([r.source, r.reviewed, r.author]).toEqual(['example', false, 'EX']);
@@ -54,8 +49,13 @@ describe('저장소의 데이터셋 검증 (pnpm test에도 포함)', () => {
   it('견본이 상황·나쁜 이유·유형을 고루 덮는다', () => {
     expect(new Set(full.pairs.map((r) => r.rejectedReason)).size).toBe(6);
     expect(new Set(full.redteam.map((r) => r.category)).size).toBe(6);
-    for (const unit of EXAMPLE_UNITS) {
-      expect(new Set(full.redteam.filter((r) => r.unitId === unit).map((r) => r.category)).size).toBe(6);
+    for (const unit of TUTOR_UNITS) {
+      const rich = RICH_EXAMPLE_UNITS.includes(unit as (typeof RICH_EXAMPLE_UNITS)[number]);
+      expect(new Set(full.redteam.filter((r) => r.unitId === unit).map((r) => r.category)).size, `${unit} redteam 유형`).toBe(rich ? 6 : 3);
+      expect(new Set(full.pairs.filter((r) => r.unitId === unit).map((r) => r.rejectedReason)).size, `${unit} 나쁜 이유`).toBe(rich ? 4 : 2);
+      const sft = full.sft.filter((r) => r.unitId === unit);
+      expect(sft.some((r) => r.utterance === ''), `${unit}: 말하지 않은 상황`).toBe(true);
+      expect(new Set(sft.map((r) => r.scenarioId)).size, `${unit}: 서로 다른 시나리오`).toBe(sft.length);
     }
   });
   it('시나리오: 단원마다 15~25개, 입력이 비어 있지 않다', () => {
@@ -227,7 +227,7 @@ describe('importCsv', () => {
     expect(records[0] as RedteamRecord).toMatchObject({ category: 'ask-answer', mustNotContain: ['많이 녹는다', '늘어난다'] });
   });
 
-  it('견본이 없는 단원(카드 분류·관찰)도 시나리오 번호와 단원 검사로 가져온다', () => {
+  it('카드 분류·관찰 단원도 시나리오 번호와 단원 검사로 가져오고, id는 견본 뒤 번호를 잇는다', () => {
     for (const [unit, num] of [['g3-animal', '12'], ['g3-plantlife', '20'], ['g5-strata', '22'], ['g6-earth-motion', '8']] as const) {
       const csv = toCsv([
         CSV_HEADERS.sft,
@@ -236,7 +236,8 @@ describe('importCsv', () => {
       ]);
       const { records, errors } = importCsv(csv, { unitId: unit, kind: 'sft', author: 'T03', existing: full });
       expect(records, unit).toHaveLength(1);
-      expect(records[0]).toMatchObject({ id: `${unit}-sft-0001`, unitId: unit, scenarioId: `${unit}-s${num.padStart(3, '0')}` });
+      const next = String(full.sft.filter((r) => r.unitId === unit).length + 1).padStart(4, '0');
+      expect(records[0]).toMatchObject({ id: `${unit}-sft-${next}`, unitId: unit, scenarioId: `${unit}-s${num.padStart(3, '0')}` });
       expect(errors.map((e) => e.row), unit).toEqual([3]);
       expect(errors[0]!.reason).toContain('다른 단원');
     }

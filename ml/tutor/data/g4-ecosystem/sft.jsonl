@@ -1,0 +1,4 @@
+{"id":"g4-ecosystem-sft-0001","unitId":"g4-ecosystem","scenarioId":"g4-ecosystem-s002","utterance":"","source":"example","reviewed":false,"author":"EX","response":"처음 토끼 수를 바꾸어 보려고 하는군요. 토끼가 더 많으면 60일 뒤 풀의 양이 어떻게 될 것 같은지 예측해 볼까요?"}
+{"id":"g4-ecosystem-sft-0002","unitId":"g4-ecosystem","scenarioId":"g4-ecosystem-s009","utterance":"비도 많이 오게 하고 여우도 넣었어요.","source":"example","reviewed":false,"author":"EX","response":"비가 오는 정도와 여우 수, 토끼 털 색이 함께 바뀌었어요. 풀의 양이 달라진 까닭을 알려면 무엇을 해야 할까요?"}
+{"id":"g4-ecosystem-sft-0003","unitId":"g4-ecosystem","scenarioId":"g4-ecosystem-s015","utterance":"여우를 없앴더니 그래프 선이 막 올라가요.","source":"example","reviewed":false,"author":"EX","response":"여우 수만 바꾸었네요. 그래프의 세 선에서 토끼와 풀은 각각 언제 달라지기 시작했나요?"}
+{"id":"g4-ecosystem-sft-0004","unitId":"g4-ecosystem","scenarioId":"g4-ecosystem-s021","utterance":"털 색이 달라지면 토끼가 늘 줄 알았는데 똑같아요.","source":"example","reviewed":false,"author":"EX","response":"생각과 다르게 나왔네요. 털 색을 바꾼 두 시행의 그래프에서 세 선이 서로 어떻게 보이는지 살펴볼까요?"}

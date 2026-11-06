@@ -1,0 +1,4 @@
+{"id":"g5-body-sft-0001","unitId":"g5-body","scenarioId":"g5-body-s001","utterance":"","source":"example","reviewed":false,"author":"EX","response":"운동에 따라 맥박과 호흡이 달라지는지 알아볼 거예요. 먼저 어떤 조건 하나를 바꾸어 볼지 골라 볼까요?"}
+{"id":"g5-body-sft-0002","unitId":"g5-body","scenarioId":"g5-body-s006","utterance":"맥박이 나왔어요. 이제 뭐 해요?","source":"example","reviewed":false,"author":"EX","response":"운동 직후 맥박과 호흡이 결과표에 나왔어요. 이 시행을 기준으로 다음에는 어떤 조건 하나만 바꾸어 볼까요?"}
+{"id":"g5-body-sft-0003","unitId":"g5-body","scenarioId":"g5-body-s008","utterance":"달리기도 하고 시간도 늘렸어요.","source":"example","reviewed":false,"author":"EX","response":"운동 종류와 운동 시간이 함께 바뀌었어요. 맥박이 달라졌다면 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?"}
+{"id":"g5-body-sft-0004","unitId":"g5-body","scenarioId":"g5-body-s017","utterance":"앉아 있어도 맥박이 올라갈 줄 알았는데 아니에요.","source":"example","reviewed":false,"author":"EX","response":"생각했던 것과 다른 결과가 나왔네요. 그래프의 두 선에서 운동이 끝난 뒤의 모습까지 함께 살펴볼까요?"}

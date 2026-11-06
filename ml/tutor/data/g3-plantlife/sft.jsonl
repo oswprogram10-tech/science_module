@@ -1,0 +1,4 @@
+{"id":"g3-plantlife-sft-0001","unitId":"g3-plantlife","scenarioId":"g3-plantlife-s001","utterance":"","source":"example","reviewed":false,"author":"EX","response":"잎 카드 여덟 장을 두 갈래로 나누려고 해요. 누가 답해도 같은 대답이 나오는 질문은 어떤 질문일까요?"}
+{"id":"g3-plantlife-sft-0002","unitId":"g3-plantlife","scenarioId":"g3-plantlife-s009","utterance":"국화 잎은 좀 울퉁불퉁해요.","source":"example","reviewed":false,"author":"EX","response":"울퉁불퉁한 모습을 보았군요. 잎 가장자리를 관찰한 내용으로는 톱니 질문에 '예'일까요, '아니요'일까요?"}
+{"id":"g3-plantlife-sft-0003","unitId":"g3-plantlife","scenarioId":"g3-plantlife-s020","utterance":"다 한쪽으로 몰렸어요. 왜 그래요?","source":"example","reviewed":false,"author":"EX","response":"네 장이 모두 한쪽으로 모였어요. 이 무리의 잎들을 비교해 보면 다른 점이 보이는 부분은 어디일까요?"}
+{"id":"g3-plantlife-sft-0004","unitId":"g3-plantlife","scenarioId":"g3-plantlife-s014","utterance":"확인했는데 다시 하래요.","source":"example","reviewed":false,"author":"EX","response":"관찰한 내용과 다른 쪽에 들어간 잎이 있다고 해요. 가장자리를 관찰한 기록과 넣은 쪽을 잎마다 견주어 볼까요?"}

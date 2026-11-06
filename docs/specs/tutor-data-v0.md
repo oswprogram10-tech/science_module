@@ -103,7 +103,7 @@ ml/tutor/
 
 ### 2.3 견본 데이터 (`source: "example"`, `reviewed: false`, `author: "EX"`)
 
-- 견본 단원(`EXAMPLE_UNITS`: 대표 단원 3개)마다 sft 8개, pairs 4개, redteam 6개. 나머지 단원은 빈 파일로 시작한다.
+- 대표 단원(`RICH_EXAMPLE_UNITS`: 3개)마다 sft 8개, pairs 4개, redteam 6개. 나머지 단원도 모두 견본이 있다(단원마다 sft 4개, pairs 2개, redteam 3개).
   - 상황과 rejectedReason, category를 고루 덮는다.
 - 견본은 **형식과 수준을 보여 주는 용도**다. 내보내기 기본값에서 빠진다(T3).
 - 견본도 `checkTutorResponse`를 통과해야 한다(rejected 제외).

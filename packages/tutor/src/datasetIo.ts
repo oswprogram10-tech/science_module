@@ -16,8 +16,11 @@ export const TUTOR_UNITS = [
   'g6-acid-base', 'g6-combustion', 'g6-electricity', 'g6-earth-motion', 'g6-seasons', 'g6-plant', 'g6-motion',
 ] as const;
 
-/** 견본 레코드(source: "example")를 둔 단원. 나머지 단원은 빈 파일로 시작한다. */
-export const EXAMPLE_UNITS = ['g5-solution', 'g4-gases', 'g6-acid-base'] as const;
+/**
+ * 견본 레코드(source: "example")를 가장 많이(sft 8 · pairs 4 · redteam 6) 둔 대표 단원 3개.
+ * 나머지 단원도 모두 견본이 있다(단원마다 sft 4 · pairs 2 · redteam 3). 검증기·가져오기·내보내기 시험이 이 3개 단원의 레코드를 재료로 쓴다.
+ */
+export const RICH_EXAMPLE_UNITS = ['g5-solution', 'g4-gases', 'g6-acid-base'] as const;
 
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 export const CONTENT_DIR = join(repoRoot, 'content', 'units');

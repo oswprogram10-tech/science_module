@@ -1,0 +1,4 @@
+{"id":"g6-seasons-sft-0001","unitId":"g6-seasons","scenarioId":"g6-seasons-s002","utterance":"","source":"example","reviewed":false,"author":"EX","response":"계절을 바꾸어 보려고 하는군요. 계절이 달라지면 태양의 남중 고도가 어떻게 될지 예측해 볼까요?"}
+{"id":"g6-seasons-sft-0002","unitId":"g6-seasons","scenarioId":"g6-seasons-s008","utterance":"계절을 바꾸고 기울기도 바꿔 버렸어요.","source":"example","reviewed":false,"author":"EX","response":"계절과 자전축 기울기가 함께 바뀌었어요. 남중 고도가 달라졌다면 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?"}
+{"id":"g6-seasons-sft-0003","unitId":"g6-seasons","scenarioId":"g6-seasons-s016","utterance":"막대를 길게 했더니 그림자가 길어졌어요.","source":"example","reviewed":false,"author":"EX","response":"막대 길이만 바꾸었네요. 결과표의 세 값 가운데 달라진 값과 달라지지 않은 값은 각각 무엇인가요?"}
+{"id":"g6-seasons-sft-0004","unitId":"g6-seasons","scenarioId":"g6-seasons-s018","utterance":"기울기를 늘리면 남중 고도가 커질 줄 알았는데 아니에요.","source":"example","reviewed":false,"author":"EX","response":"처음 예측과 달랐네요. 눈으로 보기 화면에서 두 시행의 태양 높이와 그림자를 나란히 살펴볼까요?"}

@@ -1,0 +1,4 @@
+{"id":"g4-climate-sft-0001","unitId":"g4-climate","scenarioId":"g4-climate-s002","utterance":"","source":"example","reviewed":false,"author":"EX","response":"투명 비닐 덮개를 바꾸면 병 속 온도가 어떻게 될지 예측해 볼까요? 왜 그렇게 생각하나요?"}
+{"id":"g4-climate-sft-0002","unitId":"g4-climate","scenarioId":"g4-climate-s008","utterance":"덮개를 빼고 이산화 탄소도 넣어 봤어요.","source":"example","reviewed":false,"author":"EX","response":"덮개와 병 속 공기가 함께 바뀌었어요. 온도가 달라졌다면 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?"}
+{"id":"g4-climate-sft-0003","unitId":"g4-climate","scenarioId":"g4-climate-s016","utterance":"뚜껑 색만 바꿨는데 숫자가 비슷해요.","source":"example","reviewed":false,"author":"EX","response":"뚜껑 색만 바꾸었을 때 오른 온도를 두 시행에서 각각 읽어 볼까요? 그래프의 두 선은 어떻게 보이나요?"}
+{"id":"g4-climate-sft-0004","unitId":"g4-climate","scenarioId":"g4-climate-s017","utterance":"덮개를 빼도 온도가 올라갈 줄 알았는데 달라요.","source":"example","reviewed":false,"author":"EX","response":"예측했던 것과 다른 값이 나왔군요. '열이 드나드는 모습' 그림에서 들어오는 화살표와 나가는 화살표를 비교해 볼까요?"}
