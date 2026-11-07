@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { agoText, describeSituation } from './describe';
+import { PHASE_LABEL, agoText, describeSituation, phaseLabel } from './describe';
 
 describe('describeSituation', () => {
   it('변인 실험 분석 종류를 문장으로', () => {
@@ -44,5 +44,19 @@ describe('agoText', () => {
     expect(agoText(0, 30_000)).toBe('방금');
     expect(agoText(0, 3 * 60_000 + 1)).toBe('3분 전');
     expect(agoText(0, 125 * 60_000)).toBe('2시간 전');
+  });
+});
+
+describe('phaseLabel', () => {
+  it('진행 중은 활동 종류에 맞게 부르고, 변인 실험만 "실험 중"이다', () => {
+    expect(phaseLabel('running', 'variable')).toBe('실험 중');
+    expect(phaseLabel('running', 'classify')).toBe('분류 중');
+    expect(phaseLabel('running', 'card-sort')).toBe('분류 중');
+    expect(phaseLabel('running', 'observe')).toBe('관찰 중');
+    expect(phaseLabel('running', 'portfolio')).toBe('진로 탐색 중');
+  });
+  it('다른 단계와 활동을 모르는 경우는 PHASE_LABEL 그대로', () => {
+    for (const p of ['designing', 'reviewing', 'idle'] as const) expect(phaseLabel(p, 'portfolio')).toBe(PHASE_LABEL[p]);
+    expect(phaseLabel('running')).toBe('실험 중');
   });
 });

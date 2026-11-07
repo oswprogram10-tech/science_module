@@ -7,6 +7,21 @@ export const PHASE_LABEL: Record<Phase, string> = {
   idle: '단원 고르는 중',
 };
 
+/** "진행 중"을 활동 종류에 맞는 말로 바꾼다. 분류·관찰·진로 활동은 실험이 아니라서 "실험 중"이라고 하지 않는다. */
+const RUNNING_LABEL: Record<Activity, string> = {
+  variable: '실험 중',
+  classify: '분류 중',
+  'card-sort': '분류 중',
+  observe: '관찰 중',
+  portfolio: '진로 탐색 중',
+};
+
+/** 교사 화면의 모둠 상태 글자. 활동 종류를 모르면 PHASE_LABEL 그대로. */
+export function phaseLabel(phase: Phase, activity?: Activity): string {
+  if (phase === 'running' && activity) return RUNNING_LABEL[activity];
+  return PHASE_LABEL[phase];
+}
+
 export const SAFETY_LABEL: Record<SafetyType, string> = {
   NO_GOGGLES: '보안경 안 씀',
   NO_GLOVES: '장갑 안 낌',

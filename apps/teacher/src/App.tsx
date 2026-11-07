@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
 import {
   PHASE_LABEL,
+  phaseLabel,
   SAFETY_LABEL,
   agoText,
   describeSituation,
@@ -256,7 +257,7 @@ function GroupCard({ entry, now, onAck }: { entry: Entry; now: number; onAck: (t
         <>
           <p className="unit">{title ?? PHASE_LABEL.idle}</p>
           <p className="meta">
-            {g.phase ? PHASE_LABEL[g.phase] : ''}
+            {g.phase ? phaseLabel(g.phase, g.activity) : ''}
             {g.activity ? (g.activity === 'portfolio' ? ` · ${g.trials}단계` : ` · 시행 ${g.trials}회`) : ''}
           </p>
           {sentence && <p className="situation">{sentence}</p>}
