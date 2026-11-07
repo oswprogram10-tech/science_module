@@ -51,11 +51,11 @@ export function GasMacroView({ experiment, trial, snapshot, values }: ViewProps<
         {/* 고무마개 */}
         <rect x={BARREL_L + 8} y={BOTTOM} width={BARREL_R - BARREL_L - 16} height="10" rx="2" fill="#5a4a3a" stroke="currentColor" />
         {/* 눈금 */}
-        <g fontSize="10" fill="currentColor">
+        <g fontSize="12" fill="currentColor">
           {ticks.map((ml) => (
             <g key={ml}>
               <line x1={BARREL_L - 8} x2={BARREL_L} y1={BOTTOM - ml * PX_PER_ML} y2={BOTTOM - ml * PX_PER_ML} stroke="currentColor" strokeWidth="1.5" />
-              <text x={BARREL_L - 11} y={BOTTOM - ml * PX_PER_ML + 3.5} textAnchor="end">{ml}</text>
+              <text x={BARREL_L - 11} y={BOTTOM - ml * PX_PER_ML + 4.2} textAnchor="end">{ml}</text>
             </g>
           ))}
           <text x={BARREL_L - 11} y={topY - 8} textAnchor="end">mL</text>
@@ -69,7 +69,7 @@ export function GasMacroView({ experiment, trial, snapshot, values }: ViewProps<
           <g aria-hidden="true" fill="#c0392b" stroke="#c0392b">
             <line x1="100" y1={handleY - 34} x2="100" y2={handleY - 10} strokeWidth={arrowW} />
             <polygon points={`${100 - 6 - arrowW},${handleY - 12} ${100 + 6 + arrowW},${handleY - 12} 100,${handleY - 1}`} stroke="none" />
-            <text x="136" y={handleY - 20} fontSize="11" stroke="none">{push === 2 ? '세게' : '살짝'}</text>
+            <text x="136" y={handleY - 20} fontSize="12" stroke="none">{push === 2 ? '세게' : '살짝'}</text>
           </g>
         )}
       </svg>

@@ -1,4 +1,5 @@
 import { CONSTELLATIONS, CONSTELLATION_KEYS, dayOfMonth15, type Rotation } from '@sci/engine-earth';
+import { useNarrow } from './useNarrow';
 import { earthOrbitAngleDeg, screenAngleIsDay, seoulScreenAngle } from './model';
 
 const BG = '#0b1020';
@@ -17,12 +18,18 @@ function arrowHead(e: Pt, t: Pt, size = 9): string {
 }
 
 /** 중심에서 본 방향 각도(화면 각도 rad)로 바깥 라벨의 정렬을 정한다. */
-function labelSpot(cx: number, cy: number, r: number, angle: number) {
+function labelSpot(cx: number, cy: number, r: number, angle: number, width: number, viewW: number) {
   const c = Math.cos(angle);
   const s = Math.sin(angle);
-  const anchor = c > 0.35 ? 'start' : c < -0.35 ? 'end' : 'middle';
+  let anchor: 'start' | 'end' | 'middle' = c > 0.35 ? 'start' : c < -0.35 ? 'end' : 'middle';
+  let x = cx + r * c;
+  // 글자가 그림 밖으로 나가면 점 반대쪽(안쪽)으로 쓴다.
+  if (anchor === 'start' && x + width > viewW - 2) {
+    anchor = 'end';
+    x = cx + r * c - 28;
+  }
   const dy = anchor === 'middle' ? (s < 0 ? -4 : 16) : 5;
-  return { x: cx + r * c, y: cy + r * s + dy, anchor: anchor as 'start' | 'end' | 'middle' };
+  return { x, y: cy + r * s + dy, anchor };
 }
 
 export interface RotationSpaceProps {
@@ -33,6 +40,9 @@ export interface RotationSpaceProps {
 }
 
 export function RotationSpaceView({ hour, rotation, showAntipode, ariaLabel }: RotationSpaceProps) {
+  // 휴대폰에서는 그림이 0.64배로 줄어 그려지므로 글자를 키워 화면에서 13 px 이상으로 만든다(데스크톱은 1배).
+  const narrow = useNarrow();
+  const f = narrow ? 22 : 16;
   const cx = 300;
   const cy = 150;
   const R = 95;
@@ -40,8 +50,8 @@ export function RotationSpaceView({ hour, rotation, showAntipode, ariaLabel }: R
   const anti = seoul + Math.PI;
   const sPos: Pt = [cx + R * Math.cos(seoul), cy + R * Math.sin(seoul)];
   const aPos: Pt = [cx + R * Math.cos(anti), cy + R * Math.sin(anti)];
-  const sLabel = labelSpot(cx, cy, R + 14, seoul);
-  const aLabel = labelSpot(cx, cy, R + 14, anti);
+  const sLabel = labelSpot(cx, cy, R + 14, seoul, 4 * (f + 1), 520);
+  const aLabel = labelSpot(cx, cy, R + 14, anti, 5 * (f + 1) + 6, 520);
   // 북극 위에서 보면 실제 자전(forward)은 반시계 방향: 수학 각도가 늘어나는 쪽.
   const sign = rotation === 'forward' ? 1 : -1;
   const ringR = 29;
@@ -58,7 +68,7 @@ export function RotationSpaceView({ hour, rotation, showAntipode, ariaLabel }: R
     <svg viewBox="0 0 520 300" role="img" aria-label={ariaLabel} data-testid="space-svg">
       <rect width={520} height={300} fill={BG} />
       <circle cx={60} cy={150} r={34} fill={SUN} stroke="#ffe08a" strokeWidth={3} />
-      <text x={60} y={205} textAnchor="middle" fontSize={16} fontWeight={700} fill="#ffffff">
+      <text x={60} y={205} textAnchor="middle" fontSize={f} fontWeight={700} fill="#ffffff">
         태양
       </text>
       {rays.map((y) => (
@@ -70,29 +80,29 @@ export function RotationSpaceView({ hour, rotation, showAntipode, ariaLabel }: R
       <circle cx={cx} cy={cy} r={R} fill={NIGHT} />
       <path d={`M${cx},${cy - R} A${R},${R} 0 0 0 ${cx},${cy + R} Z`} fill={DAYSIDE} />
       <circle cx={cx} cy={cy} r={R} fill="none" stroke="#ffffff" strokeWidth={2} />
-      <text x={cx - 66} y={cy + 6} textAnchor="middle" fontSize={20} fontWeight={700} fill="#0b1530">
+      <text x={cx - 66} y={cy + 6} textAnchor="middle" fontSize={f + 4} fontWeight={700} fill="#0b1530">
         낮
       </text>
-      <text x={cx + 66} y={cy + 6} textAnchor="middle" fontSize={20} fontWeight={700} fill="#ffffff">
+      <text x={cx + 66} y={cy + 6} textAnchor="middle" fontSize={f + 4} fontWeight={700} fill="#ffffff">
         밤
       </text>
       <circle cx={cx} cy={cy} r={36} fill={BG} />
       <polyline points={arcPts.map(fmt).join(' ')} fill="none" stroke="#ffffff" strokeWidth={2.5} />
       <polygon points={arrowHead(end, tangent, 9)} fill="#ffffff" data-testid="rotation-arrow" data-direction={rotation} />
-      <text x={cx} y={cy + 5} textAnchor="middle" fontSize={14} fontWeight={700} fill="#ffffff">
+      <text x={cx} y={cy + 5} textAnchor="middle" fontSize={narrow ? 21 : 14} fontWeight={700} fill="#ffffff">
         자전
       </text>
       {showAntipode && (
         <g data-testid="antipode-marker">
           <rect x={aPos[0] - 7} y={aPos[1] - 7} width={14} height={14} fill="#ffe14d" stroke="#0b1020" strokeWidth={2} />
-          <text x={aLabel.x} y={aLabel.y} textAnchor={aLabel.anchor} fontSize={15} fontWeight={700} fill="#ffe14d" stroke={BG} strokeWidth={4} paintOrder="stroke">
+          <text x={aLabel.x} y={aLabel.y} textAnchor={aLabel.anchor} fontSize={f} fontWeight={700} fill="#ffe14d" stroke={BG} strokeWidth={4} paintOrder="stroke">
             지구 반대편
           </text>
         </g>
       )}
       <g data-testid="seoul-marker" data-day={screenAngleIsDay(seoul)}>
         <circle cx={sPos[0]} cy={sPos[1]} r={8} fill="#ff5a4d" stroke="#ffffff" strokeWidth={2.5} />
-        <text x={sLabel.x} y={sLabel.y} textAnchor={sLabel.anchor} fontSize={15} fontWeight={700} fill="#ff9a90" stroke={BG} strokeWidth={4} paintOrder="stroke">
+        <text x={sLabel.x} y={sLabel.y} textAnchor={sLabel.anchor} fontSize={f} fontWeight={700} fill="#ff9a90" stroke={BG} strokeWidth={4} paintOrder="stroke">
           우리나라
         </text>
       </g>
@@ -107,6 +117,8 @@ export interface RevolutionSpaceProps {
 }
 
 export function RevolutionSpaceView({ month, dayOfYear, ariaLabel }: RevolutionSpaceProps) {
+  const narrow = useNarrow();
+  const f = narrow ? 21 : 15;
   const cx = 260;
   const cy = 185;
   const R = 88;
@@ -117,7 +129,10 @@ export function RevolutionSpaceView({ month, dayOfYear, ariaLabel }: RevolutionS
   const dir: Pt = [Math.cos(outward), -Math.sin(outward)];
   const tail = at(psi, R + 13);
   const tip = at(psi, R + 40);
-  const nameSpot = at(psi, R + 52);
+  // "밤하늘 쪽" 이름표는 화살촉 끝 바깥에, 글자 상자가 화살표와 닿지 않을 만큼 띄워 놓는다(글자가 클수록 더 멀리).
+  const nameW = 4.3 * f;
+  const nameGap = Math.abs(dir[0]) * (nameW / 2) + Math.abs(dir[1]) * (f / 2) + 4;
+  const nameSpot = at(psi, R + 40 + nameGap);
   // 지구 이름표는 궤도 접선 방향(위쪽)으로 조금 띄운다.
   const tangent: Pt = [-dir[1], dir[0]];
   const earthLabel: Pt = [earth[0] + tangent[0] * 30, earth[1] + tangent[1] * 30];
@@ -126,17 +141,17 @@ export function RevolutionSpaceView({ month, dayOfYear, ariaLabel }: RevolutionS
       <rect width={520} height={370} fill={BG} />
       <circle cx={cx} cy={cy} r={R} fill="none" stroke="#6f86b8" strokeWidth={2} strokeDasharray="6 6" />
       <circle cx={cx} cy={cy} r={16} fill={SUN} stroke="#ffe08a" strokeWidth={2} />
-      <text x={cx} y={cy + 36} textAnchor="middle" fontSize={15} fontWeight={700} fill="#ffffff">
+      <text x={cx} y={cy + 36} textAnchor="middle" fontSize={f} fontWeight={700} fill="#ffffff">
         태양
       </text>
       {[1, 4, 7, 10].map((m) => {
         const a = earthOrbitAngleDeg(dayOfMonth15(m));
         const dot = at(a, R);
-        const lab = at(a, R - 26);
+        const lab = at(a, R - (narrow ? 36 : 26));
         return (
           <g key={m}>
             <circle cx={dot[0]} cy={dot[1]} r={3.5} fill="#cfe0ff" />
-            <text x={lab[0]} y={lab[1] + 5} textAnchor="middle" fontSize={14} fill="#cfe0ff">
+            <text x={lab[0]} y={lab[1] + 5} textAnchor="middle" fontSize={f} fill="#cfe0ff">
               {m}월
             </text>
           </g>
@@ -146,7 +161,7 @@ export function RevolutionSpaceView({ month, dayOfYear, ariaLabel }: RevolutionS
         const c = CONSTELLATIONS[k];
         const p = at(c.raHours * 15, 160);
         return (
-          <text key={k} x={p[0]} y={p[1] + 5} textAnchor="middle" fontSize={16} fontWeight={700} fill="#ffffff" data-testid={`ring-${k}`}>
+          <text key={k} x={p[0]} y={p[1] + 5} textAnchor="middle" fontSize={f + 1} fontWeight={700} fill="#ffffff" data-testid={`ring-${k}`}>
             {c.name}
           </text>
         );
@@ -155,11 +170,11 @@ export function RevolutionSpaceView({ month, dayOfYear, ariaLabel }: RevolutionS
         <line x1={tail[0]} y1={tail[1]} x2={tip[0] - dir[0] * 6} y2={tip[1] - dir[1] * 6} stroke="#9fb4ff" strokeWidth={3} />
         <polygon points={arrowHead(tip, dir, 11)} fill="#9fb4ff" data-testid="night-arrow" />
       </g>
-      <text x={nameSpot[0]} y={nameSpot[1] + 5} textAnchor="middle" fontSize={14} fontWeight={700} fill="#9fb4ff" stroke={BG} strokeWidth={4} paintOrder="stroke">
+      <text x={nameSpot[0]} y={nameSpot[1] + 0.35 * f} textAnchor="middle" fontSize={f} fontWeight={700} fill="#9fb4ff" stroke={BG} strokeWidth={4} paintOrder="stroke">
         밤하늘 쪽
       </text>
       <circle cx={earth[0]} cy={earth[1]} r={10} fill="#4aa3ff" stroke="#ffffff" strokeWidth={2.5} data-testid="earth-marker" data-month={month} />
-      <text x={earthLabel[0]} y={earthLabel[1] + 5} textAnchor="middle" fontSize={15} fontWeight={700} fill="#ffffff" stroke={BG} strokeWidth={4} paintOrder="stroke">
+      <text x={earthLabel[0]} y={earthLabel[1] + 5} textAnchor="middle" fontSize={f} fontWeight={700} fill="#ffffff" stroke={BG} strokeWidth={4} paintOrder="stroke">
         지구
       </text>
     </svg>

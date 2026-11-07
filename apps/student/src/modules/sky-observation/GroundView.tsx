@@ -1,5 +1,6 @@
 import type { SkyPoint } from '@sci/engine-earth';
 import type { GroundScene } from './model';
+import { useNarrow } from './useNarrow';
 
 const W = 640;
 const H = 300;
@@ -19,6 +20,10 @@ const yOf = (alt: number) => HORIZON - (alt / 90) * (HORIZON - SKY_TOP);
 const inView = (p: SkyPoint) => p.altDeg > 0 && p.azDeg >= 60 && p.azDeg <= 300;
 
 export function GroundView({ scene, trail }: { scene: GroundScene; trail: SkyPoint[] }) {
+  // 휴대폰에서는 그림이 0.52배로 줄어 그려지므로 글자를 키워 화면에서 13 px 이상으로 만든다(데스크톱은 1배).
+  const narrow = useNarrow();
+  const nameSize = narrow ? 26 : 16;
+  const dirSize = narrow ? 26 : 20;
   const sunX = xOf(scene.sun.azDeg);
   const sunY = yOf(scene.sun.altDeg);
   const trailPts = trail.filter(inView);
@@ -66,7 +71,8 @@ export function GroundView({ scene, trail }: { scene: GroundScene; trail: SkyPoi
         if (pts.length === 0) return null;
         const cx = pts.reduce((a, s) => a + xOf(s.point.azDeg), 0) / pts.length;
         const top = Math.min(...pts.map((s) => yOf(s.point.altDeg)));
-        const labelX = Math.min(W - 70, Math.max(70, cx));
+        const half = (c.name.length * nameSize) / 2 + 6;
+        const labelX = Math.min(W - half, Math.max(half, cx));
         return (
           <g key={c.key} data-testid={`constellation-${c.key}`}>
             <g aria-hidden="true">
@@ -87,7 +93,7 @@ export function GroundView({ scene, trail }: { scene: GroundScene; trail: SkyPoi
                 visible[i] ? <circle key={i} cx={xOf(s.point.azDeg)} cy={yOf(s.point.altDeg)} r={3.5} fill="#ffffff" /> : null,
               )}
             </g>
-            <text x={labelX} y={Math.max(20, top - 12)} textAnchor="middle" fontSize={16} fontWeight={700} fill="#ffffff">
+            <text x={labelX} y={Math.max(nameSize + 4, top - 12)} textAnchor="middle" fontSize={nameSize} fontWeight={700} fill="#ffffff">
               {c.name}
             </text>
           </g>
@@ -95,13 +101,13 @@ export function GroundView({ scene, trail }: { scene: GroundScene; trail: SkyPoi
       })}
       <path d={`M0,${HORIZON} L0,${H} L${W},${H} L${W},${HORIZON} Z`} fill={GROUND} />
       <line x1={0} y1={HORIZON} x2={W} y2={HORIZON} stroke="#ffffff" strokeWidth={2} />
-      <text x={X0} y={HORIZON + 30} textAnchor="middle" fontSize={20} fontWeight={700} fill="#ffffff">
+      <text x={X0} y={HORIZON + 30} textAnchor="middle" fontSize={dirSize} fontWeight={700} fill="#ffffff">
         동
       </text>
-      <text x={(X0 + X1) / 2} y={HORIZON + 30} textAnchor="middle" fontSize={20} fontWeight={700} fill="#ffffff">
+      <text x={(X0 + X1) / 2} y={HORIZON + 30} textAnchor="middle" fontSize={dirSize} fontWeight={700} fill="#ffffff">
         남
       </text>
-      <text x={X1} y={HORIZON + 30} textAnchor="middle" fontSize={20} fontWeight={700} fill="#ffffff">
+      <text x={X1} y={HORIZON + 30} textAnchor="middle" fontSize={dirSize} fontWeight={700} fill="#ffffff">
         서
       </text>
     </svg>

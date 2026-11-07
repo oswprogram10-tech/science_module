@@ -65,7 +65,7 @@ export function BeakerView({ experiment, trial, snapshot, values, playhead }: Vi
             <circle cx="104" cy="32" r="2" fill="#d8c9a8" />
           </g>
         )}
-        <text x="100" y="232" textAnchor="middle" fontSize="11" fill="currentColor">
+        <text x="100" y="232" textAnchor="middle" fontSize="12" fill="currentColor">
           넣은 용질 {added.toFixed(1)} g ({Math.round(added / spoonGrams)}숟가락)
         </text>
       </svg>

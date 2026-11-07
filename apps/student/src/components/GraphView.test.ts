@@ -220,7 +220,7 @@ describe('x축 라벨·눈금(xLabel, xTicks, xTickFormat)', () => {
     expect(groups[0]).toContain('남중');
     // 12시 표식은 x축의 정중앙(눈금 0과 24의 한가운데)에 있다
     const x1 = Number(/x1="([\d.]+)"/.exec(groups[0]!)![1]);
-    expect(x1).toBeCloseTo((44 + (320 - 12)) / 2, 1);
+    expect(x1).toBeCloseTo((54 + (320 - 12)) / 2, 1);
     expect(html).toContain('태양 고도(°)');
   });
 
@@ -277,7 +277,7 @@ describe('여러 선(graph.series)과 y축 눈금(graph.yTicks)', () => {
       expect(html).toContain('시간(1000분의 1초)');
       expect(html).toContain('줄의 떨림');
       // 0 가로선: y = 가운데(−1이 아래, 1이 위이므로 눈금 0의 y와 같다)
-      const zero = /<line data-testid="zero-line" x1="44" x2="308" y1="([\d.]+)" y2="([\d.]+)"/.exec(html)!;
+      const zero = /<line data-testid="zero-line" x1="54" x2="308" y1="([\d.]+)" y2="([\d.]+)"/.exec(html)!;
       expect(zero[1]).toBe(zero[2]);
       expect(Number(zero[1])).toBeCloseTo((14 + 202) / 2, 6);
       // 파형의 점은 모두 틀 안(y 14~202)에 있고, 꼭짓점이 위·아래에 모두 있다

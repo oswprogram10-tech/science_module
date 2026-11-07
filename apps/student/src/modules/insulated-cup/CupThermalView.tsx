@@ -23,7 +23,7 @@ export const arrowWidth = (lossW: number) => Math.max(1, lossW * 1.2);
 
 const CUP = { l: 104, r: 176, top: 84, bottom: 220, wall: 11 };
 const MID_X = (CUP.l + CUP.r) / 2;
-const BAR = { x: 282, top: 44, bottom: 204 };
+const BAR = { x: 270, top: 44, bottom: 204 };
 const LABEL = '열이 빠져나가요';
 
 /** 가로·세로 화살표. dir: 어느 쪽으로 나가는지. 굵기 w, 길이 len. */
@@ -86,16 +86,20 @@ export function CupThermalView({ experiment, snapshot, values }: ViewProps<Insul
         <Arrow x={MID_X} y={CUP.top - 4} dir="up" w={wTop} len={34} />
 
         {/* 숫자 온도: 색만으로 전달하지 않는다 */}
-        <text x={50} y={204} textAnchor="middle" fontSize="16" fontWeight="700" fill="currentColor">{sideText}</text>
-        <text x={MID_X} y={18} textAnchor="middle" fontSize="16" fontWeight="700" fill="currentColor">{topText}</text>
+        {/* 데스크톱에서 그림이 0.72배로 줄어 그려져도 화면에서 13 px 이상이 되도록 글자는 19로 쓰고, 옆면은 두 줄로 나눈다. */}
+        <text x={50} y={196} textAnchor="middle" fontSize="19" fontWeight="700" fill="currentColor">
+          <tspan x={50}>옆면 </tspan>
+          <tspan x={50} dy={22}>{side.toFixed(1)} °C</tspan>
+        </text>
+        <text x={MID_X} y={20} textAnchor="middle" fontSize="19" fontWeight="700" fill="currentColor">{topText}</text>
 
         {/* 색 막대 범례 */}
-        <text x={BAR.x + 5} y={BAR.top - 10} textAnchor="middle" fontSize="14" fill="currentColor">°C</text>
+        <text x={BAR.x + 5} y={BAR.top - 10} textAnchor="middle" fontSize="19" fill="currentColor">°C</text>
         <rect x={BAR.x} y={BAR.top} width="10" height={BAR.bottom - BAR.top} fill="url(#thermal-bar)" stroke="currentColor" strokeWidth="1" />
         {ticks.map((c) => (
           <g key={c}>
             <line x1={BAR.x + 10} x2={BAR.x + 15} y1={tickY(c)} y2={tickY(c)} stroke="currentColor" strokeWidth="1" />
-            <text x={BAR.x + 16} y={tickY(c) + 5} fontSize="14" fill="currentColor">{c}</text>
+            <text x={BAR.x + 16} y={tickY(c) + 7} fontSize="19" fill="currentColor">{c}</text>
           </g>
         ))}
       </svg>

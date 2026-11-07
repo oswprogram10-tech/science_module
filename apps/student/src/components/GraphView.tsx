@@ -22,7 +22,10 @@ interface Props {
 const DEFAULT_X_LABEL = '시간(초)';
 const W = 320;
 const H = 240;
-const M = { l: 44, r: 12, t: 14, b: 38 };
+// 글자는 화면에서 13 px 이상이어야 한다(휴대폰 390 px에서 이 그림은 약 1.04배, 데스크톱에서는 그 이상으로 그려진다).
+// 그래서 viewBox 안 글자는 13으로 쓰고, 왼쪽 여백(M.l)은 4자리 눈금("1000", "−0.5")과 세로 y축 라벨이 겹치지 않을 만큼 둔다.
+const FONT = 13;
+const M = { l: 54, r: 12, t: 14, b: 38 };
 const MAX_POINTS = 160;
 
 /** 'name(unit)' 형태의 y축 라벨을 이름과 단위로 나눈다. */
@@ -86,8 +89,8 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
       : [];
   const yMax = yScale.max;
   const sx = (t: number) => M.l + (t / xMax) * (W - M.l - M.r);
-  // 라벨 자리: 다음 표식의 선을 가로지르거나 오른쪽 끝을 넘으면 선의 왼쪽에 쓰고, 앞 라벨과 겹치면 한 줄 아래로 내린다(글자 폭은 한글 12, 공백 4로 넉넉히 어림).
-  const labelW = (label: string) => [...label].reduce((w, ch) => w + (ch === ' ' ? 4 : 12), 0);
+  // 라벨 자리: 다음 표식의 선을 가로지르거나 오른쪽 끝을 넘으면 선의 왼쪽에 쓰고, 앞 라벨과 겹치면 한 줄 아래로 내린다(글자 폭은 한글 13, 공백 4로 넉넉히 어림).
+  const labelW = (label: string) => [...label].reduce((w, ch) => w + (ch === ' ' ? 4 : FONT), 0);
   const placedMarkers = markers.reduce<{ m: GraphMarker; row: number; flip: boolean; spill: boolean; right: number }[]>((acc, m, i) => {
     const x = sx(m.t);
     const w = labelW(m.label);
@@ -184,32 +187,32 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
       >
         <rect x={M.l} y={M.t} width={W - M.l - M.r} height={H - M.t - M.b} fill="none" stroke="#999" />
         {trial && (
-          <g fontSize="10" fill="currentColor">
+          <g fontSize={FONT} fill="currentColor">
             {xScale.ticks.map((t) => (
               <g key={`x${t}`}>
                 <line x1={sx(t)} x2={sx(t)} y1={H - M.b} y2={H - M.b + 4} stroke="#666" />
-                <text x={sx(t)} y={H - M.b + 15} textAnchor="middle">{xTickText(t)}</text>
+                <text x={sx(t)} y={H - M.b + 17} textAnchor="middle">{xTickText(t)}</text>
               </g>
             ))}
             {yScale.ticks.map((g) => (
               <g key={`y${g}`}>
                 <line x1={M.l} x2={W - M.r} y1={sy(g)} y2={sy(g)} stroke="currentColor" opacity="0.12" />
                 <line x1={M.l - 4} x2={M.l} y1={sy(g)} y2={sy(g)} stroke="#666" />
-                <text x={M.l - 7} y={sy(g) + 3} textAnchor="end">{yTickText(g)}</text>
+                <text x={M.l - 7} y={sy(g) + 4.5} textAnchor="end">{yTickText(g)}</text>
               </g>
             ))}
           </g>
         )}
         {trial && yMin < 0 && <line data-testid="zero-line" x1={M.l} x2={W - M.r} y1={sy(0)} y2={sy(0)} stroke="currentColor" strokeWidth="1" opacity="0.45" />}
-        <text x={(M.l + W - M.r) / 2} y={H - 6} textAnchor="middle" fontSize="11" fill="currentColor">{xLabel}</text>
-        <text transform={`translate(11 ${(M.t + H - M.b) / 2}) rotate(-90)`} textAnchor="middle" fontSize="11" fill="currentColor">{mod.graph.yLabel}</text>
+        <text x={(M.l + W - M.r) / 2} y={H - 5} textAnchor="middle" fontSize={FONT} fill="currentColor">{xLabel}</text>
+        <text transform={`translate(12 ${(M.t + H - M.b) / 2}) rotate(-90)`} textAnchor="middle" fontSize={FONT} fill="currentColor">{mod.graph.yLabel}</text>
         {placedMarkers.map(({ m, row, flip, spill }) => (
           <g key={`${m.t}:${m.label}`} data-testid="graph-marker">
             <line x1={sx(m.t)} x2={sx(m.t)} y1={M.t} y2={H - M.b} stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" opacity="0.6" />
             {flip ? (
-              <text x={sx(m.t) - 3} y={M.t + 11 + 16 * row + (spill ? 8 : 0)} textAnchor="end" fontSize="12" fill="currentColor">{m.label}</text>
+              <text x={sx(m.t) - 3} y={M.t + 12 + 17 * row + (spill ? 8 : 0)} textAnchor="end" fontSize={FONT} fill="currentColor">{m.label}</text>
             ) : (
-              <text x={sx(m.t) + 3} y={M.t + 11 + 16 * row} fontSize="12" fill="currentColor">{m.label}</text>
+              <text x={sx(m.t) + 3} y={M.t + 12 + 17 * row} fontSize={FONT} fill="currentColor">{m.label}</text>
             )}
           </g>
         ))}
@@ -224,7 +227,7 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
             <polygon points={`${sx(playhead) - 5},${M.t} ${sx(playhead) + 5},${M.t} ${sx(playhead)},${M.t + 7}`} fill="#c0392b" />
           </g>
         )}
-        {!trial && <text x={W / 2} y={H / 2} textAnchor="middle" fontSize="12" fill="#666">실험하면 그래프가 그려져요.</text>}
+        {!trial && <text x={W / 2} y={H / 2} textAnchor="middle" fontSize={FONT} fill="#666">실험하면 그래프가 그려져요.</text>}
       </svg>
       {trial && series && (
         <ul className="graph-legend" aria-label="범례">

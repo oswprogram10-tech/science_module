@@ -248,6 +248,6 @@ describe('그래프', () => {
   it('1 m 도착 표식 선은 y = 1 m 에서 곡선과 만난다 (표식 x 위치가 도착 시각과 같다)', () => {
     const html = render(base);
     const x1 = Number(/data-testid="graph-marker"><line x1="([\d.]+)"/.exec(html)![1]);
-    expect(x1).toBeCloseTo(44 + (arrivalS({ heightCm: 20, floor: 'wood' }) / 1.2) * (320 - 44 - 12), 0);
+    expect(x1).toBeCloseTo(54 + (arrivalS({ heightCm: 20, floor: 'wood' }) / 1.2) * (320 - 54 - 12), 0);
   });
 });

@@ -85,12 +85,12 @@ describe('결과 열·센서·그래프·예측 기준', () => {
       renderToStaticMarkup(createElement(GraphView, { module: freezeMeltModule as never, experiment, trial: trialOf(v), prev: undefined, playhead: 0, playing: false, onPlayhead: () => {}, describedBy: 'results-table' }));
     for (const v of [base, { ...base, startMl: 20 }, { ...base, process: 'melt' }, { ...base, process: 'melt', startMl: 20 }]) {
       const h = html(v);
-      expect([...h.matchAll(/<text x="37" y="\d+" text-anchor="end">([^<]+)</g)].map((m) => m[1])).toEqual(['−2', '−1', '0', '1', '2']);
+      expect([...h.matchAll(/<text x="47" y="[\d.]+" text-anchor="end">([^<]+)</g)].map((m) => m[1])).toEqual(['−2', '−1', '0', '1', '2']);
       expect(h).toContain('zero-line');
       expect(count(h, 'graph-marker')).toBe(2);
-      // 두 라벨의 글자 줄(y)이 같으면 가로로 겹치지 않아야 한다(글자 폭은 한글 12, 공백 4 어림)
-      const labels = [...h.matchAll(/<text x="([\d.]+)" y="([\d.]+)"( text-anchor="end")? font-size="12" fill="currentColor">([^<]+)<\/text>/g)].map((m) => {
-        const w = [...m[4]!].reduce((a, ch) => a + (ch === ' ' ? 4 : 12), 0);
+      // 두 라벨의 글자 줄(y)이 같으면 가로로 겹치지 않아야 한다(글자 폭은 한글 13, 공백 4 어림)
+      const labels = [...h.matchAll(/<text x="([\d.]+)" y="([\d.]+)"( text-anchor="end")? font-size="13" fill="currentColor">([^<]+)<\/text>/g)].map((m) => {
+        const w = [...m[4]!].reduce((a, ch) => a + (ch === ' ' ? 4 : 13), 0);
         const x = Number(m[1]);
         return { y: m[2], l: m[3] ? x - w : x, r: m[3] ? x : x + w };
       });
@@ -98,7 +98,7 @@ describe('결과 열·센서·그래프·예측 기준', () => {
       if (labels[0]!.y === labels[1]!.y) expect(labels[0]!.r).toBeLessThanOrEqual(labels[1]!.l);
       // 라벨은 그림 틀 안
       for (const l of labels) {
-        expect(l.l).toBeGreaterThanOrEqual(44);
+        expect(l.l).toBeGreaterThanOrEqual(54);
         expect(l.r).toBeLessThanOrEqual(308);
       }
     }
