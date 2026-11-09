@@ -1,0 +1,4 @@
+{"id":"g3-force-sft-0001","unitId":"g3-force","scenarioId":"g3-force-s002","utterance":"","source":"example","reviewed":false,"author":"EX","response":"오른쪽 추의 수를 바꾸어 보려고 하는군요. 추를 늘리면 막대의 오른쪽 끝이 어떻게 될 것 같은지 예측해 볼까요?"}
+{"id":"g3-force-sft-0002","unitId":"g3-force","scenarioId":"g3-force-s006","utterance":"한 번 해 봤더니 막대가 움직였어요.","source":"example","reviewed":false,"author":"EX","response":"오른쪽 끝의 높이가 결과표에 나왔어요. 이 결과를 기준으로 삼아 다음에는 어떤 조건 하나만 바꾸어 볼까요?"}
+{"id":"g3-force-sft-0003","unitId":"g3-force","scenarioId":"g3-force-s013","utterance":"똑같은 걸 또 눌렀어요.","source":"example","reviewed":false,"author":"EX","response":"앞 시행과 조건이 모두 같아요. 두 번의 오른쪽 끝 높이를 나란히 놓으면 무엇이 보이나요?"}
+{"id":"g3-force-sft-0004","unitId":"g3-force","scenarioId":"g3-force-s018","utterance":"멀리 놓으면 올라갈 줄 알았는데 달라요.","source":"example","reviewed":false,"author":"EX","response":"예상과 다르게 나왔네요. '돌리려는 정도 보기' 그림에서 왼쪽과 오른쪽 막대를 나란히 놓고 살펴볼까요?"}

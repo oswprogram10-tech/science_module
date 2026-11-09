@@ -1,0 +1,158 @@
+{
+  "id": "g4-night-sky",
+  "title": "밤하늘 관찰",
+  "grade": 4,
+  "standards": ["4과13-01"],
+  "engine": "earth",
+  "experiments": [
+    {
+      "id": "night-sky",
+      "module": "sky-observation",
+      "title": "태양계와 북쪽 하늘 관찰하기",
+      "question": "태양계 행성의 크기와 거리는 어떻게 다르고, 북쪽 하늘에서 북극성은 어떻게 찾을까?",
+      "safety": [],
+      "limits": ["천구", "적경", "적위", "광년", "천문단위", "등급", "세차 운동"],
+      "params": { "latDeg": 37.5 },
+      "tasks": [
+        {
+          "id": "planet-size",
+          "title": "행성의 크기 비교",
+          "view": "solar-system",
+          "question": "지구의 지름을 1로 하면 목성의 지름은 약 몇 배일까?",
+          "options": [
+            { "value": "2", "label": "약 2배" },
+            { "value": "5", "label": "약 5배" },
+            { "value": "11", "label": "약 11배" },
+            { "value": "50", "label": "약 50배" }
+          ],
+          "controls": [
+            {
+              "key": "compare",
+              "label": "비교하기",
+              "options": [
+                { "value": "size", "label": "크기 비교" },
+                { "value": "distance", "label": "거리 비교" }
+              ],
+              "default": "size"
+            }
+          ],
+          "answer": "jupiter-earth-size",
+          "probes": [
+            { "when": "before-observe", "text": "지구와 목성 중 어느 쪽이 더 클지, 얼마나 더 클지 떠올려 보고 예측해 볼까요?" },
+            { "when": "observing", "text": "크기 비교 화면에서 지구 원과 목성 원을 견주어 볼까요? 지구 원을 몇 개 이으면 목성 원의 지름과 같아지는지 세어 보면 어떨까요?" },
+            { "when": "record-mismatch", "text": "지구 원의 지름을 한 칸으로 삼아 목성 원의 지름이 몇 칸인지 다시 세어 볼까요?" },
+            { "when": "record-match", "text": "다른 행성의 원도 지구와 견주어 보면 어떤 행성이 지구보다 작고 어떤 행성이 더 클까요?" },
+            { "when": "prediction-mismatch", "text": "예측과 관찰이 달랐네요. 예측할 때 떠올린 모습과 화면의 원 크기는 어떻게 다른가요?" }
+          ]
+        },
+        {
+          "id": "planet-distance",
+          "title": "행성까지의 거리 비교",
+          "view": "solar-system",
+          "question": "태양에서 지구까지를 1칸으로 하면 태양에서 해왕성까지는 약 몇 칸일까?",
+          "options": [
+            { "value": "3", "label": "약 3칸" },
+            { "value": "10", "label": "약 10칸" },
+            { "value": "30", "label": "약 30칸" },
+            { "value": "100", "label": "약 100칸" }
+          ],
+          "controls": [
+            {
+              "key": "compare",
+              "label": "비교하기",
+              "options": [
+                { "value": "size", "label": "크기 비교" },
+                { "value": "distance", "label": "거리 비교" }
+              ],
+              "default": "distance"
+            }
+          ],
+          "answer": "neptune-distance",
+          "probes": [
+            { "when": "before-observe", "text": "지구에서 태양까지를 한 칸으로 생각하면, 바깥쪽 행성은 몇 칸 떨어져 있을지 떠올려 볼까요?" },
+            { "when": "observing", "text": "거리 비교 막대에서 눈금을 하나씩 세어 볼까요? 해왕성 점은 어느 눈금 가까이에 있나요?" },
+            { "when": "record-mismatch", "text": "지구 점이 1칸에 있는 것을 기준으로 해왕성 점까지 눈금을 다시 세어 볼까요?" },
+            { "when": "record-match", "text": "해왕성까지의 길이 이렇게 멀다면, 해왕성에서 보는 태양은 지구에서 볼 때와 어떻게 다를까요?" },
+            { "when": "prediction-mismatch", "text": "예측과 관찰이 달랐네요. 예측할 때 떠올린 거리와 막대에서 센 칸 수는 어떻게 다른가요?" }
+          ]
+        },
+        {
+          "id": "find-polaris",
+          "title": "북극성 찾기",
+          "view": "north-sky",
+          "question": "북두칠성 국자 끝의 두 별을 이은 거리의 5배만큼 늘이면 어느 별에 닿을까?",
+          "options": [
+            { "value": "polaris", "label": "북극성" },
+            { "value": "kochab", "label": "작은곰자리의 밝은 별(코카브)" },
+            { "value": "capella", "label": "카펠라" },
+            { "value": "vega", "label": "직녀성" }
+          ],
+          "answer": "pointer-star-target",
+          "probes": [
+            { "when": "before-observe", "text": "북두칠성에서 국자 끝의 두 별을 찾아볼까요? 그 두 별을 이으면 어느 쪽을 가리킬까요?" },
+            { "when": "observing", "text": "길잡이 선 보기를 켜고 시각을 바꾸며, 점선이 끝나는 곳 가까이에 어떤 별이 있는지 살펴볼까요?" },
+            { "when": "record-mismatch", "text": "국자 끝의 두 별 사이 거리를 기준으로 점선이 끝나는 곳을 다시 찾고, 그 가까이의 별을 살펴볼까요?" },
+            { "when": "record-match", "text": "북극성을 찾으면 방향을 알 때 어떻게 도움이 될까요?" },
+            { "when": "prediction-mismatch", "text": "예측과 관찰이 달랐네요. 점선이 끝나는 곳과 처음에 생각한 별의 위치는 어떻게 다른가요?" }
+          ]
+        },
+        {
+          "id": "polaris-still",
+          "title": "밤 동안 북극성의 움직임",
+          "view": "north-sky",
+          "question": "밤 9시부터 자정까지 북극성을 보면 어떻게 움직여 보일까?",
+          "options": [
+            { "value": "nearly-still", "label": "거의 움직이지 않아요" },
+            { "value": "east-to-west", "label": "동쪽에서 서쪽으로" },
+            { "value": "west-to-east", "label": "서쪽에서 동쪽으로" }
+          ],
+          "controls": [
+            {
+              "key": "rotation",
+              "label": "지구의 자전 방향",
+              "options": [
+                { "value": "forward", "label": "서쪽에서 동쪽으로 (실제)" },
+                { "value": "reverse", "label": "동쪽에서 서쪽으로 (만약에)" }
+              ],
+              "default": "forward"
+            }
+          ],
+          "answer": "polaris-motion",
+          "probes": [
+            { "when": "before-observe", "text": "밤이 깊어지면 하늘의 별들이 모두 똑같이 움직여 보일지 생각해 볼까요?" },
+            { "when": "observing", "text": "시각을 바꾸며 북두칠성과 북극성의 움직임을 비교해 볼까요? 별 자취 남기기를 켜면 지나간 자리가 보이는지 확인해 볼까요?" },
+            { "when": "record-mismatch", "text": "시각을 밤 9시와 자정으로 맞추고 북극성과 북두칠성의 위치를 다시 비교해 볼까요?" },
+            { "when": "record-match", "text": "북극성 둘레의 다른 별들은 어떻게 움직여 보였나요? 그 까닭은 무엇일까요?" },
+            { "when": "prediction-mismatch", "text": "예측과 관찰이 달랐네요. 북두칠성의 움직임과 비교하면 북극성은 어떻게 달리 보였나요?" }
+          ]
+        }
+      ],
+      "tutor": {
+        "forbiddenAnswers": [
+          "목성은 지구보다 약 11배",
+          "목성은 지구보다 11배",
+          "목성의 지름은 지구의 약 11배",
+          "지구의 약 11배",
+          "약 11배 커",
+          "약 11배 크",
+          "약 11배 큰",
+          "약 11배 큽",
+          "해왕성까지 약 30칸",
+          "해왕성까지 30칸",
+          "해왕성은 약 30칸",
+          "약 30칸",
+          "30칸쯤",
+          "북극성은 거의 움직이지 않",
+          "북극성은 움직이지 않",
+          "북극성은 거의 제자리",
+          "거의 제자리",
+          "5배만큼 늘이면 북극성",
+          "5배 늘이면 북극성",
+          "가장 큰 행성은 목성",
+          "목성이 가장 큰 행성"
+        ],
+        "probes": []
+      }
+    }
+  ]
+}

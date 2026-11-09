@@ -1,0 +1,100 @@
+{
+  "id": "g4-water-state",
+  "title": "물의 상태 변화",
+  "grade": 4,
+  "standards": ["4과10-01"],
+  "engine": "matter",
+  "experiments": [
+    {
+      "id": "freeze-melt",
+      "module": "freeze-melt",
+      "title": "물이 얼 때와 얼음이 녹을 때의 부피와 무게 알아보기",
+      "question": "물이 얼거나 얼음이 녹을 때 부피와 무게는 어떻게 달라질까?",
+      "predictionPrompt": "예측: 부피 변화는?",
+      "variables": [
+        {
+          "key": "process",
+          "label": "과정",
+          "type": "choice",
+          "options": [
+            { "value": "freeze", "label": "물 얼리기" },
+            { "value": "melt", "label": "얼음 녹이기" }
+          ],
+          "default": "freeze"
+        },
+        {
+          "key": "startMl",
+          "label": "처음 물의 양",
+          "type": "choice",
+          "unit": "mL",
+          "options": [
+            { "value": 10, "label": "10 mL" },
+            { "value": 20, "label": "20 mL" }
+          ],
+          "default": 10
+        },
+        {
+          "key": "tube",
+          "label": "시험관 종류",
+          "type": "choice",
+          "options": [
+            { "value": "glass", "label": "유리 시험관" },
+            { "value": "plastic", "label": "플라스틱 시험관" }
+          ],
+          "default": "glass"
+        }
+      ],
+      "dependent": [
+        { "key": "dV", "label": "부피 변화", "unit": "mL" },
+        { "key": "volumeEnd", "label": "나중 부피", "unit": "mL" }
+      ],
+      "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
+      "safety": ["cold"],
+      "safetyChecklist": [
+        "소금 얼음물은 맨손으로 오래 만지지 않아요.",
+        "유리 시험관은 시험관대에 세워 두어요.",
+        "따뜻한 물은 선생님이 준비해 주신 것만 써요."
+      ],
+      "safetyMessages": {
+        "NO_GOGGLES": "유리 시험관을 다루기 전에 보안경을 먼저 착용해 주세요!",
+        "NO_GLOVES": "소금 얼음물은 아주 차가워요. 맨손으로 오래 만지지 말고 장갑을 먼저 껴 주세요!",
+        "SPILL": "물이나 얼음물이 쏟아졌어요! 유리가 깨졌다면 손대지 말고 바로 선생님께 알려 주세요.",
+        "FOOD": "실험하는 동안에는 얼음이나 물을 먹지 않아요!"
+      },
+      "safetyNotices": [],
+      "limits": ["밀도", "분자", "수소 결합", "잠열", "응고점", "녹는점"],
+      "params": { "totalMin": 30 },
+      "tutor": {
+        "forbiddenAnswers": [
+          "물이 얼면 부피가 늘어",
+          "얼음이 녹으면 부피가 줄어",
+          "무게는 변하지 않",
+          "무게는 그대로",
+          "물이 많을수록 부피가 더 많이",
+          "부피가 늘어나",
+          "부피가 커져",
+          "부피가 줄어들",
+          "부피가 작아져",
+          "얼음이 되면 부피가",
+          "무게는 같아",
+          "무게가 같",
+          "무게가 변하지",
+          "무게가 그대로",
+          "무게는 달라지지 않",
+          "많을수록 부피가 더"
+        ],
+        "probes": [
+          { "when": "before-run", "text": "{iv}을(를) 바꾸면 부피 변화가 어떻게 될지 예측해 볼까요? 무게는 어떻게 될 것 같나요?" },
+          { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 결과표에서 무게의 처음과 나중도 비교해 보고, 다음에는 무엇만 바꿔 볼까요?" },
+          { "when": "confounded", "text": "{changed}이(가) 함께 바뀌었어요. 부피 변화가 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
+          { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },
+          { "when": "repeat", "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
+          { "when": "fair-test", "text": "{iv}만 바꾸었을 때 부피 변화와 무게는 각각 어떻게 되었나요? 알갱이 그림도 함께 볼까요?" },
+          { "when": "fair-test", "iv": "process", "text": "과정만 바꾸었어요. 얼리기와 녹이기에서 시험관 속 높이 표시는 어떻게 달랐나요? 알갱이 사이의 간격은 어땠나요?" },
+          { "when": "fair-test", "iv": "tube", "text": "시험관 종류만 바꾸었을 때 결과가 달라졌나요? 이 결과로 무엇을 알 수 있을까요?" },
+          { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 그래프에서 부피가 언제부터 변하기 시작했는지, 그때 온도는 얼마였는지 볼까요?" }
+        ]
+      }
+    }
+  ]
+}

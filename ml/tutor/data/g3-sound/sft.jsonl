@@ -1,0 +1,4 @@
+{"id":"g3-sound-sft-0001","unitId":"g3-sound","scenarioId":"g3-sound-s001","utterance":"","source":"example","reviewed":false,"author":"EX","response":"줄을 튕겨서 소리가 어떻게 달라지는지 알아볼 거예요. 먼저 어떤 조건 하나를 바꾸어 볼지 골라 볼까요?"}
+{"id":"g3-sound-sft-0002","unitId":"g3-sound","scenarioId":"g3-sound-s008","utterance":"약하게도 해 보고 줄도 짧게 해 봤어요.","source":"example","reviewed":false,"author":"EX","response":"튕기는 세기와 줄의 길이가 함께 바뀌었어요. 소리가 달라졌다면 어느 조건 때문인지 어떻게 가려낼 수 있을까요?"}
+{"id":"g3-sound-sft-0003","unitId":"g3-sound","scenarioId":"g3-sound-s016","utterance":"색깔만 바꿨는데 소리 크기 눈금이 같아요.","source":"example","reviewed":false,"author":"EX","response":"색깔만 바꾸었을 때 소리의 크기 눈금과 떨림 모양 그래프를 모두 살펴볼까요? 두 시행에서 무엇이 같고 다른가요?"}
+{"id":"g3-sound-sft-0004","unitId":"g3-sound","scenarioId":"g3-sound-s017","utterance":"약하게 했는데 소리가 안 커졌어요.","source":"example","reviewed":false,"author":"EX","response":"생각했던 것과 다르게 나왔네요. 떨림 모양 그래프에서 흐린 선과 진한 선의 물결 높이는 어떻게 다른가요?"}

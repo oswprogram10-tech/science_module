@@ -1,0 +1,29 @@
+{
+  "name": "sci-bridge",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "dev": "pnpm --filter student dev",
+    "build": "pnpm -r --if-present build",
+    "test": "vitest run",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "e2e": "pnpm --filter student e2e",
+    "tutor:scenarios": "tsx packages/tutor/scripts/cli.ts scenarios",
+    "tutor:validate": "tsx packages/tutor/scripts/cli.ts validate",
+    "tutor:export": "tsx packages/tutor/scripts/cli.ts export",
+    "tutor:import": "tsx packages/tutor/scripts/cli.ts import",
+    "tutor:authoring-data": "tsx packages/tutor/scripts/authoring-data.ts",
+    "teacher:dev": "pnpm --filter teacher dev",
+    "server:dev": "pnpm --filter @sci/server dev",
+    "classroom:dev": "pnpm --parallel --filter @sci/server --filter teacher dev",
+    "cap:sync": "pnpm --filter student cap:sync",
+    "android:debug": "pnpm --filter student android:debug",
+    "ios:sim": "pnpm --filter student ios:sim"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}

@@ -1,0 +1,4 @@
+{"id":"g4-microbe-sft-0001","unitId":"g4-microbe","scenarioId":"g4-microbe-s002","utterance":"","source":"example","reviewed":false,"author":"EX","response":"빵의 물기를 바꾸어 보려고 하는군요. 마른 빵과 물을 뿌린 빵에서 곰팡이가 덮는 넓이가 어떻게 다를지 예측해 볼까요?"}
+{"id":"g4-microbe-sft-0002","unitId":"g4-microbe","scenarioId":"g4-microbe-s005","utterance":"곰팡이가 조금 생겼어요. 다음엔요?","source":"example","reviewed":false,"author":"EX","response":"7일째 곰팡이 넓이와 처음 보인 날이 결과표에 있어요. 이 시행을 기준으로 다음에는 어떤 조건만 바꾸어 볼까요?"}
+{"id":"g4-microbe-sft-0003","unitId":"g4-microbe","scenarioId":"g4-microbe-s010","utterance":"물기를 바꾸려고 했는데 어두운 곳으로 됐어요.","source":"example","reviewed":false,"author":"EX","response":"빵의 물기를 알아보려 했는데 빛이 바뀌었어요. 물기의 영향만 알아보려면 어느 칸을 되돌려야 할까요?"}
+{"id":"g4-microbe-sft-0004","unitId":"g4-microbe","scenarioId":"g4-microbe-s015","utterance":"냉장고에 넣었더니 곰팡이가 거의 안 보여요.","source":"example","reviewed":false,"author":"EX","response":"냉장고에 넣은 빵과 실온의 빵을 결과표에서 나란히 놓고, 곰팡이가 처음 보인 날을 비교해 볼까요?"}

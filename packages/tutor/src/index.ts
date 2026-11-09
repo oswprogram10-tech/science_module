@@ -1,0 +1,125 @@
+import {
+  joinLabels,
+  josa,
+  type JosaPair,
+  type Prediction,
+  type TrialAnalysis,
+} from '@sci/gateway';
+
+export const FALLBACK_PROBE = '지금까지의 결과표를 다시 살펴볼까요? 무엇이 달라졌나요?';
+
+export interface ProbeTemplate {
+  when: string;
+  /** 이 조작변인일 때만 쓰는 질문. */
+  iv?: string;
+  text: string;
+}
+
+export interface ProbeContext {
+  /** 마지막 시행의 분석. 아직 실행한 적이 없으면 undefined. */
+  lastAnalysis?: TrialAnalysis;
+  /** 조작변인 키(실행 전에는 현재 선택, 실행 후에는 마지막 시행의 값). */
+  ivKey?: string | null;
+  labels: Record<string, string>;
+  /** 마지막 시행의 예측과, fair-test일 때 관찰된 변화. */
+  prediction?: Prediction | null;
+  observed?: Prediction | null;
+}
+
+export interface GuardConfig {
+  forbiddenAnswers: string[];
+  limits: string[];
+}
+
+export interface GuardResult {
+  ok: boolean;
+  hits: string[];
+}
+
+const normalize = (s: string) => s.normalize('NFC').replace(/[\s\p{P}\p{S}\p{Cf}]/gu, '');
+
+export function guardOutput(text: string, config: GuardConfig): GuardResult {
+  const haystack = normalize(text);
+  const hits = [...config.forbiddenAnswers, ...config.limits].filter((phrase) => {
+    const needle = normalize(phrase);
+    return needle.length > 0 && haystack.includes(needle);
+  });
+  return { ok: hits.length === 0, hits };
+}
+
+const JOSA_PATTERN = /(\S)(을\(를\)|이\(가\)|와\(과\)|은\(는\))/g;
+
+function fixJosa(text: string): string {
+  return text.replace(JOSA_PATTERN, (_m, prev: string, pair: string, offset: number) => {
+    const p = `${pair[0]}/${pair[2]}` as JosaPair;
+    // 앞 글자가 ')'면 괄호 설명 앞 낱말로 판단해야 하므로 앞부분 전체를 넘긴다.
+    return prev + josa(text.slice(0, offset + prev.length), p);
+  });
+}
+
+/** 템플릿의 {iv}, {changed}를 라벨로 바꾸고, 괄호형 조사를 앞 낱말 받침에 맞춘다. */
+export function renderProbe(
+  template: string,
+  vars: { iv: string; changed: string[] },
+): string {
+  return fixJosa(
+    template.replaceAll('{iv}', vars.iv).replaceAll('{changed}', joinLabels(vars.changed)),
+  );
+}
+
+/**
+ * 활동 유형과 무관한 탐침 선택: when이 같은 첫 probe의 {이름}을 vars로 바꾸고 조사를 맞춘 뒤 출력 가드를 건다.
+ * 맞는 probe가 없거나 가드에 걸리면 FALLBACK_PROBE.
+ */
+export function renderAndGuard(
+  when: string,
+  vars: Record<string, string>,
+  probes: ProbeTemplate[],
+  guard: GuardConfig,
+): string {
+  const probe = probes.find((p) => p.when === when);
+  if (!probe) return FALLBACK_PROBE;
+  let text = probe.text;
+  for (const [k, v] of Object.entries(vars)) text = text.replaceAll(`{${k}}`, v);
+  text = fixJosa(text);
+  return guardOutput(text, guard).ok ? text : FALLBACK_PROBE;
+}
+
+export function pickProbeKey(context: ProbeContext): string {
+  const a = context.lastAnalysis;
+  if (!a) return 'before-run';
+  if (a.kind === 'confounded') return 'confounded';
+  if (a.kind === 'iv-unchanged') return 'iv-unchanged';
+  if (a.kind === 'repeat') return 'repeat';
+  if (a.kind === 'fair-test') {
+    if (context.prediction && context.observed && context.prediction !== context.observed) {
+      return 'prediction-mismatch';
+    }
+    return 'fair-test';
+  }
+  return 'first-trial';
+}
+
+export function selectProbe(
+  context: ProbeContext,
+  probes: ProbeTemplate[],
+  guard: GuardConfig,
+): string {
+  const key = pickProbeKey(context);
+  // 같은 시점 안에서 현재 조작변인과 iv가 일치하는 probe를 먼저, 없으면 iv가 없는 probe를 고른다.
+  const sameWhen = probes.filter((p) => p.when === key);
+  const probe =
+    (context.ivKey ? sameWhen.find((p) => p.iv === context.ivKey) : undefined) ??
+    sameWhen.find((p) => p.iv === undefined);
+  if (!probe) return FALLBACK_PROBE;
+  const ivLabel = context.ivKey ? (context.labels[context.ivKey] ?? context.ivKey) : '조건';
+  const changed = (context.lastAnalysis?.changed ?? []).map((k) => context.labels[k] ?? k);
+  const text = renderProbe(probe.text, { iv: ivLabel, changed });
+  if (!guardOutput(text, guard).ok) return FALLBACK_PROBE;
+  return text;
+}
+
+export * from './check';
+export * from './context';
+export * from './observeModel';
+export * from './situation';

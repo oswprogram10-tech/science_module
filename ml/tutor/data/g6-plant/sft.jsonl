@@ -1,0 +1,4 @@
+{"id":"g6-plant-sft-0001","unitId":"g6-plant","scenarioId":"g6-plant-s003","utterance":"","source":"example","reviewed":false,"author":"EX","response":"선풍기를 약하게 켜서 바람을 바꾸면 줄어드는 물의 양이 어떻게 될지 예측해 볼까요? 왜 그렇게 생각하나요?"}
+{"id":"g6-plant-sft-0002","unitId":"g6-plant","scenarioId":"g6-plant-s006","utterance":"이틀 지났어요. 물이 줄었어요.","source":"example","reviewed":false,"author":"EX","response":"결과표에서 줄어든 물의 양은 몇 mL인가요? 이 시행을 기준으로 다음에는 어떤 조건만 바꾸어 볼까요?"}
+{"id":"g6-plant-sft-0003","unitId":"g6-plant","scenarioId":"g6-plant-s009","utterance":"바람이랑 빛이랑 물도 다 바뀌었어요.","source":"example","reviewed":false,"author":"EX","response":"빛과 바람, 처음 물의 양이 함께 바뀌었어요. 줄어든 물의 양이 달라졌다면 어느 조건 때문인지 어떻게 알 수 있을까요?"}
+{"id":"g6-plant-sft-0004","unitId":"g6-plant","scenarioId":"g6-plant-s021","utterance":"물이 적으면 더 줄어들 줄 알았는데 아니에요.","source":"example","reviewed":false,"author":"EX","response":"예측했던 것과 다른 값이 나왔군요. 줄어든 양과 남은 양을 나누어서 두 시행의 결과표를 비교해 볼까요?"}

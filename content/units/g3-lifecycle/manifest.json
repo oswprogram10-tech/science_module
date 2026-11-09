@@ -1,0 +1,79 @@
+{
+  "id": "g3-lifecycle",
+  "title": "생물의 한살이",
+  "grade": 3,
+  "standards": ["4과04-01"],
+  "engine": "life",
+  "experiments": [
+    {
+      "id": "germination",
+      "module": "germination",
+      "title": "씨가 싹 트는 조건 알아보기",
+      "question": "씨가 싹 트려면 어떤 조건이 필요할까?",
+      "predictionPrompt": "예측: 7일째 싹 튼 씨앗 수는?",
+      "variables": [
+        {
+          "key": "water",
+          "label": "물",
+          "type": "choice",
+          "options": [
+            { "value": "none", "label": "물을 주지 않음" },
+            { "value": "water", "label": "물을 줌 (젖은 솜)" }
+          ],
+          "default": "water"
+        },
+        {
+          "key": "tempC",
+          "label": "온도",
+          "type": "choice",
+          "unit": "°C",
+          "options": [
+            { "value": 5, "label": "냉장고 5 °C" },
+            { "value": 20, "label": "실온 20 °C" },
+            { "value": 30, "label": "따뜻한 곳 30 °C" }
+          ],
+          "default": 20
+        },
+        {
+          "key": "light",
+          "label": "빛",
+          "type": "choice",
+          "options": [
+            { "value": "bright", "label": "밝은 곳" },
+            { "value": "dark", "label": "어두운 곳 (상자를 덮음)" }
+          ],
+          "default": "bright"
+        }
+      ],
+      "dependent": [
+        { "key": "sproutedDay7", "label": "7일째 싹 튼 씨앗 수", "unit": "개" },
+        { "key": "firstDay", "label": "처음 싹 튼 날", "unit": "일" }
+      ],
+      "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
+      "safety": [],
+      "safetyNotices": [],
+      "limits": ["발아", "배아", "광합성", "엽록소", "호르몬"],
+      "params": { "seeds": 10, "days": 10 },
+      "tutor": {
+        "forbiddenAnswers": [
+          "물이 있어야 싹이 트",
+          "빛이 없어도 싹이 트",
+          "온도가 낮으면 싹이 트지 않",
+          "알맞은 온도가 필요",
+          "빛은 싹 트는 데 필요하지 않"
+        ],
+        "probes": [
+          { "when": "before-run", "text": "{iv}을(를) 바꾸면 싹 트는 씨앗 수가 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?" },
+          { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?" },
+          { "when": "confounded", "text": "{changed}이(가) 함께 바뀌었어요. 싹 튼 수가 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
+          { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },
+          { "when": "repeat", "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
+          { "when": "fair-test", "text": "{iv}만 바꾸었을 때 싹 튼 씨앗 수와 처음 싹 튼 날은 각각 어떻게 달라졌나요? 결과표의 두 칸을 함께 볼까요?" },
+          { "when": "fair-test", "iv": "light", "text": "빛만 바꾸었을 때 싹 튼 씨앗 수와 떡잎 색은 각각 어떻게 되었나요? 두 결과는 무엇이 다를까요?" },
+          { "when": "fair-test", "iv": "tempC", "text": "온도만 바꾸었어요. 싹 튼 수가 같아도 다른 점이 있나요? 그래프에서 싹이 트기 시작한 때를 비교해 볼까요?" },
+          { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 날마다 바뀌는 그래프와 그릇 그림의 어느 부분을 보면 그 까닭을 찾을 수 있을까요?" }
+        ]
+      }
+    }
+  ]
+}

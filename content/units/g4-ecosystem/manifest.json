@@ -1,0 +1,55 @@
+{
+  "id": "g4-ecosystem",
+  "title": "생물과 환경",
+  "grade": 4,
+  "standards": ["4과14-01"],
+  "engine": "life",
+  "experiments": [
+    {
+      "id": "food-web",
+      "module": "food-web",
+      "title": "먹이 관계와 생물의 수 변화 알아보기",
+      "question": "풀, 토끼, 여우가 사는 곳에서 어떤 조건이 바뀌면 생물의 수는 어떻게 달라질까?",
+      "predictionPrompt": "예측: 60일 뒤 풀의 양은?",
+      "variables": [
+        { "key": "rabbits0", "label": "처음 토끼 수", "type": "choice", "unit": "마리",
+          "options": [ {"value":10,"label":"10마리"}, {"value":20,"label":"20마리"} ], "default": 10 },
+        { "key": "foxes0", "label": "처음 여우 수", "type": "choice", "unit": "마리",
+          "options": [ {"value":0,"label":"0마리 (여우 없음)"}, {"value":2,"label":"2마리"}, {"value":4,"label":"4마리"} ], "default": 2 },
+        { "key": "rain", "label": "비가 오는 정도", "type": "choice",
+          "options": [ {"value":"low","label":"적게"}, {"value":"normal","label":"보통"}, {"value":"high","label":"많이"} ], "default": "normal" },
+        { "key": "furColor", "label": "토끼 털 색", "type": "choice",
+          "options": [ {"value":"white","label":"흰색"}, {"value":"brown","label":"갈색"} ], "default": "white" }
+      ],
+      "dependent": [
+        { "key": "grassDay60", "label": "60일 뒤 풀의 양", "unit": "%" },
+        { "key": "rabbitsMax", "label": "가장 많았던 토끼 수", "unit": "마리" }
+      ],
+      "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
+      "safety": [],
+      "safetyNotices": [],
+      "limits": ["개체군", "로트카", "볼테라", "미분", "환경 수용력"],
+      "params": { "days": 60 },
+      "tutor": {
+        "forbiddenAnswers": [
+          "여우가 없으면 토끼가 늘어",
+          "토끼가 풀을 다 먹어",
+          "생태계 평형이 깨졌기 때문",
+          "비가 많이 오면 풀이 잘 자라",
+          "털 색은 관계없"
+        ],
+        "probes": [
+          { "when": "before-run",  "text": "{iv}을(를) 바꾸면 60일 뒤 풀의 양이 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?" },
+          { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?" },
+          { "when": "confounded",  "text": "{changed}이(가) 함께 바뀌었어요. 결과가 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
+          { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },
+          { "when": "repeat",      "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
+          { "when": "fair-test",   "text": "{iv}만 바꾸었을 때 풀, 토끼, 여우의 수는 각각 어떻게 달라졌나요? 그래프의 세 선을 함께 볼까요?" },
+          { "when": "fair-test", "iv": "foxes0", "text": "여우의 수만 바꾸었어요. 그래프에서 토끼가 가장 많았던 때와 그 뒤 풀의 양은 어떻게 달랐나요? 먹이 그물 그림에서 무엇이 빠졌을까요?" },
+          { "when": "fair-test", "iv": "furColor", "text": "털 색만 바꾸었을 때 결과가 달라졌나요? 이 결과로 무엇을 알 수 있을까요?" },
+          { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 그래프에서 토끼 수가 바뀐 때와 풀의 양이 바뀐 때를 비교해 볼까요?" }
+        ]
+      }
+    }
+  ]
+}

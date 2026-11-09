@@ -1,0 +1,90 @@
+{
+  "id": "g5-body",
+  "title": "우리 몸의 구조와 기능",
+  "grade": 5,
+  "standards": ["6과04-01"],
+  "engine": "life",
+  "experiments": [
+    {
+      "id": "exercise-body",
+      "module": "exercise-body",
+      "title": "운동할 때 맥박과 호흡의 변화 알아보기",
+      "question": "운동을 하면 맥박과 호흡은 어떻게 달라질까?",
+      "predictionPrompt": "예측: 운동 직후 맥박은?",
+      "variables": [
+        {
+          "key": "kind",
+          "label": "운동 종류",
+          "type": "choice",
+          "options": [
+            { "value": "sit", "label": "가만히 앉아 있기" },
+            { "value": "walk", "label": "걷기" },
+            { "value": "run", "label": "제자리 달리기" }
+          ],
+          "default": "walk"
+        },
+        {
+          "key": "minutes",
+          "label": "운동 시간",
+          "type": "choice",
+          "unit": "분",
+          "options": [
+            { "value": 1, "label": "1분" },
+            { "value": 3, "label": "3분" }
+          ],
+          "default": 1
+        },
+        {
+          "key": "wrist",
+          "label": "맥박을 잰 손목",
+          "type": "choice",
+          "options": [
+            { "value": "left", "label": "왼손 손목" },
+            { "value": "right", "label": "오른손 손목" }
+          ],
+          "default": "left"
+        }
+      ],
+      "dependent": [
+        { "key": "pulseEnd", "label": "운동 직후 맥박", "unit": "회/분" },
+        { "key": "breathEnd", "label": "운동 직후 호흡", "unit": "회/분" }
+      ],
+      "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
+      "safety": ["exercise"],
+      "safetyChecklist": [
+        "주변에 부딪힐 물건이 없는지 확인했어요.",
+        "어지럽거나 숨이 너무 차면 바로 멈춰요.",
+        "몸이 아픈 날에는 선생님께 말하고 쉬어요."
+      ],
+      "safetyMessages": {
+        "NO_GOGGLES": "운동할 때는 주변을 먼저 살펴 주세요!",
+        "NO_GLOVES": "운동 전에 신발 끈을 확인해 주세요!",
+        "SPILL": "바닥에 물이 있어요! 미끄러지지 않게 멈춰 주세요.",
+        "FOOD": "운동하는 동안에는 음식을 먹지 않아요!"
+      },
+      "safetyNotices": [],
+      "limits": ["심박출량", "산소 포화도", "헤모글로빈", "폐활량", "자율 신경"],
+      "params": { "totalMin": 10 },
+      "tutor": {
+        "forbiddenAnswers": [
+          "운동을 하면 맥박이 빨라",
+          "산소가 더 필요하기 때문",
+          "쉬면 다시 원래대로",
+          "손목은 관계없",
+          "세게 운동할수록 맥박이 빨라"
+        ],
+        "probes": [
+          { "when": "before-run", "text": "{iv}을(를) 바꾸면 운동 직후 맥박이 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?" },
+          { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?" },
+          { "when": "confounded", "text": "{changed}이(가) 함께 바뀌었어요. 맥박이 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
+          { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },
+          { "when": "repeat", "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
+          { "when": "fair-test", "text": "{iv}만 바꾸었을 때 맥박과 호흡은 각각 어떻게 달라졌나요? 그래프의 두 선을 함께 볼까요?" },
+          { "when": "fair-test", "iv": "kind", "text": "운동 종류만 바꾸었어요. 몸속 기관 그림에서 심장과 폐는 어떻게 달라 보였나요? 몸이 무엇을 더 필요로 했을까요?" },
+          { "when": "fair-test", "iv": "wrist", "text": "손목만 바꾸었을 때 결과가 달라졌나요? 이 결과로 무엇을 알 수 있을까요?" },
+          { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 그래프에서 운동이 끝난 뒤의 모습도 함께 살펴볼까요?" }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "id": "g3-sound",
+  "title": "소리의 성질",
+  "grade": 3,
+  "standards": ["4과08-01"],
+  "engine": "physics",
+  "experiments": [
+    {
+      "id": "string-sound",
+      "module": "string-sound",
+      "title": "줄을 튕겨 소리의 세기와 높낮이 알아보기",
+      "question": "줄을 튕기는 세기와 줄의 길이를 바꾸면 소리는 어떻게 달라질까?",
+      "predictionPrompt": "예측: 1초 동안 줄이 떨린 횟수는?",
+      "variables": [
+        {
+          "key": "strength",
+          "label": "튕기는 세기",
+          "type": "choice",
+          "options": [
+            { "value": "weak", "label": "약하게" },
+            { "value": "strong", "label": "세게" }
+          ],
+          "default": "weak"
+        },
+        {
+          "key": "lengthCm",
+          "label": "떨리는 줄의 길이",
+          "type": "choice",
+          "unit": "cm",
+          "options": [
+            { "value": 15, "label": "15 cm" },
+            { "value": 20, "label": "20 cm" },
+            { "value": 30, "label": "30 cm" }
+          ],
+          "default": 20
+        },
+        {
+          "key": "color",
+          "label": "고무줄 색",
+          "type": "choice",
+          "options": [
+            { "value": "red", "label": "빨간색" },
+            { "value": "yellow", "label": "노란색" }
+          ],
+          "default": "red"
+        }
+      ],
+      "dependent": [
+        { "key": "freq", "label": "1초 동안 떨린 횟수", "unit": "번" },
+        { "key": "level", "label": "소리의 크기", "unit": "눈금" }
+      ],
+      "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
+      "safety": [],
+      "safetyNotices": [],
+      "limits": ["진동수", "진폭", "헤르츠", "데시벨", "파장", "음파"],
+      "params": { "windowMs": 20 },
+      "tutor": {
+        "forbiddenAnswers": [
+          "세게 튕기면 소리가 커",
+          "줄이 짧을수록 높은 소리",
+          "짧은 줄이 더 빨리 떨",
+          "세기는 높낮이와 관계없",
+          "색은 관계없"
+        ],
+        "probes": [
+          { "when": "before-run", "text": "{iv}을(를) 바꾸면 줄이 떨리는 횟수가 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?" },
+          { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?" },
+          { "when": "confounded", "text": "{changed}이(가) 함께 바뀌었어요. 소리가 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
+          { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },
+          { "when": "repeat", "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
+          { "when": "fair-test", "text": "{iv}만 바꾸었을 때 떨림 모양 그래프는 어떻게 달라졌나요? 물결의 높이와 개수를 나누어 볼까요?" },
+          { "when": "fair-test", "iv": "strength", "text": "튕기는 세기만 바꾸었어요. 물결의 높이와 물결의 개수 가운데 무엇이 달라졌나요? 소리의 크기 눈금도 함께 볼까요?" },
+          { "when": "fair-test", "iv": "lengthCm", "text": "줄의 길이만 바꾸었어요. 같은 시간 동안 물결이 몇 개 있었나요? 소리는 어떻게 들렸을까요?" },
+          { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 떨림 모양 그래프에서 앞 시행의 흐린 선과 물결 개수를 세어 비교해 볼까요?" }
+        ]
+      }
+    }
+  ]
+}

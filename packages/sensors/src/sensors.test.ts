@@ -1,0 +1,265 @@
+import { describe, expect, it } from 'vitest';
+import { simulateDissolution } from '@sci/engine-matter';
+import { MockGasDriver, MockDistanceDriver, MockHumidityDriver, MockLightDriver, MockPowerDriver, MockPressureDriver, MockPulseDriver, MockScaleDriver, MockSoundDriver, MockSpeedDriver, MockTemperatureDriver, MockTiltDriver, mulberry32 } from './index';
+
+describe('mulberry32', () => {
+  it('같은 시드면 같은 수열', () => {
+    const a = mulberry32(42);
+    const b = mulberry32(42);
+    expect([a(), a(), a()]).toEqual([b(), b(), b()]);
+    expect(mulberry32(1)()).not.toBe(mulberry32(2)());
+  });
+});
+
+describe('MockTemperatureDriver', () => {
+  it('±0.2 °C 안, 소수 첫째 자리, 시드 재현', () => {
+    const a = new MockTemperatureDriver(() => 40, 7);
+    const b = new MockTemperatureDriver(() => 40, 7);
+    const ra = Array.from({ length: 50 }, () => a.read().value);
+    const rb = Array.from({ length: 50 }, () => b.read().value);
+    expect(ra).toEqual(rb);
+    for (const v of ra) {
+      expect(Math.abs(v - 40)).toBeLessThanOrEqual(0.2 + 1e-9);
+      expect(Math.round(v * 10) / 10).toBe(v);
+    }
+    expect(a.read().unit).toBe('°C');
+  });
+});
+
+describe('MockScaleDriver', () => {
+  it('시드 재현성', () => {
+    const mk = () => new MockScaleDriver(() => 50 + 2, 3);
+    const a = mk();
+    const b = mk();
+    expect(Array.from({ length: 20 }, () => a.read().value)).toEqual(
+      Array.from({ length: 20 }, () => b.read().value),
+    );
+  });
+
+  it('용질이 녹는 동안(addedG가 같은 구간) 저울 값은 변하지 않는다', () => {
+    const waterMl = 100;
+    const { samples } = simulateDissolution({ solute: 'sugar', waterMl, waterTempC: 20, stir: 1 });
+    let i = 0;
+    const scale = new MockScaleDriver(() => waterMl + samples[i]!.addedG, 11);
+    // 첫 숟가락이 녹는 구간: addedG가 그대로인 연속 샘플
+    const window: number[] = [];
+    for (i = 0; i < samples.length && samples[i]!.addedG === samples[0]!.addedG; i++) {
+      window.push(scale.read().value);
+    }
+    expect(window.length).toBeGreaterThan(3);
+    expect(samples[window.length - 1]!.dissolvedG).toBeGreaterThan(samples[0]!.dissolvedG);
+    for (const v of window) {
+      expect(Math.abs(v - (100 + waterMl + samples[0]!.addedG))).toBeLessThanOrEqual(0.011);
+    }
+    expect(Math.max(...window) - Math.min(...window)).toBeLessThanOrEqual(0.021);
+  });
+
+  it('숟가락을 더 넣으면 addedG만큼 무거워진다', () => {
+    const { samples } = simulateDissolution({ solute: 'sugar', waterMl: 100, waterTempC: 20, stir: 2 });
+    const last = samples[samples.length - 1]!;
+    expect(last.addedG).toBeGreaterThan(samples[0]!.addedG);
+  });
+
+  it('connect/subscribe/disconnect', async () => {
+    const d = new MockTemperatureDriver(() => 20, 1, 5);
+    const got: number[] = [];
+    const off = d.subscribe((r) => got.push(r.value));
+    await d.connect();
+    await new Promise((r) => setTimeout(r, 40));
+    await d.disconnect();
+    off();
+    const n = got.length;
+    expect(n).toBeGreaterThan(0);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(got.length).toBe(n);
+  });
+});
+
+describe('MockPressureDriver', () => {
+  it('±0.1 kPa 안, 소수 첫째 자리, 시드 재현, 단위 kPa', () => {
+    const a = new MockPressureDriver(() => 126.6, 9);
+    const b = new MockPressureDriver(() => 126.6, 9);
+    const ra = Array.from({ length: 50 }, () => a.read().value);
+    const rb = Array.from({ length: 50 }, () => b.read().value);
+    expect(ra).toEqual(rb);
+    for (const v of ra) {
+      expect(Math.abs(v - 126.6)).toBeLessThanOrEqual(0.1 + 1e-9);
+      expect(Math.round(v * 10) / 10).toBe(v);
+    }
+    expect(a.kind).toBe('pressure');
+    expect(a.read().unit).toBe('kPa');
+  });
+  it('원천값이 바뀌면 읽는 값도 따라간다', () => {
+    let src = 101.3;
+    const d = new MockPressureDriver(() => src, 1);
+    expect(Math.abs(d.read().value - 101.3)).toBeLessThanOrEqual(0.1 + 1e-9);
+    src = 202.6;
+    expect(Math.abs(d.read().value - 202.6)).toBeLessThanOrEqual(0.1 + 1e-9);
+  });
+});
+
+describe('MockGasDriver', () => {
+  it('산소·이산화 탄소: 단위 %, 소수 첫째 자리, ±0.05 잡음, 시드 재현', () => {
+    for (const kind of ['oxygen', 'carbonDioxide'] as const) {
+      const a = new MockGasDriver(kind, () => 20.5, 9);
+      const b = new MockGasDriver(kind, () => 20.5, 9);
+      const ra = Array.from({ length: 50 }, () => a.read().value);
+      expect(ra).toEqual(Array.from({ length: 50 }, () => b.read().value));
+      for (const v of ra) {
+        expect(Math.abs(v - 20.5)).toBeLessThanOrEqual(0.1 + 1e-9); // 잡음 ±0.05를 소수 첫째 자리로 반올림
+        expect(Math.round(v * 10) / 10).toBe(v);
+      }
+      expect(a.read().unit).toBe('%');
+      expect(a.kind).toBe(kind);
+    }
+    expect(new MockGasDriver('oxygen', () => 21, 1).id).not.toBe(new MockGasDriver('carbonDioxide', () => 21, 1).id);
+  });
+});
+
+describe('MockLightDriver', () => {
+  it('단위 %, 소수 첫째 자리, ±0.5 잡음, 0~100 %로 자르기, 시드 재현', () => {
+    const a = new MockLightDriver(() => 60, 5);
+    const b = new MockLightDriver(() => 60, 5);
+    const ra = Array.from({ length: 50 }, () => a.read().value);
+    expect(ra).toEqual(Array.from({ length: 50 }, () => b.read().value));
+    for (const v of ra) {
+      expect(Math.abs(v - 60)).toBeLessThanOrEqual(0.5 + 1e-9);
+      expect(Math.round(v * 10) / 10).toBe(v);
+    }
+    expect(a.read().unit).toBe('%');
+    expect(a.kind).toBe('light');
+    const dark = new MockLightDriver(() => 0, 5);
+    const bright = new MockLightDriver(() => 100, 5);
+    for (let i = 0; i < 50; i++) {
+      expect(dark.read().value).toBeGreaterThanOrEqual(0);
+      expect(bright.read().value).toBeLessThanOrEqual(100);
+    }
+  });
+});
+
+describe('MockHumidityDriver', () => {
+  it('단위 %, 소수 첫째 자리, ±0.5 잡음, 0~100 %로 자르기, 시드 재현', () => {
+    const a = new MockHumidityDriver(() => 60, 7);
+    const b = new MockHumidityDriver(() => 60, 7);
+    const ra = Array.from({ length: 50 }, () => a.read().value);
+    expect(ra).toEqual(Array.from({ length: 50 }, () => b.read().value));
+    for (const v of ra) {
+      expect(Math.abs(v - 60)).toBeLessThanOrEqual(0.5 + 1e-9);
+      expect(Math.round(v * 10) / 10).toBe(v);
+    }
+    expect(a.read().unit).toBe('%');
+    expect(a.kind).toBe('humidity');
+    expect(a.id).toBe('mock-humidity');
+    const dry = new MockHumidityDriver(() => 0, 7);
+    const wet = new MockHumidityDriver(() => 100, 7);
+    for (let i = 0; i < 50; i++) {
+      expect(dry.read().value).toBeGreaterThanOrEqual(0);
+      expect(wet.read().value).toBeLessThanOrEqual(100);
+    }
+  });
+});
+
+describe('MockPulseDriver', () => {
+  it('단위 회/분, 정수, ±1 잡음, 시드 재현', () => {
+    const a = new MockPulseDriver(() => 111, 7);
+    const b = new MockPulseDriver(() => 111, 7);
+    const ra = Array.from({ length: 50 }, () => a.read().value);
+    expect(ra).toEqual(Array.from({ length: 50 }, () => b.read().value));
+    for (const v of ra) {
+      expect(Math.abs(v - 111)).toBeLessThanOrEqual(1);
+      expect(Number.isInteger(v)).toBe(true);
+    }
+    expect(a.read().unit).toBe('회/분');
+    expect(a.kind).toBe('pulse');
+    expect(a.id).toBe('mock-pulse');
+    const zero = new MockPulseDriver(() => 0, 7);
+    for (let i = 0; i < 50; i++) expect(zero.read().value).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('MockTiltDriver', () => {
+  it('단위 °, 부호 유지, ±0.1 잡음, 소수 첫째 자리, 시드 재현', () => {
+    const a = new MockTiltDriver(() => -12.8, 7);
+    const b = new MockTiltDriver(() => -12.8, 7);
+    const ra = Array.from({ length: 50 }, () => a.read().value);
+    expect(ra).toEqual(Array.from({ length: 50 }, () => b.read().value));
+    for (const v of ra) {
+      expect(Math.abs(v + 12.8)).toBeLessThanOrEqual(0.1 + 1e-9);
+      expect(Math.round(v * 10) / 10).toBe(v);
+    }
+    expect(a.read().unit).toBe('°');
+    expect(a.kind).toBe('tilt');
+    expect(a.id).toBe('mock-tilt');
+    const right = new MockTiltDriver(() => 12.8, 7);
+    for (let i = 0; i < 50; i++) expect(right.read().value).toBeGreaterThan(12);
+  });
+});
+
+describe('MockSoundDriver', () => {
+  it('단위 눈금, ±0.2 잡음, 소수 첫째 자리, 0 이상, 시드 재현', () => {
+    const a = new MockSoundDriver(() => 62, 7);
+    const b = new MockSoundDriver(() => 62, 7);
+    const ra = Array.from({ length: 50 }, () => a.read().value);
+    expect(ra).toEqual(Array.from({ length: 50 }, () => b.read().value));
+    for (const v of ra) {
+      expect(Math.abs(v - 62)).toBeLessThanOrEqual(0.2 + 1e-9);
+      expect(Math.round(v * 10) / 10).toBe(v);
+    }
+    expect(a.read().unit).toBe('눈금');
+    expect(a.kind).toBe('sound');
+    expect(a.id).toBe('mock-sound');
+    const zero = new MockSoundDriver(() => 0, 7);
+    for (let i = 0; i < 50; i++) expect(zero.read().value).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('MockDistanceDriver', () => {
+  it('단위 cm, ±0.05 잡음, 소수 둘째 자리, 0 이상, 시드 재현', () => {
+    const a = new MockDistanceDriver(() => 2.5, 7);
+    const b = new MockDistanceDriver(() => 2.5, 7);
+    const ra = Array.from({ length: 50 }, () => a.read().value);
+    expect(ra).toEqual(Array.from({ length: 50 }, () => b.read().value));
+    for (const v of ra) {
+      expect(Math.abs(v - 2.5)).toBeLessThanOrEqual(0.05 + 1e-9);
+      expect(Math.round(v * 100) / 100).toBe(v);
+    }
+    expect(a.read().unit).toBe('cm');
+    expect(a.kind).toBe('distance');
+    expect(a.id).toBe('mock-distance');
+    const zero = new MockDistanceDriver(() => 0, 7);
+    for (let i = 0; i < 50; i++) expect(zero.read().value).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('MockSpeedDriver', () => {
+  it('단위 m/s, ±0.01 잡음, 소수 둘째 자리, 0 이상, 시드 재현', () => {
+    const a = new MockSpeedDriver(() => 1.82, 7);
+    const b = new MockSpeedDriver(() => 1.82, 7);
+    const ra = Array.from({ length: 50 }, () => a.read().value);
+    expect(ra).toEqual(Array.from({ length: 50 }, () => b.read().value));
+    for (const v of ra) {
+      expect(Math.abs(v - 1.82)).toBeLessThanOrEqual(0.01 + 1e-9);
+      expect(Math.round(v * 100) / 100).toBe(v);
+    }
+    expect(a.read().unit).toBe('m/s');
+    expect(a.kind).toBe('speed');
+    expect(a.id).toBe('mock-speed');
+    const zero = new MockSpeedDriver(() => 0, 7);
+    for (let i = 0; i < 50; i++) expect(zero.read().value).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('MockPowerDriver', () => {
+  it('단위 mW, 정수, 0 이상, 시드 재현이고 source가 정수면 값은 source와 같다', () => {
+    const a = new MockPowerDriver(() => 433, 7);
+    const b = new MockPowerDriver(() => 433, 7);
+    const ra = Array.from({ length: 50 }, () => a.read().value);
+    expect(ra).toEqual(Array.from({ length: 50 }, () => b.read().value));
+    for (const v of ra) expect(v).toBe(433);
+    expect(a.read().unit).toBe('mW');
+    expect(a.kind).toBe('power');
+    expect(a.id).toBe('mock-power');
+    const zero = new MockPowerDriver(() => 0, 7);
+    for (let i = 0; i < 50; i++) expect(zero.read().value).toBe(0);
+  });
+});

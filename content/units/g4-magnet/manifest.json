@@ -1,0 +1,92 @@
+{
+  "id": "g4-magnet",
+  "title": "자석의 이용",
+  "grade": 4,
+  "standards": ["4과09-01"],
+  "engine": "physics",
+  "experiments": [
+    {
+      "id": "magnet-distance",
+      "module": "magnet-distance",
+      "title": "자석과 클립 사이의 거리에 따라 끌려오는 클립 수 알아보기",
+      "question": "자석과 클립 사이의 거리가 멀어지면 자석이 끌어당기는 클립의 수는 어떻게 달라질까?",
+      "predictionPrompt": "예측: 끌려온 클립의 수는?",
+      "variables": [
+        {
+          "key": "gapCm",
+          "label": "자석과 클립 사이의 거리",
+          "type": "choice",
+          "unit": "cm",
+          "options": [
+            { "value": 0, "label": "0 cm (닿게)" },
+            { "value": 0.5, "label": "0.5 cm" },
+            { "value": 1, "label": "1 cm" },
+            { "value": 2, "label": "2 cm" }
+          ],
+          "default": 0.5
+        },
+        {
+          "key": "magnets",
+          "label": "자석의 수",
+          "type": "choice",
+          "unit": "개",
+          "options": [
+            { "value": 1, "label": "1개" },
+            { "value": 2, "label": "2개 (겹쳐서)" }
+          ],
+          "default": 1
+        },
+        {
+          "key": "between",
+          "label": "사이에 둔 물체",
+          "type": "choice",
+          "options": [
+            { "value": "none", "label": "없음" },
+            { "value": "paper", "label": "종이" },
+            { "value": "plastic", "label": "플라스틱 판" },
+            { "value": "iron", "label": "얇은 철판" }
+          ],
+          "default": "none"
+        }
+      ],
+      "dependent": [{ "key": "clips", "label": "끌려온 클립의 수", "unit": "개" }],
+      "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
+      "safety": ["magnet"],
+      "safetyChecklist": [
+        "자석을 전자 기기나 카드 가까이에 두지 않아요.",
+        "자석끼리 세게 부딪히지 않게 천천히 겹쳐요.",
+        "작은 자석은 입에 넣지 않아요."
+      ],
+      "safetyMessages": {
+        "NO_GOGGLES": "자석을 쓰기 전에 주변에 휴대 전화나 카드가 없는지 살펴 주세요!",
+        "NO_GLOVES": "작은 자석이나 클립을 입에 넣지 않아요!",
+        "SPILL": "클립이 바닥에 흩어졌어요! 밟지 않게 주워 주세요.",
+        "FOOD": "실험하는 동안에는 음식을 먹지 않아요!"
+      },
+      "safetyNotices": [],
+      "limits": ["자기력", "자기장", "자기력선", "투자율", "강자성", "N극과 S극의 세기"],
+      "params": { "totalS": 6 },
+      "tutor": {
+        "forbiddenAnswers": [
+          "가까울수록 클립이 많이",
+          "멀수록 클립이 적게",
+          "자석을 겹치면 더 많이",
+          "종이는 자석의 힘을 막지 못",
+          "철판이 자석의 힘을 막",
+          "철판은 자석에 붙"
+        ],
+        "probes": [
+          { "when": "before-run", "text": "{iv}을(를) 바꾸면 끌려오는 클립의 수가 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?" },
+          { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?" },
+          { "when": "confounded", "text": "{changed}이(가) 함께 바뀌었어요. 클립 수가 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
+          { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },
+          { "when": "repeat", "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
+          { "when": "fair-test", "text": "{iv}만 바꾸었을 때 클립의 수는 어떻게 달라졌나요? 결과표의 앞 시행과 비교해 볼까요?" },
+          { "when": "fair-test", "iv": "gapCm", "text": "거리만 바꾸었어요. '자석의 힘이 미치는 곳' 그림에서 클립 더미는 어디쯤에 있었나요?" },
+          { "when": "fair-test", "iv": "between", "text": "사이에 둔 물체만 바꾸었어요. 어떤 물체를 두었을 때 클립이 끌려왔고, 어떤 물체일 때 달랐나요? 그 물체는 무엇으로 만들어졌을까요?" },
+          { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 그래프에서 자석이 내려오는 동안 클립 수가 언제 늘었는지 살펴볼까요?" }
+        ]
+      }
+    }
+  ]
+}

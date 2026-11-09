@@ -1,0 +1,94 @@
+{
+  "id": "g4-gases",
+  "title": "여러 가지 기체",
+  "grade": 4,
+  "standards": ["4과15-01"],
+  "engine": "matter",
+  "experiments": [
+    {
+      "id": "syringe-volume",
+      "module": "gas-syringe",
+      "title": "주사기 속 기체의 부피 변화 알아보기",
+      "question": "주사기 속 기체의 부피는 어떤 조건에 따라 달라질까?",
+      "predictionPrompt": "예측: 기체의 부피는?",
+      "variables": [
+        {
+          "key": "push",
+          "label": "피스톤을 누르는 힘",
+          "type": "choice",
+          "options": [
+            { "value": 0, "label": "누르지 않음" },
+            { "value": 1, "label": "살짝 누름" },
+            { "value": 2, "label": "세게 누름" }
+          ],
+          "default": 0
+        },
+        {
+          "key": "bathTempC",
+          "label": "주사기를 담근 물의 온도",
+          "type": "choice",
+          "unit": "°C",
+          "options": [
+            { "value": 0, "label": "얼음물 0 °C" },
+            { "value": 20, "label": "실온 20 °C" },
+            { "value": 60, "label": "뜨거운 물 60 °C" }
+          ],
+          "default": 20
+        },
+        {
+          "key": "gasType",
+          "label": "기체의 종류",
+          "type": "choice",
+          "options": [
+            { "value": "air", "label": "공기" },
+            { "value": "oxygen", "label": "산소" },
+            { "value": "carbonDioxide", "label": "이산화 탄소" }
+          ],
+          "default": "air"
+        },
+        {
+          "key": "startMl",
+          "label": "처음 기체의 부피",
+          "type": "choice",
+          "unit": "mL",
+          "options": [
+            { "value": 30, "label": "30 mL" },
+            { "value": 50, "label": "50 mL" }
+          ],
+          "default": 30
+        }
+      ],
+      "dependent": [
+        { "key": "volumeMl", "label": "기체의 부피", "unit": "mL" },
+        { "key": "changeMl", "label": "부피 변화", "unit": "mL" }
+      ],
+      "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
+      "safety": ["hot-water"],
+      "safetyNotices": [
+        { "key": "bathTempC", "value": 60, "text": "⚠ 뜨거운 물 주의: 60 °C의 물은 화상을 입을 수 있어요. 실제 실험에서는 선생님과 함께 조심해서 다뤄요." }
+      ],
+      "limits": ["보일", "샤를", "절대 온도", "분자", "몰"],
+      "params": { "syringeMaxMl": 60 },
+      "tutor": {
+        "forbiddenAnswers": [
+          "세게 누를수록 부피가 작아",
+          "누르는 힘이 클수록 부피가 작아",
+          "온도가 높을수록 부피가 커",
+          "온도가 낮을수록 부피가 작아",
+          "기체의 종류와 관계없이"
+        ],
+        "probes": [
+          { "when": "before-run", "text": "{iv}을(를) 바꾸면 기체의 부피가 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?" },
+          { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?" },
+          { "when": "confounded", "text": "{changed}이(가) 함께 바뀌었어요. 부피가 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
+          { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },
+          { "when": "repeat", "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
+          { "when": "fair-test", "text": "{iv}만 바꾸었을 때 주사기 눈금은 어떻게 달라졌나요? 알갱이 화면에서 알갱이 사이의 거리도 살펴볼까요?" },
+          { "when": "fair-test", "iv": "bathTempC", "text": "물의 온도만 바꾸었을 때 알갱이의 움직임은 어떻게 달라 보이나요? 그것이 주사기 눈금과 어떤 관계가 있을까요?" },
+          { "when": "fair-test", "iv": "gasType", "text": "기체의 종류만 바꾸었을 때 부피 변화가 달라졌나요? 두 결과를 나란히 놓고 비교해 볼까요?" },
+          { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 결과표와 그래프의 어느 부분을 보면 그 까닭을 찾을 수 있을까요?" }
+        ]
+      }
+    }
+  ]
+}

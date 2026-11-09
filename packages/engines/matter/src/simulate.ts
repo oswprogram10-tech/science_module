@@ -1,0 +1,129 @@
+import { capacityG, type Solute } from './solubility';
+
+export interface DissolutionParams {
+  solute: Solute;
+  waterMl: number;
+  waterTempC: number;
+  stir: 0 | 1 | 2;
+}
+
+export interface DissolutionOptions {
+  spoonGrams?: number;
+  dt?: number;
+  sampleEvery?: number;
+  maxTimeS?: number;
+}
+
+export interface DissolutionSample {
+  t: number;
+  addedG: number;
+  dissolvedG: number;
+  undissolvedG: number;
+}
+
+export interface DissolutionResult {
+  dissolvedG: number;
+  spoonsFullyDissolved: number;
+  timeS: number;
+  saturated: boolean;
+  truncated: boolean;
+}
+
+export interface DissolutionOutput {
+  samples: DissolutionSample[];
+  result: DissolutionResult;
+}
+
+export const BASE_RATE: readonly [number, number, number] = [0.05, 0.2, 0.5];
+
+const EPS = 1e-9;
+const round = (x: number, digits: number) => {
+  const f = 10 ** digits;
+  return Math.round(x * f) / f;
+};
+
+/** 녹는 속도 (g/s). 젓기는 속도만 바꾼다. */
+export function dissolveRate(stir: 0 | 1 | 2, tempC: number): number {
+  return BASE_RATE[stir] * (1 + (tempC - 20) / 40);
+}
+
+export function simulateDissolution(
+  params: DissolutionParams,
+  opts: DissolutionOptions = {},
+): DissolutionOutput {
+  const { spoonGrams = 2, dt = 0.1, sampleEvery = 1, maxTimeS = 20000 } = opts;
+  if (![0, 1, 2].includes(params.stir)) {
+    throw new RangeError(`젓기 값 ${String(params.stir)}은(는) 0, 1, 2 중 하나여야 합니다.`);
+  }
+  if (typeof params.waterMl !== 'number' || !Number.isFinite(params.waterMl) || !(params.waterMl > 0)) {
+    throw new RangeError(`물의 양 ${String(params.waterMl)}은(는) 0보다 큰 유한한 수여야 합니다.`);
+  }
+  const capacity = capacityG(params.solute, params.waterTempC, params.waterMl);
+  const rate = dissolveRate(params.stir, params.waterTempC);
+  const sampleSteps = Math.max(1, Math.round(sampleEvery / dt));
+  const maxSteps = Math.round(maxTimeS / dt);
+
+  let added = spoonGrams;
+  let dissolved = 0;
+  let step = 0;
+  let saturated = false;
+  let truncated = false;
+  const samples: DissolutionSample[] = [];
+  const push = (s: number) =>
+    samples.push({
+      t: round(s * dt, 6),
+      addedG: added,
+      dissolvedG: dissolved,
+      undissolvedG: added - dissolved,
+    });
+  push(0);
+
+  for (;;) {
+    step++;
+    const undissolved = added - dissolved;
+    dissolved += Math.min(rate * dt, undissolved, capacity - dissolved);
+    if (dissolved > capacity) dissolved = capacity;
+    // 넣은 숟가락이 다 녹으면 즉시 다음 숟가락을 넣는다.
+    if (added - dissolved <= EPS) {
+      dissolved = added;
+      added += spoonGrams;
+    }
+    if (dissolved >= capacity - EPS && added - dissolved > EPS) saturated = true;
+    else if (step >= maxSteps) truncated = true;
+
+    const done = saturated || truncated;
+    if (step % sampleSteps === 0 || done) push(step);
+    if (done) break;
+  }
+
+  const timeS = round(step * dt, 6);
+  // 표시값은 소수 첫째 자리에서 내림한다(반올림하면 녹을 수 있는 최대량을 넘을 수 있다).
+  const dissolvedG = Math.floor(dissolved * 10 + EPS) / 10;
+  return {
+    samples,
+    result: {
+      dissolvedG,
+      // 숟가락 수는 반올림 전 값으로 센다. 바닥에 남은 숟가락은 세지 않는다.
+      spoonsFullyDissolved: Math.floor(dissolved / spoonGrams + EPS),
+      timeS,
+      saturated,
+      truncated,
+    },
+  };
+}
+
+/**
+ * 두 샘플 사이를 보간한다. 넣은 양은 계단식이다:
+ * 앞 숟가락이 다 녹는 순간 다음 숟가락이 들어간다.
+ */
+export function interpolateDissolution(
+  a: DissolutionSample,
+  b: DissolutionSample,
+  k: number,
+): DissolutionSample {
+  const lerp = (x: number, y: number) => x + (y - x) * k;
+  const dissolvedRaw = lerp(a.dissolvedG, b.dissolvedG);
+  const addedG = dissolvedRaw >= a.addedG - 1e-9 ? b.addedG : a.addedG;
+  const dissolvedG = Math.min(dissolvedRaw, addedG);
+  return { t: lerp(a.t, b.t), addedG, dissolvedG, undissolvedG: addedG - dissolvedG };
+}

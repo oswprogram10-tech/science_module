@@ -1,0 +1,4 @@
+{"id":"g6-motion-sft-0001","unitId":"g6-motion","scenarioId":"g6-motion-s002","utterance":"","source":"example","reviewed":false,"author":"EX","response":"출발 높이를 바꾸어 보려고 하는군요. 높이가 달라지면 수레가 1 m를 가는 데 걸리는 시간이 어떻게 될지 예측해 볼까요?"}
+{"id":"g6-motion-sft-0002","unitId":"g6-motion","scenarioId":"g6-motion-s007","utterance":"수건을 깔고 추도 실었어요.","source":"example","reviewed":false,"author":"EX","response":"바닥과 수레에 실은 추가 함께 바뀌었어요. 속력이 달라졌다면 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?"}
+{"id":"g6-motion-sft-0003","unitId":"g6-motion","scenarioId":"g6-motion-s016","utterance":"추를 실었는데 시간이 비슷해요.","source":"example","reviewed":false,"author":"EX","response":"실은 추만 바꾸었을 때 1 m 가는 데 걸린 시간을 두 시행에서 각각 읽어 볼까요? 처음 예상과는 어떻게 비교되나요?"}
+{"id":"g6-motion-sft-0004","unitId":"g6-motion","scenarioId":"g6-motion-s017","utterance":"낮게 놓으면 속력이 늘 줄 알았는데 아니에요.","source":"example","reviewed":false,"author":"EX","response":"생각과 달랐네요. 위치 그래프의 두 선 가운데 어느 쪽이 1 m 지점에 먼저 닿았는지 찾아볼까요?"}

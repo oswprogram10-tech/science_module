@@ -1,0 +1,325 @@
+{
+  "id": "g3-material",
+  "title": "물체와 물질",
+  "grade": 3,
+  "standards": [
+    "4과02-01"
+  ],
+  "engine": "matter",
+  "experiments": [
+    {
+      "id": "material-sort",
+      "module": "card-sort",
+      "layout": "groups",
+      "title": "물질의 성질에 따라 물체 분류하기",
+      "question": "물체를 이루는 물질의 성질에 따라 물체를 어떻게 분류할 수 있을까?",
+      "features": [
+        {
+          "key": "hard",
+          "label": "단단함",
+          "action": "눌러 보기"
+        },
+        {
+          "key": "bends",
+          "label": "휘어짐",
+          "action": "구부려 보기"
+        },
+        {
+          "key": "absorbs",
+          "label": "물 흡수",
+          "action": "물 떨어뜨려 보기"
+        }
+      ],
+      "criteria": [
+        {
+          "key": "hard",
+          "label": "손으로 눌러도 모양이 그대로인가요?",
+          "feature": "hard",
+          "objective": true,
+          "groups": [
+            {
+              "value": "yes",
+              "label": "그대로이다"
+            },
+            {
+              "value": "no",
+              "label": "모양이 변한다"
+            }
+          ]
+        },
+        {
+          "key": "bends",
+          "label": "손으로 구부리면 휘어지나요?",
+          "feature": "bends",
+          "objective": true,
+          "groups": [
+            {
+              "value": "yes",
+              "label": "휘어진다"
+            },
+            {
+              "value": "no",
+              "label": "휘어지지 않는다"
+            }
+          ]
+        },
+        {
+          "key": "absorbs",
+          "label": "물을 떨어뜨리면 빨아들이나요?",
+          "feature": "absorbs",
+          "objective": true,
+          "groups": [
+            {
+              "value": "yes",
+              "label": "빨아들인다"
+            },
+            {
+              "value": "no",
+              "label": "빨아들이지 않는다"
+            }
+          ]
+        },
+        {
+          "key": "expensive",
+          "label": "값비싸 보이나요?",
+          "objective": false,
+          "groups": [
+            {
+              "value": "expensive",
+              "label": "비싸 보인다"
+            },
+            {
+              "value": "cheap",
+              "label": "싸 보인다"
+            }
+          ]
+        }
+      ],
+      "cards": [
+        {
+          "key": "nail",
+          "label": "쇠못",
+          "sublabel": "금속",
+          "icon": "nail",
+          "features": {
+            "hard": "yes",
+            "bends": "no",
+            "absorbs": "no"
+          },
+          "observations": {
+            "hard": "세게 눌러도 모양이 변하지 않아요.",
+            "bends": "손으로 구부려도 휘어지지 않아요.",
+            "absorbs": "물방울이 동그랗게 맺혀 있어요."
+          }
+        },
+        {
+          "key": "marble",
+          "label": "유리구슬",
+          "sublabel": "유리",
+          "icon": "marble",
+          "features": {
+            "hard": "yes",
+            "bends": "no",
+            "absorbs": "no"
+          },
+          "observations": {
+            "hard": "세게 눌러도 모양이 변하지 않아요.",
+            "bends": "손으로 구부릴 수 없어요.",
+            "absorbs": "물방울이 또르르 굴러떨어져요."
+          }
+        },
+        {
+          "key": "woodblock",
+          "label": "나무 블록",
+          "sublabel": "나무",
+          "icon": "woodblock",
+          "features": {
+            "hard": "yes",
+            "bends": "no",
+            "absorbs": "yes"
+          },
+          "observations": {
+            "hard": "세게 눌러도 모양이 변하지 않아요.",
+            "bends": "손으로 구부려도 휘어지지 않아요.",
+            "absorbs": "물방울이 천천히 스며들어 그 자리 색이 진해져요."
+          }
+        },
+        {
+          "key": "ruler",
+          "label": "플라스틱 자",
+          "sublabel": "플라스틱",
+          "icon": "ruler",
+          "features": {
+            "hard": "yes",
+            "bends": "yes",
+            "absorbs": "no"
+          },
+          "observations": {
+            "hard": "눌러도 모양이 그대로예요.",
+            "bends": "양 끝을 잡고 구부리면 휘었다가 놓으면 돌아와요.",
+            "absorbs": "물방울이 맺혀 있고 스며들지 않아요."
+          }
+        },
+        {
+          "key": "rubberband",
+          "label": "고무줄",
+          "sublabel": "고무",
+          "icon": "rubberband",
+          "features": {
+            "hard": "no",
+            "bends": "yes",
+            "absorbs": "no"
+          },
+          "observations": {
+            "hard": "손가락으로 누르면 쉽게 눌려요.",
+            "bends": "쉽게 휘어지고 늘어나요.",
+            "absorbs": "물방울이 맺혀 있고 스며들지 않아요."
+          }
+        },
+        {
+          "key": "paper",
+          "label": "종이",
+          "sublabel": "종이",
+          "icon": "paper",
+          "features": {
+            "hard": "no",
+            "bends": "yes",
+            "absorbs": "yes"
+          },
+          "observations": {
+            "hard": "손으로 누르면 구겨져요.",
+            "bends": "쉽게 휘어지고 접혀요.",
+            "absorbs": "물방울이 금방 스며들어 젖어요."
+          }
+        },
+        {
+          "key": "handkerchief",
+          "label": "면 손수건",
+          "sublabel": "섬유",
+          "icon": "handkerchief",
+          "features": {
+            "hard": "no",
+            "bends": "yes",
+            "absorbs": "yes"
+          },
+          "observations": {
+            "hard": "손으로 누르면 쉽게 모양이 변해요.",
+            "bends": "쉽게 휘어지고 접혀요.",
+            "absorbs": "물방울이 금방 스며들어 넓게 퍼져요."
+          }
+        },
+        {
+          "key": "foil",
+          "label": "알루미늄 포일",
+          "sublabel": "금속",
+          "icon": "foil",
+          "features": {
+            "hard": "no",
+            "bends": "yes",
+            "absorbs": "no"
+          },
+          "observations": {
+            "hard": "손으로 누르면 쉽게 구겨져요.",
+            "bends": "쉽게 휘어지고 구부린 모양 그대로 있어요.",
+            "absorbs": "물방울이 맺혀 있고 스며들지 않아요."
+          }
+        }
+      ],
+      "limits": [
+        "밀도",
+        "탄성",
+        "흡수율",
+        "경도",
+        "전성",
+        "연성"
+      ],
+      "safetyChecklist": [],
+      "safetyNotices": [],
+      "tutor": {
+        "forbiddenAnswers": [
+          "금속은 단단",
+          "금속은 모두 단단",
+          "금속은 다 단단",
+          "금속이 단단",
+          "금속은 딱딱",
+          "금속은 늘 단단",
+          "플라스틱 자는 단단하면서 휘어",
+          "플라스틱 자는 단단하면서도 휘어",
+          "플라스틱 자는 단단하면서도 구부러",
+          "플라스틱 자는 단단하고 휘어",
+          "플라스틱 자는 단단하지만 휘어",
+          "플라스틱 자는 휘어지면서 단단",
+          "플라스틱 자는 휘어지고 단단",
+          "플라스틱 자는 딱딱하면서 휘어",
+          "알루미늄 포일은 단단하지 않",
+          "알루미늄 포일은 딱딱하지 않",
+          "알루미늄 포일은 단단하다",
+          "알루미늄 포일은 단단해",
+          "알루미늄 포일은 무르",
+          "종이와 손수건은 물을 빨아들",
+          "종이와 손수건은 물을 흡수",
+          "종이와 손수건은 물에 젖",
+          "종이와 면 손수건은 물을 빨아들",
+          "손수건과 종이는 물을 빨아들",
+          "종이는 물을 빨아들",
+          "손수건은 물을 빨아들",
+          "종이는 물을 흡수",
+          "손수건은 물을 흡수",
+          "나무 블록은 물을 빨아들",
+          "나무 블록은 물을 흡수",
+          "나무 블록이 물을 빨아들",
+          "나무 블록은 물에 스며",
+          "나무 블록은 물이 스며",
+          "나무는 물을 빨아들",
+          "값비싸 보이는가는 분류 기준이 될 수 없",
+          "값비싸 보이는가는 분류 기준이 아니",
+          "값비싸 보이는가는 기준이 될 수 없",
+          "값비싸 보이는지는 분류 기준이 될 수 없",
+          "값비싸 보이는 것은 분류 기준이 될 수 없"
+        ],
+        "probes": [
+          {
+            "when": "choose-criterion",
+            "text": "물체들을 어떤 성질로 나누어 볼까요? 누가 나누어도 같은 결과가 나오는 기준을 골라 보세요."
+          },
+          {
+            "when": "pick-card",
+            "text": "어떤 물체부터 살펴볼까요?"
+          },
+          {
+            "when": "before-observe",
+            "text": "{card}을(를) 넣기 전에 '{criterion}'에 맞게 직접 시험해 볼까요?"
+          },
+          {
+            "when": "sorting",
+            "text": "{card}을(를) 시험한 결과를 보고 어느 무리에 넣을지 정해 볼까요? 왜 그렇게 생각했나요?"
+          },
+          {
+            "when": "check-subjective",
+            "text": "'{criterion}'로 나누면 친구와 내 결과가 같을까요? 누가 나누어도 같게 나오는 기준인지 생각해 볼까요?"
+          },
+          {
+            "when": "check-unplaced",
+            "text": "아직 무리에 넣지 않은 물체가 있어요. 모든 물체를 넣어 볼까요?"
+          },
+          {
+            "when": "check-unobserved",
+            "text": "{card}은(는) 아직 시험해 보지 않았어요. 먼저 시험해 볼까요?"
+          },
+          {
+            "when": "check-inconsistent",
+            "text": "{card}을(를) 시험한 결과와 넣은 무리를 다시 비교해 볼까요?"
+          },
+          {
+            "when": "check-complete",
+            "text": "시험한 결과와 분류가 잘 맞아요. 이번에는 다른 성질로도 나누어 볼까요?"
+          },
+          {
+            "when": "finished",
+            "text": "두 가지 성질로 나누어 보았어요. 같은 물질로 만든 물체인데 다른 무리에 들어간 것이 있나요?"
+          }
+        ]
+      }
+    }
+  ]
+}

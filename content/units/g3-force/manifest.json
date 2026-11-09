@@ -1,0 +1,82 @@
+{
+  "id": "g3-force",
+  "title": "힘과 우리 생활",
+  "grade": 3,
+  "standards": ["4과01-02"],
+  "engine": "physics",
+  "experiments": [
+    {
+      "id": "lever-balance",
+      "module": "lever-balance",
+      "title": "막대의 수평 잡기",
+      "question": "막대의 수평을 잡으려면 물체를 어디에 놓아야 할까?",
+      "predictionPrompt": "예측: 오른쪽 끝의 높이는?",
+      "variables": [
+        {
+          "key": "count",
+          "label": "오른쪽 추의 수",
+          "type": "choice",
+          "unit": "개",
+          "options": [
+            { "value": 1, "label": "1개" },
+            { "value": 2, "label": "2개" },
+            { "value": 4, "label": "4개" }
+          ],
+          "default": 2
+        },
+        {
+          "key": "distance",
+          "label": "오른쪽 추의 거리",
+          "type": "choice",
+          "unit": "칸",
+          "options": [
+            { "value": 2, "label": "받침점에서 2칸" },
+            { "value": 4, "label": "받침점에서 4칸" },
+            { "value": 8, "label": "받침점에서 8칸" }
+          ],
+          "default": 4
+        },
+        {
+          "key": "shape",
+          "label": "추의 모양",
+          "type": "choice",
+          "options": [
+            { "value": "cylinder", "label": "원기둥" },
+            { "value": "cube", "label": "정육면체" }
+          ],
+          "default": "cylinder"
+        }
+      ],
+      "dependent": [
+        { "key": "rightHeightCm", "label": "오른쪽 끝의 높이", "unit": "cm" }
+      ],
+      "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
+      "safety": [],
+      "safetyNotices": [],
+      "limits": ["지레", "돌림힘", "모멘트", "평형", "관성", "토크"],
+      "params": { "durationS": 1 },
+      "tutor": {
+        "forbiddenAnswers": [
+          "무거운 쪽으로 기울",
+          "받침점에서 멀수록 더 많이 기울",
+          "무거운 물체를 받침점에 가깝게",
+          "가벼운 물체를 받침점에서 멀리",
+          "무게와 거리를 곱",
+          "모양은 관계없"
+        ],
+        "probes": [
+          { "when": "before-run", "text": "{iv}을(를) 바꾸면 막대가 어느 쪽으로 기울지 예측해 볼까요? 왜 그렇게 생각했나요?" },
+          { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?" },
+          { "when": "confounded", "text": "{changed}이(가) 함께 바뀌었어요. 막대가 다르게 기운 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
+          { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },
+          { "when": "repeat", "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
+          { "when": "fair-test", "text": "{iv}만 바꾸었을 때 막대는 어떻게 달라졌나요? 눈으로 보기 그림과 그래프를 함께 볼까요?" },
+          { "when": "fair-test", "iv": "distance", "text": "추의 거리만 바꾸었어요. 같은 추라도 놓는 자리에 따라 막대가 어떻게 달라졌나요? 수평이 된 자리가 있었나요?" },
+          { "when": "fair-test", "iv": "count", "text": "추의 수만 바꾸었어요. 추가 늘었을 때 수평을 다시 잡으려면 추를 어디로 옮겨 보면 좋을까요?" },
+          { "when": "fair-test", "iv": "shape", "text": "모양만 바꾸었을 때 막대는 달라졌나요? 이 결과로 무엇을 알 수 있을까요?" },
+          { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. '돌리려는 정도 보기' 그림에서 양쪽 막대 길이를 비교해 볼까요?" }
+        ]
+      }
+    }
+  ]
+}

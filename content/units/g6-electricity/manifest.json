@@ -1,0 +1,103 @@
+{
+  "id": "g6-electricity",
+  "title": "전기의 이용",
+  "grade": 6,
+  "standards": ["6과15-01"],
+  "engine": "physics",
+  "experiments": [
+    {
+      "id": "electromagnet",
+      "module": "electromagnet",
+      "title": "전자석의 세기 비교하기",
+      "question": "전자석에 붙는 클립의 수는 어떤 조건에 따라 달라질까?",
+      "predictionPrompt": "예측: 전자석에 붙는 클립의 수는?",
+      "variables": [
+        {
+          "key": "turns",
+          "label": "에나멜선을 감은 횟수",
+          "type": "choice",
+          "unit": "회",
+          "options": [
+            { "value": 50, "label": "50회" },
+            { "value": 100, "label": "100회" },
+            { "value": 200, "label": "200회" }
+          ],
+          "default": 100
+        },
+        {
+          "key": "battery",
+          "label": "전지 연결",
+          "type": "choice",
+          "options": [
+            { "value": "one", "label": "전지 1개" },
+            { "value": "series", "label": "전지 2개 직렬 연결" },
+            { "value": "parallel", "label": "전지 2개 병렬 연결" }
+          ],
+          "default": "one"
+        },
+        {
+          "key": "core",
+          "label": "속에 넣은 것",
+          "type": "choice",
+          "options": [
+            { "value": "nail", "label": "철못" },
+            { "value": "straw", "label": "빨대만 (철못 없음)" }
+          ],
+          "default": "nail"
+        },
+        {
+          "key": "direction",
+          "label": "전지 방향",
+          "type": "choice",
+          "options": [
+            { "value": "forward", "label": "처음 방향" },
+            { "value": "reverse", "label": "반대 방향" }
+          ],
+          "default": "forward"
+        }
+      ],
+      "dependent": [
+        { "key": "clipsMax", "label": "붙은 클립의 수", "unit": "개" },
+        { "key": "headPole", "label": "못 머리 쪽의 극", "unit": "" }
+      ],
+      "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
+      "safety": ["electric", "hot"],
+      "safetyChecklist": [
+        "전지의 두 끝을 전선으로 바로 잇지 않아요.",
+        "에나멜선이 뜨거워지면 바로 스위치를 꺼요.",
+        "젖은 손으로 전기 기구를 만지지 않아요."
+      ],
+      "safetyMessages": {
+        "NO_GOGGLES": "실험을 계속하기 전에 보안경을 먼저 착용해 주세요!",
+        "NO_GLOVES": "뜨거워진 에나멜선은 장갑을 끼고 만져 주세요!",
+        "SPILL": "물이 쏟아졌어요! 전기 기구를 만지지 말고 선생님께 알려 주세요.",
+        "FOOD": "실험 중에는 음식을 먹지 않아요!"
+      },
+      "safetyNotices": [],
+      "limits": ["전자", "전압", "저항", "암페어", "볼트", "옴", "자기장", "자기력선"],
+      "params": { "durationS": 20, "onS": 2, "offS": 14 },
+      "tutor": {
+        "forbiddenAnswers": [
+          "많이 감을수록 세",
+          "직렬로 연결하면 세",
+          "병렬로 연결하면 1개와 같",
+          "방향을 바꾸면 극이 바뀌",
+          "철못이 있어야",
+          "전기가 흐를 때만 자석"
+        ],
+        "probes": [
+          { "when": "before-run", "text": "{iv}을(를) 바꾸면 붙는 클립의 수가 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?" },
+          { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요? 그래프에서 스위치를 끈 뒤에는 어떻게 되었나요?" },
+          { "when": "confounded", "text": "{changed}이(가) 함께 바뀌었어요. 클립 수가 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
+          { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },
+          { "when": "repeat", "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
+          { "when": "fair-test", "text": "{iv}만 바꾸었을 때 붙은 클립의 수는 어떻게 달라졌나요? 전기가 흐르는 모습 화면도 비교해 볼까요?" },
+          { "when": "fair-test", "iv": "battery", "text": "전지 연결만 바꾸었어요. 전기가 흐르는 모습 화면에서 점이 움직이는 빠르기는 어떻게 달랐나요?" },
+          { "when": "fair-test", "iv": "direction", "text": "전지 방향만 바꾸었을 때 클립의 수와 나침반 바늘은 각각 어떻게 되었나요? 결과표의 극 칸도 살펴볼까요?" },
+          { "when": "fair-test", "iv": "core", "text": "속에 넣은 것만 바꾸었을 때 클립의 수가 어떻게 달라졌나요? 무엇이 그런 차이를 만들었을까요?" },
+          { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 그래프와 전기가 흐르는 모습 화면의 어느 부분을 보면 그 까닭을 찾을 수 있을까요?" }
+        ]
+      }
+    }
+  ]
+}
