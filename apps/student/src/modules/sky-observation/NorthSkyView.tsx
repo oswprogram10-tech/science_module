@@ -1,6 +1,7 @@
 import { NORTH_CONSTELLATIONS, type NorthStarKey, type SkyPoint } from '@sci/engine-earth';
 import { azOffset, type NorthScene, type NorthStarPoint } from './nightModel';
 import { useNarrow } from './useNarrow';
+import { placeLabels, type Box, type LabelRequest, type PlacedLabel } from './labelLayout';
 
 const SKY = '#0a1230';
 const GROUND = '#2f4a2b';
@@ -10,7 +11,7 @@ const TEXT = '#ffffff';
 /** 화면에 그리는 방위 범위: 북을 가운데로 좌우 이만큼(°). */
 const HALF_RANGE = 75;
 
-interface Layout {
+export interface Layout {
   W: number;
   H: number;
   horizon: number;
@@ -20,8 +21,8 @@ interface Layout {
   top: number;
 }
 
-const WIDE: Layout = { W: 640, H: 360, horizon: 306, cx: 320, pxPerDeg: 4, pxPerAlt: 3.2, top: 18 };
-const NARROW: Layout = { W: 340, H: 430, horizon: 376, cx: 170, pxPerDeg: 2.1, pxPerAlt: 3.9, top: 18 };
+export const WIDE: Layout = { W: 640, H: 360, horizon: 306, cx: 320, pxPerDeg: 4, pxPerAlt: 3.2, top: 18 };
+export const NARROW: Layout = { W: 340, H: 430, horizon: 376, cx: 170, pxPerDeg: 2.1, pxPerAlt: 3.9, top: 18 };
 
 /** 과제 선택지에 나오는 별은 언제나 이름을 붙인다(관찰하는 것은 길잡이 선이 닿는 곳이다). */
 const OPTION_STARS: [NorthStarKey, string][] = [
@@ -33,22 +34,56 @@ const OPTION_STARS: [NorthStarKey, string][] = [
 
 const visible = (p: SkyPoint): boolean => p.altDeg > 0 && Math.abs(azOffset(p.azDeg)) <= HALF_RANGE;
 
+const DOT = 3.5;
+const dotBox = (x: number, y: number, r = DOT + 1.5): Box => ({ x: x - r, y: y - r, w: r * 2, h: r * 2 });
+
+/**
+ * 이름 자리를 정한다. 선택지 별 → 길잡이 별(두베·메라크) → 별자리 이름 순서로 놓고,
+ * 별 점·별자리 선·길잡이 선·이미 놓은 이름과 겹치지 않는 자리를 고른다.
+ */
+export function northLabels(scene: NorthScene, L: Layout): PlacedLabel[] {
+  const px = (p: SkyPoint) => L.cx + azOffset(p.azDeg) * L.pxPerDeg;
+  const py = (p: SkyPoint) => L.horizon - p.altDeg * L.pxPerAlt;
+  const star = (key: NorthStarKey): NorthStarPoint => scene.stars.find((s) => s.key === key)!;
+  const shown = scene.stars.filter((s) => visible(s.point));
+
+  const dots = shown.map((s) => dotBox(px(s.point), py(s.point)));
+  const guidePts = scene.guide.filter(visible);
+  for (const p of scene.guideMarks.filter(visible)) dots.push(dotBox(px(p), py(p), 4.5));
+  const segments: [number, number, number, number][] = [];
+  for (const c of NORTH_CONSTELLATIONS)
+    for (const [a, b] of c.lines) {
+      const pa = star(a).point;
+      const pb = star(b).point;
+      if (visible(pa) && visible(pb)) segments.push([px(pa), py(pa), px(pb), py(pb)]);
+    }
+  for (let i = 1; i < guidePts.length; i++) segments.push([px(guidePts[i - 1]!), py(guidePts[i - 1]!), px(guidePts[i]!), py(guidePts[i]!)]);
+
+  const requests: LabelRequest[] = [];
+  const starLabel = (k: NorthStarKey, text: string, fontSize: number, bold: boolean) => {
+    const p = star(k).point;
+    if (visible(p)) requests.push({ key: k, text, target: dotBox(px(p), py(p), DOT), fontSize, bold });
+  };
+  for (const [k, text] of OPTION_STARS) starLabel(k, text, 15, true);
+  starLabel('dubhe', '두베', 14, false);
+  starLabel('merak', '메라크', 14, false);
+  for (const c of NORTH_CONSTELLATIONS) {
+    const pts = c.stars.map((k) => star(k).point).filter(visible);
+    if (pts.length === 0) continue;
+    const xs = pts.map(px);
+    const ys = pts.map(py);
+    const x0 = Math.min(...xs);
+    const y0 = Math.min(...ys);
+    requests.push({ key: c.key, text: c.name, target: { x: x0 - DOT, y: y0 - DOT, w: Math.max(...xs) - x0 + DOT * 2, h: Math.max(...ys) - y0 + DOT * 2 }, fontSize: 16, bold: true });
+  }
+  return placeLabels(requests, { dots, segments }, { x: 2, y: L.top - 14, w: L.W - 4, h: L.horizon - (L.top - 14) - 2 });
+}
+
 export function NorthSkyView({ scene, showTrail }: { scene: NorthScene; showTrail: boolean }) {
   const L = useNarrow() ? NARROW : WIDE;
   const px = (p: SkyPoint) => L.cx + azOffset(p.azDeg) * L.pxPerDeg;
   const py = (p: SkyPoint) => L.horizon - p.altDeg * L.pxPerAlt;
   const star = (key: NorthStarKey): NorthStarPoint => scene.stars.find((s) => s.key === key)!;
-
-  // 길잡이 별 이름: 두베는 오른쪽 위, 메라크는 오른쪽 아래에 써서 국자 선과 겹치지 않게 한다.
-  const pointerLabel = (k: NorthStarKey, dy: number, text: string) => {
-    const p = star(k).point;
-    if (!visible(p)) return null;
-    return (
-      <text key={k} data-testid={`name-${k}`} x={px(p) + 10} y={py(p) + dy} fontSize={14} fill={TEXT}>
-        {text}
-      </text>
-    );
-  };
 
   const guidePts = scene.guide.filter(visible);
 
@@ -103,45 +138,11 @@ export function NorthSkyView({ scene, showTrail }: { scene: NorthScene; showTrai
           ))}
       </g>
 
-      {NORTH_CONSTELLATIONS.map((c) => {
-        const pts = c.stars.map((k) => star(k).point).filter(visible);
-        if (pts.length === 0) return null;
-        const xs = pts.map(px);
-        const ys = pts.map(py);
-        const cxm = xs.reduce((a, b) => a + b, 0) / xs.length;
-                // 북두칠성은 별 무리 옆에, 카시오페이아는 위에 이름을 쓴다(길잡이 별 이름과 겹치지 않게).
-        const side = c.key === 'dipper';
-        const x = side ? Math.min(Math.max(...xs) + 16, L.W - 74) : Math.min(L.W - 62, Math.max(62, cxm));
-        const y = side ? Math.max(...ys) + 5 : Math.max(L.top + 8, Math.min(...ys) - 16);
-        return (
-          <text
-            key={c.key}
-            data-testid={`name-${c.key}`}
-            x={x}
-            y={y}
-            textAnchor={side ? 'start' : 'middle'}
-            fontSize={16}
-            fontWeight={700}
-            fill={TEXT}
-          >
-            {c.name}
-          </text>
-        );
-      })}
-      {pointerLabel('dubhe', -9, '두베')}
-      {pointerLabel('merak', 17, '메라크')}
-      {OPTION_STARS.map(([k, text]) => {
-        const p = star(k).point;
-        if (!visible(p)) return null;
-        const x = px(p);
-        // 코카브는 국자 쪽(오른쪽)과 겹치지 않게 왼쪽에, 나머지는 오른쪽 위에 쓴다.
-        const left = k === 'kochab' || x + 80 > L.W;
-        return (
-          <text key={k} data-testid={`name-${k}`} x={left ? x - 9 : x + 9} y={py(p) - 8} textAnchor={left ? 'end' : 'start'} fontSize={15} fontWeight={700} fill={TEXT}>
-            {text}
-          </text>
-        );
-      })}
+      {northLabels(scene, L).map((l) => (
+        <text key={l.key} data-testid={`name-${l.key}`} x={l.x} y={l.y} textAnchor={l.anchor} fontSize={l.fontSize} fontWeight={l.bold ? 700 : 400} fill={TEXT}>
+          {l.text}
+        </text>
+      ))}
 
       <rect x={0} y={L.horizon} width={L.W} height={L.H - L.horizon} fill={GROUND} />
       <line x1={0} y1={L.horizon} x2={L.W} y2={L.horizon} stroke={TEXT} strokeWidth={2} />

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { NorthSkyView } from './NorthSkyView';
+import { NARROW, NorthSkyView, WIDE, northLabels } from './NorthSkyView';
+import type { Box } from './labelLayout';
 import { STAR_TASK_DAY, northStar, starPosition } from '@sci/engine-earth';
 import { parseManifest, type ObservationExperiment } from '@sci/schema';
 import { FALLBACK_PROBE, guardOutput, renderAndGuard } from '@sci/tutor';
@@ -296,4 +297,37 @@ describe('지구의 운동(g6) 화면은 그대로다', () => {
     expect(touchView(s, g6)).toBe(s);
     expect(s.trail).toEqual([12]);
   });
+});
+
+describe('밤하늘 관찰: 북쪽 하늘 이름 배치', () => {
+  const hours: number[] = [];
+  for (let h = NORTH_HOUR_MIN; h <= NORTH_HOUR_MAX; h += 0.5) hours.push(h);
+  const overlap = (a: Box, b: Box) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+
+  for (const [name, L] of [['넓은 화면', WIDE], ['좁은 화면', NARROW]] as const) {
+    it(`${name}: 모든 시각·길잡이 선 유무에서 이름끼리 겹치지 않고 별 점을 덮지 않으며 하늘 안에 있다`, () => {
+      let crossings = 0;
+      for (const hour of hours)
+        for (const guide of [false, true]) {
+          const sc = northScene(exp, { hour, controls: {} }, [], guide);
+          const labels = northLabels(sc, L);
+          for (let i = 0; i < labels.length; i++)
+            for (let j = i + 1; j < labels.length; j++)
+              expect(overlap(labels[i]!.box, labels[j]!.box), `${hour}시 ${labels[i]!.text}·${labels[j]!.text}`).toBe(false);
+          for (const l of labels) {
+            expect(l.box.x, `${hour}시 ${l.text}`).toBeGreaterThanOrEqual(0);
+            expect(l.box.x + l.box.w, `${hour}시 ${l.text}`).toBeLessThanOrEqual(L.W);
+            expect(l.box.y + l.box.h, `${hour}시 ${l.text}`).toBeLessThanOrEqual(L.horizon);
+            for (const s of sc.stars) {
+              if (s.point.altDeg <= 0 || Math.abs(azOffset(s.point.azDeg)) > 75) continue;
+              const x = L.cx + azOffset(s.point.azDeg) * L.pxPerDeg;
+              const y = L.horizon - s.point.altDeg * L.pxPerAlt;
+              expect(overlap(l.box, { x: x - 3.5, y: y - 3.5, w: 7, h: 7 }), `${hour}시 ${l.text}이 ${s.key} 점을 덮음`).toBe(false);
+            }
+          }
+          crossings += labels.length;
+        }
+      expect(crossings).toBeGreaterThan(0);
+    });
+  }
 });
