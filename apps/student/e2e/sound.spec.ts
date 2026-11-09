@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { test, expect, gotoUnit, setValue, selectIV, predict, runButton, resultRows, sensor } from './helpers';
+import { test, expect, gotoUnit, setValue, selectIV, predict, runButton, resultRows, sensor, expectSensorNear } from './helpers';
 
 const tutorBox = (page: Page) => page.getByRole('heading', { name: '생각해 볼까요?' }).locator('..');
 const macro = (page: Page) => page.getByRole('figure', { name: '눈으로 보기' });
@@ -89,7 +89,7 @@ test('새 페이지에서 세기만 세게로 바꾸면 330, 70.0, 결과: 변�
   await expect(row2).toContainText('결과: 변하지 않았다');
   await expect(tutorBox(page)).toContainText('튕기는 세기만 바꾸었어요. 물결의 높이와 물결의 개수 가운데 무엇이 달라졌나요? 소리의 크기 눈금도 함께 볼까요?');
   await expect(macro(page).getByText('1초 동안 330번 떨려요 · 소리의 크기 70.0')).toBeVisible();
-  await expect(sensor(page, '소리')).toContainText('70.');
+  await expectSensorNear(page, '소리', 70.0, 0.25); // 잡음 ±0.2
 
   // 그래프: 물결 개수는 같고 높이만 2.5배
   const svg = graph(page).locator('svg').first();

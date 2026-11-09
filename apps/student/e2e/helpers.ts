@@ -61,6 +61,14 @@ export const resultRows = (page: Page) => page.locator('#results-table tbody tr'
 /** 센서 값 (aria-label: 온도/무게/압력/산소/이산화 탄소) */
 export const sensor = (page: Page, name: '온도' | '무게' | '압력' | '산소' | '이산화 탄소' | '빛 세기' | '습도' | '맥박' | '기울기' | '소리' | '거리' | '속력' | '전력') => page.getByRole('status', { name, exact: true });
 
+/**
+ * 모의 센서 값은 씨앗 고정 잡음을 더하는데, 재생 중 값을 몇 번 읽었는지(화면 갱신 수)에 따라 잡음 차례가 달라진다.
+ * 그래서 화면 숫자를 글자로 맞추지 않고 참값 ± 허용 범위로 확인한다. tol은 잡음 크기 + 반올림 반 칸으로 준다.
+ */
+export async function expectSensorNear(page: Page, name: Parameters<typeof sensor>[1], value: number, tol: number) {
+  await expect.poll(async () => Math.abs(parseFloat(await sensor(page, name).innerText()) - value)).toBeLessThanOrEqual(tol);
+}
+
 /** 가로 스크롤이 없는지(문서 폭 <= 뷰포트 폭) */
 export async function scrollWidth(page: Page) {
   return page.evaluate(() => ({ sw: document.documentElement.scrollWidth, iw: window.innerWidth }));

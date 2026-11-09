@@ -20,7 +20,7 @@ import { readPlaybackSeconds } from './playback';
 import { UNITS, activityOf, parseRoute, unitHash, type ActivityEntry, type UnitEntry } from './units';
 import type { AnyModule } from './modules/types';
 import { restPlayheadOf } from './modules/restPlayhead';
-import { ActivityTabs, ActivityTabsContext, ActivityTabsSlot } from './components/ActivityTabs';
+import { ACTIVITY_PANEL_ID, ActivityTabs, ActivityTabsContext, ActivityTabsSlot, activityTabId } from './components/ActivityTabs';
 import { DesignPanel } from './components/DesignPanel';
 import { GraphView } from './components/GraphView';
 import { SensorBar } from './components/SensorBar';
@@ -90,7 +90,16 @@ function Routes() {
       ) : null;
     return (
       <ExperimentIdContext.Provider value={tabs ? act.experiment.id : undefined}>
-        <ActivityTabsContext.Provider value={tabs}>{renderLab(unit.id, unit.manifest.title, act, key)}</ActivityTabsContext.Provider>
+        <ActivityTabsContext.Provider value={tabs}>
+          {tabs ? (
+            // 여러 활동 단원만: 고른 활동 화면 전체를 탭 패널로 묶는다(탭 목록도 화면 머리 아래에 있어 패널 안에 들어간다).
+            <div role="tabpanel" id={ACTIVITY_PANEL_ID} aria-labelledby={activityTabId(act.experiment.id)}>
+              {renderLab(unit.id, unit.manifest.title, act, key)}
+            </div>
+          ) : (
+            renderLab(unit.id, unit.manifest.title, act, key)
+          )}
+        </ActivityTabsContext.Provider>
       </ExperimentIdContext.Provider>
     );
   }

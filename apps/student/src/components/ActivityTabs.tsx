@@ -9,6 +9,10 @@ export function ActivityTabsSlot() {
   return <>{useContext(ActivityTabsContext)}</>;
 }
 
+/** 고른 활동 화면을 감싸는 탭 패널의 id. 패널은 하나이고 고른 탭만 이 패널을 가리킨다(고르지 않은 활동의 화면은 만들지 않음). */
+export const ACTIVITY_PANEL_ID = 'activity-panel';
+export const activityTabId = (experimentId: string) => `activity-tab-${experimentId}`;
+
 /** 탭을 바꾸면 화면이 새로 만들어지므로, 키보드로 바꾼 직후에는 새 화면의 선택된 탭으로 초점을 돌려준다. */
 let refocusSelected = false;
 
@@ -54,8 +58,9 @@ export function ActivityTabs({
           }}
           type="button"
           role="tab"
-          id={`activity-tab-${a.experiment.id}`}
+          id={activityTabId(a.experiment.id)}
           aria-selected={i === current}
+          aria-controls={i === current ? ACTIVITY_PANEL_ID : undefined}
           tabIndex={i === current ? 0 : -1}
           className={`activity-tab${i === current ? ' selected' : ''}`}
           onClick={() => {

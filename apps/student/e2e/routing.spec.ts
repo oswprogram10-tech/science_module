@@ -141,6 +141,22 @@ test('모르는 experimentId는 첫 활동으로 돌린다', async ({ page }) =>
   await expect(page.getByRole('tablist')).toHaveCount(0);
 });
 
+test('고른 탭은 활동 화면을 감싼 탭 패널을 가리키고, 패널 이름은 고른 탭이다', async ({ page }) => {
+  await page.goto('/#/unit/g5-mixture/separation-methods');
+  const panel = page.getByRole('tabpanel');
+  await expect(panel).toHaveCount(1);
+  await expect(panel).toHaveAccessibleName('활동 2 · 혼합물의 성질에 따라 분리 방법 고르기');
+  await expect(activityTab(page, 2)).toHaveAttribute('aria-controls', 'activity-panel');
+  await expect(activityTab(page, 1)).not.toHaveAttribute('aria-controls', /.+/);
+  await expect(panel.getByRole('radio', { name: '한 가지가 자석에 붙나요?', exact: true })).toBeVisible();
+  await activityTab(page, 1).click();
+  await expect(page.getByRole('tabpanel')).toHaveAccessibleName('활동 1 · 소금과 모래의 혼합물 분리하기');
+  // 활동이 하나인 단원에는 탭 패널이 없다.
+  await page.goto('/#/unit/g4-gases');
+  await expect(page.getByRole('heading', { level: 1, name: '여러 가지 기체' })).toBeVisible();
+  await expect(page.getByRole('tabpanel')).toHaveCount(0);
+});
+
 test('새로 고침해도 같은 활동이 열린다', async ({ page }) => {
   await page.goto('/#/unit/g5-mixture');
   await activityTab(page, 2).click();
