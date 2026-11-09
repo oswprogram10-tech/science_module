@@ -153,10 +153,13 @@ export function RampMacroView({ experiment, snapshot, values }: ViewProps<RampSa
         {TICKS.map((m) => (
           <g key={m} data-testid="ramp-tick">
             <line x1={xOf(m)} y1={FLOOR_Y + BAND_H} x2={xOf(m)} y2={FLOOR_Y + BAND_H + 5} stroke="currentColor" strokeWidth="1.5" />
-            <text x={xOf(m)} y={FLOOR_Y + BAND_H + 21} textAnchor="middle" fontSize="14" fill="currentColor">{m}</text>
+            {/* 단위 m는 마지막 눈금 글자에 붙여 함께 가운데 맞춤한다(따로 쓰면 글꼴에 따라 그림 오른쪽 밖으로 잘렸다). */}
+            <text x={xOf(m)} y={FLOOR_Y + BAND_H + 21} textAnchor="middle" fontSize="14" fill="currentColor">
+              {m}
+              {m === WALL_M && <tspan dx="3">m</tspan>}
+            </text>
           </g>
         ))}
-        <text x={xOf(WALL_M) + 14} y={FLOOR_Y + BAND_H + 21} fontSize="14" fill="currentColor">m</text>
 
         {/* 잔상 점: 0.1초마다 수레가 있던 자리(간격이 넓을수록 빠르다) */}
         {ghosts.map((gx, i) => (
