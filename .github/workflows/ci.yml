@@ -75,6 +75,12 @@ jobs:
       - run: pnpm --filter student build
       - run: npx cap sync android
         working-directory: apps/student
+      # Gradle 배포판은 GitHub 릴리스에서 내려받는데, 가끔 504로 끊긴다. 내려받기만 몇 번 다시 시도한다(빌드·테스트는 다시 하지 않음).
+      - name: Gradle 내려받기(재시도)
+        working-directory: apps/student/android
+        run: |
+          for i in 1 2 3 4; do ./gradlew --version && exit 0; echo "다시 시도 $i"; sleep $((i * 20)); done
+          exit 1
       # 러너에 설치된 Android SDK(ANDROID_HOME)를 쓴다.
       - run: ./gradlew assembleDebug
         working-directory: apps/student/android
@@ -99,6 +105,12 @@ jobs:
       - run: pnpm --filter student build
       - run: npx cap sync ios
         working-directory: apps/student
+      # Capacitor 바이너리는 GitHub 릴리스에서 내려받는데, 가끔 504로 끊긴다. 패키지 받기만 몇 번 다시 시도한다.
+      - name: Swift 패키지 내려받기(재시도)
+        working-directory: apps/student/ios/App
+        run: |
+          for i in 1 2 3 4; do xcodebuild -resolvePackageDependencies -scheme App && exit 0; echo "다시 시도 $i"; sleep $((i * 20)); done
+          exit 1
       - run: xcodebuild -scheme App -sdk iphonesimulator -configuration Debug build CODE_SIGNING_ALLOWED=NO
         working-directory: apps/student/ios/App
       # 실기기용 ipa(서명 없음). 설치하려면 본인 Apple ID 등으로 다시 서명해야 한다(docs/app-packaging.md).
