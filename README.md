@@ -100,4 +100,4 @@ pnpm e2e            # 브라우저 자동 테스트 (Playwright)
 | `packages/xapi` | `@sci/xapi` xAPI 문장 생성과 메모리 큐 |
 | `apps/student` | Vite + React 19 학생 앱 (`src/modules/`에 실험 모듈, `src/units.ts`에 단원 목록) |
 
-패키지는 빌드하지 않고 `src/index.ts`를 바로 읽습니다. Capacitor(ios/android)는 이번 범위가 아닙니다.
+패키지는 빌드하지 않고 `src/index.ts`를 바로 읽습니다. 앱 포장(Capacitor, Android)은 `docs/app-packaging.md`를 보세요. iOS 앱은 지원하지 않습니다.

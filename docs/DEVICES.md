@@ -2,7 +2,7 @@
 
 > **초안이다.** 국내 학교 보급 기기 유형을 기준으로 정했다. 학교·교육청의 실제 보유 기기 목록이 나오면 그 목록으로 바꾼다. (결정 D8, `DEVELOPMENT_PLAN.md` §1)
 
-근거: D1(Capacitor 앱: iPadOS·Android, 크롬북·Windows는 PWA), D2(성능 KPI), §4.2 ⑦(저사양 폴백), §7.0(스파이크 S1·S3).
+근거: D1(Capacitor 앱: Android, 크롬북·Windows는 PWA. iPadOS 앱은 2026-11-09에 취소해 iPad는 Safari 웹판으로만 쓰고 실물 블루투스 센서는 쓸 수 없음), D2(성능 KPI), §4.2 ⑦(저사양 폴백), §7.0(스파이크 S1·S3).
 
 ## 등급
 

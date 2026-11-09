@@ -14,7 +14,7 @@ const toError = (e: unknown): BleError => {
   return new BleError('failed', msg);
 };
 
-/** iOS·Android 앱의 `@capacitor-community/bluetooth-le`. */
+/** Android 앱의 `@capacitor-community/bluetooth-le`. (iOS 앱은 지원하지 않음) */
 export class CapacitorBleTransport implements BleTransport {
   private deviceId: string | null = null;
   private disconnectCb: (() => void) | null = null;
