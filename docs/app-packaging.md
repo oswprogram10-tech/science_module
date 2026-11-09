@@ -60,7 +60,7 @@ iOS 시뮬레이터 빌드는 Mac의 Xcode 시뮬레이터에서만 돈다.
 | 플랫폼 | 항목 | 문구·설정 |
 |---|---|---|
 | iOS `Info.plist` | `NSCameraUsageDescription` | 지시약 색을 읽으려고 카메라를 사용해요. 사진은 기기 밖으로 보내지 않아요. |
-| iOS `Info.plist` | `NSBluetoothAlwaysUsageDescription` | 실험용 온도 센서와 연결하려고 블루투스를 사용해요. |
+| iOS `Info.plist` | `NSBluetoothAlwaysUsageDescription` | 실험용 센서(온도계·심박 센서)와 연결하려고 블루투스를 사용해요. 측정값은 기기 밖으로 보내지 않아요. |
 | Android | `CAMERA` | 산과 염기 색 판독기 |
 | Android | `BLUETOOTH_SCAN`(`neverForLocation`), `BLUETOOTH_CONNECT` | API 31 이상 |
 | Android | `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`(`maxSdkVersion` 30) | API 30 이하 |
@@ -99,7 +99,7 @@ iOS 시뮬레이터 빌드는 Mac의 Xcode 시뮬레이터에서만 돈다.
 - **심박은 민감정보이고, 만 14세 미만은 법정대리인 동의가 필요할 수 있다. 학교에 적용하기 전에 법무 검토가 필요하다.** (`docs/DEVELOPMENT_PLAN.md` D10)
 - 실측값은 **기기 메모리에만** 둔다. 앱 종료, 단원 이탈, "지금 지우기", "그만두기"(허가 철회), 마지막 측정 뒤 30분 경과, `pagehide`에서 삭제한다. 저장소·서버·교사 화면·xAPI·콘솔·주소에는 쓰지 않는다.
 - 허가는 앱이 켜져 있는 동안만 유효하다. 저장하지 않으므로 앱을 다시 켜면 다시 묻는다.
-- 블루투스 권한 문구(`NSBluetoothAlwaysUsageDescription` 등)는 온도 센서만 적혀 있다. 심박 센서도 쓰므로 스토어 제출 전 문구를 "실험용 센서(온도·심박)"로 넓힌다.
+- 블루투스 권한 문구(`NSBluetoothAlwaysUsageDescription`)는 온도계와 심박 센서를 모두 적고, 측정값을 기기 밖으로 보내지 않는다고 밝힌다. Android는 시스템 권한 창에 앱 문구가 없다.
 
 ### 탐구 기록장과 학생이 쓴 글 (D11)
 

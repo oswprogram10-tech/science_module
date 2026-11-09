@@ -25,7 +25,7 @@
 	<key>NSCameraUsageDescription</key>
 	<string>지시약 색을 읽으려고 카메라를 사용해요. 사진은 기기 밖으로 보내지 않아요.</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>실험용 온도 센서와 연결하려고 블루투스를 사용해요.</string>
+	<string>실험용 센서(온도계·심박 센서)와 연결하려고 블루투스를 사용해요. 측정값은 기기 밖으로 보내지 않아요.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>
