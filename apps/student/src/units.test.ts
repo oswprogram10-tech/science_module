@@ -8,7 +8,11 @@ import lightJson from '../../../content/units/g5-light/manifest.json';
 import electricityJson from '../../../content/units/g6-electricity/manifest.json';
 import animalJson from '../../../content/units/g3-animal/manifest.json';
 import landJson from '../../../content/units/g4-land/manifest.json';
-import { UNITS, buildRegistry, parseRoute, unitHash } from './units';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import mixtureJson from '../../../content/units/g5-mixture/manifest.json';
+import { ActivityTabs, ActivityTabsContext, ActivityTabsSlot } from './components/ActivityTabs';
+import { UNITS, activityOf, buildRegistry, parseRoute, unitHash } from './units';
 
 const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
@@ -223,5 +227,88 @@ describe('해시 라우팅', () => {
     expect(parseRoute(unitHash('g5-solution'))).toEqual({ page: 'unit', unitId: 'g5-solution' });
     expect(parseRoute('#/nope')).toEqual({ page: 'list' });
     expect(parseRoute('#/unit/%E0%A4%A')).toEqual({ page: 'list' });
+  });
+});
+
+describe('해시 라우팅: 활동 주소', () => {
+  it('#/unit/{id}는 활동을 정하지 않고 #/unit/{id}/{experimentId}는 활동을 정한다', () => {
+    expect(parseRoute('#/unit/g5-mixture')).toEqual({ page: 'unit', unitId: 'g5-mixture' });
+    expect(parseRoute('#/unit/g5-mixture/')).toEqual({ page: 'unit', unitId: 'g5-mixture' });
+    expect(parseRoute('#/unit/g5-mixture/separation-methods')).toEqual({ page: 'unit', unitId: 'g5-mixture', experimentId: 'separation-methods' });
+    expect(parseRoute('#/unit/g5-mixture/separation-methods/')).toEqual({ page: 'unit', unitId: 'g5-mixture', experimentId: 'separation-methods' });
+    expect(parseRoute('#/unit/g5-mixture/no-such')).toEqual({ page: 'unit', unitId: 'g5-mixture', experimentId: 'no-such' });
+  });
+  it('unitHash는 두 형식을 만들고 parseRoute와 맞물린다', () => {
+    expect(unitHash('g5-mixture')).toBe('#/unit/g5-mixture');
+    expect(unitHash('g5-mixture', 'separation-methods')).toBe('#/unit/g5-mixture/separation-methods');
+    for (const [u, e] of [['g5-mixture', 'separation-methods'], ['a b', 'c/d']] as const) {
+      expect(parseRoute(unitHash(u, e))).toEqual({ page: 'unit', unitId: u, experimentId: e });
+    }
+  });
+  it('깨진 인코딩이나 경로가 더 깊은 주소는 목록으로 돌아간다', () => {
+    expect(parseRoute('#/unit/g5-mixture/%E0%A4%A')).toEqual({ page: 'list' });
+    expect(parseRoute('#/unit/g5-mixture/a/b')).toEqual({ page: 'list' });
+  });
+  it('활동 고르기: 없거나 모르는 experimentId는 첫 활동', () => {
+    const u = UNITS.find((x) => x.id === 'g5-mixture')!;
+    if (!u.ok) throw new Error('g5-mixture');
+    expect(activityOf(u).experiment.id).toBe('salt-sand');
+    expect(activityOf(u, 'salt-sand').experiment.id).toBe('salt-sand');
+    expect(activityOf(u, 'separation-methods').experiment.id).toBe('separation-methods');
+    expect(activityOf(u, 'nope').experiment.id).toBe('salt-sand');
+    // 활동이 하나인 단원은 어떤 id로도 첫(유일한) 활동이다.
+    const gases = UNITS.find((x) => x.id === 'g4-gases')!;
+    if (!gases.ok) throw new Error('g4-gases');
+    expect(activityOf(gases, 'separation-methods')).toBe(gases.activities[0]);
+  });
+});
+
+describe('레지스트리 activities', () => {
+  it('모든 experiment가 매니페스트 순서대로 활동이 되고 최상위 값은 첫 활동과 같다', () => {
+    for (const u of UNITS) {
+      if (!u.ok) throw new Error(u.id);
+      expect(u.activities.map((a) => a.experiment.id), u.id).toEqual(u.manifest.experiments.map((e) => e.id));
+      const first = u.activities[0]!;
+      expect([u.activity, u.experiment, u.module], u.id).toEqual([first.activity, first.experiment, first.module]);
+    }
+  });
+  it('활동이 둘 이상인 단원은 g5-mixture뿐이다', () => {
+    const multi = UNITS.filter((u) => u.ok && u.activities.length > 1).map((u) => u.id);
+    expect(multi).toEqual(['g5-mixture']);
+    const m = UNITS.find((u) => u.id === 'g5-mixture')!;
+    expect(m.ok && m.activities.map((a) => [a.activity, a.experiment.id])).toEqual([['variable', 'salt-sand'], ['card-sort', 'separation-methods']]);
+    expect(m.ok && m.module.kind).toBe('salt-sand');
+  });
+  it('두 번째 활동이 깨져도 그 단원만 오류 항목이 된다(모든 experiment를 검사)', () => {
+    const broken = clone(mixtureJson);
+    broken.experiments[1].cards[0].features.size = 'maybe';
+    const units = buildRegistry([gasesJson, broken, solutionJson]);
+    expect(units.map((u) => u.ok)).toEqual([true, false, true]);
+    const bad = units[1]!;
+    if (!bad.ok) expect(bad.issues.join()).toContain('maybe');
+  });
+});
+
+describe('활동 탭 화면', () => {
+  const m = UNITS.find((u) => u.id === 'g5-mixture')!;
+  if (!m.ok) throw new Error('g5-mixture');
+  it('탭이 없으면(활동이 하나인 단원) 자리가 아무것도 그리지 않는다', () => {
+    expect(renderToStaticMarkup(createElement('div', null, createElement(ActivityTabsSlot)))).toBe('<div></div>');
+    expect(renderToStaticMarkup(createElement(ActivityTabsContext.Provider, { value: null }, createElement('div', null, createElement(ActivityTabsSlot))))).toBe('<div></div>');
+    // 활동이 하나인 단원은 탭을 만들 필요가 없다.
+    for (const u of UNITS) if (u.ok && u.id !== 'g5-mixture') expect(u.activities, u.id).toHaveLength(1);
+  });
+  it('탭은 tablist와 tab, aria-selected, "활동 n · 제목" 이름을 가진다', () => {
+    const html = renderToStaticMarkup(
+      createElement(ActivityTabs, { activities: m.activities, currentId: 'separation-methods', onSelect: () => {} }),
+    );
+    expect(html).toContain('role="tablist"');
+    expect(html.match(/role="tab"/g)).toHaveLength(2);
+    expect(html).toMatch(/aria-selected="false"[^>]*tabindex="-1"[^>]*>활동 1 · [^<]+/);
+    expect(html).toMatch(/aria-selected="true"[^>]*tabindex="0"[^>]*>활동 2 · 혼합물의 성질에 따라 분리 방법 고르기/);
+    const inSlot = renderToStaticMarkup(
+      createElement(ActivityTabsContext.Provider, { value: createElement(ActivityTabs, { activities: m.activities, currentId: 'salt-sand', onSelect: () => {} }) }, createElement(ActivityTabsSlot)),
+    );
+    expect(inSlot).toMatch(/aria-selected="true"[^>]*tabindex="0"[^>]*>활동 1 · /);
   });
 });

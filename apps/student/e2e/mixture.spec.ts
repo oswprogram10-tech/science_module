@@ -1,5 +1,31 @@
 import type { Locator, Page } from '@playwright/test';
-import { test, expect, gotoUnit, setValue, selectIV, predict, runButton, resultRows, confirmSafetyDialog, sensor } from './helpers';
+import {
+  test,
+  expect,
+  gotoUnit,
+  setValue,
+  selectIV,
+  predict,
+  runButton,
+  resultRows,
+  confirmSafetyDialog,
+  sensor,
+  scrollWidth,
+  activityTab,
+  activityTabs,
+  gotoMixtureSort,
+  mixtureCard,
+  mixtureFinishCriterion,
+  mixtureObserveButton,
+  mixtureSortAll,
+  MIXTURE_CARDS,
+  MIXTURE_SORT_TITLE,
+  sortCheckButton,
+  sortChoose,
+  sortFeedback,
+  sortPutButton,
+  sortTutor,
+} from './helpers';
 
 const tutorBox = (page: Page) => page.getByRole('heading', { name: '생각해 볼까요?' }).locator('..');
 const macro = (page: Page) => page.getByRole('figure', { name: '눈으로 보기' });
@@ -272,4 +298,165 @@ test.describe('1280x800 화면', () => {
     await run(page, '줄어든다');
     await check();
   });
+});
+
+// ---- 두 번째 활동: 분리 방법 고르기(카드 분류 groups) ----
+
+test.describe('분리 방법 고르기 (두 번째 활동)', () => {
+  const progress = (page: Page) => page.getByRole('region', { name: '진행 상황' });
+  const magnifier = (page: Page) => page.getByRole('region', { name: '돋보기' });
+
+  test('첫 활동 화면의 활동 탭으로 이동한다: 탭 이름, 주소, 질문', async ({ page }) => {
+    await gotoUnit(page, 'g5-mixture');
+    await expect(activityTabs(page)).toBeVisible();
+    await expect(page.getByRole('tab')).toHaveCount(2);
+    await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+    await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'false');
+    await expect(activityTab(page, 2)).toHaveText(`활동 2 · ${MIXTURE_SORT_TITLE}`);
+    await activityTab(page, 2).click();
+    await expect(page).toHaveURL(/#\/unit\/g5-mixture\/separation-methods$/);
+    await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('heading', { level: 1, name: '혼합물의 분리' })).toBeVisible();
+    await expect(page.getByText('탐구 질문: 혼합물을 이루는 물질의 성질이 다르면 어떻게 분리할 수 있을까?')).toBeVisible();
+    await expect(page.getByRole('radio')).toHaveCount(4);
+    for (const card of MIXTURE_CARDS) await expect(mixtureCard(page, card)).toBeVisible();
+    await expect(page.locator('.sort-card-sub')).toHaveCount(0);
+    await expect(sortCheckButton(page)).toBeDisabled();
+    await expect(sortTutor(page)).toContainText('혼합물들을 어떤 성질로 나누어 볼까요?');
+    // 첫 활동으로 돌아가면 상태가 새로 시작한다.
+    await activityTab(page, 1).click();
+    await expect(page).toHaveURL(/#\/unit\/g5-mixture\/salt-sand$/);
+    await expect(page.getByRole('group', { name: '넣는 물의 양' })).toBeVisible();
+  });
+
+  test('돋보기 버튼 문구는 "크기 비교하기", "자석 대 보기", "물에 넣어 보기"이다', async ({ page }) => {
+    await gotoMixtureSort(page);
+    await expect(magnifier(page).getByRole('button')).toHaveCount(0);
+    await mixtureCard(page, '철 가루와 모래').click();
+    for (const name of ['크기 비교하기', '자석 대 보기', '물에 넣어 보기']) {
+      await expect(magnifier(page).getByRole('button', { name, exact: true })).toBeVisible();
+    }
+  });
+
+  test('"한 가지가 자석에 붙나요?"로 관찰 없이 넣으면 미관찰 문장이, 관찰 뒤 철 구슬을 "붙지 않는다"에 넣으면 비교 문장이, 고치면 맞음 문장이 보인다', async ({ page }) => {
+    await gotoMixtureSort(page);
+    await sortChoose(page, '한 가지가 자석에 붙나요?');
+    // 관찰 없이 넣는다.
+    await mixtureSortAll(page, 'magnet', { observe: false });
+    await sortCheckButton(page).click();
+    await expect(page.getByText('아직 이 기준의 특징을 살펴보지 않았어요.')).toBeVisible();
+    await expect(sortTutor(page)).toContainText('아직 시험해 보지 않았어요. 먼저 시험해 볼까요?');
+    // 관찰하되 철 구슬과 유리 구슬을 "붙지 않는다"에 넣는다.
+    for (const card of MIXTURE_CARDS) {
+      await mixtureCard(page, card).click();
+      await mixtureObserveButton(page, 'magnet').click();
+    }
+    await mixtureCard(page, '철 구슬과 유리 구슬').click();
+    await sortPutButton(page, '붙지 않는다').click();
+    await sortCheckButton(page).click();
+    await expect(page.getByText('철 구슬과 유리 구슬은 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?')).toBeVisible();
+    await expect(sortTutor(page)).toContainText('철 구슬과 유리 구슬을 시험한 결과와 넣은 무리를 다시 비교해 볼까요?');
+    // 어느 무리가 맞는지는 말하지 않는다.
+    for (const box of [sortFeedback(page), sortTutor(page)]) {
+      await expect(box).not.toContainText('붙는다');
+      await expect(box).not.toContainText('철 가루는');
+    }
+    await expect(progress(page)).toContainText('끝낸 기준: 없음 (0/2)');
+    // 고친다.
+    await mixtureCard(page, '철 구슬과 유리 구슬').click();
+    await sortPutButton(page, '붙는다').click();
+    await sortCheckButton(page).click();
+    await expect(page.getByText('관찰한 특징과 분류가 서로 잘 맞아요.')).toBeVisible();
+    await expect(progress(page)).toContainText('끝낸 기준: 한 가지가 자석에 붙나요? (1/2)');
+  });
+
+  test('"보기에 깨끗한가요?"는 판정하지 않고 사람마다 다르다고만 한다', async ({ page }) => {
+    await gotoMixtureSort(page);
+    await sortChoose(page, '보기에 깨끗한가요?');
+    for (const [i, card] of MIXTURE_CARDS.entries()) {
+      await mixtureCard(page, card).click();
+      await sortPutButton(page, i % 2 === 0 ? '깨끗해 보인다' : '지저분해 보인다').click();
+    }
+    await sortCheckButton(page).click();
+    await expect(page.getByText('이 기준은 사람마다 다르게 나눌 수 있어요.')).toBeVisible();
+    await expect(sortTutor(page)).toContainText("'보기에 깨끗한가요?'로 나누면 친구와 내 결과가 같을까요?");
+    await expect(progress(page)).toContainText('끝낸 기준: 없음 (0/2)');
+  });
+
+  test('두 기준을 끝내면 완료 문구와 "어떤 도구로 분리할 수 있을까요?" 마무리 질문이 나온다', async ({ page }) => {
+    await gotoMixtureSort(page);
+    await mixtureFinishCriterion(page, 'magnet');
+    await expect(page.getByText('두 가지 기준으로 분류했어요!')).toHaveCount(0);
+    await mixtureFinishCriterion(page, 'dissolve');
+    await expect(progress(page)).toContainText('끝낸 기준: 한 가지가 자석에 붙나요?, 한 가지만 물에 녹나요? (2/2)');
+    await expect(page.getByText('두 가지 기준으로 분류했어요!')).toBeVisible();
+    await expect(sortTutor(page)).toContainText('어떤 도구로 분리할 수 있을까요?');
+    await expect(sortTutor(page)).toContainText('두 가지 방법이 다 될 것 같은 혼합물도 있나요?');
+  });
+
+  test('관찰하기 전에는 기본 그림만 보이고, 시험한 특징의 결과 그림만 나타난다', async ({ page }) => {
+    await gotoMixtureSort(page);
+    await mixtureCard(page, '철 가루와 모래').click();
+    await expect(page.locator('svg.mixture-icon')).toHaveCount(7); // 더미 6장 + 돋보기 1장
+    await expect(page.locator('svg .mix-result')).toHaveCount(0);
+
+    await mixtureObserveButton(page, 'magnet').click();
+    await expect(page.locator('svg .mix-magnet')).toHaveCount(1);
+    await expect(page.locator('svg .mix-stuck')).toHaveCount(1); // 철 가루는 자석에 달라붙는다
+    await expect(page.locator('svg .mix-size, svg .mix-beaker')).toHaveCount(0);
+    await expect(magnifier(page)).toContainText('자석을 가까이 대면 검은 가루만 자석에 달라붙어요.');
+
+    await mixtureObserveButton(page, 'size').click();
+    await expect(page.locator('svg .mix-size')).toHaveCount(1);
+    await mixtureObserveButton(page, 'dissolve').click();
+    await expect(page.locator('svg .mix-beaker')).toHaveCount(1);
+    await expect(page.locator('svg .mix-settle')).toHaveCount(1); // 철 가루와 모래는 녹지 않고 가라앉는다
+    await expect(page.locator('svg .mix-gone')).toHaveCount(0);
+
+    // 다른 카드를 고르면 그 카드에서 시험한 것만 그려진다.
+    await mixtureCard(page, '소금과 모래').click();
+    await expect(page.locator('svg .mix-result')).toHaveCount(0);
+    await mixtureObserveButton(page, 'dissolve').click();
+    await expect(page.locator('svg .mix-gone')).toHaveCount(1);
+    await expect(page.locator('svg .mix-stuck')).toHaveCount(0);
+  });
+
+  test('아직 관찰하지 않은 문장은 화면에 없다', async ({ page }) => {
+    await gotoMixtureSort(page);
+    const body = page.locator('body');
+    await mixtureCard(page, '설탕과 콩').click();
+    for (const s of ['콩은 크고 설탕 알갱이는 작아요.', '물에 넣고 저으면 설탕은 보이지 않게 되고']) await expect(body).not.toContainText(s);
+    await mixtureObserveButton(page, 'size').click();
+    await expect(body).toContainText('콩은 크고 설탕 알갱이는 작아요.');
+    await expect(body).not.toContainText('물에 넣고 저으면 설탕은 보이지 않게 되고');
+  });
+
+  test('첫 활동(소금과 모래) 화면은 그대로이고 탭만 더해졌다', async ({ page }) => {
+    await gotoUnit(page, 'g5-mixture');
+    await expect(page.getByRole('heading', { level: 1, name: '혼합물의 분리' })).toBeVisible();
+    await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('group', { name: '넣는 물의 양' })).toBeVisible();
+    await expect(page.getByRole('radio')).toHaveCount(3);
+  });
+
+  for (const vp of [{ width: 390, height: 800 }, { width: 1280, height: 800 }]) {
+    test.describe(`${vp.width}px`, () => {
+      test.use({ viewport: vp });
+      test('가로 스크롤이 없다 (처음, 카드를 시험한 뒤, 모두 넣은 뒤)', async ({ page }) => {
+        await gotoMixtureSort(page);
+        const noScroll = async () => {
+          const { sw, iw } = await scrollWidth(page);
+          expect(sw).toBeLessThanOrEqual(iw);
+        };
+        await noScroll();
+        await sortChoose(page, '한 가지만 물에 녹나요?');
+        await mixtureCard(page, '설탕과 콩').click();
+        await mixtureObserveButton(page, 'dissolve').click();
+        await noScroll();
+        await mixtureSortAll(page, 'dissolve');
+        await sortCheckButton(page).click();
+        await noScroll();
+      });
+    });
+  }
 });

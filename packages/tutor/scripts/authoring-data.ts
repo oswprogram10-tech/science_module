@@ -9,11 +9,17 @@ const out = process.argv[2];
 if (!out) throw new Error('출력 파일 경로를 주세요');
 const ds = loadDataset();
 // TUTOR_UNITS는 학년 순, 같은 학년은 앱 목록(apps/student/src/units.ts) 순서다(scenarios.test.ts가 확인한다).
-// 단원마다 실험은 하나이고, 질문·한계·금지 답은 실험 수준(experiments[0])의 값이다. 관찰 단원도 같다.
+// 질문은 첫 활동의 값이다. 한 단원에 활동이 여럿이면 학년 밖 용어(limits)와 금지 답(forbiddenAnswers)은
+// 단원 안 모든 활동의 합집합으로 한다(더 엄격한 쪽). 활동이 하나인 단원은 그 활동의 값 그대로다.
+const union = (lists: string[][]) => [...new Set(lists.flat())];
 const units = TUTOR_UNITS.map((id) => {
   const m = ds.units[id]!.manifest;
   const e = m.experiments[0]!;
-  return { id, title: m.title, grade: m.grade, question: e.question, limits: e.limits, forbiddenAnswers: e.tutor.forbiddenAnswers };
+  return {
+    id, title: m.title, grade: m.grade, question: e.question,
+    limits: union(m.experiments.map((x) => x.limits)),
+    forbiddenAnswers: union(m.experiments.map((x) => x.tutor.forbiddenAnswers)),
+  };
 });
 const scenarios = ds.scenarios.map((s) => {
   const m = ds.units[s.unitId]!.manifest;
@@ -21,6 +27,7 @@ const scenarios = ds.scenarios.map((s) => {
   return {
     id: s.scenarioId,
     unitId: s.unitId,
+    experimentId: e.id,
     title: s.title,
     situation: situationOf(s.state, e),
     input: buildTutorInput(e, s.state, '', { title: m.title, grade: m.grade }),

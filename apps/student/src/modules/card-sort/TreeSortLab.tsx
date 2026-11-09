@@ -1,4 +1,5 @@
 import { useMemo, useState, useSyncExternalStore } from 'react';
+import { ActivityTabsSlot } from '../../components/ActivityTabs';
 import { availableCriteria, criterionOf, isEmptySplit, type TreeState } from '@sci/cardsort';
 import type { CardSortExperiment } from '@sci/schema';
 import { renderAndGuard } from '@sci/tutor';
@@ -132,6 +133,7 @@ export function TreeSortLab({
         <h1>{title}</h1>
         <p className="question">탐구 질문: {exp.question}</p>
       </header>
+      <ActivityTabsSlot />
 
       <main className="sort-layout tree-layout">
         <section className="panel tree-area" aria-label="나누기 트리">

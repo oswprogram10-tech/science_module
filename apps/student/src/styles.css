@@ -89,6 +89,12 @@ button.unit-card { cursor:pointer; }
 button.unit-card:hover { border-color:var(--accent); }
 .unit-title { font-size:1.15rem; font-weight:700; }
 .unit-standards { font-size:.85rem; opacity:.85; }
+.unit-activities { font-size:.85rem; font-weight:700; color:var(--accent); }
+.activity-tabs { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0; }
+.activity-tab { min-height:44px; padding:8px 14px; border:2px solid var(--line); border-radius:10px; background:var(--card); color:var(--fg); font:inherit; font-weight:600; cursor:pointer; text-align:left; word-break:keep-all; }
+.activity-tab:hover { border-color:var(--accent); }
+.activity-tab.selected { border-color:var(--accent); background:var(--accent); color:var(--on-accent); }
+.activity-tab:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
 .unit-card.error { border-color:var(--warn); cursor:default; }
 .unit-card.error ul { margin:0; padding-left:1.2rem; }
 
@@ -254,12 +260,12 @@ button.unit-card:hover { border-color:var(--accent); }
 .sort-layout { display:grid; grid-template-columns: 280px minmax(0,1fr) 340px; gap:12px; align-items:start; }
 .sort-criteria { display:flex; flex-direction:column; gap:6px; margin-bottom:8px; }
 .sort-criteria legend { font-weight:700; padding:0; margin-bottom:6px; font-size:1.05rem; }
-.sort-criteria .iv-radio { white-space:normal; border-radius:12px; }
+.sort-criteria .iv-radio { white-space:normal; border-radius:12px; word-break:keep-all; }
 .visually-live { margin:0; min-height:1.3em; font-size:.9rem; font-weight:700; }
 .sort-pile { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:6px; }
 .sort-card { width:100%; display:grid; grid-template-columns:auto minmax(0,1fr); grid-template-areas:"icon name" "icon dots" "icon count"; column-gap:8px; align-items:center; text-align:left; padding:6px 8px; }
 .sort-card .animal-icon { grid-area:icon; color:var(--fg); }
-.sort-card-name { grid-area:name; font-weight:700; }
+.sort-card-name { grid-area:name; font-weight:700; word-break:keep-all; overflow-wrap:anywhere; }
 .sort-card.has-sub { grid-template-areas:"icon name" "icon sub" "icon dots" "icon count"; }
 .sort-card-sub { grid-area:sub; font-size:.85rem; }
 .sort-card.has-sub:not(.small) { grid-template-columns:auto; grid-template-areas:"icon" "name" "sub" "dots" "count"; justify-items:center; text-align:center; row-gap:2px; }
@@ -270,6 +276,8 @@ button.unit-card:hover { border-color:var(--accent); }
 .dot.on { background:var(--accent); border-color:var(--accent); }
 .obs-count { grid-area:count; font-size:.8rem; }
 .sort-card.small { padding:4px 8px; }
+/* 혼합물 카드는 이름이 길어("철 구슬과 유리 구슬") 넓은 화면에서도 그림 위·이름 아래로 쌓는다. */
+.sort-pile .sort-card:has(.mixture-icon) { grid-template-columns:auto; grid-template-areas:"icon" "name" "dots" "count"; justify-items:center; text-align:center; }
 .sort-placed { display:flex; gap:4px; align-items:center; }
 .sort-placed .sort-card { width:auto; flex:1 1 auto; min-width:0; }
 .sort-placed > button:not(.sort-card) { flex:none; }

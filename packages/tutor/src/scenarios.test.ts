@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { UNITS } from '../../../apps/student/src/units';
@@ -6,6 +7,8 @@ import { buildTutorInput, situationOf } from './context';
 import { CONTENT_DIR, TUTOR_DIR, TUTOR_UNITS, loadUnits, scenarioFile } from './datasetIo';
 
 const units = loadUnits();
+/** 활동을 더하기 전 HEAD의 ml/tutor/scenarios/g5-mixture.jsonl 20줄(줄바꿈으로 이은 글자)의 SHA-256. */
+const FIRST_ACTIVITY_SHA = '2b7ef4f3ed95a95828bffbfa1152bfba63813d89cf63d67f5c85b7259dd8a85e';
 
 describe('튜터 단원 목록', () => {
   it('g6-career를 뺀 모든 단원이고, 학년 순 · 같은 학년은 앱 목록 순서다', () => {
@@ -16,6 +19,35 @@ describe('튜터 단원 목록', () => {
       .sort((a, b) => a.grade - b.grade || a.i - b.i)
       .map((u) => u.id);
     expect([...TUTOR_UNITS]).toEqual(order);
+  });
+});
+
+describe('활동이 여럿인 단원의 시나리오(id 안정성)', () => {
+  const m = units['g5-mixture']!;
+  const list = generateScenarios('g5-mixture', m);
+  const firstExp = m.manifest.experiments[0]!.id;
+  const lastOfFirst = list.filter((s) => s.state.experimentId === firstExp).length - 1;
+
+  it('첫 활동의 시나리오가 번호 순서대로 앞을 차지하고 새 활동 시나리오가 뒤에 덧붙는다', () => {
+    expect(firstExp).toBe('salt-sand');
+    expect(list.map((s) => s.scenarioId)).toEqual(list.map((_, i) => `g5-mixture-s${String(i + 1).padStart(3, '0')}`));
+    expect(list.slice(0, lastOfFirst + 1).every((s) => s.state.experimentId === 'salt-sand')).toBe(true);
+    expect(list.slice(lastOfFirst + 1).every((s) => s.state.experimentId === 'separation-methods')).toBe(true);
+    // 첫 활동만 만든 예전 결과와 같다: s001~s020, 20개.
+    expect(lastOfFirst + 1).toBe(20);
+    expect(list.slice(lastOfFirst + 1).length).toBeGreaterThan(0);
+  });
+  it('첫 활동의 시나리오 줄은 활동을 하나 더해도 한 글자도 바뀌지 않는다(해시 고정)', () => {
+    const first = list.slice(0, 20).map((s) => JSON.stringify(s)).join('\n');
+    expect(createHash('sha256').update(first).digest('hex')).toBe(FIRST_ACTIVITY_SHA);
+  });
+  it('활동이 하나인 단원은 활동마다 시나리오를 한 번만 만들고 모두 첫 활동 것이다', () => {
+    for (const id of TUTOR_UNITS) {
+      if (id === 'g5-mixture') continue;
+      const only = units[id]!.manifest.experiments;
+      expect(only, id).toHaveLength(1);
+      expect(new Set(generateScenarios(id, units[id]!).map((s) => s.state.experimentId)), id).toEqual(new Set([only[0]!.id]));
+    }
   });
 });
 
@@ -37,8 +69,8 @@ describe('시나리오 생성기', () => {
       const list = generated.filter((s) => s.unitId === id);
       expect(list.length, id).toBeGreaterThanOrEqual(15);
       // 관찰 활동은 과제마다 5개(다섯 상황)이므로 과제가 5개를 넘으면 그만큼 늘어난다.
-      const exp = units[id]!.manifest.experiments[0]!;
-      const cap = 'tasks' in exp ? Math.max(25, exp.tasks.length * 5) : 25;
+      // 활동이 여럿인 단원은 활동마다 상한을 더한다.
+      const cap = units[id]!.manifest.experiments.reduce((n, exp) => n + ('tasks' in exp ? Math.max(25, exp.tasks.length * 5) : 25), 0);
       expect(list.length, id).toBeLessThanOrEqual(cap);
       const inputs = list.map((s) => buildTutorInput(expOf(s), s.state, '', { title: units[id]!.manifest.title, grade: units[id]!.manifest.grade }));
       expect(new Set(inputs).size, id).toBe(inputs.length);

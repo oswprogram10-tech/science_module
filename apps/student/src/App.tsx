@@ -17,9 +17,10 @@ import { PortfolioLab } from './modules/career-portfolio/PortfolioLab';
 import { logbook } from './logbook';
 import { ObserveLab } from './modules/sky-observation/ObserveLab';
 import { readPlaybackSeconds } from './playback';
-import { UNITS, parseRoute, unitHash, type UnitEntry } from './units';
+import { UNITS, activityOf, parseRoute, unitHash, type ActivityEntry, type UnitEntry } from './units';
 import type { AnyModule } from './modules/types';
 import { restPlayheadOf } from './modules/restPlayhead';
+import { ActivityTabs, ActivityTabsContext, ActivityTabsSlot } from './components/ActivityTabs';
 import { DesignPanel } from './components/DesignPanel';
 import { GraphView } from './components/GraphView';
 import { SensorBar } from './components/SensorBar';
@@ -29,7 +30,7 @@ import { MockSafetyPanel } from './components/safety/MockSafetyPanel';
 import { SafetyAlertBanner } from './components/safety/SafetyAlertBanner';
 import { SafetyDialog } from './components/safety/SafetyDialog';
 import { devMode } from './components/safety/devMode';
-import { reportSafety, reportSafetyClear, useClassroomStatus, usePaused } from './classroom/bus';
+import { ExperimentIdContext, reportSafety, reportSafetyClear, useClassroomStatus, usePaused } from './classroom/bus';
 import { classroomUrl } from './classroom/config';
 import { ErrorBoundary } from './classroom/ErrorBoundary';
 import { LazyHost } from './classroom/lazy';
@@ -74,22 +75,42 @@ function Routes() {
   }, [route.page, unit]);
 
   if (unit) {
-    // key: 단원을 바꾸면 런타임 상태를 새로 만든다.
-    if (unit.activity === 'classify') {
-      return <ClassifyLab key={unit.id} unitId={unit.id} title={unit.manifest.title} experiment={unit.experiment} />;
-    }
-    if (unit.activity === 'card-sort') {
-      return <CardSortLab key={unit.id} unitId={unit.id} title={unit.manifest.title} experiment={unit.experiment} />;
-    }
-    if (unit.activity === 'portfolio') {
-      return <PortfolioLab key={unit.id} unitId={unit.id} title={unit.manifest.title} experiment={unit.experiment} unitTitles={UNIT_TITLES} />;
-    }
-    if (unit.activity === 'observe') {
-      return <ObserveLab key={unit.id} unitId={unit.id} title={unit.manifest.title} experiment={unit.experiment} />;
-    }
-    return <Lab key={unit.id} unitId={unit.id} title={unit.manifest.title} experiment={unit.experiment} module={unit.module} />;
+    const act = activityOf(unit, route.page === 'unit' ? route.experimentId : undefined);
+    const key = `${unit.id}/${act.experiment.id}`;
+    // 활동이 둘 이상일 때만 탭을 둔다. 하나뿐인 단원은 컨텍스트가 비어 화면이 그대로다.
+    const tabs =
+      unit.activities.length > 1 ? (
+        <ActivityTabs
+          activities={unit.activities}
+          currentId={act.experiment.id}
+          onSelect={(id) => {
+            window.location.hash = unitHash(unit.id, id);
+          }}
+        />
+      ) : null;
+    return (
+      <ExperimentIdContext.Provider value={tabs ? act.experiment.id : undefined}>
+        <ActivityTabsContext.Provider value={tabs}>{renderLab(unit.id, unit.manifest.title, act, key)}</ActivityTabsContext.Provider>
+      </ExperimentIdContext.Provider>
+    );
   }
   return <UnitList units={UNITS} hrefOf={unitHash} />;
+}
+
+function renderLab(unitId: string, title: string, act: ActivityEntry, key: string) {
+  // key: 단원이나 활동을 바꾸면 런타임 상태를 새로 만든다.
+  switch (act.activity) {
+    case 'classify':
+      return <ClassifyLab key={key} unitId={unitId} title={title} experiment={act.experiment} />;
+    case 'card-sort':
+      return <CardSortLab key={key} unitId={unitId} title={title} experiment={act.experiment} />;
+    case 'portfolio':
+      return <PortfolioLab key={key} unitId={unitId} title={title} experiment={act.experiment} unitTitles={UNIT_TITLES} />;
+    case 'observe':
+      return <ObserveLab key={key} unitId={unitId} title={title} experiment={act.experiment} />;
+    default:
+      return <Lab key={key} unitId={unitId} title={title} experiment={act.experiment} module={act.module} />;
+  }
 }
 
 /** 진로 활동이 "준비 중"을 가려내는 데 쓰는 단원 id -> 이름. */
@@ -320,6 +341,7 @@ function Lab({
         <h1>{title}</h1>
         <p className="question">탐구 질문: {experiment.question}</p>
       </header>
+      <ActivityTabsSlot />
 
       <main className="layout">
         <DesignPanel

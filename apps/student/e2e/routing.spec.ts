@@ -1,4 +1,5 @@
-import { test, expect } from './helpers';
+import { createHash } from 'node:crypto';
+import { test, expect, gotoUnit, activityTab, activityTabs, MIXTURE_SORT_TITLE } from './helpers';
 
 test('단원 목록은 3·4·5·6학년으로 묶인 카드 32개를 보여 준다', async ({ page }) => {
   await page.goto('/');
@@ -99,4 +100,135 @@ test('알 수 없는 단원 id는 단원 목록(#/)으로 돌아간다', async (
   await page.goto('/#/unit/nope');
   await expect(page).toHaveURL(/#\/$/);
   await expect(page.getByRole('heading', { level: 1, name: '과학 실험 단원 목록' })).toBeVisible();
+});
+
+// ---- 한 단원에 여러 활동 ----
+
+test('단원 목록 카드: 활동이 둘인 혼합물의 분리만 "활동 2개"를 보이고 카드는 단원당 하나다', async ({ page }) => {
+  await page.goto('/');
+  const cards = page.getByRole('button', { name: /탐구 질문:/ });
+  await expect(cards).toHaveCount(32);
+  await expect(page.getByText(/^활동 \d+개$/)).toHaveCount(1);
+  const mixture = page.getByRole('region', { name: '5학년' }).getByRole('button', { name: /혼합물의 분리/ });
+  await expect(mixture).toHaveCount(1);
+  await expect(mixture).toContainText('활동 2개');
+  // 카드의 탐구 질문은 첫 활동의 것이다.
+  await expect(mixture).toContainText('소금과 모래가 섞인 혼합물에서 소금을 어떻게 분리할 수 있을까?');
+  await mixture.click();
+  await expect(page).toHaveURL(/#\/unit\/g5-mixture$/);
+  await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+});
+
+test('#/unit/{id}는 첫 활동, #/unit/{id}/{experimentId}는 그 활동을 연다', async ({ page }) => {
+  await page.goto('/#/unit/g5-mixture');
+  await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('group', { name: '넣는 물의 양' })).toBeVisible();
+  await page.goto('/#/unit/g5-mixture/separation-methods');
+  await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByText('탐구 질문: 혼합물을 이루는 물질의 성질이 다르면')).toBeVisible();
+  await page.goto('/#/unit/g5-mixture/salt-sand');
+  await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+});
+
+test('모르는 experimentId는 첫 활동으로 돌린다', async ({ page }) => {
+  await page.goto('/#/unit/g5-mixture/nope');
+  await expect(page.getByRole('heading', { level: 1, name: '혼합물의 분리' })).toBeVisible();
+  await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('group', { name: '넣는 물의 양' })).toBeVisible();
+  // 활동이 하나인 단원에서는 어떤 experimentId도 그 단원의 활동을 연다.
+  await page.goto('/#/unit/g4-gases/separation-methods');
+  await expect(page.getByRole('heading', { level: 1, name: '여러 가지 기체' })).toBeVisible();
+  await expect(page.getByRole('tablist')).toHaveCount(0);
+});
+
+test('새로 고침해도 같은 활동이 열린다', async ({ page }) => {
+  await page.goto('/#/unit/g5-mixture');
+  await activityTab(page, 2).click();
+  await expect(page).toHaveURL(/#\/unit\/g5-mixture\/separation-methods$/);
+  await page.reload();
+  await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('radio', { name: '한 가지가 자석에 붙나요?', exact: true })).toBeVisible();
+  await activityTab(page, 1).click();
+  await page.reload();
+  await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+});
+
+test('뒤로 가기로 활동이 바뀌고 활동의 상태는 새로 시작한다', async ({ page }) => {
+  await page.goto('/#/unit/g5-mixture/separation-methods');
+  await page.getByRole('radio', { name: '한 가지가 자석에 붙나요?', exact: true }).check();
+  await expect(page.getByRole('radio', { name: '한 가지가 자석에 붙나요?', exact: true })).toBeChecked();
+  await activityTab(page, 1).click();
+  await activityTab(page, 2).click();
+  await expect(page.getByRole('radio', { name: '한 가지가 자석에 붙나요?', exact: true })).not.toBeChecked();
+  await page.goBack();
+  await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+});
+
+test('키보드로 탭을 옮긴다: 화살표, Home, End', async ({ page }) => {
+  await page.goto('/#/unit/g5-mixture');
+  await expect(activityTabs(page)).toBeVisible();
+  // 선택된 탭만 Tab 순서에 들어 있다(roving tabindex).
+  await expect(activityTab(page, 1)).toHaveAttribute('tabindex', '0');
+  await expect(activityTab(page, 2)).toHaveAttribute('tabindex', '-1');
+  await activityTab(page, 1).focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page).toHaveURL(/#\/unit\/g5-mixture\/separation-methods$/);
+  await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'true');
+  await expect(activityTab(page, 2)).toBeFocused();
+  await expect(page.getByRole('heading', { level: 1, name: '혼합물의 분리' })).toBeVisible();
+  await page.keyboard.press('ArrowRight'); // 끝에서 처음으로
+  await expect(activityTab(page, 1)).toBeFocused();
+  await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+  await page.keyboard.press('End');
+  await expect(activityTab(page, 2)).toBeFocused();
+  await expect(page).toHaveURL(/#\/unit\/g5-mixture\/separation-methods$/);
+  await page.keyboard.press('Home');
+  await expect(activityTab(page, 1)).toBeFocused();
+  await page.keyboard.press('ArrowLeft'); // 처음에서 끝으로
+  await expect(activityTab(page, 2)).toBeFocused();
+  await expect(activityTab(page, 2)).toHaveText(`활동 2 · ${MIXTURE_SORT_TITLE}`);
+});
+
+test('활동이 하나인 단원은 탭을 그리지 않고 머리 바로 아래가 본문이다(구조 그대로)', async ({ page }) => {
+  for (const id of ['g4-gases', 'g5-solution', 'g6-acid-base', 'g3-animal', 'g3-material', 'g5-strata', 'g4-night-sky', 'g6-career']) {
+    await gotoUnit(page, id);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('tablist'), id).toHaveCount(0);
+    await expect(page.getByRole('tab'), id).toHaveCount(0);
+    await expect(page.locator('.activity-tabs'), id).toHaveCount(0);
+    // 머리(header.top) 바로 뒤 형제는 본문(main)이다: 탭 자리가 DOM에 아무것도 남기지 않는다.
+    const next = await page.locator('.app > header.top').evaluate((h) => h.nextElementSibling?.tagName ?? null);
+    expect(next, id).toBe('MAIN');
+  }
+});
+
+test('활동이 둘인 단원은 머리 바로 아래에 탭이 있다', async ({ page }) => {
+  await gotoUnit(page, 'g5-mixture');
+  const next = await page.locator('.app > header.top').evaluate((h) => h.nextElementSibling?.className ?? null);
+  expect(next).toBe('activity-tabs');
+});
+
+/**
+ * 여러 활동 지원을 더하기 전의 코드로 만든 화면(#root의 innerHTML, 처음 상태)의 SHA-256.
+ * 활동이 하나인 단원은 한 글자도 달라지면 안 된다(탭 자리가 DOM에 아무것도 남기지 않는다).
+ */
+const BASELINE_DOM: Record<string, string> = {
+  'g4-gases': '88a2f9af0f667dc4e24ed3a4e713a33551ad13e9906629f9ab60a4c7f43c7bbb',
+  'g5-solution': '5a419295a21b415e3bd24ed2b086ac4d851b453cbf4953b1bb9f42c93e4586ae',
+  'g6-acid-base': '82cf6aa6cc7d15ec3e3db7f9eee55708f52ba91d06bb59d6bf3f7aa2d914f073',
+  'g3-animal': 'ba0769772093ae57a65c339e59359328fb904c4c825cd47dc3282b58d69ce133',
+  'g3-material': 'ccfbecacc9872a8c06aa62ccb273a21781f1841ae715a1fec7b80ca7528e94aa',
+  'g5-strata': '37617a9f885625557bf0b125484a688f4140ef72fc7f11f6d50e4f30fae817e7',
+  'g3-plantlife': '9d2d201024b82e7fcf7d7b4a5d643ba423e0e66db84606e3e8ed1562b1ea8c10',
+  'g6-career': '8483518f5d62a6e5049cf6d5ce6905f8592f1e35b51bccab201a2ac360d5733b',
+};
+
+test('활동이 하나인 대표 단원 8개의 화면(DOM)이 활동 탭을 더하기 전과 같다', async ({ page }) => {
+  for (const [id, sha] of Object.entries(BASELINE_DOM)) {
+    await gotoUnit(page, id);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await page.waitForTimeout(300);
+    const html = await page.locator('#root').innerHTML();
+    expect(createHash('sha256').update(html).digest('hex'), `${id}: 화면이 달라졌어요`).toBe(sha);
+  }
 });

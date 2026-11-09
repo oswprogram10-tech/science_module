@@ -62,6 +62,33 @@ test.describe('수업 연결', () => {
     await expect(card(teacher, 2)).toContainText('결과 보는 중');
   });
 
+  test('혼합물의 분리: 활동이 둘이라 교사 카드에 단원 이름 옆 활동 이름이 보이고, 활동을 옮기면 바뀐다', async ({ page: teacher, context }) => {
+    const code = await createClass(teacher);
+    const s3 = await context.newPage();
+    await joinClass(s3, code, 3);
+    await s3.evaluate(() => {
+      window.location.hash = '#/unit/g5-mixture';
+    });
+    await expect(s3.getByRole('tab', { name: /^활동 1 · / })).toHaveAttribute('aria-selected', 'true');
+    // 첫 활동(experimentId가 없던 때와 같은 단원)도 활동이 둘이므로 첫 활동의 이름이 붙는다.
+    await expect(card(teacher, 3)).toContainText('혼합물의 분리 · ');
+    await expect(card(teacher, 3)).toContainText('실험 설계 중');
+    await s3.getByRole('tab', { name: /^활동 2 · / }).click();
+    await expect(card(teacher, 3)).toContainText('혼합물의 분리 · 혼합물의 성질에 따라 분리 방법 고르기');
+    // 두 번째 활동에서 한 가지를 살펴보면 진행이 교사 카드에 반영된다.
+    await s3.getByRole('radio', { name: '한 가지가 자석에 붙나요?', exact: true }).check();
+    await s3.getByRole('button', { name: /^철 가루와 모래 관찰 \d\/3$/ }).click();
+    await s3.getByRole('button', { name: '자석 대 보기', exact: true }).click();
+    await expect(card(teacher, 3)).toContainText('시행 1회');
+    // 활동이 하나인 단원은 활동 이름을 붙이지 않는다.
+    await s3.evaluate(() => {
+      window.location.hash = '#/unit/g5-solution';
+    });
+    await expect(card(teacher, 3)).toContainText('용해와 용액');
+    await expect(card(teacher, 3)).not.toContainText(' · 용해');
+    await expect(card(teacher, 3).locator('.unit')).toHaveText('용해와 용액');
+  });
+
   test('5모둠의 모의 안전 경고가 교사 화면에 붉게 보이고, 확인하면 사라진다', async ({ page: teacher, context }) => {
     const code = await createClass(teacher);
     const s5 = await context.newPage();

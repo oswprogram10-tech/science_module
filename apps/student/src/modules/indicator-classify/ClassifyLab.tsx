@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { ActivityTabsSlot } from '../../components/ActivityTabs';
 import { indicatorColor, type GroupKey } from '@sci/engine-matter';
 import { josa } from '@sci/gateway';
 import type { ClassificationExperiment } from '@sci/schema';
@@ -196,6 +197,7 @@ export function ClassifyLab({
         <h1>{title}</h1>
         <p className="question">탐구 질문: {exp.question}</p>
       </header>
+      <ActivityTabsSlot />
 
       <main className="classify-layout">
         <section className="panel" aria-label="용액 고르기">

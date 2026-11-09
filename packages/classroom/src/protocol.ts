@@ -42,6 +42,8 @@ export const statusSchema = z.strictObject({
   // 단원 목록에 있을 때(idle)는 단원과 활동이 없다.
   unitId: shortText.optional(),
   activity: activitySchema.optional(),
+  // 한 단원에 활동이 여럿일 때 어느 활동인지(없으면 첫 활동). 오래된 학생 앱은 보내지 않는다.
+  experimentId: shortText.optional(),
   phase: phaseSchema,
   trials: z.number().int().min(0).max(9999),
   lastKind: shortText.optional(),
@@ -86,6 +88,7 @@ export const groupViewSchema = z.strictObject({
   deviceTier: tierSchema.optional(),
   unitId: shortText.optional(),
   activity: activitySchema.optional(),
+  experimentId: shortText.optional(),
   phase: phaseSchema.optional(),
   trials: z.number().int().min(0),
   lastKind: shortText.optional(),

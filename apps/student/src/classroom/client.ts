@@ -276,11 +276,12 @@ export class StudentClassroom {
 
   private sendStatus(force: boolean) {
     if (this.state.link !== 'online') return;
-    const { unitId, activity, phase, trials, lastKind, mismatch, safetyLocked } = bus.getStatus();
+    const { unitId, activity, experimentId, phase, trials, lastKind, mismatch, safetyLocked } = bus.getStatus();
     const msg = {
       t: 'status',
       ...(unitId ? { unitId: clampText(unitId, LIMITS.shortText) } : {}),
       ...(activity ? { activity } : {}),
+      ...(experimentId ? { experimentId: clampText(experimentId, LIMITS.shortText) } : {}),
       phase,
       trials: Math.min(9999, Math.max(0, Math.trunc(trials))),
       ...(lastKind ? { lastKind: clampText(lastKind, LIMITS.shortText) } : {}),

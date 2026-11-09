@@ -37,6 +37,18 @@ for (const vp of VIEWPORTS) {
         expect(overflow).toBeLessThanOrEqual(1);
       });
     }
+
+    // 한 단원에 여러 활동: 두 번째 활동(분리 방법 고르기)과 활동 탭도 가로 스크롤이 없다.
+    test('g5-mixture 두 번째 활동(활동 탭 포함)에 가로 스크롤이 없다', async ({ page }) => {
+      await gotoUnit(page, 'g5-mixture', { experiment: 'separation-methods' });
+      await expect(page.getByRole('tab', { name: /^활동 2 · / })).toBeVisible();
+      await expect(page.getByRole('link', { name: '← 단원 목록' })).toBeVisible();
+      const { sw, iw } = await scrollWidth(page);
+      expect(sw).toBeLessThanOrEqual(iw);
+      // 탭이 화면 폭 안에 들어온다(긴 이름은 줄을 바꾼다).
+      const tabs = await page.getByRole('tab').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().right));
+      for (const right of tabs) expect(right).toBeLessThanOrEqual(vp.width + 1);
+    });
   });
 }
 

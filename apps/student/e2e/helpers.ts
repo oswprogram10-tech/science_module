@@ -20,13 +20,13 @@ export const test = base.extend<{ errors: string[] }>({
 });
 
 /** 단원 화면으로 간다. playback은 기본 0.3초(빠른 재생). */
-export async function gotoUnit(page: Page, id: string, opts: { dev?: boolean; playback?: number | null } = {}) {
+export async function gotoUnit(page: Page, id: string, opts: { dev?: boolean; playback?: number | null; experiment?: string } = {}) {
   const params: string[] = [];
   if (opts.dev) params.push('dev=1');
   const playback = opts.playback === undefined ? 0.3 : opts.playback;
   if (playback !== null) params.push(`playback=${playback}`);
   const qs = params.length ? `?${params.join('&')}` : '';
-  await page.goto(`/${qs}#/unit/${id}`);
+  await page.goto(`/${qs}#/unit/${id}${opts.experiment ? `/${opts.experiment}` : ''}`);
 }
 
 /** 바꿀 조건(조작변인) 라디오를 고른다. 예: selectIV(page, '물의 온도') */
@@ -401,3 +401,58 @@ export async function strataFinishEnv(page: Page, override: Partial<Record<Strat
   }
   await strataEnvCheck(page).click();
 }
+
+// ---- 혼합물의 분리 두 번째 활동: 분리 방법 고르기(카드 분류 groups, 활동 탭) ----
+
+export const MIXTURE_UNIT = 'g5-mixture';
+export const MIXTURE_SORT = 'separation-methods';
+export const MIXTURE_SORT_TITLE = '혼합물의 성질에 따라 분리 방법 고르기';
+
+/** 두 번째 활동으로 간다(주소 #/unit/g5-mixture/separation-methods). */
+export const gotoMixtureSort = (page: Page, opts: { dev?: boolean } = {}) => gotoUnit(page, MIXTURE_UNIT, { ...opts, experiment: MIXTURE_SORT });
+
+export const MIXTURE_CARDS = ['콩과 좁쌀', '쌀과 모래', '철 가루와 모래', '철 구슬과 유리 구슬', '소금과 모래', '설탕과 콩'] as const;
+export type MixtureCard = (typeof MIXTURE_CARDS)[number];
+export type MixtureCriterionKey = 'size' | 'magnet' | 'dissolve';
+export const MIXTURE_CRITERION_LABEL: Record<MixtureCriterionKey, string> = {
+  size: '두 가지의 알갱이 크기가 다른가요?',
+  magnet: '한 가지가 자석에 붙나요?',
+  dissolve: '한 가지만 물에 녹나요?',
+};
+/** 돋보기 버튼 문구(매니페스트 features[].action). */
+export const MIXTURE_ACTION: Record<MixtureCriterionKey, string> = { size: '크기 비교하기', magnet: '자석 대 보기', dissolve: '물에 넣어 보기' };
+/** 카드를 관찰 결과에 맞게 넣을 무리(테스트가 정답을 알고 있어야 올바른 분류를 재현할 수 있다). */
+export const MIXTURE_GROUP: Record<MixtureCriterionKey, Record<MixtureCard, string>> = {
+  size: { '콩과 좁쌀': '다르다', '쌀과 모래': '다르다', '철 가루와 모래': '비슷하다', '철 구슬과 유리 구슬': '비슷하다', '소금과 모래': '비슷하다', '설탕과 콩': '다르다' },
+  magnet: { '콩과 좁쌀': '붙지 않는다', '쌀과 모래': '붙지 않는다', '철 가루와 모래': '붙는다', '철 구슬과 유리 구슬': '붙는다', '소금과 모래': '붙지 않는다', '설탕과 콩': '붙지 않는다' },
+  dissolve: { '콩과 좁쌀': '녹지 않는다', '쌀과 모래': '녹지 않는다', '철 가루와 모래': '녹지 않는다', '철 구슬과 유리 구슬': '녹지 않는다', '소금과 모래': '녹는다', '설탕과 콩': '녹는다' },
+};
+
+/** 카드 버튼(이름 아래 물질 이름이 없다). 접근 가능한 이름은 "이름 관찰 n/3"이다. */
+export const mixtureCard = (page: Page, card: MixtureCard) => page.getByRole('button', { name: new RegExp(`^${card} 관찰 \\d/3$`) });
+export const mixtureObserveButton = (page: Page, key: MixtureCriterionKey) =>
+  page.getByRole('region', { name: '돋보기' }).getByRole('button', { name: MIXTURE_ACTION[key], exact: true });
+
+/** 6장을 모두 살펴보고 나눈다. override는 일부러 다른 무리에 넣을 카드. */
+export async function mixtureSortAll(
+  page: Page,
+  key: MixtureCriterionKey,
+  opts: { observe?: boolean; override?: Partial<Record<MixtureCard, string>> } = {},
+) {
+  for (const card of MIXTURE_CARDS) {
+    await mixtureCard(page, card).click();
+    if (opts.observe !== false) await mixtureObserveButton(page, key).click();
+    await sortPutButton(page, opts.override?.[card] ?? MIXTURE_GROUP[key][card]).click();
+  }
+}
+
+/** 기준 하나를 관찰 결과에 맞게 끝낸다(고르기 -> 관찰 -> 넣기 -> 확인). */
+export async function mixtureFinishCriterion(page: Page, key: MixtureCriterionKey) {
+  await sortChoose(page, MIXTURE_CRITERION_LABEL[key]);
+  await mixtureSortAll(page, key);
+  await sortCheckButton(page).click();
+}
+
+/** 활동 탭(활동이 둘 이상인 단원에만 있다). */
+export const activityTabs = (page: Page) => page.getByRole('tablist', { name: '활동 고르기' });
+export const activityTab = (page: Page, n: number) => page.getByRole('tab', { name: new RegExp(`^활동 ${n} · `) });

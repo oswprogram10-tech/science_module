@@ -25,6 +25,11 @@ import {
   materialFinishCriterion,
   materialObserveButton,
   materialSortAll,
+  gotoMixtureSort,
+  mixtureCard,
+  mixtureFinishCriterion,
+  mixtureObserveButton,
+  mixtureSortAll,
   strataCard,
   strataFill,
   strataFinishEnv,
@@ -701,6 +706,53 @@ for (const scheme of ['light', 'dark'] as const) {
     await sortCheckButton(page).click();
     await expect(page.getByText('관찰한 특징과 분류가 서로 잘 맞아요.')).toBeVisible();
     await materialFinishCriterion(page, 'bends');
+    await expect(page.getByText('두 가지 기준으로 분류했어요!')).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+}
+
+// ---- g5-mixture 두 번째 활동(활동 탭, 분리 방법 고르기) ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`g5-mixture 활동 탭 ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 첫 활동의 탭, 분리 방법 고르기 처음, 결과 그림, 다시 비교하기, 두 기준을 끝낸 뒤`, async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.emulateMedia({ colorScheme: scheme });
+    // 단원 목록의 "활동 2개" 표시
+    await page.goto('/');
+    await expect(page.getByText('활동 2개')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    // 첫 활동 화면의 활동 탭
+    await gotoUnit(page, 'g5-mixture');
+    await expect(page.getByRole('tablist', { name: '활동 고르기' })).toBeVisible();
+    await expectNoSeriousViolations(page);
+
+    await gotoMixtureSort(page);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('tab', { name: /^활동 2 · / })).toHaveAttribute('aria-selected', 'true');
+    await expectNoSeriousViolations(page);
+
+    await sortChoose(page, '한 가지가 자석에 붙나요?');
+    await mixtureCard(page, '철 가루와 모래').click();
+    await mixtureObserveButton(page, 'size').click();
+    await mixtureObserveButton(page, 'magnet').click();
+    await mixtureObserveButton(page, 'dissolve').click();
+    await expect(page.locator('svg .mix-result')).not.toHaveCount(0);
+    await expectNoSeriousViolations(page);
+    await mixtureCard(page, '소금과 모래').click();
+    await mixtureObserveButton(page, 'dissolve').click();
+    await expect(page.locator('svg .mix-gone')).toHaveCount(1);
+    await expectNoSeriousViolations(page);
+
+    await mixtureSortAll(page, 'magnet', { override: { '철 구슬과 유리 구슬': '붙지 않는다' } });
+    await sortCheckButton(page).click();
+    await expect(page.getByText('철 구슬과 유리 구슬은 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?')).toBeVisible();
+    await expectNoSeriousViolations(page);
+
+    await mixtureCard(page, '철 구슬과 유리 구슬').click();
+    await sortPutButton(page, '붙는다').click();
+    await sortCheckButton(page).click();
+    await expect(page.getByText('관찰한 특징과 분류가 서로 잘 맞아요.')).toBeVisible();
+    await mixtureFinishCriterion(page, 'dissolve');
     await expect(page.getByText('두 가지 기준으로 분류했어요!')).toBeVisible();
     await expectNoSeriousViolations(page);
   });

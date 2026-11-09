@@ -16,17 +16,20 @@ const VIEWPORTS = [
 ];
 
 const UNITS_DIR = join(process.cwd(), '..', '..', 'content', 'units');
+// 활동이 여럿인 단원은 활동마다 하나씩 잰다(첫 활동은 단원 id만, 나머지는 `단원 id/활동 id`로 부른다).
 const UNITS = readdirSync(UNITS_DIR)
   .sort()
-  .map((id) => {
-    const manifest = JSON.parse(readFileSync(join(UNITS_DIR, id, 'manifest.json'), 'utf8')) as { experiments: { module: string }[] };
-    return { id, module: manifest.experiments[0]!.module };
+  .flatMap((id) => {
+    const manifest = JSON.parse(readFileSync(join(UNITS_DIR, id, 'manifest.json'), 'utf8')) as { experiments: { id: string; module: string }[] };
+    return manifest.experiments.map((e, i) => ({ id, name: i === 0 ? id : `${id}/${e.id}`, experiment: i === 0 ? undefined : e.id, module: e.module }));
   });
 
-const NO_SVG_TEXT = new Set(['g3-animal', 'g3-material', 'g3-plantlife', 'g5-strata', 'g6-acid-base', 'g6-career']);
+const NO_SVG_TEXT = new Set(['g3-animal', 'g3-material', 'g3-plantlife', 'g5-strata', 'g6-acid-base', 'g6-career', 'g5-mixture/separation-methods']);
 
-test('단원 목록: 32개 단원을 모두 잰다', () => {
-  expect(UNITS.length).toBe(32);
+test('단원 목록: 32개 단원의 모든 활동(33개)을 잰다', () => {
+  expect(new Set(UNITS.map((u) => u.id)).size).toBe(32);
+  expect(UNITS.length).toBe(33);
+  expect(UNITS.map((u) => u.name)).toContain('g5-mixture/separation-methods');
 });
 
 /** 지금 화면의 SVG 글자를 재서 13 px보다 작은 것, 그림 밖으로 잘린 것, (그래프에서) 서로 겹친 것을 "상태 | 그림 | 글자 | 문제"로 돌려준다. */
@@ -169,9 +172,9 @@ for (const vp of VIEWPORTS) {
   test.describe(`${vp.width}px`, () => {
     test.use({ viewport: vp });
     for (const unit of UNITS) {
-      test(`${unit.id}: SVG 글자가 ${MIN_PX}px 이상`, async ({ page }) => {
+      test(`${unit.name}: SVG 글자가 ${MIN_PX}px 이상`, async ({ page }) => {
         measured = 0;
-        await gotoUnit(page, unit.id);
+        await gotoUnit(page, unit.id, { experiment: unit.experiment });
         await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
         const found: string[] = [...(await smallTexts(page, '처음'))];
         switch (unit.module) {
@@ -192,7 +195,7 @@ for (const vp of VIEWPORTS) {
             found.push(...(await smallTexts(page, '시행 1회 뒤')));
         }
         // 카드 그림·도구 그림·지시약 단원에는 SVG 글자가 없다(그림은 글자 없이 그린다). 나머지는 반드시 글자를 잰다.
-        if (!NO_SVG_TEXT.has(unit.id)) expect(measured, '잰 SVG 글자가 하나도 없어요').toBeGreaterThan(0);
+        if (!NO_SVG_TEXT.has(unit.name)) expect(measured, '잰 SVG 글자가 하나도 없어요').toBeGreaterThan(0);
         expect([...new Set(found)], `${MIN_PX}px보다 작거나 잘리거나 겹친 SVG 글자`).toEqual([]);
       });
     }

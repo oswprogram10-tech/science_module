@@ -52,13 +52,28 @@ import { cardSortModule } from './modules/card-sort';
 import { portfolioModule } from './modules/career-portfolio';
 import type { AnyModule, CardSortModule, ClassifyModule, ObserveModule, PortfolioModule } from './modules/types';
 
+/** 단원의 활동 하나. 매니페스트 experiments의 항목마다 하나씩 있고 순서도 같다. */
+export type ActivityEntry =
+  | { activity: 'variable'; experiment: VariableExperiment; module: AnyModule }
+  | { activity: 'classify'; experiment: ClassificationExperiment; module: ClassifyModule }
+  | { activity: 'observe'; experiment: ObservationExperiment; module: ObserveModule }
+  | { activity: 'card-sort'; experiment: CardSortExperiment; module: CardSortModule }
+  | { activity: 'portfolio'; experiment: PortfolioExperiment; module: PortfolioModule };
+
+/** 최상위 activity/experiment/module은 첫 활동의 값이다(activities[0]과 같다). */
 export type UnitEntry =
-  | { ok: true; activity: 'variable'; id: string; manifest: Manifest; experiment: VariableExperiment; module: AnyModule }
-  | { ok: true; activity: 'classify'; id: string; manifest: Manifest; experiment: ClassificationExperiment; module: ClassifyModule }
-  | { ok: true; activity: 'observe'; id: string; manifest: Manifest; experiment: ObservationExperiment; module: ObserveModule }
-  | { ok: true; activity: 'card-sort'; id: string; manifest: Manifest; experiment: CardSortExperiment; module: CardSortModule }
-  | { ok: true; activity: 'portfolio'; id: string; manifest: Manifest; experiment: PortfolioExperiment; module: PortfolioModule }
+  | (ActivityEntry & { ok: true; id: string; manifest: Manifest; activities: ActivityEntry[] })
   | { ok: false; id: string; title: string; issues: string[] };
+
+type OkUnit = Extract<UnitEntry, { ok: true }>;
+
+function toActivity(experiment: Manifest['experiments'][number], modules: Record<ModuleKind, AnyModule>): ActivityEntry {
+  if (isObservationExperiment(experiment)) return { activity: 'observe', experiment, module: observeModule };
+  if (isCardSortExperiment(experiment)) return { activity: 'card-sort', experiment, module: cardSortModule };
+  if (isPortfolioExperiment(experiment)) return { activity: 'portfolio', experiment, module: portfolioModule };
+  if (!isVariableExperiment(experiment)) return { activity: 'classify', experiment, module: classifyModule };
+  return { activity: 'variable', experiment, module: modules[experiment.module] };
+}
 
 /** 매니페스트 하나를 schema 검증과 모듈 validate에 통과시킨다. 실패하면 오류 항목을 돌려준다. */
 export function loadUnit(
@@ -85,20 +100,8 @@ export function loadUnit(
       for (const msg of msgs) issues.push(`${exp.id}: ${msg}`);
     }
     if (issues.length > 0) return { ok: false, id: manifest.id, title: manifest.title, issues };
-    const experiment = manifest.experiments[0]!;
-    if (isObservationExperiment(experiment)) {
-      return { ok: true, activity: 'observe', id: manifest.id, manifest, experiment, module: observeModule };
-    }
-    if (isCardSortExperiment(experiment)) {
-      return { ok: true, activity: 'card-sort', id: manifest.id, manifest, experiment, module: cardSortModule };
-    }
-    if (isPortfolioExperiment(experiment)) {
-      return { ok: true, activity: 'portfolio', id: manifest.id, manifest, experiment, module: portfolioModule };
-    }
-    if (!isVariableExperiment(experiment)) {
-      return { ok: true, activity: 'classify', id: manifest.id, manifest, experiment, module: classifyModule };
-    }
-    return { ok: true, activity: 'variable', id: manifest.id, manifest, experiment, module: modules[experiment.module] };
+    const activities = manifest.experiments.map((exp) => toActivity(exp, modules));
+    return { ...activities[0]!, ok: true, id: manifest.id, manifest, activities } as OkUnit;
   } catch (e) {
     return {
       ok: false,
@@ -119,14 +122,16 @@ export function buildRegistry(
 
 export const UNITS: UnitEntry[] = buildRegistry([gasesJson, solutionJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, earthMotionJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, animalJson, plantlifeJson, forceJson, soundJson, magnetJson, motionJson, materialJson, waterStateJson, mixtureJson, earthSeaJson, nightSkyJson, strataJson, weatherJson, healthJson, climateJson, energyJson, careerJson]);
 
-export type Route = { page: 'list' } | { page: 'unit'; unitId: string };
+/** experimentId는 주소에 있을 때만 들어 있다(없으면 첫 활동). */
+export type Route = { page: 'list' } | { page: 'unit'; unitId: string; experimentId?: string };
 
-/** `#/` → 목록, `#/unit/{id}` → 실험 화면. */
+/** `#/` → 목록, `#/unit/{id}` → 첫 활동, `#/unit/{id}/{experimentId}` → 그 활동. */
 export function parseRoute(hash: string): Route {
-  const m = /^#\/unit\/([^/?#]+)\/?$/.exec(hash);
+  const m = /^#\/unit\/([^/?#]+)(?:\/([^/?#]+))?\/?$/.exec(hash);
   if (m) {
     try {
-      return { page: 'unit', unitId: decodeURIComponent(m[1]!) };
+      const unitId = decodeURIComponent(m[1]!);
+      return m[2] === undefined ? { page: 'unit', unitId } : { page: 'unit', unitId, experimentId: decodeURIComponent(m[2]) };
     } catch {
       return { page: 'list' };
     }
@@ -134,4 +139,10 @@ export function parseRoute(hash: string): Route {
   return { page: 'list' };
 }
 
-export const unitHash = (id: string) => `#/unit/${encodeURIComponent(id)}`;
+export const unitHash = (id: string, experimentId?: string) =>
+  `#/unit/${encodeURIComponent(id)}${experimentId === undefined ? '' : `/${encodeURIComponent(experimentId)}`}`;
+
+/** 주소의 experimentId에 해당하는 활동. 없거나 모르는 id면 첫 활동. */
+export function activityOf(unit: OkUnit, experimentId?: string): ActivityEntry {
+  return unit.activities.find((a) => a.experiment.id === experimentId) ?? unit.activities[0]!;
+}

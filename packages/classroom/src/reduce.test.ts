@@ -54,6 +54,12 @@ describe('reduce: 상태·경고', () => {
     const s = reduce(joined(), { type: 'status', group: 1, status: { ...status, lastKind: 'confounded', mismatch: true }, now: T0 + 10 });
     expect(toSnapshot(s).groups[0]).toMatchObject({ unitId: 'g5-solution', activity: 'variable', phase: 'running', trials: 1, lastKind: 'confounded', mismatch: true });
   });
+  it('experimentId는 있을 때만 카드에 실린다(오래된 클라이언트는 보내지 않는다)', () => {
+    const old = toSnapshot(reduce(joined(), { type: 'status', group: 1, status, now: T0 + 10 })).groups[0]!;
+    expect(old).not.toHaveProperty('experimentId');
+    const next = toSnapshot(reduce(joined(), { type: 'status', group: 1, status: { ...status, experimentId: 'separation-methods' }, now: T0 + 10 })).groups[0]!;
+    expect(next.experimentId).toBe('separation-methods');
+  });
   it('참여하지 않은 모둠의 이벤트는 무시한다', () => {
     const s = fresh();
     expect(reduce(s, { type: 'status', group: 4, status, now: T0 })).toBe(s);

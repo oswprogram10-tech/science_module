@@ -1,4 +1,5 @@
 import { useMemo, useState, useSyncExternalStore } from 'react';
+import { ActivityTabsSlot } from '../../components/ActivityTabs';
 import { REQUIRED_CRITERIA, criterionOf } from '@sci/cardsort';
 import type { CardSortExperiment } from '@sci/schema';
 import { renderAndGuard } from '@sci/tutor';
@@ -125,6 +126,7 @@ function GroupsSortLab({
         <h1>{title}</h1>
         <p className="question">탐구 질문: {exp.question}</p>
       </header>
+      <ActivityTabsSlot />
 
       <main className="sort-layout">
         <section className="panel" aria-label="카드 고르기">

@@ -162,6 +162,7 @@ export function toGroupView(g: GroupRecord): GroupView {
     ...(g.deviceTier ? { deviceTier: g.deviceTier } : {}),
     ...(s?.unitId ? { unitId: s.unitId } : {}),
     ...(s?.activity ? { activity: s.activity } : {}),
+    ...(s?.experimentId ? { experimentId: s.experimentId } : {}),
     ...(s ? { phase: s.phase } : {}),
     trials: s?.trials ?? 0,
     ...(s?.lastKind ? { lastKind: s.lastKind } : {}),

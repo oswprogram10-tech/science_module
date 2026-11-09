@@ -72,6 +72,27 @@ describe('클라이언트 메시지', () => {
   });
 });
 
+describe('status의 experimentId (선택, 하위 호환)', () => {
+  const base = { t: 'status', unitId: 'g5-mixture', activity: 'card-sort', phase: 'running', trials: 2, safetyLocked: false };
+  it('오래된 클라이언트처럼 experimentId가 없어도 통과한다', () => {
+    const m = parseClientMessage(j(base));
+    expect(m).toMatchObject({ t: 'status', unitId: 'g5-mixture' });
+    expect(m).not.toHaveProperty('experimentId');
+  });
+  it('있으면 읽히고 shortText(1~64자)가 아니면 거부한다', () => {
+    expect(parseClientMessage(j({ ...base, experimentId: 'separation-methods' }))).toMatchObject({ experimentId: 'separation-methods' });
+    expect(parseClientMessage(j({ ...base, experimentId: '' }))).toBeNull();
+    expect(parseClientMessage(j({ ...base, experimentId: 'x'.repeat(65) }))).toBeNull();
+    expect(parseClientMessage(j({ ...base, experimentId: 3 }))).toBeNull();
+  });
+  it('교사에게 가는 스냅샷도 experimentId가 있거나 없거나 통과한다', () => {
+    const group = { group: 1, online: true, lastSeen: 1, unitId: 'g5-mixture', activity: 'card-sort', phase: 'running', trials: 2, mismatch: false, safety: [], safetyLocked: false };
+    for (const g of [group, { ...group, experimentId: 'separation-methods' }]) {
+      expect(parseServerMessage(j({ t: 'snapshot', code: 'ABC234', paused: false, groups: [g] }))).not.toBeNull();
+    }
+  });
+});
+
 describe('서버 메시지', () => {
   it('정상 메시지를 읽는다', () => {
     expect(parseServerMessage(j({ t: 'joined', code: 'ABC234', group: 1 }))).not.toBeNull();

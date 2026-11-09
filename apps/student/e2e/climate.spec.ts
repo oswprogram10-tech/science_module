@@ -70,7 +70,8 @@ test('점검표를 거쳐 기준(없음, 보통 공기, 흰색)을 하면 27.8, 
   for (const h of ['오른 온도(°C)', '20분 뒤 온도(°C)']) await expect(page.getByRole('columnheader', { name: h })).toBeVisible();
   await expect(macro(page).getByText('20.0분 · 병 속 27.8 °C (처음보다 +5.8 °C)')).toBeVisible();
   await expect(macro(page).getByTestId('bottle-temp')).toHaveText('27.8°C');
-  await expect(sensor(page, '온도')).toContainText('27.');
+  // 모의 온도계는 씨앗 고정 잡음(±0.2 °C)을 더한다. 재생 중 몇 번 읽었는지(화면 갱신 수)에 따라 잡음 차례가 달라지므로 범위로 본다.
+  await expect.poll(async () => Math.abs(parseFloat(await sensor(page, '온도').innerText()) - 27.8)).toBeLessThanOrEqual(0.25);
   expect(await page.locator('main').innerText()).not.toMatch(/복사 평형|적외선 흡수|복사 강제력|탄소 순환|ppm/);
 });
 

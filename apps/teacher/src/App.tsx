@@ -11,7 +11,7 @@ import {
 import { TeacherClient, type TeacherState } from './client';
 import { serverUrl } from './serverUrl';
 import { beep, enableSound } from './sound';
-import { unitTitle } from './units';
+import { activityTitle, unitTitle } from './units';
 
 interface Creds {
   code: string;
@@ -239,6 +239,7 @@ function GroupCard({ entry, now, onAck }: { entry: Entry; now: number; onAck: (t
   const { group, view: g } = entry;
   const alerts = unacked(g);
   const title = g ? unitTitle(g.unitId) : null;
+  const actTitle = g ? activityTitle(g.unitId, g.experimentId) : null;
   const sentence = g ? describeSituation(g) : null;
   const cls = ['card', alerts.length > 0 ? 'alert' : '', g?.safetyLocked ? 'locked' : '', g ? '' : 'empty'].filter(Boolean).join(' ');
   return (
@@ -255,7 +256,7 @@ function GroupCard({ entry, now, onAck }: { entry: Entry; now: number; onAck: (t
       </div>
       {g && (
         <>
-          <p className="unit">{title ?? PHASE_LABEL.idle}</p>
+          <p className="unit">{title ? (actTitle ? `${title} · ${actTitle}` : title) : PHASE_LABEL.idle}</p>
           <p className="meta">
             {g.phase ? phaseLabel(g.phase, g.activity) : ''}
             {g.activity ? (g.activity === 'portfolio' ? ` · ${g.trials}단계` : ` · 시행 ${g.trials}회`) : ''}

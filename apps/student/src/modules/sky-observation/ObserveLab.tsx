@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { ActivityTabsSlot } from '../../components/ActivityTabs';
 import { isDaylight } from '@sci/engine-earth';
 import type { ObservationExperiment } from '@sci/schema';
 import { renderAndGuard } from '@sci/tutor';
@@ -243,6 +244,7 @@ export function ObserveLab({
         <h1>{title}</h1>
         <p className="question">탐구 질문: {exp.question}</p>
       </header>
+      <ActivityTabsSlot />
 
       <main className="observe-layout">
         <section className="panel" aria-label="과제 목록">

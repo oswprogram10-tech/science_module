@@ -1,4 +1,5 @@
 import { useCallback, useId, useMemo, useState } from 'react';
+import { ActivityTabsSlot } from '../../components/ActivityTabs';
 import type { PortfolioExperiment, PortfolioJob } from '@sci/schema';
 import { renderAndGuard } from '@sci/tutor';
 import { MemoryRecorder, buildStatement, toExtensions } from '@sci/xapi';
@@ -109,6 +110,7 @@ export function PortfolioLab({
         <h1>{title}</h1>
         <p className="question">탐구 질문: {exp.question}</p>
       </header>
+      <ActivityTabsSlot />
 
       <main className="career-main">
         <nav className="career-steps no-print" aria-label="진로 탐색 단계">

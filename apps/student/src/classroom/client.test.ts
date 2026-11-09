@@ -130,6 +130,24 @@ describe('학생 수업 연결', () => {
     c.leave();
   });
 
+  it('experimentId는 있을 때만 status에 실리고 64자로 자른다(하위 호환)', () => {
+    const c = new StudentClassroom();
+    const ws = connect(c);
+    reportStatus({ unitId: 'g5-mixture', activity: 'card-sort', experimentId: 'separation-methods', phase: 'running', trials: 1, safetyLocked: false });
+    vi.advanceTimersByTime(2000);
+    let status = ws.sent.map((s) => s.msg).filter((m) => m.t === 'status').pop()!;
+    expect(status.experimentId).toBe('separation-methods');
+    reportStatus({ unitId: 'g4-gases', activity: 'variable', phase: 'running', trials: 1, safetyLocked: false });
+    vi.advanceTimersByTime(2000);
+    status = ws.sent.map((s) => s.msg).filter((m) => m.t === 'status').pop()!;
+    expect(status).not.toHaveProperty('experimentId');
+    reportStatus({ unitId: 'u', activity: 'card-sort', experimentId: 'e'.repeat(200), phase: 'running', trials: 1, safetyLocked: false });
+    vi.advanceTimersByTime(2000);
+    status = ws.sent.map((s) => s.msg).filter((m) => m.t === 'status').pop()!;
+    expect((status.experimentId as string).length).toBe(64);
+    c.leave();
+  });
+
   it('멈춤 중 수업 나가기를 누르면 멈춤이 풀린다', () => {
     const c = new StudentClassroom();
     const ws = connect(c);

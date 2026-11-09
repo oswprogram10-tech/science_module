@@ -37,6 +37,7 @@ export function UnitList({ units, hrefOf }: { units: UnitEntry[]; hrefOf: (id: s
                     <button type="button" className="unit-card" onClick={() => (window.location.hash = hrefOf(u.id))}>
                       <span className="unit-title">{u.manifest.title}</span>
                       <span className="unit-question">탐구 질문: {u.experiment.question}</span>
+                      {u.activities.length > 1 && <span className="unit-activities">활동 {u.activities.length}개</span>}
                       {u.manifest.standards.length > 0 && (
                         <span className="unit-standards">성취기준 {u.manifest.standards.join(', ')}</span>
                       )}

@@ -1,4 +1,5 @@
 import { useMemo, useSyncExternalStore } from 'react';
+import { ActivityTabsSlot } from '../../components/ActivityTabs';
 import { orderPile } from '@sci/cardsort';
 import type { CardSortExperiment } from '@sci/schema';
 import { renderAndGuard } from '@sci/tutor';
@@ -143,6 +144,7 @@ export function OrderSortLab({
         <p className="question">탐구 질문: {exp.question}</p>
         {exp.notice && <p className="order-notice" role="note">{exp.notice}</p>}
       </header>
+      <ActivityTabsSlot />
 
       <main className="sort-layout">
         <section className="panel" aria-label="표본 고르기">
