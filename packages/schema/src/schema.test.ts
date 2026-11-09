@@ -558,10 +558,12 @@ describe('관찰 활동 (sky-observation)', () => {
     expect(isVariableExperiment(e)).toBe(false);
     expect(isClassificationExperiment(e)).toBe(false);
     const o = e as ObservationExperiment;
-    expect(o.tasks.map((t) => t.id)).toEqual(['sun-path', 'day-night', 'star-path', 'season-stars', 'winter-stars']);
-    expect(o.tasks.map((t) => t.view)).toEqual(['rotation', 'rotation', 'rotation', 'revolution', 'revolution']);
+    // 달 모양 과제 둘은 기존 과제 뒤에 덧붙었다(앞 다섯 과제의 순서와 내용은 그대로).
+    expect(o.tasks.map((t) => t.id)).toEqual(['sun-path', 'day-night', 'star-path', 'season-stars', 'winter-stars', 'moon-change', 'full-moon']);
+    expect(o.tasks.map((t) => t.view)).toEqual(['rotation', 'rotation', 'rotation', 'revolution', 'revolution', 'moon', 'moon']);
     expect(o.tasks.map((t) => t.answer)).toEqual([
       'sun-path-direction', 'antipode-day-night', 'star-path-direction', 'constellation-changes', 'winter-constellation',
+      'moon-evening-change', 'full-moon-day',
     ]);
     for (const t of o.tasks) expect(t.probes.map((p) => p.when).sort()).toEqual(
       ['before-observe', 'observing', 'prediction-mismatch', 'record-match', 'record-mismatch'],
@@ -630,10 +632,12 @@ describe('관찰 활동 (sky-observation)', () => {
     expect(observationAnswerSchema.options).toEqual([
       'sun-path-direction', 'antipode-day-night', 'star-path-direction', 'constellation-changes', 'winter-constellation',
       'jupiter-earth-size', 'neptune-distance', 'pointer-star-target', 'polaris-motion',
+      'moon-evening-change', 'full-moon-day',
     ]);
     expect(() => parseManifest(edit((x) => { x.tasks[0].view = 'moon-phase'; }))).toThrow(ManifestError);
     expect(() => parseManifest(edit((x) => { x.tasks[0].answer = 'moon-phase'; }))).toThrow(ManifestError);
     expect(() => parseManifest(edit((x) => { x.tasks[2].view = 'north-sky'; x.tasks[2].answer = 'polaris-motion'; }))).not.toThrow();
+    expect(() => parseManifest(edit((x) => { x.tasks[0].view = 'moon'; x.tasks[0].answer = 'moon-evening-change'; }))).not.toThrow();
   });
 });
 

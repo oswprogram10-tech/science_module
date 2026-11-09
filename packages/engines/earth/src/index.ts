@@ -5,3 +5,4 @@ export * from './stream';
 export * from './solar';
 export * from './northSky';
 export * from './breeze';
+export * from './moon';

@@ -32,11 +32,14 @@ describe('시나리오 생성기', () => {
     }
   });
 
-  it('단원마다 15~25개이고, 입력이 서로 다르다', () => {
+  it('단원마다 15~25개(관찰 활동은 과제당 5개)이고, 입력이 서로 다르다', () => {
     for (const id of TUTOR_UNITS) {
       const list = generated.filter((s) => s.unitId === id);
       expect(list.length, id).toBeGreaterThanOrEqual(15);
-      expect(list.length, id).toBeLessThanOrEqual(25);
+      // 관찰 활동은 과제마다 5개(다섯 상황)이므로 과제가 5개를 넘으면 그만큼 늘어난다.
+      const exp = units[id]!.manifest.experiments[0]!;
+      const cap = 'tasks' in exp ? Math.max(25, exp.tasks.length * 5) : 25;
+      expect(list.length, id).toBeLessThanOrEqual(cap);
       const inputs = list.map((s) => buildTutorInput(expOf(s), s.state, '', { title: units[id]!.manifest.title, grade: units[id]!.manifest.grade }));
       expect(new Set(inputs).size, id).toBe(inputs.length);
     }

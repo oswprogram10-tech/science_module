@@ -1,6 +1,7 @@
 import type { ObservationAnswerRule, ObservationExperiment } from '@sci/schema';
 import { northStar, pointerStarKey, type NorthStarKey } from './northSky';
 import { distanceCells, sizeRatio } from './solar';
+import { fullMoonDay, moonEveningChange } from './moon';
 
 /**
  * 천체 근사 모델(교사 검수 대상). 관측 위치는 서울(위도 37.5°N)이다.
@@ -290,6 +291,10 @@ export function answerFor(rule: ObservationAnswerRule, controls: AnswerControls 
       const dir = directionFromAz(a.azDeg, b.azDeg);
       return dir === 'still' ? 'nearly-still' : dir;
     }
+    case 'moon-evening-change':
+      return moonEveningChange(3, 10, latDeg);
+    case 'full-moon-day':
+      return String(fullMoonDay());
   }
 }
 

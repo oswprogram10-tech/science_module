@@ -295,7 +295,7 @@ describe('관찰 활동', () => {
             let s = obs.select(obs.createInitialState(exp), exp, task.id);
             if (pred !== null) s = obs.predict(s, exp, pred);
             if (moved) {
-              s = task.view === 'rotation' ? obs.setHour(s, exp, 9) : obs.setMonth(s, exp, 1);
+              s = task.view === 'rotation' ? obs.setHour(s, exp, 9) : task.view === 'moon' ? obs.setDay(s, exp, 10) : obs.setMonth(s, exp, 1);
               if (task.controls?.[0]) s = obs.setControl(s, exp, task.controls[0].key, task.controls[0].options[1]!.value);
             }
             if (rec !== null) s = obs.record(s, exp, rec);

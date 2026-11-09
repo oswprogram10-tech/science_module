@@ -55,7 +55,7 @@ async function smallTexts(page: Page, state: string): Promise<string[]> {
         if (box.left < frame.left - 1 || box.right > frame.right + 1 || box.top < frame.top - 1 || box.bottom > frame.bottom + 1) out.push(`${name} | 그림 밖으로 잘림`);
       }
       // 그래프는 눈금·라벨·표식 글자가 서로 겹치면 읽을 수 없다.
-      if (label === '그래프로 보기') {
+      if (label === '그래프로 보기' || (svg.getAttribute('data-testid') ?? '').startsWith('moon-')) {
         for (let i = 0; i < drawn.length; i++) {
           for (let j = i + 1; j < drawn.length; j++) {
             const a = drawn[i]!.box;
@@ -134,6 +134,13 @@ async function observeStates(page: Page, found: string[]) {
         if (v === null) continue;
         await s.fill(v);
         found.push(...(await smallTexts(page, `과제 ${i + 1} ${title} / 슬라이더 ${at}`)));
+      }
+      // 달 보기(음력 1~29일)는 날짜마다 달 위치·라벨 자리가 달라지므로 모든 날짜를 잰다(글자 크기·잘림·겹침).
+      if ((await s.getAttribute('max')) === '29') {
+        for (let d = 1; d <= 29; d++) {
+          await s.fill(String(d));
+          found.push(...(await smallTexts(page, `과제 ${i + 1} ${title} / 음력 ${d}일`)));
+        }
       }
     }
   }

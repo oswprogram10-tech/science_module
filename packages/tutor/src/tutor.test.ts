@@ -566,7 +566,7 @@ describe('지구의 운동 과제 probe 전수 검사', () => {
         count++;
       }
     }
-    expect(count).toBe(25);
+    expect(count).toBe(35);
   });
 
   it('과제 probe에는 어려운 용어(limits)와 정답 문장이 없다', () => {

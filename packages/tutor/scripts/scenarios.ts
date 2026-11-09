@@ -689,6 +689,7 @@ function genObservation(unitId: string, exp: ObservationExperiment): Draft[] {
         cur = obsStore.setControl(cur, exp, control.key, next);
       }
       if (task.view === 'solar-system') return obsStore.touchView(cur, exp);
+      if (task.view === 'moon') return obsStore.setDay(cur, exp, [10, 15, 22, 18][(ti + variant) % 4]!);
       if (task.view === 'revolution') return obsStore.setMonth(cur, exp, [8, 11, 2, 5][(ti + variant) % 4]!);
       const hours = task.view === 'north-sky' ? [NORTH_HOUR_MIN + 3, NORTH_HOUR_MIN + 6, NORTH_HOUR_MIN + 1, NORTH_HOUR_MAX] : [15, 18, 22, 6];
       return obsStore.setHour(cur, exp, hours[(ti + variant) % 4]!);

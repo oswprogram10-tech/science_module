@@ -1,6 +1,7 @@
 import type { ObservationExperiment, ObservationProbeWhen, ObservationTask } from '@sci/schema';
 import { observeWhen } from '@sci/tutor';
 import { DEFAULT_MONTH, defaultHour, modelAnswer, type Controls } from './model';
+import { MOON_DAY_DEFAULT, clampMoonDay } from './moonModel';
 import { NORTH_HOUR_MAX, NORTH_HOUR_MIN } from './nightModel';
 
 export type Value = string | number;
@@ -16,6 +17,8 @@ export interface TaskState {
   controls: Controls;
   hour: number;
   month: number;
+  /** 달 보기의 음력 날짜(1~29). */
+  day: number;
   /** 시각·달 슬라이더나 조건 토글을 한 번 이상 움직였는가. */
   observed: boolean;
   recorded: Recorded | null;
@@ -41,6 +44,7 @@ function initialTask(task: ObservationTask): TaskState {
     controls: Object.fromEntries((task.controls ?? []).map((c) => [c.key, c.default])),
     hour: defaultHour(task),
     month: DEFAULT_MONTH,
+    day: MOON_DAY_DEFAULT,
     observed: false,
     recorded: null,
     guide: false,
@@ -122,6 +126,15 @@ export function setMonth(state: ObserveState, exp: ObservationExperiment, month:
   const m = Math.min(12, Math.max(1, Math.round(month)));
   if (m === ts.month) return state;
   return withTask(state, task.id, { month: m, observed: true });
+}
+
+/** 달 보기의 음력 날짜(1~29일). 막혀 있거나 값이 그대로면 상태를 바꾸지 않는다. */
+export function setDay(state: ObserveState, exp: ObservationExperiment, day: number): ObserveState {
+  const { task, ts } = current(state, exp);
+  if (task.view !== 'moon' || ts.prediction === null || !Number.isFinite(day)) return state;
+  const d = clampMoonDay(day);
+  if (d === ts.day) return state;
+  return withTask(state, task.id, { day: d, observed: true });
 }
 
 /** 과제의 조건 토글(예: 자전 방향). 조건이 바뀌면 지나온 태양 자리 점선을 지운다. */

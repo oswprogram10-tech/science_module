@@ -7,11 +7,13 @@ import { readPlaybackSeconds } from '../../playback';
 import { useClassroomStatus, usePaused } from '../../classroom/bus';
 import { logbook } from '../../logbook';
 import { GroundView } from './GroundView';
+import { MoonGroundView, MoonSpaceView } from './MoonView';
 import { NorthSkyView } from './NorthSkyView';
 import { SolarSystemView } from './SolarSystemView';
 import { RevolutionSpaceView, RotationSpaceView } from './SpaceView';
 import { feedbackText } from './feedback';
 import { dayFor, formatHour, groundScene, rotationOf, sunTrail } from './model';
+import { MOON_DAY_MAX, MOON_DAY_MIN, isMoonView, moonDayLabel, moonScene } from './moonModel';
 import { NORTH_HOUR_MAX, NORTH_HOUR_MIN, compareOf, isNightView, nightLabel, northScene, solarScene } from './nightModel';
 import {
   canObserve,
@@ -26,6 +28,7 @@ import {
   recordMatchesModel,
   select,
   setControl,
+  setDay,
   setHour,
   setMonth,
   setSkyToggle,
@@ -122,6 +125,12 @@ export function ObserveLab({
     return () => cancelAnimationFrame(id);
   }, [playing, paused, daySeconds, onHour, hourLo, hourHi]);
 
+  const onDay = (day: number) => {
+    const before = store.getState();
+    const after = store.update((s) => setDay(s, exp, day));
+    if (after !== before) noteObserved(before.tasks[before.selected]!.observed, { kind: 'day' });
+  };
+
   const onSelectTask = (id: string) => {
     setPlaying(false);
     store.update((s) => select(s, exp, id));
@@ -210,6 +219,7 @@ export function ObserveLab({
   const revealed = recordMatchesModel(exp, task, ts) === true;
   const solar = task.view === 'solar-system' ? solarScene(task.answer, !revealed, compareOf(ts.controls)) : null;
   const north = task.view === 'north-sky' ? northScene(exp, ts, state.trail, ts.guide) : null;
+  const moon = isMoonView(task) ? moonScene(exp, ts.day) : null;
   const nightCaption = solar
     ? compareOf(ts.controls) === 'size'
       ? '크기 비교 · 지구 지름을 10 px로 그렸어요'
@@ -222,7 +232,9 @@ export function ObserveLab({
       ? '크기 비교나 거리 비교를 눌러 관찰하면 기록할 수 있어요.'
       : task.view === 'north-sky'
         ? '시각을 바꾸거나 길잡이 선·별 자취를 켜서 관찰하면 기록할 수 있어요.'
-        : '시각이나 달, 조건을 한 번 바꾸어 관찰하면 기록할 수 있어요.';
+        : task.view === 'moon'
+          ? '음력 날짜를 바꾸어 달을 관찰하면 기록할 수 있어요.'
+          : '시각이나 달, 조건을 한 번 바꾸어 관찰하면 기록할 수 있어요.';
 
   return (
     <div className="app">
@@ -261,7 +273,25 @@ export function ObserveLab({
 
         <div className="center">
           <div className="observe-views">
-            {night ? (
+            {moon ? (
+              <>
+                <figure className="view observe-view">
+                  <figcaption>땅에서 보기</figcaption>
+                  <MoonGroundView scene={moon} />
+                  <p className="view-note" data-testid="moon-ground-caption">{moon.groundCaption}</p>
+                  {revealed && (
+                    <p className="view-note" data-testid="moon-shape-name">
+                      <strong>이 날의 달: {moon.shapeName}</strong>
+                    </p>
+                  )}
+                </figure>
+                <figure className="view observe-view space">
+                  <figcaption>우주에서 보기</figcaption>
+                  <MoonSpaceView scene={moon} />
+                  <p className="view-note" data-testid="moon-space-caption">{moon.spaceCaption}</p>
+                </figure>
+              </>
+            ) : night ? (
               <figure className="view observe-view">
                 <figcaption>{task.view === 'solar-system' ? '태양계 모형 보기' : '북쪽 하늘 보기'}</figcaption>
                 {solar && <SolarSystemView scene={solar} compare={compareOf(ts.controls)} />}
@@ -367,6 +397,25 @@ export function ObserveLab({
                     </button>
                   </div>
                 </fieldset>
+              </>
+            ) : task.view === 'moon' ? (
+              <>
+                <div className="slider-row">
+                  <span id="slider-label" className="slider-name">음력 날짜</span>
+                  <input
+                    type="range"
+                    min={MOON_DAY_MIN}
+                    max={MOON_DAY_MAX}
+                    step={1}
+                    value={ts.day}
+                    disabled={!enabled}
+                    aria-labelledby="slider-label"
+                    aria-valuetext={moonDayLabel(ts.day)}
+                    onChange={(e) => onDay(Number(e.target.value))}
+                  />
+                  <span className="slider-value" aria-hidden="true">{moonDayLabel(ts.day)}</span>
+                </div>
+                <p className="hint">저녁 7시에 남쪽 하늘을 바라본 모습이에요.</p>
               </>
             ) : task.view === 'solar-system' ? (
               <p className="hint">크기 비교와 거리 비교를 눌러 가며 살펴보세요.</p>
