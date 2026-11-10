@@ -2,7 +2,7 @@
   "id": "g3-earth-sea",
   "title": "지구와 바다",
   "grade": 3,
-  "standards": ["4과05-02"],
+  "standards": ["4과11-01"],
   "engine": "earth",
   "experiments": [
     {

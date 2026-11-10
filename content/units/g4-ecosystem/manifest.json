@@ -2,7 +2,7 @@
   "id": "g4-ecosystem",
   "title": "생물과 환경",
   "grade": 4,
-  "standards": ["4과14-01"],
+  "standards": ["4과14-02"],
   "engine": "life",
   "experiments": [
     {

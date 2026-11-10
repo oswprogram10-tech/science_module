@@ -2,7 +2,7 @@
   "id": "g3-sound",
   "title": "소리의 성질",
   "grade": 3,
-  "standards": ["4과08-01"],
+  "standards": ["4과07-02"],
   "engine": "physics",
   "experiments": [
     {

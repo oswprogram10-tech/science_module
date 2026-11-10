@@ -2,7 +2,7 @@
   "id": "g6-plant",
   "title": "식물의 구조와 기능",
   "grade": 6,
-  "standards": ["6과11-01"],
+  "standards": ["6과11-02"],
   "engine": "life",
   "experiments": [{
     "id": "transpiration",

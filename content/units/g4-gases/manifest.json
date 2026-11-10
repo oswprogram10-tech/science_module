@@ -2,7 +2,7 @@
   "id": "g4-gases",
   "title": "여러 가지 기체",
   "grade": 4,
-  "standards": ["4과15-01"],
+  "standards": ["4과15-02"],
   "engine": "matter",
   "experiments": [
     {

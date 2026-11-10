@@ -2,7 +2,7 @@
   "id": "g5-mixture",
   "title": "혼합물의 분리",
   "grade": 5,
-  "standards": ["6과05-03"],
+  "standards": ["6과05-01", "6과05-02"],
   "engine": "matter",
   "experiments": [
     {

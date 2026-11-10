@@ -2,7 +2,7 @@
   "id": "g4-water-state",
   "title": "물의 상태 변화",
   "grade": 4,
-  "standards": ["4과10-01"],
+  "standards": ["4과10-02"],
   "engine": "matter",
   "experiments": [
     {

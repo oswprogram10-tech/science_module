@@ -22,7 +22,7 @@ const exp = load();
 describe('진로 매니페스트', () => {
   it('단원 정보와 활동 유형', () => {
     const m = parseManifest(careerJson);
-    expect([m.id, m.title, m.grade, m.engine, m.standards]).toEqual(['g6-career', '과학과 나의 진로', 6, 'ssi', ['6과19-01']]);
+    expect([m.id, m.title, m.grade, m.engine, m.standards]).toEqual(['g6-career', '과학과 나의 진로', 6, 'ssi', ['6과16-02']]);
     expect(m.experiments).toHaveLength(1);
     expect(isPortfolioExperiment(exp)).toBe(true);
     expect(isVariableExperiment(exp)).toBe(false);

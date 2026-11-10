@@ -2,7 +2,7 @@
   "id": "g6-electricity",
   "title": "전기의 이용",
   "grade": 6,
-  "standards": ["6과15-01"],
+  "standards": ["6과15-03"],
   "engine": "physics",
   "experiments": [
     {
