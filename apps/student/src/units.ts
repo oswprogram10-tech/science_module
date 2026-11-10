@@ -36,6 +36,7 @@ import magnetJson from '../../../content/units/g4-magnet/manifest.json';
 import motionJson from '../../../content/units/g6-motion/manifest.json';
 import waterStateJson from '../../../content/units/g4-water-state/manifest.json';
 import mixtureJson from '../../../content/units/g5-mixture/manifest.json';
+import earthSeaJson from '../../../content/units/g3-earth-sea/manifest.json';
 import weatherJson from '../../../content/units/g5-weather/manifest.json';
 import healthJson from '../../../content/units/g3-health/manifest.json';
 import climateJson from '../../../content/units/g4-climate/manifest.json';
@@ -119,7 +120,7 @@ export function buildRegistry(
   return raws.map((raw, i) => loadUnit(raw, i, modules));
 }
 
-export const UNITS: UnitEntry[] = buildRegistry([gasesJson, solutionJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, earthMotionJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, animalJson, plantlifeJson, forceJson, soundJson, magnetJson, motionJson, materialJson, waterStateJson, mixtureJson, nightSkyJson, strataJson, weatherJson, healthJson, climateJson, energyJson, careerJson]);
+export const UNITS: UnitEntry[] = buildRegistry([gasesJson, solutionJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, earthMotionJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, animalJson, plantlifeJson, forceJson, soundJson, magnetJson, motionJson, materialJson, waterStateJson, mixtureJson, earthSeaJson, nightSkyJson, strataJson, weatherJson, healthJson, climateJson, energyJson, careerJson]);
 
 /** experimentId는 주소에 있을 때만 들어 있다(없으면 첫 활동). */
 export type Route = { page: 'list' } | { page: 'unit'; unitId: string; experimentId?: string };

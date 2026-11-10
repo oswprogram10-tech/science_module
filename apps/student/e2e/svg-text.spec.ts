@@ -26,9 +26,9 @@ const UNITS = readdirSync(UNITS_DIR)
 
 const NO_SVG_TEXT = new Set(['g3-animal', 'g3-material', 'g3-plantlife', 'g5-strata', 'g6-acid-base', 'g6-career', 'g5-mixture/separation-methods']);
 
-test('단원 목록: 31개 단원의 모든 활동(33개)을 잰다', () => {
-  expect(new Set(UNITS.map((u) => u.id)).size).toBe(31);
-  expect(UNITS.length).toBe(33);
+test('단원 목록: 32개 단원의 모든 활동(35개)을 잰다', () => {
+  expect(new Set(UNITS.map((u) => u.id)).size).toBe(32);
+  expect(UNITS.length).toBe(35);
   expect(UNITS.map((u) => u.name)).toContain('g5-mixture/separation-methods');
 });
 
@@ -137,6 +137,13 @@ async function observeStates(page: Page, found: string[]) {
         if (v === null) continue;
         await s.fill(v);
         found.push(...(await smallTexts(page, `과제 ${i + 1} ${title} / 슬라이더 ${at}`)));
+      }
+      // 바닷가 보기(0~24시, 30분 단위)는 시각마다 바닷물 높이·갯벌·생물 아이콘이 달라지므로 모든 시각을 잰다(글자 크기·잘림·겹침).
+      if ((await page.getByTestId('tide-svg').count()) > 0 && (await s.getAttribute('max')) === '24') {
+        for (let h = 0; h <= 24; h += 0.5) {
+          await s.fill(String(h));
+          found.push(...(await smallTexts(page, `과제 ${i + 1} ${title} / ${h}시`)));
+        }
       }
       // 달 보기(음력 1~29일)는 날짜마다 달 위치·라벨 자리가 달라지므로 모든 날짜를 잰다(글자 크기·잘림·겹침).
       if ((await s.getAttribute('max')) === '29') {

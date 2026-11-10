@@ -2,6 +2,7 @@ import type { ObservationAnswerRule, ObservationExperiment } from '@sci/schema';
 import { northStar, pointerStarKey, type NorthStarKey } from './northSky';
 import { distanceCells, sizeRatio } from './solar';
 import { fullMoonDay, moonEveningChange } from './moon';
+import { lowTideExposed, tideHighsPerDay } from './tide';
 
 /**
  * 천체 근사 모델(교사 검수 대상). 관측 위치는 서울(위도 37.5°N)이다.
@@ -295,6 +296,10 @@ export function answerFor(rule: ObservationAnswerRule, controls: AnswerControls 
       return moonEveningChange(3, 10, latDeg);
     case 'full-moon-day':
       return String(fullMoonDay());
+    case 'tide-highs-per-day':
+      return String(tideHighsPerDay());
+    case 'low-tide-exposed':
+      return lowTideExposed();
   }
 }
 

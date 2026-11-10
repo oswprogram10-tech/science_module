@@ -18,7 +18,7 @@ const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
 describe('단원 레지스트리', () => {
   it('열 단원이 모두 로드된다', () => {
-    expect(UNITS.map((u) => u.id)).toEqual(['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat', 'g5-light', 'g6-electricity', 'g4-land', 'g6-earth-motion', 'g6-seasons', 'g3-lifecycle', 'g6-plant', 'g4-ecosystem', 'g4-microbe', 'g5-body', 'g3-animal', 'g3-plantlife', 'g3-force', 'g3-sound', 'g4-magnet', 'g6-motion', 'g3-material', 'g4-water-state', 'g5-mixture', 'g4-night-sky', 'g5-strata', 'g5-weather', 'g3-health', 'g4-climate', 'g5-energy', 'g6-career']);
+    expect(UNITS.map((u) => u.id)).toEqual(['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat', 'g5-light', 'g6-electricity', 'g4-land', 'g6-earth-motion', 'g6-seasons', 'g3-lifecycle', 'g6-plant', 'g4-ecosystem', 'g4-microbe', 'g5-body', 'g3-animal', 'g3-plantlife', 'g3-force', 'g3-sound', 'g4-magnet', 'g6-motion', 'g3-material', 'g4-water-state', 'g5-mixture', 'g3-earth-sea', 'g4-night-sky', 'g5-strata', 'g5-weather', 'g3-health', 'g4-climate', 'g5-energy', 'g6-career']);
     expect(UNITS.every((u) => u.ok)).toBe(true);
     const gases = UNITS[0]!;
     if (gases.ok) expect(gases.module.kind).toBe('gas-syringe');
@@ -90,22 +90,25 @@ describe('단원 레지스트리', () => {
     const stream = UNITS[7]!;
     expect(stream.ok && stream.activities.map((a) => a.activity)).toEqual(['variable', 'variable']);
     if (stream.ok) expect(stream.activities[1]!.module.kind).toBe('stream-table');
-    const night = UNITS[24]!;
+    const sea = UNITS[24]!;
+    expect(sea.ok && sea.activity).toBe('variable');
+    if (sea.ok) expect(sea.module.kind).toBe('sea-water');
+    const night = UNITS[25]!;
     expect(night.ok && night.activity).toBe('observe');
     if (night.ok) expect(night.module.kind).toBe('sky-observation');
-    const strata = UNITS[25]!;
+    const strata = UNITS[26]!;
     expect(strata.ok && strata.activity).toBe('card-sort');
     if (strata.ok && strata.activity === 'card-sort') expect(strata.experiment.layout).toBe('order');
-    const weather = UNITS[26]!;
+    const weather = UNITS[27]!;
     expect(weather.ok && weather.activity).toBe('variable');
     if (weather.ok) expect(weather.module.kind).toBe('land-sea-breeze');
-    const health = UNITS[27]!;
+    const health = UNITS[28]!;
     expect(health.ok && health.activity).toBe('variable');
     if (health.ok) expect(health.module.kind).toBe('infection-spread');
-    const energy = UNITS[29]!;
+    const energy = UNITS[30]!;
     expect(energy.ok && energy.activity).toBe('variable');
     if (energy.ok) expect(energy.module.kind).toBe('solar-panel');
-    const career = UNITS[30]!;
+    const career = UNITS[31]!;
     expect(career.ok && career.activity).toBe('portfolio');
     if (career.ok) expect(career.module.kind).toBe('career-portfolio');
     const material = UNITS[21]!;
@@ -272,13 +275,16 @@ describe('레지스트리 activities', () => {
       expect([u.activity, u.experiment, u.module], u.id).toEqual([first.activity, first.experiment, first.module]);
     }
   });
-  it('활동이 둘 이상인 단원은 g4-land와 g5-mixture뿐이다', () => {
+  it('활동이 둘 이상인 단원은 g4-land, g5-mixture, g3-earth-sea뿐이다', () => {
     const multi = UNITS.filter((u) => u.ok && u.activities.length > 1).map((u) => u.id);
-    expect(multi).toEqual(['g4-land', 'g5-mixture']);
+    expect(multi).toEqual(['g4-land', 'g5-mixture', 'g3-earth-sea']);
     const land = UNITS.find((u) => u.id === 'g4-land')!;
     expect(land.ok && land.activities.map((a) => [a.activity, a.experiment.id, a.module.kind])).toEqual([['variable', 'magma-cooling', 'magma-cooling'], ['variable', 'stream-table', 'stream-table']]);
     expect(land.ok && land.manifest.standards).toEqual(['4과11-01', '4과11-03']);
-    expect(UNITS.some((x) => x.id === 'g3-earth-sea')).toBe(false);
+    // 옛 흐르는 물 단원 id를 다시 쓴다: 「지구와 바다」는 바닷물과 강물 비교하기(변인)와 밀물과 썰물 관찰하기(관찰) 두 활동 단원이다.
+    const sea = UNITS.find((x) => x.id === 'g3-earth-sea')!;
+    expect(sea.ok && sea.activities.map((a) => [a.activity, a.experiment.id, a.module.kind])).toEqual([['variable', 'sea-water', 'sea-water'], ['observe', 'tide', 'sky-observation']]);
+    expect(sea.ok && [sea.manifest.title, sea.manifest.grade, sea.manifest.engine, sea.manifest.standards]).toEqual(['지구와 바다', 3, 'earth', ['4과06-02', '4과06-03']]);
     const m = UNITS.find((u) => u.id === 'g5-mixture')!;
     expect(m.ok && m.activities.map((a) => [a.activity, a.experiment.id])).toEqual([['variable', 'salt-sand'], ['card-sort', 'separation-methods']]);
     expect(m.ok && m.module.kind).toBe('salt-sand');
@@ -300,7 +306,7 @@ describe('활동 탭 화면', () => {
     expect(renderToStaticMarkup(createElement('div', null, createElement(ActivityTabsSlot)))).toBe('<div></div>');
     expect(renderToStaticMarkup(createElement(ActivityTabsContext.Provider, { value: null }, createElement('div', null, createElement(ActivityTabsSlot))))).toBe('<div></div>');
     // 활동이 하나인 단원은 탭을 만들 필요가 없다.
-    for (const u of UNITS) if (u.ok && u.id !== 'g5-mixture' && u.id !== 'g4-land') expect(u.activities, u.id).toHaveLength(1);
+    for (const u of UNITS) if (u.ok && u.id !== 'g5-mixture' && u.id !== 'g4-land' && u.id !== 'g3-earth-sea') expect(u.activities, u.id).toHaveLength(1);
   });
   it('탭은 tablist와 tab, aria-selected, "활동 n · 제목" 이름을 가진다', () => {
     const html = renderToStaticMarkup(

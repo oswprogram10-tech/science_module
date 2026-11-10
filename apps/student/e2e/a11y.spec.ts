@@ -719,8 +719,8 @@ for (const scheme of ['light', 'dark'] as const) {
     await page.emulateMedia({ colorScheme: scheme });
     // 단원 목록의 "활동 2개" 표시
     await page.goto('/');
-    // 활동이 둘인 단원은 땅의 변화와 혼합물의 분리 두 곳이다.
-    await expect(page.getByText('활동 2개')).toHaveCount(2);
+    // 활동이 둘인 단원은 땅의 변화, 혼합물의 분리, 지구와 바다 세 곳이다.
+    await expect(page.getByText('활동 2개')).toHaveCount(3);
     await expect(page.getByText('활동 2개').first()).toBeVisible();
     await expectNoSeriousViolations(page);
     // 첫 활동 화면의 활동 탭
@@ -1119,6 +1119,66 @@ for (const scheme of ['light', 'dark'] as const) {
     await page.getByRole('button', { name: '▶ 실험 실행' }).click();
     await expect(runButton(page)).toHaveText('▶ 실험 실행');
     await expect(page.getByText('60.0초 · 깎인 흙 40 g · 쌓인 흙 32 g')).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+}
+
+// ---- g3-earth-sea ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`g3-earth-sea ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 처음, 점검표, 실행 뒤(강물 0.0·10분), 바닷물(1.8)과 앞 시행, 100 mL(3.6)`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g3-earth-sea');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '물의 종류');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(page.getByRole('dialog', { name: '안전 점검표' })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await confirmSafetyDialog(page);
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('20.0분 · 접시에 남은 물 0 mL · 접시 위 가루 0.0 g')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await setValue(page, '물의 종류', '바닷물');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('20.0분 · 접시에 남은 물 0 mL · 접시 위 가루 1.8 g')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await page.reload();
+    await setValue(page, '물의 종류', '바닷물');
+    await setValue(page, '증발 접시에 붓는 물의 양', '100 mL');
+    await setValue(page, '증발 접시 모양', '네모난 접시');
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '증발 접시에 붓는 물의 양');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await confirmSafetyDialog(page);
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('20.0분 · 접시에 남은 물 0 mL · 접시 위 가루 3.6 g')).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+}
+
+// ---- g3-earth-sea 활동 2 (밀물과 썰물 관찰하기) ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`g3-earth-sea 밀물과 썰물 ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 처음, 예측 뒤(2시), 8시(갯벌), 기록 뒤(이름 문구), 둘째 과제`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g3-earth-sea', { experiment: 'tide' });
+    await expect(page.getByTestId('tide-svg')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await earthPick(page, '바닷물이 높이 들어오는 때', '한 번');
+    await expectNoSeriousViolations(page);
+    await earthSlider(page, '시각').fill('8');
+    await expectNoSeriousViolations(page);
+    await region(page, '관찰 기록').getByRole('button', { name: '두 번', exact: true }).click();
+    await expect(page.getByTestId('tide-state-name')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await earthPick(page, '바닷물이 가장 빠졌을 때', '모래사막');
+    await earthSlider(page, '시각').fill('20.5');
+    await region(page, '관찰 기록').getByRole('button', { name: '넓은 갯벌', exact: true }).click();
     await expectNoSeriousViolations(page);
   });
 }

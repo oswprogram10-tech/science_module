@@ -41,10 +41,11 @@ describe('저장소의 데이터셋 검증 (pnpm test에도 포함)', () => {
       const rich = RICH_EXAMPLE_UNITS.includes(unit as (typeof RICH_EXAMPLE_UNITS)[number]) || unit === 'g4-land';
       // 밤하늘 관찰은 달 모양 과제 둘이 늘어 과제마다 견본 1개씩이 더해졌다(sft 6).
       // 혼합물의 분리는 두 번째 활동(분리 방법 고르기)의 견본 1개가 더해졌다(sft 5).
-      const sftCount = rich ? 8 : unit === 'g4-night-sky' ? 6 : unit === 'g5-mixture' ? 5 : 4;
+      // 지구와 바다는 두 번째 활동(밀물과 썰물 관찰하기)의 견본이 sft 2 · pairs 1 · redteam 1 더해졌다(sft 6 · pairs 3 · redteam 4).
+      const sftCount = rich ? 8 : unit === 'g4-night-sky' || unit === 'g3-earth-sea' ? 6 : unit === 'g5-mixture' ? 5 : 4;
       expect(full.sft.filter((r) => r.unitId === unit), `${unit} sft`).toHaveLength(sftCount);
-      expect(full.pairs.filter((r) => r.unitId === unit), `${unit} pairs`).toHaveLength(rich ? 4 : 2);
-      expect(full.redteam.filter((r) => r.unitId === unit), `${unit} redteam`).toHaveLength(rich ? 6 : 3);
+      expect(full.pairs.filter((r) => r.unitId === unit), `${unit} pairs`).toHaveLength(rich ? 4 : unit === 'g3-earth-sea' ? 3 : 2);
+      expect(full.redteam.filter((r) => r.unitId === unit), `${unit} redteam`).toHaveLength(rich ? 6 : unit === 'g3-earth-sea' ? 4 : 3);
     }
     for (const r of [...full.sft, ...full.pairs, ...full.redteam]) {
       expect([r.source, r.reviewed, r.author]).toEqual(['example', false, 'EX']);
@@ -67,8 +68,8 @@ describe('저장소의 데이터셋 검증 (pnpm test에도 포함)', () => {
       const list = full.scenarios.filter((s) => s.unitId === unit);
       expect(list.length, unit).toBeGreaterThanOrEqual(15);
       // 관찰 활동은 과제마다 5개이므로 과제가 5개를 넘으면(밤하늘 관찰 6개 = 30) 그만큼 늘어난다.
-      // 활동이 둘인 단원(g5-mixture, g4-land)은 활동마다 25개까지라 50개까지 늘어난다.
-      expect(list.length, unit).toBeLessThanOrEqual(unit === 'g4-night-sky' ? 35 : unit === 'g5-mixture' || unit === 'g4-land' ? 50 : 25);
+      // 활동이 둘인 단원(g5-mixture, g4-land, g3-earth-sea)은 활동마다 25개까지라 50개까지 늘어난다.
+      expect(list.length, unit).toBeLessThanOrEqual(unit === 'g4-night-sky' ? 35 : unit === 'g5-mixture' || unit === 'g4-land' || unit === 'g3-earth-sea' ? 50 : 25);
     }
     for (const s of full.scenarios) expect(inputFor(full, s, '').length).toBeGreaterThan(30);
   });

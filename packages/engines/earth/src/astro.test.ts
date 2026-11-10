@@ -21,9 +21,11 @@ import {
 } from './astro';
 import earthJson from '../../../../content/units/g6-earth-motion/manifest.json';
 import nightSkyJson from '../../../../content/units/g4-night-sky/manifest.json';
+import earthSeaJson from '../../../../content/units/g3-earth-sea/manifest.json';
 
 const exp = parseManifest(earthJson).experiments[0] as ObservationExperiment;
 const nightExp = parseManifest(nightSkyJson).experiments[0] as ObservationExperiment;
+const tideExp = parseManifest(earthSeaJson).experiments[1] as ObservationExperiment;
 
 describe('태양 위치 (서울, 위도 37.5°N)', () => {
   it('정오 고도: 춘분 52.5, 하지 75.9, 동지 29.1', () => {
@@ -145,7 +147,7 @@ describe('answerFor: 모델에서 계산한 과제 정답', () => {
 
   it('모든 규칙이 매니페스트의 선택지 안에서 답한다', () => {
     for (const rule of observationAnswerSchema.options) {
-      const tasks = [...exp.tasks, ...nightExp.tasks].filter((t) => t.answer === rule);
+      const tasks = [...exp.tasks, ...nightExp.tasks, ...tideExp.tasks].filter((t) => t.answer === rule);
       expect(tasks.length, rule).toBeGreaterThan(0);
       for (const t of tasks) {
         for (const combo of controlCombos(t.controls)) {

@@ -10,7 +10,7 @@ import type { AnyRecord, Dataset, PairRecord, RecordKind, RedteamRecord, Scenari
  * 시나리오(scenarios/), 학습 레코드(data/<단원>/), 가져오기 검증이 모두 이 목록을 따른다.
  */
 export const TUTOR_UNITS = [
-  'g3-lifecycle', 'g3-animal', 'g3-plantlife', 'g3-force', 'g3-sound', 'g3-material', 'g3-health',
+  'g3-lifecycle', 'g3-animal', 'g3-plantlife', 'g3-force', 'g3-sound', 'g3-material', 'g3-earth-sea', 'g3-health',
   'g4-gases', 'g4-land', 'g4-ecosystem', 'g4-microbe', 'g4-magnet', 'g4-water-state', 'g4-night-sky', 'g4-climate',
   'g5-solution', 'g5-heat', 'g5-light', 'g5-body', 'g5-mixture', 'g5-strata', 'g5-weather', 'g5-energy',
   'g6-acid-base', 'g6-combustion', 'g6-electricity', 'g6-earth-motion', 'g6-seasons', 'g6-plant', 'g6-motion',

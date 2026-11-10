@@ -5,7 +5,7 @@ const VIEWPORTS = [
   { width: 1100, height: 800 },
   { width: 1280, height: 800 },
 ];
-const UNITS = ['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat', 'g5-light', 'g6-electricity', 'g4-land', 'g6-earth-motion', 'g6-seasons', 'g3-lifecycle', 'g6-plant', 'g4-ecosystem', 'g4-microbe', 'g5-body', 'g3-animal', 'g3-plantlife', 'g3-force', 'g3-sound', 'g4-magnet', 'g6-motion', 'g4-water-state', 'g3-material', 'g5-mixture', 'g4-night-sky', 'g5-strata', 'g5-weather', 'g3-health', 'g4-climate', 'g5-energy', 'g6-career'];
+const UNITS = ['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat', 'g5-light', 'g6-electricity', 'g4-land', 'g6-earth-motion', 'g6-seasons', 'g3-lifecycle', 'g6-plant', 'g4-ecosystem', 'g4-microbe', 'g5-body', 'g3-animal', 'g3-plantlife', 'g3-force', 'g3-sound', 'g4-magnet', 'g6-motion', 'g4-water-state', 'g3-material', 'g5-mixture', 'g3-earth-sea', 'g4-night-sky', 'g5-strata', 'g5-weather', 'g3-health', 'g4-climate', 'g5-energy', 'g6-career'];
 
 for (const vp of VIEWPORTS) {
   test.describe(`${vp.width}x${vp.height}`, () => {
@@ -46,6 +46,16 @@ for (const vp of VIEWPORTS) {
       const { sw, iw } = await scrollWidth(page);
       expect(sw).toBeLessThanOrEqual(iw);
       const box = await page.getByTestId('climate-svg').boundingBox();
+      expect(box!.x + box!.width).toBeLessThanOrEqual(vp.width + 1);
+    });
+
+    test('g3-earth-sea 두 번째 활동(밀물과 썰물 관찰하기, 활동 탭 포함)에 가로 스크롤이 없다', async ({ page }) => {
+      await gotoUnit(page, 'g3-earth-sea', { experiment: 'tide' });
+      await expect(page.getByRole('tab', { name: /^활동 2 · / })).toBeVisible();
+      await expect(page.getByTestId('tide-svg')).toBeVisible();
+      const { sw, iw } = await scrollWidth(page);
+      expect(sw).toBeLessThanOrEqual(iw);
+      const box = await page.getByTestId('tide-svg').boundingBox();
       expect(box!.x + box!.width).toBeLessThanOrEqual(vp.width + 1);
     });
 

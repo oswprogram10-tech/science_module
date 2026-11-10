@@ -52,8 +52,8 @@ function initialTask(task: ObservationTask): TaskState {
   };
 }
 
-/** 지나온 시각(점선·별 자취)을 모으는 과제인가. */
-const keepsTrail = (task: ObservationTask): boolean => task.view === 'rotation' || task.view === 'north-sky';
+/** 지나온 시각(점선·별 자취·하루 그래프의 점)을 모으는 과제인가. */
+const keepsTrail = (task: ObservationTask): boolean => task.view === 'rotation' || task.view === 'north-sky' || task.view === 'tide';
 
 /** 시각 슬라이더가 있는 과제의 범위. */
 const hourRange = (task: ObservationTask): [number, number] => (task.view === 'north-sky' ? [NORTH_HOUR_MIN, NORTH_HOUR_MAX] : [0, 24]);
@@ -99,16 +99,16 @@ export const canRecord = (state: ObserveState, exp: ObservationExperiment): bool
   return ts.prediction !== null && ts.observed;
 };
 
-/** 시각 슬라이더가 있는 과제(rotation 0~24시, north-sky 오후 7시~새벽 3시)의 시각, 0.5시 단위. 막혀 있거나 값이 그대로면 상태를 바꾸지 않는다. */
+/** 시각 슬라이더가 있는 과제(rotation·tide 0~24시, north-sky 오후 7시~새벽 3시)의 시각, 0.5시 단위. 막혀 있거나 값이 그대로면 상태를 바꾸지 않는다. */
 export function setHour(state: ObserveState, exp: ObservationExperiment, hour: number): ObserveState {
   const { task, ts } = current(state, exp);
   if (!keepsTrail(task) || ts.prediction === null || !Number.isFinite(hour)) return state;
   const [lo, hi] = hourRange(task);
   const h = Math.min(hi, Math.max(lo, Math.round(hour * 2) / 2));
   if (h === ts.hour) return state;
-  // 북쪽 하늘 보기는 건너뛴 시각의 별 자취도 이어서 남긴다.
+  // 북쪽 하늘 보기와 바닷가 보기는 건너뛴 시각의 자취(별 자취, 하루 그래프의 점)도 이어서 남긴다.
   const stops: number[] = [];
-  if (task.view === 'north-sky') {
+  if (task.view === 'north-sky' || task.view === 'tide') {
     const dir = h > ts.hour ? 1 : -1;
     for (let x = ts.hour + dir * 0.5; dir > 0 ? x <= h : x >= h; x += dir * 0.5) stops.push(x);
   } else {

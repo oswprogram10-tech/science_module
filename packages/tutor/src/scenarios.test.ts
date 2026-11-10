@@ -43,10 +43,33 @@ describe('활동이 여럿인 단원의 시나리오(id 안정성)', () => {
   });
   it('활동이 하나인 단원은 활동마다 시나리오를 한 번만 만들고 모두 첫 활동 것이다', () => {
     for (const id of TUTOR_UNITS) {
-      if (id === 'g5-mixture' || id === 'g4-land') continue;
+      if (id === 'g5-mixture' || id === 'g4-land' || id === 'g3-earth-sea') continue;
       const only = units[id]!.manifest.experiments;
       expect(only, id).toHaveLength(1);
       expect(new Set(generateScenarios(id, units[id]!).map((s) => s.state.experimentId)), id).toEqual(new Set([only[0]!.id]));
+    }
+  });
+});
+
+describe('지구와 바다 시나리오(활동 2 덧붙임)', () => {
+  const sea = units['g3-earth-sea']!;
+  const list = generateScenarios('g3-earth-sea', sea);
+  it('첫 활동(바닷물과 강물 비교하기) 시나리오 s001~s020은 활동 2를 더하기 전과 한 글자도 같고, 밀물과 썰물 시나리오 10개가 뒤에 덧붙는다', () => {
+    expect(sea.manifest.experiments.map((e) => e.id)).toEqual(['sea-water', 'tide']);
+    expect(list.map((s) => s.scenarioId)).toEqual(list.map((_, i) => `g3-earth-sea-s${String(i + 1).padStart(3, '0')}`));
+    expect(list).toHaveLength(30);
+    expect(list.slice(0, 20).every((s) => s.state.experimentId === 'sea-water')).toBe(true);
+    expect(list.slice(20).every((s) => s.state.experimentId === 'tide')).toBe(true);
+    // 이 해시는 활동 2를 더하기 전 ml/tutor/scenarios/g3-earth-sea.jsonl 20줄(줄바꿈으로 이은 글자)의 SHA-256이다.
+    const first = list.slice(0, 20).map((s) => JSON.stringify(s)).join('\n');
+    expect(createHash('sha256').update(first).digest('hex')).toBe('25b4f820044a6b9b92d54677b66beb068ea463cc279d145fd3e76883b59d63e9');
+  });
+  it('밀물과 썰물 과제마다 다섯 상황이 모두 있다', () => {
+    const exp = sea.manifest.experiments[1]!;
+    if (!('tasks' in exp)) throw new Error('관찰 활동이 아닙니다.');
+    for (const task of exp.tasks) {
+      const keys = list.filter((s) => s.state.kind === 'observe' && s.state.taskId === task.id).map((s) => situationOf(s.state, exp));
+      expect(new Set(keys), task.id).toEqual(new Set(['before-observe', 'observing', 'record-mismatch', 'record-match', 'prediction-mismatch']));
     }
   });
 });
