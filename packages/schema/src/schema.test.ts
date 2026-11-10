@@ -558,12 +558,10 @@ describe('관찰 활동 (sky-observation)', () => {
     expect(isVariableExperiment(e)).toBe(false);
     expect(isClassificationExperiment(e)).toBe(false);
     const o = e as ObservationExperiment;
-    // 달 모양 과제 둘은 기존 과제 뒤에 덧붙었다(앞 다섯 과제의 순서와 내용은 그대로).
-    expect(o.tasks.map((t) => t.id)).toEqual(['sun-path', 'day-night', 'star-path', 'season-stars', 'winter-stars', 'moon-change', 'full-moon']);
-    expect(o.tasks.map((t) => t.view)).toEqual(['rotation', 'rotation', 'rotation', 'revolution', 'revolution', 'moon', 'moon']);
+    expect(o.tasks.map((t) => t.id)).toEqual(['sun-path', 'day-night', 'star-path', 'season-stars', 'winter-stars']);
+    expect(o.tasks.map((t) => t.view)).toEqual(['rotation', 'rotation', 'rotation', 'revolution', 'revolution']);
     expect(o.tasks.map((t) => t.answer)).toEqual([
       'sun-path-direction', 'antipode-day-night', 'star-path-direction', 'constellation-changes', 'winter-constellation',
-      'moon-evening-change', 'full-moon-day',
     ]);
     for (const t of o.tasks) expect(t.probes.map((p) => p.when).sort()).toEqual(
       ['before-observe', 'observing', 'prediction-mismatch', 'record-match', 'record-mismatch'],
@@ -596,20 +594,22 @@ describe('관찰 활동 (sky-observation)', () => {
     expect(() => parseManifest(edit((x) => { delete x.tasks; }))).toThrow(ManifestError);
   });
 
-  it('밤하늘 관찰 매니페스트: 과제 4개, 새 보기 둘, 새 정답 규칙 넷, 선택지 value는 문자열', () => {
+  it('밤하늘 관찰 매니페스트: 과제 6개(달 모양 과제 둘은 기존 넷 뒤), 새 보기 셋, 새 정답 규칙 여섯, 선택지 value는 문자열', () => {
     const m = parseManifest(nightSkyJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-night-sky', 4, 'earth', ['4과13-02', '4과13-03']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-night-sky', 4, 'earth', ['4과13-01', '4과13-02', '4과13-03']]);
     const o = m.experiments[0] as ObservationExperiment;
     expect(isObservationExperiment(o)).toBe(true);
     expect([o.id, o.module, o.params]).toEqual(['night-sky', 'sky-observation', { latDeg: 37.5 }]);
-    expect(o.tasks.map((t) => t.id)).toEqual(['planet-size', 'planet-distance', 'find-polaris', 'polaris-still']);
-    expect(o.tasks.map((t) => t.view)).toEqual(['solar-system', 'solar-system', 'north-sky', 'north-sky']);
-    expect(o.tasks.map((t) => t.answer)).toEqual(['jupiter-earth-size', 'neptune-distance', 'pointer-star-target', 'polaris-motion']);
+    expect(o.tasks.map((t) => t.id)).toEqual(['planet-size', 'planet-distance', 'find-polaris', 'polaris-still', 'moon-change', 'full-moon']);
+    expect(o.tasks.map((t) => t.view)).toEqual(['solar-system', 'solar-system', 'north-sky', 'north-sky', 'moon', 'moon']);
+    expect(o.tasks.map((t) => t.answer)).toEqual(['jupiter-earth-size', 'neptune-distance', 'pointer-star-target', 'polaris-motion', 'moon-evening-change', 'full-moon-day']);
     expect(o.tasks.map((t) => t.options.map((x) => x.value))).toEqual([
       ['2', '5', '11', '50'],
       ['3', '10', '30', '100'],
       ['polaris', 'kochab', 'capella', 'vega'],
       ['nearly-still', 'east-to-west', 'west-to-east'],
+      ['waxes-east', 'wanes-west', 'same'],
+      ['3', '8', '15', '22'],
     ]);
     for (const t of o.tasks) {
       for (const x of t.options) expect(typeof x.value).toBe('string');
@@ -617,9 +617,9 @@ describe('관찰 활동 (sky-observation)', () => {
         ['before-observe', 'observing', 'prediction-mismatch', 'record-match', 'record-mismatch'],
       );
     }
-    expect(o.tasks.map((t) => (t.controls ?? []).map((c) => c.key))).toEqual([['compare'], ['compare'], [], ['rotation']]);
-    expect(o.tasks.map((t) => (t.controls ?? []).map((c) => c.default))).toEqual([['size'], ['distance'], [], ['forward']]);
-    expect(o.limits).toEqual(['천구', '적경', '적위', '광년', '천문단위', '등급', '세차 운동']);
+    expect(o.tasks.map((t) => (t.controls ?? []).map((c) => c.key))).toEqual([['compare'], ['compare'], [], ['rotation'], [], []]);
+    expect(o.tasks.map((t) => (t.controls ?? []).map((c) => c.default))).toEqual([['size'], ['distance'], [], ['forward'], [], []]);
+    expect(o.limits).toEqual(['천구', '적경', '적위', '광년', '천문단위', '등급', '세차 운동', '위상', '이각', '삭망월', '황도']);
     expect(o.tutor.probes).toEqual([]);
   });
 

@@ -38,9 +38,9 @@ describe('저장소의 데이터셋 검증 (pnpm test에도 포함)', () => {
   it('견본: 대표 3개 단원은 sft 8 · pairs 4 · redteam 6, 나머지 단원은 sft 4 · pairs 2 · redteam 3', () => {
     for (const unit of TUTOR_UNITS) {
       const rich = RICH_EXAMPLE_UNITS.includes(unit as (typeof RICH_EXAMPLE_UNITS)[number]);
-      // 지구의 운동은 달 모양 과제 둘이 늘어 과제마다 견본 1개씩이 더해졌다(sft 6).
+      // 밤하늘 관찰은 달 모양 과제 둘이 늘어 과제마다 견본 1개씩이 더해졌다(sft 6).
       // 혼합물의 분리는 두 번째 활동(분리 방법 고르기)의 견본 1개가 더해졌다(sft 5).
-      const sftCount = rich ? 8 : unit === 'g6-earth-motion' ? 6 : unit === 'g5-mixture' ? 5 : 4;
+      const sftCount = rich ? 8 : unit === 'g4-night-sky' ? 6 : unit === 'g5-mixture' ? 5 : 4;
       expect(full.sft.filter((r) => r.unitId === unit), `${unit} sft`).toHaveLength(sftCount);
       expect(full.pairs.filter((r) => r.unitId === unit), `${unit} pairs`).toHaveLength(rich ? 4 : 2);
       expect(full.redteam.filter((r) => r.unitId === unit), `${unit} redteam`).toHaveLength(rich ? 6 : 3);
@@ -65,9 +65,9 @@ describe('저장소의 데이터셋 검증 (pnpm test에도 포함)', () => {
     for (const unit of TUTOR_UNITS) {
       const list = full.scenarios.filter((s) => s.unitId === unit);
       expect(list.length, unit).toBeGreaterThanOrEqual(15);
-      // 관찰 활동은 과제마다 5개이므로 과제가 5개를 넘으면(지구의 운동 7개 = 35) 그만큼 늘어난다.
+      // 관찰 활동은 과제마다 5개이므로 과제가 5개를 넘으면(밤하늘 관찰 6개 = 30) 그만큼 늘어난다.
       // 활동이 둘인 단원(g5-mixture)은 활동마다 25개까지라 50개까지 늘어난다.
-      expect(list.length, unit).toBeLessThanOrEqual(unit === 'g6-earth-motion' ? 35 : unit === 'g5-mixture' ? 50 : 25);
+      expect(list.length, unit).toBeLessThanOrEqual(unit === 'g4-night-sky' ? 35 : unit === 'g5-mixture' ? 50 : 25);
     }
     for (const s of full.scenarios) expect(inputFor(full, s, '').length).toBeGreaterThan(30);
   });

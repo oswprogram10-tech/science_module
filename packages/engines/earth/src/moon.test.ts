@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseManifest, type ObservationExperiment } from '@sci/schema';
 import earthJson from '../../../../content/units/g6-earth-motion/manifest.json';
+import nightJson from '../../../../content/units/g4-night-sky/manifest.json';
 import { answerFor, sunPositionAtDeclination, validateSkyObservation } from './astro';
 import {
   fullMoonDay,
@@ -95,9 +96,11 @@ describe('달 모양 모델(교사 검수 대상)', () => {
     expect(moonDay(10).pos.azDeg).toBeLessThan(moonDay(3).pos.azDeg);
   });
 
-  it('지구의 운동 매니페스트가 validateSkyObservation을 통과한다', () => {
-    const exp = parseManifest(earthJson).experiments[0] as ObservationExperiment;
+  it('밤하늘 관찰 매니페스트(달 과제는 맨 뒤 둘)와 지구의 운동 매니페스트가 validateSkyObservation을 통과한다', () => {
+    const exp = parseManifest(nightJson).experiments[0] as ObservationExperiment;
     expect(validateSkyObservation(exp)).toEqual([]);
     expect(exp.tasks.slice(-2).map((t) => t.id)).toEqual(['moon-change', 'full-moon']);
+    const g6 = parseManifest(earthJson).experiments[0] as ObservationExperiment;
+    expect(validateSkyObservation(g6)).toEqual([]);
   });
 });

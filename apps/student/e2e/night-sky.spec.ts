@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { test, expect, gotoUnit } from './helpers';
+import { test, expect, gotoUnit, scrollWidth } from './helpers';
 
 const ID = 'g4-night-sky';
 const region = (page: Page, name: string) => page.getByRole('region', { name, exact: true });
@@ -26,9 +26,9 @@ test.beforeEach(async ({ page }) => {
   await gotoUnit(page, ID);
 });
 
-test('단원 화면: 과제 4개, 태양계 모형 보기 하나, 예측 전에는 조작과 기록이 잠겨 있다', async ({ page }) => {
+test('단원 화면: 과제 6개(달 모양 과제 둘은 맨 뒤), 태양계 모형 보기 하나, 예측 전에는 조작과 기록이 잠겨 있다', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name: '밤하늘 관찰' })).toBeVisible();
-  await expect(region(page, '과제 목록').getByRole('button')).toHaveCount(4);
+  await expect(region(page, '과제 목록').getByRole('button')).toHaveCount(6);
   await expect(page.getByRole('figure', { name: '태양계 모형 보기' })).toBeVisible();
   await expect(page.getByRole('figure', { name: '땅에서 보기' })).toHaveCount(0);
   await expect(toggle(page, '거리 비교')).toBeDisabled();
@@ -250,5 +250,128 @@ test.describe('390x844 화면', () => {
     await toggle(page, '길잡이 선 보기').click();
     await expect(page.getByTestId('north-svg')).toHaveAttribute('data-layout', 'narrow');
     await noScroll('북쪽 하늘');
+  });
+});
+
+// ---- 달 모양 과제(음력 날짜 슬라이더로 땅·우주 두 그림 비교) ----
+const moonSlider = (page: Page) => page.getByRole('slider', { name: '음력 날짜', exact: true });
+/** range 입력의 값을 바꾼다(React가 change를 받도록 입력 이벤트를 일으킨다). */
+const setSlider = (input: Locator, value: number) => input.fill(String(value));
+const SHAPE_NAMES = ['초승달', '상현달', '보름달이에요', '하현달', '그믐달', '보름과 하현 사이', '상현과 보름 사이', '삭 무렵'];
+const moonDisc = (page: Page) => page.getByTestId('moon-disc');
+const moonGround = (page: Page) => page.getByTestId('moon-ground');
+const shapeName = (page: Page) => page.getByTestId('moon-shape-name');
+
+/** 달 그림의 화면 위치와 밝은 부분의 크기(data-lit-width는 달 지름 방향 길이). */
+async function moonMeasure(page: Page) {
+  const box = (await moonDisc(page).boundingBox())!;
+  const g = moonGround(page);
+  return { x: box.x + box.width / 2, frac: Number(await g.getAttribute('data-frac')), lit: Number(await g.getAttribute('data-lit-width')), waxing: await g.getAttribute('data-waxing') };
+}
+
+test('달 모양 과제: 3일 → 10일에 달이 왼쪽(동쪽)으로 옮겨 가고 밝은 부분이 넓어진다. 모양 이름은 기록 전에 없다', async ({ page }) => {
+  await pickTask(page, '저녁 달의 모양과 위치');
+  await expect(moonSlider(page)).toBeDisabled();
+  await predict(page, '점점 차오르고 동쪽으로 옮겨 가요');
+  const input = moonSlider(page);
+  await expect(input).toBeEnabled();
+  await expect(input).toHaveValue('3');
+  await expect(recordBtn(page, '점점 차오르고 동쪽으로 옮겨 가요')).toBeDisabled();
+  const a = await moonMeasure(page);
+  expect(a.waxing).toBe('true');
+  await expect(page.getByTestId('moon-ground-caption')).toContainText('음력 3일');
+  await expect(page.getByTestId('moon-ground-caption')).toContainText('오른쪽이 밝아요');
+  await setSlider(input, 10);
+  await expect(input).toHaveAttribute('aria-valuetext', '음력 10일');
+  const b = await moonMeasure(page);
+  expect(b.x).toBeLessThan(a.x - 20);
+  expect(b.frac).toBeGreaterThan(a.frac);
+  expect(b.lit).toBeGreaterThan(a.lit);
+  // 기록 전에는 어디에도 모양 이름이 없다.
+  await expect(shapeName(page)).toHaveCount(0);
+  const body = await page.locator('body').innerText();
+  const aria = await page.locator('svg[aria-label]').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')).join(' '));
+  for (const n of SHAPE_NAMES) {
+    expect(body, n).not.toContain(n);
+    expect(aria, n).not.toContain(n);
+  }
+  // 틀리게 기록하면 이름이 없고, 맞게 기록하면 "이 날의 달"이 보인다.
+  await recordBtn(page, '모양과 위치가 그대로예요').click();
+  await expect(feedbackBox(page)).toContainText('관찰 화면을 다시 살펴볼까요?');
+  await expect(shapeName(page)).toHaveCount(0);
+  await recordBtn(page, '점점 차오르고 동쪽으로 옮겨 가요').click();
+  await expect(feedbackBox(page)).toContainText('관찰한 내용을 잘 기록했어요.');
+  await expect(shapeName(page)).toHaveText('이 날의 달: 상현과 보름 사이');
+  await setSlider(input, 3);
+  await expect(shapeName(page)).toHaveText('이 날의 달: 초승달');
+  await expect(region(page, '과제 목록').getByRole('button', { name: /^저녁 달의 모양과 위치/ })).toContainText('✓ 완료');
+});
+
+test('달 모양 과제: 18일에는 달이 보이지 않는다는 문구가 보인다', async ({ page }) => {
+  await pickTask(page, '저녁 달의 모양과 위치');
+  await predict(page, '점점 줄어들고 서쪽으로 옮겨 가요');
+  await setSlider(moonSlider(page), 18);
+  await expect(page.getByTestId('moon-hidden-note')).toHaveText('이 시각에는 달이 보이지 않아요');
+  await expect(moonGround(page)).toHaveCount(0);
+  await expect(page.getByTestId('moon-ground-caption')).toContainText('보이지 않아요');
+  await setSlider(moonSlider(page), 8);
+  await expect(page.getByTestId('moon-hidden-note')).toHaveCount(0);
+  await expect(moonGround(page)).toHaveCount(1);
+});
+
+test('달 모양 과제: 슬라이더는 키보드로 조작하고, 우주에서 보기 달은 날짜 따라 돌며 태양 쪽이 밝다', async ({ page }) => {
+  await pickTask(page, '저녁 달의 모양과 위치');
+  await predict(page, '모양과 위치가 그대로예요');
+  const input = moonSlider(page);
+  await input.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(input).toHaveAttribute('aria-valuetext', '음력 4일');
+  await page.keyboard.press('End');
+  await expect(input).toHaveAttribute('aria-valuetext', '음력 29일');
+  await page.keyboard.press('Home');
+  await expect(input).toHaveAttribute('aria-valuetext', '음력 1일');
+  const spaceMoon = page.getByTestId('moon-space');
+  await expect(spaceMoon).toHaveAttribute('data-lit-side', 'sun');
+  await setSlider(input, 8);
+  const x8 = (await spaceMoon.boundingBox())!.x;
+  await setSlider(input, 15);
+  const x15 = (await spaceMoon.boundingBox())!.x;
+  expect(x15).toBeGreaterThan(x8);
+  await expect(page.getByTestId('moon-space-caption')).toContainText('음력 15일');
+});
+
+test('보름달 과제: 15일 무렵을 기록하면 맞게 기록했다고 알려 주고 보름달을 보여 준다', async ({ page }) => {
+  await pickTask(page, '보름달이 뜨는 날');
+  await predict(page, '15일 무렵');
+  await setSlider(moonSlider(page), 15);
+  await expect(tutorBox(page)).toContainText('밝은 부분이 가장 넓은 날을 찾아볼까요?');
+  await recordBtn(page, '22일 무렵').click();
+  await expect(feedbackBox(page)).toContainText('관찰 화면을 다시 살펴볼까요?');
+  await expect(shapeName(page)).toHaveCount(0);
+  await expect(tutorBox(page)).toContainText('앞뒤 날짜의 달보다');
+  await recordBtn(page, '15일 무렵').click();
+  await expect(feedbackBox(page)).toContainText('관찰한 내용을 잘 기록했어요.');
+  await expect(shapeName(page)).toHaveText('이 날의 달: 보름달');
+  await expect(tutorBox(page)).toContainText('태양, 지구, 달은 어떻게 늘어서 있을까요?');
+  await expect(page.getByTestId('compare')).toHaveText('예측: 15일 무렵 / 관찰: 15일 무렵');
+  await expect(page.locator('body')).not.toContainText(/틀렸|정답/);
+});
+
+test.describe('달 모양 과제: 390x844 화면', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+  test('가로 스크롤이 없고 두 그림이 화면 안에 있다', async ({ page }) => {
+    await gotoUnit(page, ID);
+    await pickTask(page, '저녁 달의 모양과 위치');
+    await predict(page, '점점 차오르고 동쪽으로 옮겨 가요');
+    for (const d of [1, 3, 10, 15, 18, 29]) {
+      await setSlider(moonSlider(page), d);
+      const { sw, iw } = await scrollWidth(page);
+      expect(sw, `${d}일`).toBeLessThanOrEqual(iw);
+    }
+    for (const id of ['moon-ground-svg', 'moon-space-svg']) {
+      const box = (await page.getByTestId(id).boundingBox())!;
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(390);
+    }
   });
 });

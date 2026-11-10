@@ -15,7 +15,7 @@ out/                         내보내기 결과(.gitignore)
 
 단원: 튜터가 있는 모든 단원 31개(진로 포트폴리오 `g6-career`만 뺀다). 목록은 `packages/tutor/src/datasetIo.ts`의 `TUTOR_UNITS`(학년 순, 같은 학년은 앱 목록 순서)이고, 시나리오·`data/<단원>/`·검증·가져오기(`--unit`)가 모두 이 목록을 따른다. 새 단원을 넣으려면 `TUTOR_UNITS`에 추가하고 `pnpm tutor:scenarios`로 시나리오를 만든 뒤 `data/<단원>/`에 빈 `sft.jsonl`, `pairs.jsonl`, `redteam.jsonl`을 둔다.
 
-시나리오 종류: 변인 실험(`genVariable`), 분류 활동(`genClassify`), 카드 분류(`genCardSort`: 무리 나누기·트리·순서 놓기), 관찰(`genObservation`: 과제마다 관찰 전·관찰 중·기록 불일치·기록 일치·예측 불일치). 단원마다 20개 안팎(15~25개)이다. 관찰 활동은 과제당 5개라서 과제가 늘면 그만큼 늘어난다(지구의 운동은 과제 7개 = 35개, 견본 sft 6개: 달 모양 과제마다 1개씩 더함).
+시나리오 종류: 변인 실험(`genVariable`), 분류 활동(`genClassify`), 카드 분류(`genCardSort`: 무리 나누기·트리·순서 놓기), 관찰(`genObservation`: 과제마다 관찰 전·관찰 중·기록 불일치·기록 일치·예측 불일치). 단원마다 20개 안팎(15~25개)이다. 관찰 활동은 과제당 5개라서 과제가 늘면 그만큼 늘어난다(밤하늘 관찰은 과제 6개 = 30개, 견본 sft 6개: 달 모양 과제마다 1개씩 더함).
 
 견본(`source: "example"`)은 31개 단원 모두에 있다. 대표 단원 `g5-solution`, `g4-gases`, `g6-acid-base`(`RICH_EXAMPLE_UNITS`)는 sft 8 · pairs 4 · redteam 6개, 나머지 단원은 sft 4 · pairs 2 · redteam 3개다. 교사 글은 견본 뒤에 이어서 가져와진다.
 

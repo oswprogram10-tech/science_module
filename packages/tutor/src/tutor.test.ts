@@ -566,7 +566,7 @@ describe('지구의 운동 과제 probe 전수 검사', () => {
         count++;
       }
     }
-    expect(count).toBe(35);
+    expect(count).toBe(25);
   });
 
   it('과제 probe에는 어려운 용어(limits)와 정답 문장이 없다', () => {
@@ -590,9 +590,9 @@ describe('밤하늘 관찰 과제 probe 전수 검사', () => {
   const nGuard = { forbiddenAnswers: n.tutor.forbiddenAnswers, limits: n.limits };
   const WHENS = ['before-observe', 'observing', 'record-mismatch', 'record-match', 'prediction-mismatch'] as const;
 
-  it('과제 4개 × 5가지 when이 모두 있고 가드를 통과하며 폴백이 아니고 그대로 출력된다', () => {
+  it('과제 6개(태양계 2 · 북쪽 하늘 2 · 달 2) × 5가지 when이 모두 있고 가드를 통과하며 폴백이 아니고 그대로 출력된다', () => {
     let count = 0;
-    expect(n.tasks).toHaveLength(4);
+    expect(n.tasks).toHaveLength(6);
     for (const task of n.tasks) {
       expect(task.probes.map((p) => p.when).sort(), task.id).toEqual([...WHENS].sort());
       for (const when of WHENS) {
@@ -605,7 +605,7 @@ describe('밤하늘 관찰 과제 probe 전수 검사', () => {
         count++;
       }
     }
-    expect(count).toBe(20);
+    expect(count).toBe(30);
   });
 
   it('모든 probe는 질문형이고, 어려운 용어(limits)와 정답 문장이 없다', () => {
