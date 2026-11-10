@@ -4,6 +4,7 @@ import type { PortfolioExperiment, PortfolioJob } from '@sci/schema';
 import { renderAndGuard } from '@sci/tutor';
 import { MemoryRecorder, buildStatement, toExtensions } from '@sci/xapi';
 import { MAX_MORE_CHARS, UNAVAILABLE_TEXT, logbook, useLogbookVersion } from '../../logbook';
+import { LogbookTurnOnButton } from '../../logbook/LogbookCard';
 import { useClassroomStatus } from '../../classroom/bus';
 import { JobIcon } from './JobIcons';
 import { MAX_AREAS, dayText, doneSkillsOf, splitJobs, summarizeRecords, toggleArea } from './portfolioModel';
@@ -147,8 +148,13 @@ export function PortfolioLab({
                 <p>
                   {enabled
                     ? '탐구 기록장이 켜져 있어요. 다른 단원에서 탐구를 하고 오면 여기에 모여요.'
-                    : '탐구 기록장이 꺼져 있으면 기록이 남지 않아요. 기록을 모아 보고 싶다면 단원 목록에서 기록장을 켜고 탐구해 보세요.'}
+                    : '탐구 기록장이 꺼져 있으면 기록이 남지 않아요. 기록을 모아 보고 싶다면 기록장을 켜고 다른 단원에서 탐구해 보세요.'}
                 </p>
+                {!enabled && (
+                  <p className="no-print">
+                    <LogbookTurnOnButton />
+                  </p>
+                )}
                 <p>기록이 없어도 아래 단계에서 직업 카드를 살펴볼 수 있어요.</p>
               </div>
             ) : (
@@ -342,7 +348,12 @@ export function PortfolioLab({
               {!usable ? (
                 <p className="logbook-warn" role="status">{UNAVAILABLE_TEXT}</p>
               ) : !enabled ? (
-                <p className="logbook-warn" role="status">기록장을 켜야 저장돼요 (단원 목록에서 켤 수 있어요).</p>
+                <>
+                  <p className="logbook-warn" role="status">기록장을 켜야 저장돼요.</p>
+                  <p>
+                    <LogbookTurnOnButton />
+                  </p>
+                </>
               ) : (
                 <p className="muted">저장하면 이 기기의 기록장에만 남아요. 선생님께 보이지 않아요.</p>
               )}

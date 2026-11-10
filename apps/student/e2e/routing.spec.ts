@@ -236,7 +236,8 @@ const BASELINE_DOM: Record<string, string> = {
   'g3-material': 'ccfbecacc9872a8c06aa62ccb273a21781f1841ae715a1fec7b80ca7528e94aa',
   'g5-strata': '37617a9f885625557bf0b125484a688f4140ef72fc7f11f6d50e4f30fae817e7',
   'g3-plantlife': '9d2d201024b82e7fcf7d7b4a5d643ba423e0e66db84606e3e8ed1562b1ea8c10',
-  'g6-career': '8483518f5d62a6e5049cf6d5ce6905f8592f1e35b51bccab201a2ac360d5733b',
+  // 진로 단원 안 "기록장 켜기" 버튼(1단계)과 안내 한 문장을 더한 뒤의 값. 그 둘을 되돌리면 앞의 값(8483518f…)과 같음을 확인했다.
+  'g6-career': '42ee7d70874a9f08c896311d310ecb85e56fd2ed61ec90f1868ad02606bed06f',
 };
 
 test('활동이 하나인 대표 단원 8개의 화면(DOM)이 활동 탭을 더하기 전과 같다', async ({ page }) => {

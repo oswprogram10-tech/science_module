@@ -56,6 +56,48 @@ export const CONSENT_POINTS = [
 
 type Dialog = null | 'consent' | 'off';
 
+/** 기록장을 켜기 전 안내(동의) 대화상자. 단원 목록 카드와 진로 단원이 같은 것을 쓴다. */
+function ConsentDialog({ onCancel, onAgree }: { onCancel: () => void; onAgree: () => void }) {
+  return (
+    <LogbookDialog title="탐구 기록장을 켤까요?" onCancel={onCancel}>
+      <ul className="consent-list">
+        {CONSENT_POINTS.map((t) => (
+          <li key={t}>{t}</li>
+        ))}
+      </ul>
+      <div className="modal-actions">
+        <button type="button" onClick={onCancel}>안 켤래요</button>
+        <button type="button" className="run" onClick={onAgree}>켤게요</button>
+      </div>
+    </LogbookDialog>
+  );
+}
+
+/**
+ * 다른 화면(진로 단원)에 두는 "기록장 켜기" 버튼. 누르면 단원 목록과 같은 안내 대화상자를 띄우고,
+ * 학생이 "켤게요"를 눌러야만 켠다. 켜고 나면 버튼은 사라지고(기록장이 켜져 있으면 그리지 않음) 결과 문구만 남는다.
+ */
+export function LogbookTurnOnButton() {
+  useLogbookVersion();
+  const [open, setOpen] = useState(false);
+  const [msg, setMsg] = useState('');
+  if (!logbook.usable()) return null;
+  const enabled = logbook.isEnabled();
+  const turnOn = () => {
+    setOpen(false);
+    setMsg(logbook.enable() ? '기록장을 켰어요. 이제부터 탐구하면 이 기기에 기록이 남아요.' : `켜지 못했어요. ${UNAVAILABLE_TEXT}.`);
+  };
+  return (
+    <>
+      {!enabled && (
+        <button type="button" className="logbook-turn-on" onClick={() => setOpen(true)}>기록장 켜기</button>
+      )}
+      <span className="logbook-msg" role="status">{msg}</span>
+      {open && <ConsentDialog onCancel={() => setOpen(false)} onAgree={turnOn} />}
+    </>
+  );
+}
+
 /** 단원 목록에 놓는 "탐구 기록장" 카드: 켜기(안내 대화상자), 끄기(지울지 묻기), 모두 지우기. */
 export function LogbookCard() {
   useLogbookVersion();
@@ -104,19 +146,7 @@ export function LogbookCard() {
       )}
       <p className="logbook-msg" role="status">{msg}</p>
 
-      {dialog === 'consent' && (
-        <LogbookDialog title="탐구 기록장을 켤까요?" onCancel={() => setDialog(null)}>
-          <ul className="consent-list">
-            {CONSENT_POINTS.map((t) => (
-              <li key={t}>{t}</li>
-            ))}
-          </ul>
-          <div className="modal-actions">
-            <button type="button" onClick={() => setDialog(null)}>안 켤래요</button>
-            <button type="button" className="run" onClick={turnOn}>켤게요</button>
-          </div>
-        </LogbookDialog>
-      )}
+      {dialog === 'consent' && <ConsentDialog onCancel={() => setDialog(null)} onAgree={turnOn} />}
       {dialog === 'off' && (
         <LogbookDialog title="기록장을 끌까요?" onCancel={() => setDialog(null)}>
           <p>끄면 앞으로는 기록하지 않아요. 지금까지 남은 기록도 지울까요?</p>
