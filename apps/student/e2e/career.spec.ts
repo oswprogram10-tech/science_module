@@ -150,6 +150,55 @@ test.describe('기록장이 꺼져 있을 때', () => {
   });
 });
 
+test.describe('진로 단원 안에서 기록장 켜기', () => {
+  test('1단계 "기록장 켜기"는 같은 안내 대화 상자를 띄우고, 안 켤래요/Esc는 아무것도 남기지 않는다', async ({ page }) => {
+    await gotoCareer(page);
+    const turnOn = page.getByRole('button', { name: '기록장 켜기' });
+    await expect(turnOn).toBeVisible();
+    await turnOn.click();
+    const dialog = page.getByRole('dialog', { name: '탐구 기록장을 켤까요?' });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('listitem')).toHaveCount(5);
+    await expect(dialog.getByText('같은 기기를 쓰는 친구가 이 기록을 볼 수 있어요.', { exact: false })).toBeVisible();
+    await dialog.getByRole('button', { name: '안 켤래요' }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(turnOn).toBeFocused();
+    expect(await logJson(page)).toBeNull();
+    await turnOn.click();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    expect(await logJson(page)).toBeNull();
+    expect(await page.evaluate(() => localStorage.length)).toBe(0);
+  });
+
+  test('1단계에서 "켤게요"를 누르면 켜지고, 버튼이 사라지며 안내가 바뀐다', async ({ page }) => {
+    await gotoCareer(page);
+    await page.getByRole('button', { name: '기록장 켜기' }).click();
+    await page.getByRole('dialog', { name: '탐구 기록장을 켤까요?' }).getByRole('button', { name: '켤게요' }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: '기록장 켜기' })).toHaveCount(0);
+    await expect(page.getByText('탐구 기록장이 켜져 있어요.', { exact: false })).toBeVisible();
+    expect(JSON.parse((await logJson(page))!)).toMatchObject({ v: 1, enabled: true, entries: [] });
+    // 단원 목록의 카드도 켜진 상태로 보인다.
+    await page.goto('/');
+    await expect(page.getByRole('button', { name: '기록장 끄기' })).toBeVisible();
+  });
+
+  test('4단계에서 켜면 저장하기가 풀리고, 저장한 글은 기록장에만 남는다', async ({ page }) => {
+    await gotoCareer(page);
+    await stage(page, 4).click();
+    await expect(page.getByRole('button', { name: '저장하기' })).toBeDisabled();
+    await page.getByRole('button', { name: '기록장 켜기' }).click();
+    await page.getByRole('dialog', { name: '탐구 기록장을 켤까요?' }).getByRole('button', { name: '켤게요' }).click();
+    await expect(page.getByText('기록장을 켜야 저장돼요')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: '저장하기' })).toBeEnabled();
+    await page.getByLabel('더 알아보고 싶은 것', { exact: false }).fill('화석이 어떻게 생기는지');
+    await page.getByRole('button', { name: '저장하기' }).click();
+    await expect(page.getByText('이 기기의 기록장에 저장했어요.')).toBeVisible();
+    expect(await logJson(page)).toContain('화석이 어떻게 생기는지');
+  });
+});
+
 test.describe('진로 단원', () => {
   test('기록장을 켜고 두 단원에서 탐구하면 영역별 기록과 탐구 능력 막대가 보인다', async ({ page }) => {
     await enableLogbook(page);
