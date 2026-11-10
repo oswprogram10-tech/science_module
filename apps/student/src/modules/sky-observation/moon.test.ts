@@ -48,7 +48,8 @@ describe('달 모양 과제: 매니페스트', () => {
   });
 
   it('4학년 밤하늘 매니페스트와 기존 화면(보기 종류)은 그대로다', () => {
-    expect(hash(nightJson)).toBe('077b5524e75949ef');
+    // 성취기준을 원문(교육부 고시 제2022-33호 별책 9)에 맞춰 4과13-02·4과13-03으로 고친 뒤의 값. standards만 예전 값으로 되돌리면 077b5524e75949ef와 같다.
+    expect(hash(nightJson)).toBe('9947b068e701b649');
     const g4 = parseManifest(nightJson).experiments[0] as ObservationExperiment;
     expect(g4.tasks.map((t) => t.view)).toEqual(['solar-system', 'solar-system', 'north-sky', 'north-sky']);
     expect(exp.tasks.slice(0, 5).some(isNightView)).toBe(false);

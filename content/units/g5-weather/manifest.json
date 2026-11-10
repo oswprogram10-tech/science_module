@@ -2,7 +2,7 @@
   "id": "g5-weather",
   "title": "날씨와 우리 생활",
   "grade": 5,
-  "standards": ["6과10-04"],
+  "standards": ["6과06-03"],
   "engine": "earth",
   "experiments": [
     {

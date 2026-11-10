@@ -2,7 +2,7 @@
   "id": "g4-climate",
   "title": "기후변화와 우리 생활",
   "grade": 4,
-  "standards": ["4과17-01"],
+  "standards": ["4과16-01", "4과16-02"],
   "engine": "ssi",
   "experiments": [
     {

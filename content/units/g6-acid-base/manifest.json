@@ -2,7 +2,7 @@
   "id": "g6-acid-base",
   "title": "산과 염기",
   "grade": 6,
-  "standards": ["6과09-04"],
+  "standards": ["6과09-01"],
   "engine": "matter",
   "experiments": [
     {

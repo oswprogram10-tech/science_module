@@ -221,7 +221,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('땅의 변화 매니페스트의 점검표, 경고 문구, 안전 종류, 변인을 읽는다', () => {
     const m = parseManifest(landJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-land', 4, 'earth', ['4과11-01']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-land', 4, 'earth', ['4과11-03']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('magma-cooling');
     expect(e.safetyChecklist).toHaveLength(3);
@@ -234,7 +234,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('계절의 변화 매니페스트의 점검표, 안전 종류, 변인을 읽는다', () => {
     const m = parseManifest(seasonsJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g6-seasons', 6, 'earth', ['6과13-01']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g6-seasons', 6, 'earth', ['6과13-01', '6과13-02', '6과13-03']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('sun-angle');
     expect(e.safetyChecklist).toHaveLength(3);
@@ -247,7 +247,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('생물의 한살이 매니페스트의 변인, 안전 종류, 탐침을 읽는다', () => {
     const m = parseManifest(lifecycleJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-lifecycle', 3, 'life', ['4과04-01']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-lifecycle', 3, 'life', ['4과04-02']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('germination');
     expect(e.safety).toEqual([]);
@@ -261,7 +261,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('식물의 구조와 기능 매니페스트의 변인, 안전 종류, 탐침을 읽는다', () => {
     const m = parseManifest(plantJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g6-plant', 6, 'life', ['6과11-01']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g6-plant', 6, 'life', ['6과11-02']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('transpiration');
     expect(e.safety).toEqual([]);
@@ -276,7 +276,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('생물과 환경 매니페스트의 변인, 안전 종류, 탐침을 읽는다', () => {
     const m = parseManifest(ecosystemJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-ecosystem', 4, 'life', ['4과14-01']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-ecosystem', 4, 'life', ['4과14-02']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('food-web');
     expect(e.safety).toEqual([]);
@@ -310,7 +310,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('우리 몸의 구조와 기능 매니페스트의 변인, 안전 종류, 점검표, 탐침을 읽는다', () => {
     const m = parseManifest(bodyJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g5-body', 5, 'life', ['6과04-01']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g5-body', 5, 'life', ['6과04-02']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('exercise-body');
     expect(e.safety).toEqual(['exercise']);
@@ -345,7 +345,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('소리의 성질 매니페스트의 변인, 안전 종류, 금지 구절, 한계 용어, 탐침을 읽는다', () => {
     const m = parseManifest(soundJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-sound', 3, 'physics', ['4과08-01']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-sound', 3, 'physics', ['4과07-02']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('string-sound');
     expect(e.safety).toEqual([]);
@@ -385,7 +385,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('물체의 운동 매니페스트의 변인, 측정, 금지 구절, 한계 용어, 탐침을 읽는다', () => {
     const m = parseManifest(motionJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g6-motion', 6, 'physics', ['6과02-02']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g6-motion', 6, 'physics', ['6과10-02']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('ramp-cart');
     expect(e.safety).toEqual([]);
@@ -403,7 +403,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('물의 상태 변화 매니페스트의 변인, 측정, 안전, 금지 구절, 한계 용어, 탐침을 읽는다', () => {
     const m = parseManifest(waterStateJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-water-state', 4, 'matter', ['4과10-01']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-water-state', 4, 'matter', ['4과10-02']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('freeze-melt');
     expect(e.safety).toEqual(['cold']);
@@ -422,7 +422,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('혼합물의 분리 매니페스트의 변인, 측정, 안전, 한계 용어, 탐침을 읽는다', () => {
     const m = parseManifest(mixtureJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g5-mixture', 5, 'matter', ['6과05-03']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g5-mixture', 5, 'matter', ['6과05-01', '6과05-02']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('salt-sand');
     expect(e.safety).toEqual(['heat']);
@@ -441,7 +441,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('지구와 바다 매니페스트의 변인, 측정, 안전 없음, 한계 용어, 탐침을 읽는다', () => {
     const m = parseManifest(earthSeaJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-earth-sea', 3, 'earth', ['4과05-02']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-earth-sea', 3, 'earth', ['4과11-01']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('stream-table');
     expect(e.safety).toEqual([]);
@@ -460,7 +460,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('날씨와 우리 생활 매니페스트의 변인, 측정, 안전, 한계 용어, 탐침을 읽는다', () => {
     const m = parseManifest(weatherJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g5-weather', 5, 'earth', ['6과10-04']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g5-weather', 5, 'earth', ['6과06-03']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('land-sea-breeze');
     expect(e.safety).toEqual(['heat', 'fire']);
@@ -480,7 +480,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('감염병과 건강한 생활 매니페스트의 변인, 측정, 안전 없음, 한계 용어, 탐침을 읽는다', () => {
     const m = parseManifest(healthJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-health', 3, 'ssi', ['4과16-01']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-health', 3, 'ssi', ['4과08-02']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('infection-spread');
     expect(e.safety).toEqual([]);
@@ -497,7 +497,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('기후변화와 우리 생활 매니페스트의 변인, 측정, 안전, 한계 용어, 탐침을 읽는다', () => {
     const m = parseManifest(climateJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-climate', 4, 'ssi', ['4과17-01']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-climate', 4, 'ssi', ['4과16-01', '4과16-02']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('greenhouse-bottle');
     expect(e.safety).toEqual(['heat']);
@@ -515,7 +515,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('자원과 에너지 매니페스트의 변인, 측정, 안전, 한계 용어, 탐침을 읽는다', () => {
     const m = parseManifest(energyJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g5-energy', 5, 'ssi', ['6과18-02']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g5-energy', 5, 'ssi', ['6과08-02']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('solar-panel');
     expect(e.safety).toEqual(['sun']);
@@ -598,7 +598,7 @@ describe('관찰 활동 (sky-observation)', () => {
 
   it('밤하늘 관찰 매니페스트: 과제 4개, 새 보기 둘, 새 정답 규칙 넷, 선택지 value는 문자열', () => {
     const m = parseManifest(nightSkyJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-night-sky', 4, 'earth', ['4과13-01']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-night-sky', 4, 'earth', ['4과13-02', '4과13-03']]);
     const o = m.experiments[0] as ObservationExperiment;
     expect(isObservationExperiment(o)).toBe(true);
     expect([o.id, o.module, o.params]).toEqual(['night-sky', 'sky-observation', { latDeg: 37.5 }]);

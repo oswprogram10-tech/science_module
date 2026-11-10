@@ -40,7 +40,7 @@ describe('혼합물의 분리 두 번째 활동 매니페스트 (사양 §나)',
   it('첫 활동(소금과 모래)은 그대로이고 두 번째 활동이 뒤에 붙는다', () => {
     expect(manifest.experiments.map((e) => e.id)).toEqual(['salt-sand', 'separation-methods']);
     expect(manifest.experiments[0]!.module).toBe('salt-sand');
-    expect([manifest.id, manifest.title, manifest.grade, manifest.standards]).toEqual(['g5-mixture', '혼합물의 분리', 5, ['6과05-03']]);
+    expect([manifest.id, manifest.title, manifest.grade, manifest.standards]).toEqual(['g5-mixture', '혼합물의 분리', 5, ['6과05-01', '6과05-02']]);
   });
   it('활동 정보', () => {
     expect([exp.id, exp.module, exp.layout]).toEqual(['separation-methods', 'card-sort', 'groups']);

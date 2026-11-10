@@ -2,7 +2,7 @@
   "id": "g6-earth-motion",
   "title": "지구의 운동",
   "grade": 6,
-  "standards": ["6과12-01"],
+  "standards": ["6과12-01", "6과12-02", "6과12-03"],
   "engine": "earth",
   "experiments": [
     {

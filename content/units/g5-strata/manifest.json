@@ -3,7 +3,8 @@
   "title": "지층과 화석",
   "grade": 5,
   "standards": [
-    "6과06-01"
+    "6과01-01",
+    "6과01-03"
   ],
   "engine": "earth",
   "experiments": [

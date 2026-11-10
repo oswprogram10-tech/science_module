@@ -2,7 +2,7 @@
   "id": "g6-seasons",
   "title": "계절의 변화",
   "grade": 6,
-  "standards": ["6과13-01"],
+  "standards": ["6과13-01", "6과13-02", "6과13-03"],
   "engine": "earth",
   "experiments": [
     {

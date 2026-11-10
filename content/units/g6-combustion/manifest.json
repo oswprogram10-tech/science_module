@@ -2,7 +2,7 @@
   "id": "g6-combustion",
   "title": "물질의 연소",
   "grade": 6,
-  "standards": ["6과14-01"],
+  "standards": ["6과14-02"],
   "engine": "matter",
   "experiments": [
     {

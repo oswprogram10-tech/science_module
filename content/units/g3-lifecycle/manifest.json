@@ -2,7 +2,7 @@
   "id": "g3-lifecycle",
   "title": "생물의 한살이",
   "grade": 3,
-  "standards": ["4과04-01"],
+  "standards": ["4과04-02"],
   "engine": "life",
   "experiments": [
     {
