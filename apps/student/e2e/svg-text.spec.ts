@@ -26,8 +26,8 @@ const UNITS = readdirSync(UNITS_DIR)
 
 const NO_SVG_TEXT = new Set(['g3-animal', 'g3-material', 'g3-plantlife', 'g5-strata', 'g6-acid-base', 'g6-career', 'g5-mixture/separation-methods']);
 
-test('단원 목록: 32개 단원의 모든 활동(33개)을 잰다', () => {
-  expect(new Set(UNITS.map((u) => u.id)).size).toBe(32);
+test('단원 목록: 31개 단원의 모든 활동(33개)을 잰다', () => {
+  expect(new Set(UNITS.map((u) => u.id)).size).toBe(31);
   expect(UNITS.length).toBe(33);
   expect(UNITS.map((u) => u.name)).toContain('g5-mixture/separation-methods');
 });

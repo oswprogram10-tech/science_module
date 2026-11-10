@@ -11,8 +11,9 @@ import { streamNote, startSample } from './initial';
 import { StreamMacroView, fanHeight, fanWidth, grooveDepth } from './StreamMacroView';
 import { BIG_COUNT, SMALL_COUNT, StreamGrainView } from './StreamGrainView';
 
-const unit = UNITS.find((u) => u.id === 'g3-earth-sea')!;
-if (!unit.ok || unit.activity !== 'variable') throw new Error('g3-earth-sea가 없어요');
+const land = UNITS.find((u) => u.id === 'g4-land')!;
+const unit = land.ok ? land.activities[1] : undefined;
+if (!land.ok || !unit || unit.activity !== 'variable') throw new Error('g4-land의 두 번째 활동(stream-table)이 없어요');
 const experiment = unit.experiment;
 type V = { slope: string; waterL: number; vessel: string };
 const base: V = { slope: 'gentle', waterL: 1, vessel: 'cup' };
@@ -27,8 +28,9 @@ const count = (html: string, id: string) => (html.match(new RegExp(`data-testid=
 const attr = (html: string, id: string, name: string) => new RegExp(`data-testid="${id}"[^>]*? ${name}="([^"]*)"`).exec(html)?.[1];
 
 describe('레지스트리', () => {
-  it('g3-earth-sea는 stream-table 모듈로 로드된다', () => {
-    expect(unit.manifest.grade).toBe(3);
+  it('g4-land의 두 번째 활동은 stream-table 모듈로 로드된다', () => {
+    expect(land.ok && land.manifest.grade).toBe(4);
+    expect(land.ok && land.activities.map((a) => a.experiment.id)).toEqual(['magma-cooling', 'stream-table']);
     expect(unit.module).toBe(streamTableModule);
     expect(MODULES['stream-table'].kind).toBe('stream-table');
     expect(experiment.safety).toEqual([]);

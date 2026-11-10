@@ -1,4 +1,0 @@
-{"id":"g3-earth-sea-sft-0001","unitId":"g3-earth-sea","scenarioId":"g3-earth-sea-s002","utterance":"","source":"example","reviewed":false,"author":"EX","response":"언덕의 기울기를 바꾸어 보기로 했네요. 기울기가 달라지면 흘러내린 물과 흙의 모습이 어떻게 될지 예측해 볼까요?"}
-{"id":"g3-earth-sea-sft-0002","unitId":"g3-earth-sea","scenarioId":"g3-earth-sea-s010","utterance":"기울기를 바꾸려고 했는데 그릇이 바뀌었어요.","source":"example","reviewed":false,"author":"EX","response":"바꿀 조건으로 기울기를 골랐는데 그릇이 바뀌었어요. 기울기의 영향을 알아보려면 어느 칸을 바꾸어야 할까요?"}
-{"id":"g3-earth-sea-sft-0003","unitId":"g3-earth-sea","scenarioId":"g3-earth-sea-s014","utterance":"가파르게 했더니 물이 쏴 하고 빨리 내려갔어요.","source":"example","reviewed":false,"author":"EX","response":"물이 빨리 내려가는 모습을 보았군요. 그래프의 두 선에서 위쪽과 아래쪽 흙은 각각 어떻게 달라졌나요?"}
-{"id":"g3-earth-sea-sft-0004","unitId":"g3-earth-sea","scenarioId":"g3-earth-sea-s016","utterance":"그릇만 바꿨는데 숫자가 비슷해요.","source":"example","reviewed":false,"author":"EX","response":"그릇만 바꾸었을 때 깎인 흙과 쌓인 흙의 숫자를 앞 시행과 각각 견주어 볼까요? 이 비교로 어떤 생각이 드나요?"}

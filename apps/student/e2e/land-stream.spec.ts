@@ -34,8 +34,8 @@ async function resultCells(row: Locator) {
 }
 
 test('기준(완만하게, 1 L, 컵)이면 20, 16이 보이고 안전 점검표 없이 바로 실행되며 가상 전자저울이 있다', async ({ page }) => {
-  await gotoUnit(page, 'g3-earth-sea');
-  await expect(page.getByRole('heading', { level: 1, name: '지구와 바다' })).toBeVisible();
+  await gotoUnit(page, 'g4-land', { experiment: 'stream-table' });
+  await expect(page.getByRole('heading', { level: 1, name: '땅의 변화' })).toBeVisible();
   await expect(page.getByText('탐구 질문: 흐르는 물은 흙 언덕을 어떻게 바꿀까?')).toBeVisible();
   await expect(page.getByText('예측: 깎인 흙의 양은?')).toBeVisible();
   // 실행 전에는 결과(문구의 숫자)를 보여 주지 않는다
@@ -57,7 +57,7 @@ test('기준(완만하게, 1 L, 컵)이면 20, 16이 보이고 안전 점검표 
 });
 
 test('기울기를 가파르게 바꾸면 50, 결과: 늘어났다, 기울기 전용 질문이 나오고 골이 더 깊다', async ({ page }) => {
-  await gotoUnit(page, 'g3-earth-sea');
+  await gotoUnit(page, 'g4-land', { experiment: 'stream-table' });
   await baselineRun(page, SLOPE);
   const gentleDepth = Number(await macro(page).getByTestId('groove').getAttribute('data-depth'));
 
@@ -72,7 +72,7 @@ test('기울기를 가파르게 바꾸면 50, 결과: 늘어났다, 기울기 �
 });
 
 test('새 페이지에서 물을 2 L로 바꾸면 40이 보인다', async ({ page }) => {
-  await gotoUnit(page, 'g3-earth-sea');
+  await gotoUnit(page, 'g4-land', { experiment: 'stream-table' });
   await baselineRun(page, WATER);
   await setValue(page, WATER, '2 L');
   await run(page, '늘어난다');
@@ -83,7 +83,7 @@ test('새 페이지에서 물을 2 L로 바꾸면 40이 보인다', async ({ pag
 });
 
 test('새 페이지에서 그릇만 바꾸면 결과: 변하지 않았다', async ({ page }) => {
-  await gotoUnit(page, 'g3-earth-sea');
+  await gotoUnit(page, 'g4-land', { experiment: 'stream-table' });
   await baselineRun(page, VESSEL);
   await setValue(page, VESSEL, '페트병');
   await run(page, '변하지 않는다');
@@ -94,7 +94,7 @@ test('새 페이지에서 그릇만 바꾸면 결과: 변하지 않았다', asyn
 });
 
 test('눈으로 보기: "깎인 곳", "쌓인 곳" 라벨이 보이고, 붓는 동안에만 그릇 아이콘이 보인다', async ({ page }) => {
-  await gotoUnit(page, 'g3-earth-sea', { playback: 8 });
+  await gotoUnit(page, 'g4-land', { experiment: 'stream-table', playback: 8 });
   for (const l of ['깎인 곳', '쌓인 곳']) await expect(macro(page).getByText(l, { exact: true })).toBeVisible();
   await selectIV(page, SLOPE);
   await predict(page, '변하지 않는다');
@@ -117,7 +117,7 @@ test('눈으로 보기: "깎인 곳", "쌓인 곳" 라벨이 보이고, 붓는 �
 });
 
 test('흙 알갱이 보기: 라벨 "물", "흙 알갱이"와 문구가 보이고, 작은 알갱이와 큰 알갱이가 있다', async ({ page }) => {
-  await gotoUnit(page, 'g3-earth-sea');
+  await gotoUnit(page, 'g4-land', { experiment: 'stream-table' });
   for (const l of ['물', '흙 알갱이']) await expect(grains(page).getByText(l, { exact: true })).toBeVisible();
   await expect(grains(page).getByText('흐르는 물은 흙 알갱이를 함께 옮겨요.')).toBeVisible();
   await expect(grains(page).getByTestId('small-grain')).toHaveCount(9);
@@ -128,7 +128,7 @@ test('흙 알갱이 보기: 라벨 "물", "흙 알갱이"와 문구가 보이고
 });
 
 test('그래프: 두 선(실선·점선), y축 0~100, x축 0~60초, 표식 "붓기 끝"', async ({ page }) => {
-  await gotoUnit(page, 'g3-earth-sea');
+  await gotoUnit(page, 'g4-land', { experiment: 'stream-table' });
   await baselineRun(page, WATER);
   await expect(graph(page).getByText('흙의 양(g)', { exact: true })).toBeVisible();
   await expect(graph(page).getByText('시간(초)', { exact: true })).toBeVisible();
@@ -150,7 +150,7 @@ test('그래프: 두 선(실선·점선), y축 0~100, x축 0~60초, 표식 "붓�
 });
 
 test('재생이 끝난 뒤 플레이헤드는 끝(60)에 있다', async ({ page }) => {
-  await gotoUnit(page, 'g3-earth-sea');
+  await gotoUnit(page, 'g4-land', { experiment: 'stream-table' });
   await baselineRun(page, WATER);
   const slider = page.getByRole('slider', { name: '그래프 시각 옮기기' });
   await expect(slider).toHaveAttribute('aria-valuenow', '60');
@@ -178,7 +178,7 @@ test('알갱이는 붓는 동안에만 움직이고, 단원을 떠나면 애니�
       caf(id);
     };
   });
-  await gotoUnit(page, 'g3-earth-sea', { playback: 5 });
+  await gotoUnit(page, 'g4-land', { experiment: 'stream-table', playback: 5 });
   await selectIV(page, SLOPE);
   await predict(page, '변하지 않는다');
   await runButton(page).click();
@@ -200,7 +200,7 @@ test('알갱이는 붓는 동안에만 움직이고, 단원을 떠나면 애니�
 
 test('움직임 줄이기이면 알갱이가 가만히 있다', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await gotoUnit(page, 'g3-earth-sea', { playback: 5 });
+  await gotoUnit(page, 'g4-land', { experiment: 'stream-table', playback: 5 });
   await selectIV(page, SLOPE);
   await predict(page, '변하지 않는다');
   await runButton(page).click();
@@ -224,7 +224,7 @@ test.describe('1280x800 화면', () => {
   }
 
   test('눈으로 보기와 흙 알갱이 보기의 SVG 글자는 화면에서 13 px 이상이다', async ({ page }) => {
-    await gotoUnit(page, 'g3-earth-sea');
+    await gotoUnit(page, 'g4-land', { experiment: 'stream-table' });
     const check = async () => {
       for (const name of ['눈으로 보기', '흙 알갱이 보기']) {
         const sizes = await renderedFontSizes(page.getByRole('figure', { name }).locator('svg').first());

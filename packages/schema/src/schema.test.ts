@@ -20,7 +20,6 @@ import motionJson from '../../../content/units/g6-motion/manifest.json';
 import strataJson from '../../../content/units/g5-strata/manifest.json';
 import waterStateJson from '../../../content/units/g4-water-state/manifest.json';
 import mixtureJson from '../../../content/units/g5-mixture/manifest.json';
-import earthSeaJson from '../../../content/units/g3-earth-sea/manifest.json';
 import weatherJson from '../../../content/units/g5-weather/manifest.json';
 import healthJson from '../../../content/units/g3-health/manifest.json';
 import climateJson from '../../../content/units/g4-climate/manifest.json';
@@ -184,7 +183,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
   const clone = (j: unknown) => JSON.parse(JSON.stringify(j));
 
   it('아홉 매니페스트가 모두 검증을 통과한다', () => {
-    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, forceJson, soundJson, magnetJson, motionJson, waterStateJson, mixtureJson, earthSeaJson, weatherJson, healthJson, climateJson, energyJson]) expect(() => parseManifest(j)).not.toThrow();
+    for (const j of [manifestJson, gasesJson, acidBaseJson, combustionJson, heatJson, lightJson, electricityJson, landJson, seasonsJson, lifecycleJson, plantJson, ecosystemJson, microbeJson, bodyJson, forceJson, soundJson, magnetJson, motionJson, waterStateJson, mixtureJson, weatherJson, healthJson, climateJson, energyJson]) expect(() => parseManifest(j)).not.toThrow();
   });
 
   it('연소 매니페스트의 점검표와 경고 문구를 읽는다', () => {
@@ -221,7 +220,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('땅의 변화 매니페스트의 점검표, 경고 문구, 안전 종류, 변인을 읽는다', () => {
     const m = parseManifest(landJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-land', 4, 'earth', ['4과11-03']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-land', 4, 'earth', ['4과11-01', '4과11-03']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('magma-cooling');
     expect(e.safetyChecklist).toHaveLength(3);
@@ -439,10 +438,11 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['waterMl', 'filter']);
   });
 
-  it('지구와 바다 매니페스트의 변인, 측정, 안전 없음, 한계 용어, 탐침을 읽는다', () => {
-    const m = parseManifest(earthSeaJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-earth-sea', 3, 'earth', ['4과11-01']]);
-    const e = m.experiments[0] as VariableExperiment;
+  it('땅의 변화 두 번째 활동(흐르는 물)의 변인, 측정, 안전 없음, 한계 용어, 탐침을 읽는다', () => {
+    const m = parseManifest(landJson);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-land', 4, 'earth', ['4과11-01', '4과11-03']]);
+    expect(m.experiments.map((x) => x.id)).toEqual(['magma-cooling', 'stream-table']);
+    const e = m.experiments[1] as VariableExperiment;
     expect(e.module).toBe('stream-table');
     expect(e.safety).toEqual([]);
     expect(e.safetyChecklist).toBeUndefined();

@@ -43,7 +43,7 @@ describe('활동이 여럿인 단원의 시나리오(id 안정성)', () => {
   });
   it('활동이 하나인 단원은 활동마다 시나리오를 한 번만 만들고 모두 첫 활동 것이다', () => {
     for (const id of TUTOR_UNITS) {
-      if (id === 'g5-mixture') continue;
+      if (id === 'g5-mixture' || id === 'g4-land') continue;
       const only = units[id]!.manifest.experiments;
       expect(only, id).toHaveLength(1);
       expect(new Set(generateScenarios(id, units[id]!).map((s) => s.state.experimentId)), id).toEqual(new Set([only[0]!.id]));

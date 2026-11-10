@@ -1785,11 +1785,9 @@ describe('g5-mixture 매니페스트 probe', () => {
   });
 });
 
-// ---------- 지구와 바다(흐르는 물) 매니페스트 ----------
-import earthSeaJson from '../../../content/units/g3-earth-sea/manifest.json';
-
-describe('g3-earth-sea 매니페스트 probe', () => {
-  const e = parseManifest(earthSeaJson).experiments[0]! as VariableExperiment;
+// ---------- 땅의 변화 두 번째 활동(흐르는 물) 매니페스트 ----------
+describe('g4-land 흐르는 물(stream-table) 활동 probe', () => {
+  const e = parseManifest(landJson).experiments[1]! as VariableExperiment;
   const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
   const eKeys = e.variables.map((v) => v.key);
   const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
