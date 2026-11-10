@@ -27,7 +27,7 @@ import {
   tutorSituation,
 } from './observeStore';
 
-const exp = parseManifest(earthJson).experiments[0] as ObservationExperiment;
+const exp = parseManifest(nightJson).experiments[0] as ObservationExperiment;
 const guard = { forbiddenAnswers: exp.tutor.forbiddenAnswers, limits: exp.limits };
 const task = (id: string) => exp.tasks.find((t) => t.id === id)!;
 const fresh = () => createInitialState(exp);
@@ -37,24 +37,34 @@ const hash = (x: unknown) => createHash('sha256').update(JSON.stringify(x)).dige
 const shapeNames = Object.values(MOON_SHAPE_NAMES);
 
 describe('달 모양 과제: 매니페스트', () => {
-  it('새 과제 둘은 기존 다섯 과제 뒤에 덧붙었고, 앞 다섯 과제의 내용은 한 글자도 바뀌지 않았다', () => {
-    expect(exp.tasks.map((t) => t.id)).toEqual(['sun-path', 'day-night', 'star-path', 'season-stars', 'winter-stars', 'moon-change', 'full-moon']);
-    // 이 해시는 달 모양 과제를 넣기 전(HEAD)의 tasks 배열을 JSON.stringify한 값이다.
-    const raw = earthJson.experiments[0]!;
-    expect(hash(raw.tasks.slice(0, 5))).toBe('b63b92a9fbf2ea99');
-    expect(hash(raw.tutor.forbiddenAnswers.slice(0, 6))).toBe('6cdb0fbc8d1dbdcf');
-    expect(hash(raw.limits.slice(0, 6))).toBe('49a1921385b1cb0c');
-    expect(exp.limits).toEqual(expect.arrayContaining(['위상', '이각', '삭망월', '황도']));
+  it('달 과제 둘은 4학년 밤하늘 관찰 과제 4개 뒤에 덧붙었고, 앞 네 과제·금지 구절·limits는 한 글자도 바뀌지 않았다', () => {
+    expect(exp.tasks.map((t) => t.id)).toEqual(['planet-size', 'planet-distance', 'find-polaris', 'polaris-still', 'moon-change', 'full-moon']);
+    // 이 해시는 달 과제를 옮겨 오기 전 g4-night-sky의 tasks·금지 구절·limits를 JSON.stringify한 값이다.
+    const raw = nightJson.experiments[0]!;
+    expect(hash(raw.tasks.slice(0, 4))).toBe('bd33272858035ec1');
+    expect(hash(raw.tutor.forbiddenAnswers.slice(0, 21))).toBe('6c9708490aa0ad86');
+    expect(hash(raw.limits.slice(0, 7))).toBe('f78801f1574303cb');
+    expect(raw.tutor.forbiddenAnswers).toHaveLength(37);
+    expect(exp.limits.slice(7)).toEqual(['위상', '이각', '삭망월', '황도']);
+    expect(exp.params).toEqual({ latDeg: 37.5 });
+    expect(parseManifest(nightJson).standards).toEqual(['4과13-01', '4과13-02', '4과13-03']);
   });
 
-  it('4학년 밤하늘 매니페스트와 기존 화면(보기 종류)은 그대로다', () => {
-    // 성취기준을 원문(교육부 고시 제2022-33호 별책 9)에 맞춰 4과13-02·4과13-03으로 고친 뒤의 값. standards만 예전 값으로 되돌리면 077b5524e75949ef와 같다.
-    expect(hash(nightJson)).toBe('9947b068e701b649');
-    const g4 = parseManifest(nightJson).experiments[0] as ObservationExperiment;
-    expect(g4.tasks.map((t) => t.view)).toEqual(['solar-system', 'solar-system', 'north-sky', 'north-sky']);
-    expect(exp.tasks.slice(0, 5).some(isNightView)).toBe(false);
-    expect(exp.tasks.slice(0, 5).some((t) => t.view === 'moon')).toBe(false);
-    expect(exp.tasks.slice(5).every((t) => t.view === 'moon' && !isNightView(t))).toBe(true);
+  it('6학년 지구의 운동 매니페스트는 달 과제를 넣기 전과 같다(성취기준만 다르다)', () => {
+    const g6 = parseManifest(earthJson);
+    expect(g6.standards).toEqual(['6과12-01', '6과12-02', '6과12-03']);
+    // 달 과제를 넣기 전(1a9a9fb^)의 매니페스트에서 standards만 현재 값으로 바꾼 것과 같다. 그 값(["6과12-01"])으로 되돌려 해시를 잰다.
+    expect(hash({ ...earthJson, standards: ['6과12-01'] })).toBe('6ba836217f7e3636');
+    const g6exp = g6.experiments[0] as ObservationExperiment;
+    expect(g6exp.tasks.map((t) => t.view)).toEqual(['rotation', 'rotation', 'rotation', 'revolution', 'revolution']);
+    expect(g6exp.tasks.some((t) => t.view === 'moon')).toBe(false);
+    expect(g6exp.limits).not.toContain('위상');
+  });
+
+  it('4학년 기존 과제 4개의 보기 종류는 그대로이고, 달 과제 둘이 맨 뒤다', () => {
+    expect(exp.tasks.map((t) => t.view)).toEqual(['solar-system', 'solar-system', 'north-sky', 'north-sky', 'moon', 'moon']);
+    expect(exp.tasks.slice(0, 4).every(isNightView)).toBe(true);
+    expect(exp.tasks.slice(4).every((t) => t.view === 'moon' && !isNightView(t))).toBe(true);
   });
 
   it('과제 모델 결과는 선택지 안에 있다: waxes-east, 15', () => {
@@ -62,6 +72,24 @@ describe('달 모양 과제: 매니페스트', () => {
     expect(modelAnswer(exp, task('full-moon'), {})).toBe('15');
     expect(task('moon-change').options.map((o) => o.value)).toEqual(['waxes-east', 'wanes-west', 'same']);
     expect(task('full-moon').options.map((o) => o.value)).toEqual(['3', '8', '15', '22']);
+  });
+
+  it('4학년 단원의 달 모델 값은 기준값 표(g6-moon-phase-ext.md §1)와 같다(서울 37.5°, 저녁 7시)', () => {
+    const table: [number, number, number, number, number][] = [
+      [1, 12.2, 0.011, -2.2, 271.7],
+      [3, 36.6, 0.098, 17.0, 256.5],
+      [8, 97.5, 0.566, 51.9, 192.2],
+      [10, 121.9, 0.764, 49.4, 153.5],
+      [15, 182.9, 0.999, 9.6, 97.5],
+      [22, 268.2, 0.516, -49.4, 26.4],
+    ];
+    for (const [d, phi, frac, alt, az] of table) {
+      const m = moonScene(exp, d);
+      expect(m.phiDeg, `${d}일 φ`).toBeCloseTo(phi, 0);
+      expect(m.frac, `${d}일 frac`).toBeCloseTo(frac, 2);
+      expect(Math.abs(m.pos.altDeg - alt), `${d}일 고도`).toBeLessThanOrEqual(0.2);
+      expect(Math.abs(m.pos.azDeg - az), `${d}일 방위각`).toBeLessThanOrEqual(0.2);
+    }
   });
 
   it('금지 구절 활용형도 막는다', () => {
@@ -123,7 +151,7 @@ describe('달 모양 과제: 저장소', () => {
   });
 
   it('두 과제의 모든 예측·기록 상황에서 튜터 문장이 가드를 통과하고 폴백이 아니다', () => {
-    for (const t of exp.tasks.slice(5)) {
+    for (const t of exp.tasks.slice(4)) {
       for (const pred of t.options) {
         for (const rec of t.options) {
           let s = predict(select(fresh(), exp, t.id), exp, pred.value);

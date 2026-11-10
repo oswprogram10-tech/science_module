@@ -49,9 +49,9 @@ describe('밤하늘 관찰: 모델 정답과 매니페스트', () => {
   });
 
   it('새 보기를 쓰는 과제는 네 개 모두이고, 지구의 운동 과제는 하나도 새 보기가 아니다', () => {
-    expect(exp.tasks.every(isNightView)).toBe(true);
+    expect(exp.tasks.slice(0, 4).every(isNightView)).toBe(true);
     expect(g6.tasks.some(isNightView)).toBe(false);
-    expect(g6.tasks.slice(0, 5).map((t) => t.view)).toEqual(['rotation', 'rotation', 'rotation', 'revolution', 'revolution']);
+    expect(g6.tasks.map((t) => t.view)).toEqual(['rotation', 'rotation', 'rotation', 'revolution', 'revolution']);
   });
 });
 
