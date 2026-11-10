@@ -9,7 +9,15 @@ import type { AnyModule } from '../modules/types';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyTrial = Trial<any, any>;
 
-const variableUnits = UNITS.flatMap((u) => (u.ok && u.activity === 'variable' ? [u] : []));
+// 단원의 첫 활동만이 아니라 모든 활동을 본다(예: 땅의 변화의 두 번째 활동인 흐르는 물 실험).
+const variableUnits = UNITS.flatMap((u) =>
+  // 첫 활동은 단원 id 그대로, 두 번째부터는 '단원/활동' id로 구분한다(예: g4-land/stream-table).
+  u.ok
+    ? u.activities.flatMap((a, i) =>
+        a.activity === 'variable' ? [{ ...u, id: i === 0 ? u.id : `${u.id}/${a.experiment.id}`, activity: a.activity, experiment: a.experiment, module: a.module }] : [],
+      )
+    : [],
+);
 
 /** 모든 변인 선택지의 조합. */
 function combos(unit: (typeof variableUnits)[number]): Record<string, string | number>[] {
@@ -235,12 +243,12 @@ describe('여러 선(graph.series)과 y축 눈금(graph.yTicks)', () => {
   const foodWeb = () => variableUnits.find((u) => u.id === 'g4-ecosystem')!;
   const base = { rabbits0: 10, foxes0: 2, rain: 'normal', furColor: 'white' };
   // series로 여러 선을 그리는 단원: 먹이 관계(세 선)와 우리 몸(맥박·호흡 두 선)
-  const SERIES_UNITS = ['g4-ecosystem', 'g5-body', 'g3-earth-sea', 'g5-weather', 'g3-health'];
+  const SERIES_UNITS = ['g4-land/stream-table', 'g4-ecosystem', 'g5-body', 'g5-weather', 'g3-health'];
   const others = variableUnits.filter((u) => !SERIES_UNITS.includes(u.id));
   // yTicks로 축을 고정한 단원. 이 단원들은 'series: undefined는 그림을 바꾸지 않는다' 비교에서 yTicks를 남긴다.
-  const FIXED_Y = ['g4-ecosystem', 'g4-microbe', 'g5-body', 'g3-force', 'g3-sound', 'g4-magnet', 'g6-motion', 'g4-water-state', 'g5-mixture', 'g3-earth-sea', 'g5-weather', 'g3-health', 'g4-climate', 'g5-energy'];
+  const FIXED_Y = ['g4-ecosystem', 'g4-microbe', 'g5-body', 'g3-force', 'g3-sound', 'g4-magnet', 'g6-motion', 'g4-water-state', 'g5-mixture', 'g4-land/stream-table', 'g5-weather', 'g3-health', 'g4-climate', 'g5-energy'];
 
-  it('series를 쓰는 모듈은 먹이 관계·우리 몸·지구와 바다·날씨와 우리 생활·감염병과 건강한 생활뿐이고, yTicks는 먹이 관계·곰팡이·우리 몸·막대 수평 잡기·줄 소리·자석·수레·물의 상태 변화·혼합물의 분리·지구와 바다·날씨와 우리 생활·감염병과 건강한 생활·기후변화와 우리 생활·자원과 에너지만 쓴다', () => {
+  it('series를 쓰는 모듈은 먹이 관계·우리 몸·흐르는 물(땅의 변화)·날씨와 우리 생활·감염병과 건강한 생활뿐이고, yTicks는 먹이 관계·곰팡이·우리 몸·막대 수평 잡기·줄 소리·자석·수레·물의 상태 변화·혼합물의 분리·흐르는 물·날씨와 우리 생활·감염병과 건강한 생활·기후변화와 우리 생활·자원과 에너지만 쓴다', () => {
     expect(variableUnits.filter((u) => u.module.graph.series !== undefined).map((u) => u.id)).toEqual(SERIES_UNITS);
     expect(variableUnits.filter((u) => u.module.graph.yTicks !== undefined).map((u) => u.id).sort()).toEqual([...FIXED_Y].sort());
   });

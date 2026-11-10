@@ -37,7 +37,8 @@ describe('저장소의 데이터셋 검증 (pnpm test에도 포함)', () => {
   });
   it('견본: 대표 3개 단원은 sft 8 · pairs 4 · redteam 6, 나머지 단원은 sft 4 · pairs 2 · redteam 3', () => {
     for (const unit of TUTOR_UNITS) {
-      const rich = RICH_EXAMPLE_UNITS.includes(unit as (typeof RICH_EXAMPLE_UNITS)[number]);
+      // 땅의 변화는 활동이 둘(마그마·흐르는 물)이라 견본도 활동마다 sft 4 · pairs 2 · redteam 3으로 합쳐 대표 단원과 같은 8 · 4 · 6이다.
+      const rich = RICH_EXAMPLE_UNITS.includes(unit as (typeof RICH_EXAMPLE_UNITS)[number]) || unit === 'g4-land';
       // 밤하늘 관찰은 달 모양 과제 둘이 늘어 과제마다 견본 1개씩이 더해졌다(sft 6).
       // 혼합물의 분리는 두 번째 활동(분리 방법 고르기)의 견본 1개가 더해졌다(sft 5).
       const sftCount = rich ? 8 : unit === 'g4-night-sky' ? 6 : unit === 'g5-mixture' ? 5 : 4;
@@ -53,8 +54,8 @@ describe('저장소의 데이터셋 검증 (pnpm test에도 포함)', () => {
     expect(new Set(full.pairs.map((r) => r.rejectedReason)).size).toBe(6);
     expect(new Set(full.redteam.map((r) => r.category)).size).toBe(6);
     for (const unit of TUTOR_UNITS) {
-      const rich = RICH_EXAMPLE_UNITS.includes(unit as (typeof RICH_EXAMPLE_UNITS)[number]);
-      expect(new Set(full.redteam.filter((r) => r.unitId === unit).map((r) => r.category)).size, `${unit} redteam 유형`).toBe(rich ? 6 : 3);
+      const rich = RICH_EXAMPLE_UNITS.includes(unit as (typeof RICH_EXAMPLE_UNITS)[number]) || unit === 'g4-land';
+      expect(new Set(full.redteam.filter((r) => r.unitId === unit).map((r) => r.category)).size, `${unit} redteam 유형`).toBe(unit === 'g4-land' ? 5 : rich ? 6 : 3); // 땅의 변화: 두 활동의 견본이 "답 달라고 하기(ask-answer)"를 한 번씩 써서 5종
       expect(new Set(full.pairs.filter((r) => r.unitId === unit).map((r) => r.rejectedReason)).size, `${unit} 나쁜 이유`).toBe(rich ? 4 : 2);
       const sft = full.sft.filter((r) => r.unitId === unit);
       expect(sft.some((r) => r.utterance === ''), `${unit}: 말하지 않은 상황`).toBe(true);
@@ -66,8 +67,8 @@ describe('저장소의 데이터셋 검증 (pnpm test에도 포함)', () => {
       const list = full.scenarios.filter((s) => s.unitId === unit);
       expect(list.length, unit).toBeGreaterThanOrEqual(15);
       // 관찰 활동은 과제마다 5개이므로 과제가 5개를 넘으면(밤하늘 관찰 6개 = 30) 그만큼 늘어난다.
-      // 활동이 둘인 단원(g5-mixture)은 활동마다 25개까지라 50개까지 늘어난다.
-      expect(list.length, unit).toBeLessThanOrEqual(unit === 'g4-night-sky' ? 35 : unit === 'g5-mixture' ? 50 : 25);
+      // 활동이 둘인 단원(g5-mixture, g4-land)은 활동마다 25개까지라 50개까지 늘어난다.
+      expect(list.length, unit).toBeLessThanOrEqual(unit === 'g4-night-sky' ? 35 : unit === 'g5-mixture' || unit === 'g4-land' ? 50 : 25);
     }
     for (const s of full.scenarios) expect(inputFor(full, s, '').length).toBeGreaterThan(30);
   });

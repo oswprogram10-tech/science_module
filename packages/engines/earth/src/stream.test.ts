@@ -11,7 +11,7 @@ import {
   type StreamParams,
   type VesselKind,
 } from './stream';
-import streamJson from '../../../../content/units/g3-earth-sea/manifest.json';
+import streamJson from '../../../../content/units/g4-land/manifest.json';
 
 const p = (slope: SlopeKind, waterL: number, vessel: VesselKind = 'cup'): StreamParams => ({ slope, waterL, vessel });
 
@@ -124,7 +124,7 @@ describe('흐르는 물 모델: 관계', () => {
 });
 
 describe('validateStreamExperiment', () => {
-  const exp = () => (JSON.parse(JSON.stringify(streamJson)).experiments[0] as VariableExperiment);
+  const exp = () => (JSON.parse(JSON.stringify(streamJson)).experiments[1] as VariableExperiment);
 
   it('매니페스트는 통과한다', () => {
     expect(validateStreamExperiment(exp())).toEqual([]);

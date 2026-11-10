@@ -719,7 +719,9 @@ for (const scheme of ['light', 'dark'] as const) {
     await page.emulateMedia({ colorScheme: scheme });
     // 단원 목록의 "활동 2개" 표시
     await page.goto('/');
-    await expect(page.getByText('활동 2개')).toBeVisible();
+    // 활동이 둘인 단원은 땅의 변화와 혼합물의 분리 두 곳이다.
+    await expect(page.getByText('활동 2개')).toHaveCount(2);
+    await expect(page.getByText('활동 2개').first()).toBeVisible();
     await expectNoSeriousViolations(page);
     // 첫 활동 화면의 활동 탭
     await gotoUnit(page, 'g5-mixture');
@@ -1090,12 +1092,12 @@ for (const scheme of ['light', 'dark'] as const) {
   });
 }
 
-// ---- g3-earth-sea ----
+// ---- g4-land 두 번째 활동(흐르는 물, stream-table) ----
 
 for (const scheme of ['light', 'dark'] as const) {
-  test(`g3-earth-sea ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 처음, 실행 뒤(20·16), 가파르게(50·40)와 앞 시행, 2 L`, async ({ page }) => {
+  test(`g4-land 흐르는 물 ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 처음, 실행 뒤(20·16), 가파르게(50·40)와 앞 시행, 2 L`, async ({ page }) => {
     await page.emulateMedia({ colorScheme: scheme });
-    await gotoUnit(page, 'g3-earth-sea');
+    await gotoUnit(page, 'g4-land', { experiment: 'stream-table' });
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await expectNoSeriousViolations(page);
     await selectIV(page, '언덕의 기울기');
