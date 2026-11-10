@@ -7,5 +7,7 @@
   "exports": { ".": "./src/index.ts" },
   "scripts": { "typecheck": "tsc --noEmit" },
   "dependencies": {"@sci/schema": "workspace:*"},
-  "devDependencies": {}
+  "devDependencies": {
+    "@types/node": "^22.20.5"
+  }
 }

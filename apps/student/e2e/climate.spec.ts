@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { test, expect, gotoUnit, setValue, selectIV, predict, runButton, resultRows, confirmSafetyDialog, sensor, expectSensorNear } from './helpers';
+import { test, expect, gotoUnit, setValue, selectIV, predict, runButton, resultRows, confirmSafetyDialog, sensor, expectSensorNear, scrollWidth } from './helpers';
 
 const tutorBox = (page: Page) => page.getByRole('heading', { name: '생각해 볼까요?' }).locator('..');
 const macro = (page: Page) => page.getByRole('figure', { name: '눈으로 보기' });
@@ -213,4 +213,92 @@ test.describe('1280x800 화면', () => {
     await run(page, '늘어난다');
     await check();
   });
+});
+
+test.describe('진짜 기온 자료 패널 (서울 연평균기온)', () => {
+  const panel = (page: Page) => page.getByTestId('climate-data');
+  const svg = (page: Page) => page.getByTestId('climate-svg');
+  const open = async (page: Page) => {
+    await panel(page).locator('summary').first().click();
+    await expect(svg(page)).toBeVisible();
+  };
+
+  test('처음에는 접혀 있고 그래프가 보이지 않는다', async ({ page }) => {
+    await gotoUnit(page, 'g4-climate');
+    await expect(panel(page)).toBeVisible();
+    await expect(panel(page).locator('summary').first()).toHaveText('진짜 기온 자료: 서울의 해마다 평균 기온');
+    await expect(panel(page)).not.toHaveAttribute('open', '');
+    await expect(svg(page)).toBeHidden();
+  });
+
+  test('열면 그래프, 두 평균 라벨, 자료 없음 라벨, 글, 출처가 보이고 선이 1950~1953에서 끊긴다', async ({ page }) => {
+    await gotoUnit(page, 'g4-climate');
+    await open(page);
+    await expect(svg(page)).toHaveAttribute('aria-label', '서울의 해마다 평균 기온, 1908년부터 2025년까지. 처음 30년 평균 10.8도, 최근 30년 평균 13.1도.');
+    await expect(page.getByTestId('climate-label-first')).toHaveText('처음 30년 평균 10.8 °C');
+    await expect(page.getByTestId('climate-label-last')).toHaveText('최근 30년 평균 13.1 °C');
+    await expect(page.getByTestId('climate-label-gap')).toHaveText('자료 없음(1950~1953)');
+    await expect(panel(page).getByText('기상청이 서울에서 잰 해마다의 평균 기온이에요. 오래전과 요즘을 비교해 볼까요?')).toBeVisible();
+    await expect(panel(page).getByText('기온이 달라진 까닭은 한 가지로 정할 수 없어요.')).toBeVisible();
+    await expect(panel(page).getByText('출처: 기상청 기상자료개방포털, 서울(지점 108) 연평균기온, 1908~2025년. 공공누리 제1유형.')).toBeVisible();
+    const segs = page.getByTestId('climate-segment');
+    await expect(segs).toHaveCount(2);
+    await expect(segs.nth(0)).toHaveAttribute('data-to', '1949');
+    await expect(segs.nth(1)).toHaveAttribute('data-from', '1954');
+    await expect(page.getByTestId('climate-dot')).toHaveCount(114);
+    for (const y of [1950, 1951, 1952, 1953]) await expect(page.locator(`[data-testid="climate-dot"][data-year="${y}"]`)).toHaveCount(0);
+  });
+
+  test('표로 보기: 12줄, 첫 줄과 끝 줄', async ({ page }) => {
+    await gotoUnit(page, 'g4-climate');
+    await open(page);
+    const table = page.getByTestId('climate-table');
+    await expect(table.locator('table')).toBeHidden();
+    await table.locator('summary').click();
+    const rows = table.locator('tbody tr');
+    await expect(rows).toHaveCount(12);
+    await expect(rows.first().locator('td')).toHaveText(['1908~1917', '10.6']);
+    await expect(rows.last().locator('td')).toHaveText(['2018~2025', '13.7 (자료 8해)']);
+    await expect(rows.nth(4).locator('td')).toHaveText(['1948~1957', '11.1 (자료 6해)']);
+  });
+
+  test('실험을 실행해도 패널 내용이 바뀌지 않는다', async ({ page }) => {
+    await gotoUnit(page, 'g4-climate');
+    await open(page);
+    const before = await panel(page).innerHTML();
+    await baselineRun(page, COVER);
+    await expect(resultRows(page)).toHaveCount(1);
+    expect(await panel(page).innerHTML()).toBe(before);
+  });
+
+  for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
+    test(`${vp.width}px: SVG 글자가 13 px 이상이고 그림 밖으로 잘리거나 서로 겹치지 않는다`, async ({ page }) => {
+      await page.setViewportSize(vp);
+      await gotoUnit(page, 'g4-climate');
+      await open(page);
+      await expect(svg(page)).toHaveAttribute('data-layout', vp.width === 390 ? 'narrow' : 'wide');
+      const report = await svg(page).evaluate((el) => {
+        const frame = el.getBoundingClientRect();
+        const items = [...el.querySelectorAll('text')].map((t) => {
+          const m = (t as unknown as SVGGraphicsElement).getScreenCTM()!;
+          return { text: (t.textContent ?? '').trim(), px: parseFloat(getComputedStyle(t).fontSize) * Math.hypot(m.a, m.b), box: t.getBoundingClientRect() };
+        });
+        const problems: string[] = [];
+        items.forEach((a, i) => {
+          if (a.box.left < frame.left - 1 || a.box.right > frame.right + 1 || a.box.top < frame.top - 1 || a.box.bottom > frame.bottom + 1) problems.push(`잘림: ${a.text}`);
+          items.slice(i + 1).forEach((b) => {
+            const w = Math.min(a.box.right, b.box.right) - Math.max(a.box.left, b.box.left);
+            const h = Math.min(a.box.bottom, b.box.bottom) - Math.max(a.box.top, b.box.top);
+            if (w > 2 && h > 4) problems.push(`겹침: ${a.text} / ${b.text}`);
+          });
+        });
+        return { count: items.length, min: Math.min(...items.map((x) => x.px)), problems };
+      });
+      expect(report.count).toBeGreaterThanOrEqual(13);
+      expect(report.min).toBeGreaterThanOrEqual(13);
+      expect(report.problems).toEqual([]);
+      const { sw, iw } = await scrollWidth(page);
+      expect(sw).toBeLessThanOrEqual(iw);
+    });
+  }
 });

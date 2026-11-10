@@ -3,6 +3,7 @@ import type { ExperimentModule } from '../types';
 import { IDLE_SAMPLE, greenhouseOptions, signedRise } from './initial';
 import { BottleView } from './BottleView';
 import { HeatFlowView } from './HeatFlowView';
+import { ClimateDataPanel } from './ClimateDataPanel';
 
 export const greenhouseBottleModule: ExperimentModule<GreenhouseSample, GreenhouseResult> = {
   kind: 'greenhouse-bottle',
@@ -31,6 +32,8 @@ export const greenhouseBottleModule: ExperimentModule<GreenhouseSample, Greenhou
   ],
   // 실행 전에는 처음 온도(조건과 상관없음)를 보여 준다.
   sensors: (snapshot) => [{ id: 'greenhouse-temp', label: '가상 온도계: 병 속', unit: '°C', kind: 'temperature', source: (snapshot ?? IDLE_SAMPLE).temp }],
+  // 결과표 아래의 접힌 실제 기온 자료(서울 연평균기온). 시뮬레이션·결과·튜터와 연결하지 않는다.
+  ResultsExtra: ClimateDataPanel,
   MacroView: BottleView,
   MicroView: HeatFlowView,
 };

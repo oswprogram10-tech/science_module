@@ -43,3 +43,19 @@ export const RETURN_MAX = 6;
 export const returningCount = (trapped: number) => Math.round(RETURN_MAX * Math.min(1, Math.max(0, trapped)));
 
 export const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
+
+/** 진짜 기온 자료 패널(ClimateDataPanel)의 화면 글. 까닭(원인)을 말하지 않는다. */
+export const CLIMATE_DATA_TITLE = '진짜 기온 자료: 서울의 해마다 평균 기온';
+export const CLIMATE_DATA_INTRO = '기상청이 서울에서 잰 해마다의 평균 기온이에요. 오래전과 요즘을 비교해 볼까요?';
+export const CLIMATE_DATA_QUESTION = '처음 30년과 최근 30년의 평균 기온은 얼마나 다른가요? 해마다 오르내림이 있는데도 긴 기간을 보면 어떤가요?';
+export const CLIMATE_DATA_CAUTION = '서울은 도시가 커지면서 더 따뜻해진 부분도 있어요. 기온이 달라진 까닭은 한 가지로 정할 수 없어요.';
+export const CLIMATE_DATA_SOURCE = '출처: 기상청 기상자료개방포털, 서울(지점 108) 연평균기온, 1908~2025년. 공공누리 제1유형.';
+export const CLIMATE_DATA_TABLE_SUMMARY = '표로 보기';
+export const CLIMATE_DATA_TABLE_CAPTION = '서울 10년 평균 기온';
+export const CLIMATE_DATA_TABLE_HEADS = ['기간', '평균 기온(°C)'] as const;
+export const CLIMATE_DATA_X_LABEL = '연도';
+export const CLIMATE_DATA_Y_LABEL = '평균 기온(°C)';
+export const CLIMATE_DATA_NO_DATA = '자료 없음(1950~1953)';
+export const climateDataFirstLabel = (shown: string) => `처음 30년 평균 ${shown} °C`;
+export const climateDataLastLabel = (shown: string) => `최근 30년 평균 ${shown} °C`;
+export const climateDataAria = (first: string, last: string) => `서울의 해마다 평균 기온, 1908년부터 2025년까지. 처음 30년 평균 ${first}도, 최근 30년 평균 ${last}도.`;

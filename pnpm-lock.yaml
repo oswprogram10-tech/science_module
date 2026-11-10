@@ -57,9 +57,6 @@ importers:
       '@capacitor/core':
         specifier: 8.5.3
         version: 8.5.3
-      '@capacitor/ios':
-        specifier: 8.5.3
-        version: 8.5.3(@capacitor/core@8.5.3)
       '@sci/cardsort':
         specifier: workspace:*
         version: link:../../packages/cardsort
@@ -206,6 +203,10 @@ importers:
       '@sci/schema':
         specifier: workspace:*
         version: link:../../schema
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.5
+        version: 22.20.5
 
   packages/gateway: {}
 
@@ -284,11 +285,6 @@ packages:
 
   '@capacitor/core@8.5.3':
     resolution: {integrity: sha512-oBE1oGuYE4ZzYYrulC75OuHdSsD6zLUy7d5o1tFwDLG4govGoubY15cxpiI5l0+q87Lm5p0bhbehMdzJg4aFag==}
-
-  '@capacitor/ios@8.5.3':
-    resolution: {integrity: sha512-HnnV92Jl8+3x0JUloXUMjFcUsQI8wHFVsKwkLn72DfRZXYGZW11tQbmNOWOnRTljaU18FdI1b9ipT09SzzPDNw==}
-    peerDependencies:
-      '@capacitor/core': ^8.5.0
 
   '@esbuild/aix-ppc64@0.28.2':
     resolution: {integrity: sha512-XExcO+dvLKvVtNTibSTBej1NCAbaGhWn9Ww1ZPx80qsahhPFe/8jgWP0IchNe0F3HwkU7n8ejhH8bjonqht8mQ==}
@@ -1622,10 +1618,6 @@ snapshots:
   '@capacitor/core@8.5.3':
     dependencies:
       tslib: 2.9.1
-
-  '@capacitor/ios@8.5.3(@capacitor/core@8.5.3)':
-    dependencies:
-      '@capacitor/core': 8.5.3
 
   '@esbuild/aix-ppc64@0.28.2':
     optional: true

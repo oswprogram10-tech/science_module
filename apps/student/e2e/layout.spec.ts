@@ -38,6 +38,17 @@ for (const vp of VIEWPORTS) {
       });
     }
 
+    test('g4-climate 기온 자료 패널을 펼쳐도(표까지) 가로 스크롤이 없다', async ({ page }) => {
+      await gotoUnit(page, 'g4-climate');
+      await page.getByTestId('climate-data').locator('summary').first().click();
+      await page.getByTestId('climate-table').locator('summary').click();
+      await expect(page.getByTestId('climate-svg')).toBeVisible();
+      const { sw, iw } = await scrollWidth(page);
+      expect(sw).toBeLessThanOrEqual(iw);
+      const box = await page.getByTestId('climate-svg').boundingBox();
+      expect(box!.x + box!.width).toBeLessThanOrEqual(vp.width + 1);
+    });
+
     // 한 단원에 여러 활동: 두 번째 활동(분리 방법 고르기)과 활동 탭도 가로 스크롤이 없다.
     test('g5-mixture 두 번째 활동(활동 탭 포함)에 가로 스크롤이 없다', async ({ page }) => {
       await gotoUnit(page, 'g5-mixture', { experiment: 'separation-methods' });

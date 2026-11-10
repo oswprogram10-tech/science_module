@@ -1,5 +1,7 @@
 # 구현 사양: 기준 기기 정의와 앱 포장 (v0)
 
+> **2026-11-09 변경: iOS 앱 지원을 취소했다.** 이 사양의 iOS 항목(`apps/student/ios`, `@capacitor/ios`, `ios-build` CI, `ios:sim`, iOS 권한 문구)은 저장소에서 뺐다. 현재 상태는 `docs/app-packaging.md`를 본다.
+
 > 근거: `docs/DEVELOPMENT_PLAN.md` 결정 D1(Capacitor 앱: iPadOS·Android, 크롬북·Windows는 PWA), D2(성능 KPI), §4.2 ⑦(저사양 폴백), §7.0(기준 기기 확정, 스파이크 S1·S3), D7(센서 프로토콜 미확보 시 micro:bit 등 대체).
 > 이번 범위: **기준 기기 문서와 기기 등급 판정, Capacitor 앱 프로젝트(iOS·Android), 실물 BLE 온도 센서 드라이버(시험 기능), CI 앱 빌드**. 서명·스토어 제출·실기기 성능 측정은 범위 밖이다(사람과 실기기가 필요).
 

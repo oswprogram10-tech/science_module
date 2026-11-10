@@ -1238,6 +1238,13 @@ for (const scheme of ['light', 'dark'] as const) {
     await expect(runButton(page)).toHaveText('▶ 실험 실행');
     await expect(page.getByText('20.0분 · 병 속 29.2 °C (처음보다 +7.2 °C)')).toBeVisible();
     await expectNoSeriousViolations(page);
+    // 진짜 기온 자료 패널과 그 안의 표를 연 상태
+    await page.getByTestId('climate-data').locator('summary').first().click();
+    await expect(page.getByTestId('climate-svg')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await page.getByTestId('climate-table').locator('summary').click();
+    await expect(page.getByTestId('climate-table').locator('tbody tr')).toHaveCount(12);
+    await expectNoSeriousViolations(page);
   });
 }
 

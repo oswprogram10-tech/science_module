@@ -20,7 +20,7 @@
 
 | # | 사안 | 결정 (2026-11-03) |
 |---|---|---|
-| D1 | iPad의 Web Bluetooth·Web Serial 미지원 | **앱 형태로 배포.** Capacitor로 iPadOS·Android 앱을 만들고 네이티브 BLE 플러그인을 쓴다. 크롬북·Windows는 PWA(Web Bluetooth). |
+| D1 | iPad의 Web Bluetooth·Web Serial 미지원 | **앱 형태로 배포.** Capacitor로 Android 앱을 만들고 네이티브 BLE 플러그인을 쓴다. 크롬북·Windows는 PWA(Web Bluetooth). **iPadOS 앱은 2026-11-09에 지원을 취소했다**: iPad는 Safari 웹판으로만 쓰며 실물 블루투스 센서는 쓸 수 없다(모의 센서·시뮬레이션은 그대로). |
 | D2 | 성능 KPI | 렌더링 60fps(기준 기기), 비전 추론 초당 5~10회 이상, 안전 경고 지연 1초 이내로 나눈다. |
 | D3 | AI 튜터 실행 위치 | **기기 내 소형 모델**을 직접 학습시켜 쓴다. 외부·서버 LLM 호출 없음. 세부 계획은 §6. |
 | D4 | 정답 노출률 | **목표 0%** 유지. 측정은 단원별 레드팀 평가셋(정답 유도 질문)의 직접 노출 건수와 운영 로그 표본 감사로 한다. |

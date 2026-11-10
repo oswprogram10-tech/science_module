@@ -1,19 +1,21 @@
 # 앱 포장 (Capacitor)
 
-iPadOS·Android 앱은 Capacitor로 만든다(결정 D1). 크롬북·Windows는 PWA다. 서명·스토어 제출·실기기 성능 측정은 아직 하지 않았다(사람과 실기기가 필요).
+Android 앱은 Capacitor로 만든다(결정 D1). 크롬북·Windows는 PWA다. 서명·스토어 제출·실기기 성능 측정은 아직 하지 않았다(사람과 실기기가 필요).
+
+> **iOS·iPadOS 앱 지원은 취소했다(2026-11-09).** 네이티브 iOS 프로젝트, `@capacitor/ios`, CI의 iOS 빌드를 뺐다. iPad에서는 Safari로 웹판을 열 수 있지만, Safari는 Web Bluetooth를 지원하지 않아 실물 블루투스 센서(온도계·심박 센서)는 쓸 수 없다. 모의 센서와 모든 시뮬레이션은 그대로 된다. 다시 지원하려면 `npx cap add ios`로 프로젝트를 새로 만든다.
 
 - 앱 ID: `kr.scibridge.student` — **가칭이다. 출시 전에 기관 도메인으로 바꾼다**(아래 "사람이 해야 할 일").
 - 앱 이름: `Sci-Bridge ON`
 - 설정: `apps/student/capacitor.config.ts` (webDir `dist`, 앱 스킴은 기본값)
-- 버전: `@capacitor/core`·`cli`·`android`·`ios` 8.5.3, `@capacitor-community/bluetooth-le` 8.3.0 (모두 정확히 고정)
-- 네이티브 프로젝트는 저장소에 있다: `apps/student/android`, `apps/student/ios`(Swift Package Manager 방식, CocoaPods 불필요). 빌드 결과물과 `cap sync`가 만드는 파일은 Capacitor가 만든 `.gitignore`가 거른다.
+- 버전: `@capacitor/core`·`cli`·`android` 8.5.3, `@capacitor-community/bluetooth-le` 8.3.0 (모두 정확히 고정)
+- 네이티브 프로젝트는 저장소에 있다: `apps/student/android`. 빌드 결과물과 `cap sync`가 만드는 파일은 Capacitor가 만든 `.gitignore`가 거른다.
 - 웹 빌드는 `base: './'`(상대 경로)다. 앱 안의 `capacitor://`·`https://localhost` 어디서든, 웹 배포에서도 같은 빌드가 열린다. 해시 라우팅(`#/unit/...`)은 그대로다.
 
 ## 빌드·실행
 
 ```bash
 pnpm install
-pnpm cap:sync          # 웹 빌드 후 android·ios에 복사(= pnpm build && cap sync)
+pnpm cap:sync          # 웹 빌드 후 android에 복사(= pnpm build && cap sync)
 ```
 
 ### Android (Android Studio 또는 명령줄)
@@ -28,39 +30,18 @@ adb install -r apps/student/android/app/build/outputs/apk/debug/app-debug.apk
 
 기기에서 USB 디버깅을 켜고 `adb devices`에 보이는지 확인한 뒤 설치한다. Android Studio에서는 `apps/student/android`를 열어 실행해도 된다.
 
-### iOS (macOS + Xcode 필요)
-
-```bash
-pnpm ios:sim           # 시뮬레이터용 빌드(서명 없음)
-```
-
-- 시뮬레이터: `npx cap open ios`로 Xcode를 열고 기기를 고른 뒤 실행.
-- 실기기: Xcode에서 `App` 대상의 Signing & Capabilities에 개발 팀을 지정한 뒤 실행(Apple Developer 계정 필요).
-- 리눅스에서는 iOS 빌드를 할 수 없다. CI의 `ios-build` 작업(macos)이 확인한다.
-
 ### CI
 
-`.github/workflows/ci.yml`의 `android-build`(ubuntu)와 `ios-build`(macos)가 기존 작업과 병렬로 돈다. push할 때마다 설치 파일 두 개가 만들어져 GitHub Actions 실행 결과의 **Artifacts**에 90일 동안 남는다.
+`.github/workflows/ci.yml`의 `android-build`(ubuntu)가 기존 작업과 병렬로 돈다. push할 때마다 설치 파일이 만들어져 GitHub Actions 실행 결과의 **Artifacts**에 90일 동안 남는다.
 
 | 파일(아티팩트 이름) | 설치 가능 여부 |
 |---|---|
 | `android-debug-apk` (`app-debug.apk`) | **바로 설치 가능.** 디버그 키로 자동 서명되어 있다. zip을 풀어 APK를 기기로 옮기고, 설정에서 "출처를 알 수 없는 앱 설치 허용"을 켠 뒤 연다. 또는 `adb install app-debug.apk`. 스토어 배포용은 아니다(배포는 정식 키스토어로 서명한 release 빌드 필요). |
-| `ios-unsigned-ipa` (`SciBridgeON-unsigned.ipa`) | **그대로는 설치 안 됨.** Apple은 서명 없는 앱을 실기기에 설치하지 못하게 한다. 아래 중 하나로 서명해야 한다. |
-
-iOS 설치 방법:
-
-1. **무료 Apple ID**: Sideloadly나 AltStore 같은 도구에 ipa와 Apple ID를 넣어 다시 서명해 설치한다. 7일마다 다시 서명해야 하고, 기기당 3개 앱 제한이 있다. 개발 확인용이다.
-2. **Mac + Xcode**: `apps/student/ios/App`을 Xcode로 열고 Signing & Capabilities에서 본인 팀을 고른 뒤 USB로 연결한 기기에 바로 실행한다(무료 계정이면 7일 제한 동일).
-3. **Apple Developer Program(연 구독)**: TestFlight로 교사·학생 기기에 배포하거나, 학교 MDM(Apple School Manager)으로 일괄 설치한다. 실제 수업 배포는 이 방법이다.
-
-iOS 시뮬레이터 빌드는 Mac의 Xcode 시뮬레이터에서만 돈다.
 
 ## 권한 문구
 
 | 플랫폼 | 항목 | 문구·설정 |
 |---|---|---|
-| iOS `Info.plist` | `NSCameraUsageDescription` | 지시약 색을 읽으려고 카메라를 사용해요. 사진은 기기 밖으로 보내지 않아요. |
-| iOS `Info.plist` | `NSBluetoothAlwaysUsageDescription` | 실험용 센서(온도계·심박 센서)와 연결하려고 블루투스를 사용해요. 측정값은 기기 밖으로 보내지 않아요. |
 | Android | `CAMERA` | 산과 염기 색 판독기 |
 | Android | `BLUETOOTH_SCAN`(`neverForLocation`), `BLUETOOTH_CONNECT` | API 31 이상 |
 | Android | `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`(`maxSdkVersion` 30) | API 30 이하 |
@@ -69,7 +50,7 @@ iOS 시뮬레이터 빌드는 Mac의 Xcode 시뮬레이터에서만 돈다.
 
 ## 카메라
 
-산과 염기 색 판독기의 `getUserMedia`를 앱 안에서도 그대로 쓴다. iOS WKWebView는 iOS 14.3 이상, Android는 Capacitor 기본 WebChromeClient가 권한 요청을 처리한다. 사진 파일을 고르는 대체 수단도 그대로 있다. **실기기 확인 필요.**
+산과 염기 색 판독기의 `getUserMedia`를 앱 안에서도 그대로 쓴다. Android는 Capacitor 기본 WebChromeClient가 권한 요청을 처리한다. 사진 파일을 고르는 대체 수단도 그대로 있다. **실기기 확인 필요.**
 
 ## 화면 방향·안전 영역
 
@@ -80,15 +61,14 @@ iOS 시뮬레이터 빌드는 Mac의 Xcode 시뮬레이터에서만 돈다.
 지금은 Capacitor 기본 이미지다. 바꾸려면:
 
 1. `apps/student/resources/icon.png`(1024×1024), `splash.png`(2732×2732)를 둔다.
-2. `npx @capacitor/assets generate`로 android·ios 이미지를 만든다(필요할 때 이 도구를 개발 의존성으로 추가한다).
-3. 또는 Android는 `android/app/src/main/res/mipmap-*`, iOS는 `ios/App/App/Assets.xcassets`를 직접 바꾼다.
+2. `npx @capacitor/assets generate`로 android 이미지를 만든다(필요할 때 이 도구를 개발 의존성으로 추가한다).
+3. 또는 `android/app/src/main/res/mipmap-*`를 직접 바꾼다.
 
 ## 사람이 해야 할 일
 
-- Apple Developer 계정(기관 명의) 만들기, 서명 인증서·프로비저닝 프로파일
 - Android 키스토어 만들기와 안전한 보관, 릴리스 서명 설정
-- 앱 ID 확정(`kr.scibridge.student`를 기관 도메인으로 바꾸기: `capacitor.config.ts`, `android/app/build.gradle`의 `applicationId`·`namespace`와 `MainActivity` 패키지 경로, iOS의 `PRODUCT_BUNDLE_IDENTIFIER`)
-- 스토어 아동 앱 정책 검토(Google Play 가족 정책, App Store 아동 카테고리, 개인정보 처리방침)
+- 앱 ID 확정(`kr.scibridge.student`를 기관 도메인으로 바꾸기: `capacitor.config.ts`, `android/app/build.gradle`의 `applicationId`·`namespace`와 `MainActivity` 패키지 경로)
+- 스토어 아동 앱 정책 검토(Google Play 가족 정책, 개인정보 처리방침)
 - MDM 배포 방법 정하기(학교·교육청 보유 관리 도구에 맞춰)
 - 실기기 성능 측정(`docs/DEVICES.md`)
 
@@ -99,7 +79,7 @@ iOS 시뮬레이터 빌드는 Mac의 Xcode 시뮬레이터에서만 돈다.
 - **심박은 민감정보이고, 만 14세 미만은 법정대리인 동의가 필요할 수 있다. 학교에 적용하기 전에 법무 검토가 필요하다.** (`docs/DEVELOPMENT_PLAN.md` D10)
 - 실측값은 **기기 메모리에만** 둔다. 앱 종료, 단원 이탈, "지금 지우기", "그만두기"(허가 철회), 마지막 측정 뒤 30분 경과, `pagehide`에서 삭제한다. 저장소·서버·교사 화면·xAPI·콘솔·주소에는 쓰지 않는다.
 - 허가는 앱이 켜져 있는 동안만 유효하다. 저장하지 않으므로 앱을 다시 켜면 다시 묻는다.
-- 블루투스 권한 문구(`NSBluetoothAlwaysUsageDescription`)는 온도계와 심박 센서를 모두 적고, 측정값을 기기 밖으로 보내지 않는다고 밝힌다. Android는 시스템 권한 창에 앱 문구가 없다.
+- Android는 시스템 권한 창에 앱이 정한 문구를 넣을 수 없다. 측정값을 기기 밖으로 보내지 않는다는 안내는 "내 맥박 재기" 동의 화면이 맡는다.
 
 ### 탐구 기록장과 학생이 쓴 글 (D11)
 
@@ -115,8 +95,8 @@ iOS 시뮬레이터 빌드는 Mac의 Xcode 시뮬레이터에서만 돈다.
 
 시험 기능이다. 주소에 `?dev=1`을 붙이면 온도 센서가 있는 실험 화면의 센서 막대에 "실물 온도 센서 연결(시험)" 버튼과 센서 종류(표준 / micro:bit)가 나온다. 연결되면 가상 온도계 자리에 실측값과 "실물 센서" 배지가 보인다. **시뮬레이션 계산에는 쓰지 않는다.** 연결이 끊기면 마지막 값을 "끊김"과 함께 보이고, 자동 재연결은 1회만 시도한다.
 
-- 웹(크롬북·웨일북·안드로이드 크롬): Web Bluetooth. HTTPS 또는 localhost에서만 동작한다.
-- 앱(iOS·Android): `@capacitor-community/bluetooth-le`. 플러그인은 센서 연결을 처음 누를 때 불러온다.
+- 웹(크롬북·웨일북·안드로이드 크롬): Web Bluetooth. HTTPS 또는 localhost에서만 동작한다. iPad·iPhone의 Safari는 지원하지 않는다.
+- 앱(Android): `@capacitor-community/bluetooth-le`. 플러그인은 센서 연결을 처음 누를 때 불러온다.
 - 지원: 표준 Environmental Sensing(서비스 `0x181A`, 온도 `0x2A6E`, sint16 little-endian, 0.01 °C), micro:bit 온도 서비스(`e95d6100-251d-470a-a062-fa1922dfa9a8` / `e95d9250-251d-470a-a062-fa1922dfa9a8`, sint8, °C).
 - 제조사 프로토콜은 확보하면 같은 `BleTemperatureProfile` 모양으로 추가한다(결정 D7).
 

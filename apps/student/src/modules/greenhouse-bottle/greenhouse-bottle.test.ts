@@ -11,6 +11,8 @@ import { greenhouseBottleModule } from './index';
 import { FLOW_IDLE_NOTE, FLOW_NOTE, HEAT_COUNT, IDLE_NOTE, IDLE_SAMPLE, LIMITS_TEXT, LIMITS_TITLE, bottleNote, returningCount, shownRise, shownTemp, signedRise } from './initial';
 import { BottleView } from './BottleView';
 import { HeatFlowView } from './HeatFlowView';
+import { ClimateDataPanel, NARROW, WIDE, segments } from './ClimateDataPanel';
+import * as I from './initial';
 
 const unit = UNITS.find((u) => u.id === 'g4-climate')!;
 if (!unit.ok || unit.activity !== 'variable') throw new Error('g4-climate가 없어요');
@@ -223,5 +225,57 @@ describe('화면 글자 가드 (쓰지 않는 말·한계 용어)', () => {
       }
     }
     for (const t of [FLOW_NOTE, FLOW_IDLE_NOTE, IDLE_NOTE, LIMITS_TITLE, LIMITS_TEXT, bottleNote(at(base, 20))]) expect(guardOutput(t, guard).ok, t).toBe(true);
+  });
+});
+
+describe('진짜 기온 자료 패널', () => {
+  const guard = { forbiddenAnswers: experiment.tutor.forbiddenAnswers, limits: experiment.limits };
+  const html = renderToStaticMarkup(createElement(ClimateDataPanel));
+  const shown = text(html.replace(/aria-label="([^"]*)"/g, '> $1 <'));
+
+  it('모듈의 ResultsExtra이고 접힌 details로 시작한다', () => {
+    expect(greenhouseBottleModule.ResultsExtra).toBe(ClimateDataPanel);
+    expect(html).toMatch(/<details class="climate-data" data-testid="climate-data">/);
+    expect(html).not.toMatch(/<details[^>]* open/);
+  });
+
+  it('화면 글(안내·질문·주의·출처·라벨·aria-label·표)이 금지 구절·학년 밖 용어에 걸리지 않는다', () => {
+    expect(guardOutput(shown, guard), shown).toEqual({ ok: true, hits: [] });
+    for (const t of [I.CLIMATE_DATA_TITLE, I.CLIMATE_DATA_INTRO, I.CLIMATE_DATA_QUESTION, I.CLIMATE_DATA_CAUTION, I.CLIMATE_DATA_SOURCE, I.CLIMATE_DATA_NO_DATA, I.climateDataFirstLabel('10.8'), I.climateDataLastLabel('13.1'), I.climateDataAria('10.8', '13.1'), I.CLIMATE_DATA_TABLE_CAPTION, ...I.CLIMATE_DATA_TABLE_HEADS]) {
+      expect(guardOutput(t, guard).ok, t).toBe(true);
+    }
+    expect(shown).not.toMatch(/때문에 (올|높)/);
+  });
+
+  it('문구: 사양 그대로, 평균 10.8·13.1', () => {
+    expect(html).toContain('aria-label="서울의 해마다 평균 기온, 1908년부터 2025년까지. 처음 30년 평균 10.8도, 최근 30년 평균 13.1도."');
+    expect(shown).toContain('처음 30년 평균 10.8 °C');
+    expect(shown).toContain('최근 30년 평균 13.1 °C');
+    expect(shown).toContain('자료 없음(1950~1953)');
+    expect(html).toContain('기상청이 서울에서 잰 해마다의 평균 기온이에요. 오래전과 요즘을 비교해 볼까요?');
+    expect(html).toContain(I.CLIMATE_DATA_SOURCE);
+  });
+
+  it('선은 1950~1953에서 끊긴다(구간 둘, 그 해의 점 없음)', () => {
+    const segs = segments();
+    expect(segs.map((s) => [s[0]!.year, s.at(-1)!.year])).toEqual([[1908, 1949], [1954, 2025]]);
+    expect((html.match(/data-testid="climate-segment"/g) ?? []).length).toBe(2);
+    expect((html.match(/data-testid="climate-dot"/g) ?? []).length).toBe(114);
+    for (const y of [1907, 1950, 1951, 1952, 1953]) expect(html).not.toContain(`data-year="${y}"`);
+  });
+
+  it('표: 12줄, 첫 줄·끝 줄, 6해·8해에만 자료 해 수', () => {
+    const rows = [...html.matchAll(/<tr><td>([^<]*)<\/td><td>([^<]*)<\/td><\/tr>/g)].map((m) => `${m[1]} / ${m[2]}`);
+    expect(rows).toHaveLength(12);
+    expect(rows[0]).toBe('1908~1917 / 10.6');
+    expect(rows[4]).toBe('1948~1957 / 11.1 (자료 6해)');
+    expect(rows[11]).toBe('2018~2025 / 13.7 (자료 8해)');
+    expect(rows.filter((r) => r.includes('자료')).length).toBe(2);
+  });
+
+  it('넓은 배치와 좁은 배치가 있고 글자 크기는 15 이하로 폭 안에 든다', () => {
+    expect([WIDE.W, WIDE.H, NARROW.W, NARROW.H]).toEqual([640, 300, 340, 320]);
+    expect(WIDE.font).toBeGreaterThanOrEqual(14);
+    expect(NARROW.font).toBeGreaterThanOrEqual(14);
   });
 });
