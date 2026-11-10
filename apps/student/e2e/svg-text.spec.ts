@@ -58,7 +58,7 @@ async function smallTexts(page: Page, state: string): Promise<string[]> {
         if (box.left < frame.left - 1 || box.right > frame.right + 1 || box.top < frame.top - 1 || box.bottom > frame.bottom + 1) out.push(`${name} | 그림 밖으로 잘림`);
       }
       // 그래프는 눈금·라벨·표식 글자가 서로 겹치면 읽을 수 없다.
-      if (label === '그래프로 보기' || (svg.getAttribute('data-testid') ?? '').startsWith('moon-')) {
+      if (label === '그래프로 보기' || label === '서울의 해마다 평균 기온' || (svg.getAttribute('data-testid') ?? '').startsWith('moon-')) {
         for (let i = 0; i < drawn.length; i++) {
           for (let j = i + 1; j < drawn.length; j++) {
             const a = drawn[i]!.box;
@@ -193,6 +193,12 @@ for (const vp of VIEWPORTS) {
           default:
             await firstTrial(page);
             found.push(...(await smallTexts(page, '시행 1회 뒤')));
+            // 접힌 패널 안의 그림(g4-climate의 서울 기온 그래프)도 펼쳐서 잰다.
+            if ((await page.getByTestId('climate-data').count()) > 0) {
+              await page.getByTestId('climate-data').locator('summary').first().click();
+              found.push(...(await smallTexts(page, '기온 자료 패널 펼침')));
+              expect(await page.getByTestId('climate-svg').isVisible(), '기온 자료 그래프가 보여야 해요').toBe(true);
+            }
         }
         // 카드 그림·도구 그림·지시약 단원에는 SVG 글자가 없다(그림은 글자 없이 그린다). 나머지는 반드시 글자를 잰다.
         if (!NO_SVG_TEXT.has(unit.name)) expect(measured, '잰 SVG 글자가 하나도 없어요').toBeGreaterThan(0);
