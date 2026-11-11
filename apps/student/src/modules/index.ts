@@ -31,6 +31,8 @@ import { magnetPolesModule } from './magnet-poles';
 import { concentrationModule } from './concentration';
 import { heatContactModule } from './heat-contact';
 import { acidBaseMixModule } from './acid-base-mix';
+import { positionTimeModule } from './position-time';
+import { combustionProductsModule } from './combustion-products';
 
 export const MODULES: Record<ModuleKind, AnyModule> = {
   dissolution: dissolutionModule,
@@ -64,4 +66,6 @@ export const MODULES: Record<ModuleKind, AnyModule> = {
   concentration: concentrationModule,
   'heat-contact': heatContactModule,
   'acid-base-mix': acidBaseMixModule,
+  'position-time': positionTimeModule,
+  'combustion-products': combustionProductsModule,
 };

@@ -40,7 +40,9 @@ function toPoints(
   sx: (t: number) => number,
   sy: (g: number) => number,
 ) {
-  const s = trial.samples as Record<string, number>[];
+  // 값이 없는 표본(NaN)은 건너뛴다. 선을 그릴 점이 하나도 없으면 빈 글자를 돌려준다.
+  const s = (trial.samples as Record<string, number>[]).filter((p) => Number.isFinite(p[key]));
+  if (s.length === 0) return '';
   const step = Math.max(1, Math.ceil(s.length / MAX_POINTS));
   const pts: string[] = [];
   for (let i = 0; i < s.length; i += step) pts.push(`${sx(s[i]!.t!).toFixed(1)},${sy(s[i]![key]!).toFixed(1)}`);
@@ -116,6 +118,10 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
 
   const duration = trial ? trialDuration(trial) : 0;
   const r1 = (x: number) => Math.round(x * 10) / 10;
+  // 그릴 값이 없는 시행(예: 종이 검사의 석회수 뿌연 정도)은 선을 그리지 않는다.
+  const prevPoints = prev ? toPoints(prev, sampleKey, sx, sy) : '';
+  const trialPoints = trial && !series ? toPoints(trial, sampleKey, sx, sy) : '';
+  const valueText = (x: number) => (Number.isFinite(x) ? String(r1(x)) : '없음');
   const onKeyDown = (e: KeyboardEvent<SVGSVGElement>) => {
     if (!trial || playing) return;
     const small = duration / 50;
@@ -158,7 +164,7 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
         'aria-valuenow': r1(playhead),
         'aria-valuetext': series
           ? `${r1(playhead)}${xUnitGap}${xUnit}, ${series.map((x) => `${x.label} ${r1(sampleAt(trial, playhead, mod.interpolate)[x.key])}`).join(', ')}`
-          : `${r1(playhead)}${xUnitGap}${xUnit}, ${yName} ${r1(sampleAt(trial, playhead, mod.interpolate)[sampleKey])}${yUnit ? ` ${yUnit}` : ''}`,
+          : `${r1(playhead)}${xUnitGap}${xUnit}, ${yName} ${valueText(sampleAt(trial, playhead, mod.interpolate)[sampleKey])}${yUnit ? ` ${yUnit}` : ''}`,
         'aria-disabled': playing ? true : undefined,
         onKeyDown,
       }
@@ -216,8 +222,11 @@ export function GraphView({ module: mod, experiment, trial, prev, playhead, play
             )}
           </g>
         ))}
-        {prev && <polyline points={toPoints(prev, sampleKey, sx, sy)} fill="none" stroke="#7a8794" strokeWidth="2" strokeDasharray="5 4" opacity="0.6" />}
-        {trial && !series && <polyline points={toPoints(trial, sampleKey, sx, sy)} fill="none" stroke="#1f6fb5" strokeWidth="2.5" />}
+        {prevPoints && <polyline points={prevPoints} fill="none" stroke="#7a8794" strokeWidth="2" strokeDasharray="5 4" opacity="0.6" />}
+        {trial && !series && trialPoints && <polyline points={trialPoints} fill="none" stroke="#1f6fb5" strokeWidth="2.5" />}
+        {trial && !series && !trialPoints && mod.graph.emptyText && (
+          <text data-testid="graph-empty" x={(M.l + W - M.r) / 2} y={(M.t + H - M.b) / 2} textAnchor="middle" fontSize={FONT} fill="currentColor">{mod.graph.emptyText}</text>
+        )}
         {trial && series?.map((x) => (
           <polyline key={x.key} data-testid="graph-series" data-series={x.key} points={toPoints(trial, x.key, sx, sy)} fill="none" stroke={x.color} strokeWidth="2.5" strokeDasharray={x.dash} />
         ))}

@@ -69,6 +69,8 @@ export interface ExperimentModule<S extends { t: number }, R> {
     yMin?: number;
     /** y축 눈금 위치. 없으면 자료에 맞춰 자동으로 잡는다. 있으면 마지막 값이 y축 끝이다. */
     yTicks?: number[];
+    /** 그릴 값이 없는 시행(주 측정값이 모두 NaN)일 때 그래프 안에 쓰는 안내 글자. 없으면 아무것도 쓰지 않는다. */
+    emptyText?: string;
     /** 개수처럼 정수만 의미 있는 값이면 true: 눈금 간격을 1 이상으로 둔다. */
     integerTicks?: boolean;
     /** 고정 배열, 또는 실험(과 그래프에 보이는 시행)에서 계산하는 함수. 시행마다 시각이 다르면 trial의 조건·결과로 계산한다. */

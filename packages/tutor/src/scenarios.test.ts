@@ -45,7 +45,7 @@ describe('활동이 여럿인 단원의 시나리오(id 안정성)', () => {
   });
   it('활동이 하나인 단원은 활동마다 시나리오를 한 번만 만들고 모두 첫 활동 것이다', () => {
     for (const id of TUTOR_UNITS) {
-      if (id === 'g5-mixture' || id === 'g4-land' || id === 'g3-earth-sea' || id === 'g5-weather' || id === 'g3-force' || id === 'g3-sound' || id === 'g4-magnet' || id === 'g5-solution' || id === 'g5-heat' || id === 'g6-acid-base' || CARD_SORT_BATCH_A.includes(id)) continue;
+      if (id === 'g5-mixture' || id === 'g4-land' || id === 'g3-earth-sea' || id === 'g5-weather' || id === 'g3-force' || id === 'g3-sound' || id === 'g4-magnet' || id === 'g5-solution' || id === 'g5-heat' || id === 'g6-acid-base' || id === 'g6-motion' || id === 'g6-combustion' || CARD_SORT_BATCH_A.includes(id)) continue;
       const only = units[id]!.manifest.experiments;
       expect(only, id).toHaveLength(1);
       expect(new Set(generateScenarios(id, units[id]!).map((s) => s.state.experimentId)), id).toEqual(new Set([only[0]!.id]));
@@ -182,6 +182,36 @@ describe('변인 실험 두 번째 활동을 더한 단원의 시나리오(용�
       const first = list.slice(0, c.n).map((s) => JSON.stringify(s)).join('\n');
       expect(createHash('sha256').update(first).digest('hex')).toBe(c.sha);
       // 저장소 파일의 앞 22줄도 같다(덧붙이기만 했다).
+      const file = readFileSync(scenarioFile(TUTOR_DIR, c.id), 'utf8').trimEnd().split('\n');
+      expect(createHash('sha256').update(file.slice(0, c.n).join('\n')).digest('hex')).toBe(c.sha);
+      expect(file).toHaveLength(c.total);
+    });
+    it(`${c.id}: 활동 2의 모든 상황(실행 전·첫 시행·함께 바뀜·바꿀 조건 그대로·반복·공정한 비교·예측 불일치)이 시나리오에 있다`, () => {
+      const exp = u.manifest.experiments[1]!;
+      const keys = new Set(list.slice(c.n).map((s) => situationOf(s.state, exp)));
+      for (const k of ['before-run', 'first-trial', 'confounded', 'iv-unchanged', 'repeat', 'fair-test', 'prediction-mismatch']) expect(keys.has(k), k).toBe(true);
+    });
+  }
+});
+
+describe('변인 실험 두 번째 활동을 더한 단원의 시나리오(물체의 운동·물질의 연소)', () => {
+  // 각 해시는 두 번째 활동을 더하기 전 ml/tutor/scenarios/<단원>.jsonl 앞 n줄(줄바꿈으로 이은 글자)의 SHA-256이다.
+  const CASES = [
+    { id: 'g6-motion', first: 'ramp-cart', second: 'position-time', n: 20, total: 40, sha: '216fbe873ffd3d71646a0784436d5eacff1be3cba0318b08e780f0388e73b68f' },
+    { id: 'g6-combustion', first: 'candle-jar', second: 'combustion-products', n: 22, total: 42, sha: '6ca252b945d680ad876da831f0453ceaf0191ec404d631d89c2c6d5d8980fd2e' },
+  ];
+  for (const c of CASES) {
+    const u = units[c.id]!;
+    const list = generateScenarios(c.id, u);
+    it(`${c.id}: 첫 활동(${c.first}) 시나리오 s001~s${String(c.n).padStart(3, '0')}은 활동 2를 더하기 전과 한 글자도 같고, ${c.second} 시나리오가 뒤에 덧붙는다`, () => {
+      expect(u.manifest.experiments.map((e) => e.id)).toEqual([c.first, c.second]);
+      expect(list.map((s) => s.scenarioId)).toEqual(list.map((_, i) => `${c.id}-s${String(i + 1).padStart(3, '0')}`));
+      expect(list).toHaveLength(c.total);
+      expect(list.slice(0, c.n).every((s) => s.state.experimentId === c.first)).toBe(true);
+      expect(list.slice(c.n).every((s) => s.state.experimentId === c.second)).toBe(true);
+      const first = list.slice(0, c.n).map((s) => JSON.stringify(s)).join('\n');
+      expect(createHash('sha256').update(first).digest('hex')).toBe(c.sha);
+      // 저장소 파일의 앞 줄도 같다(덧붙이기만 했다).
       const file = readFileSync(scenarioFile(TUTOR_DIR, c.id), 'utf8').trimEnd().split('\n');
       expect(createHash('sha256').update(file.slice(0, c.n).join('\n')).digest('hex')).toBe(c.sha);
       expect(file).toHaveLength(c.total);

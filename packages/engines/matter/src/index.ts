@@ -8,3 +8,4 @@ export * from './phase';
 export * from './separation';
 export * from './concentration';
 export * from './acidBaseMix';
+export * from './combustionProducts';

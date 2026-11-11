@@ -385,7 +385,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('물체의 운동 매니페스트의 변인, 측정, 금지 구절, 한계 용어, 탐침을 읽는다', () => {
     const m = parseManifest(motionJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g6-motion', 6, 'physics', ['6과10-02']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g6-motion', 6, 'physics', ['6과10-01', '6과10-02']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('ramp-cart');
     expect(e.safety).toEqual([]);
@@ -600,6 +600,49 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     for (const f of ['중화', '중성이 되', '산성이 약해', '염기성이 약해', '산성이 점점 약해', '염기성으로 변', '비커 크기는 관계없']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
     expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
     expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['drops', 'direction', 'indicator', 'beaker']);
+  });
+
+  it('물체의 운동 활동 2(시간에 따른 위치 변화)의 변인, 측정, 안전 없음, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(motionJson);
+    expect([m.id, m.engine, m.standards]).toEqual(['g6-motion', 'physics', ['6과10-01', '6과10-02']]);
+    expect(m.experiments.map((x) => x.id)).toEqual(['ramp-cart', 'position-time']);
+    const e = m.experiments[1] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['position-time', 'position-time', '시간에 따른 위치 변화', '어떤 물체가 운동했는지 어떻게 알 수 있을까?', '예측: 관찰하는 동안 물체가 움직인 거리는?']);
+    expect(e.safety).toEqual([]);
+    expect(e.variables.map((v) => v.key)).toEqual(['object', 'watchS', 'weather']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([['bike', 'walker', 'snail', 'tree'], [5, 10], ['sunny', 'cloudy']]);
+    expect(e.variables.map((v) => v.default)).toEqual(['bike', 5, 'sunny']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['distM', 'm'], ['endM', 'm']]);
+    expect(e.gateway).toEqual({ mode: 'open', requirePrediction: true, requireSingleIV: true });
+    expect(e.limits).toEqual(['속도', '가속도', '변위', '등속', '벡터']);
+    for (const f of ['위치가 변하면 운동', '위치가 변하지 않으면 운동하지 않', '나무는 운동하지 않', '달팽이도 운동', '날씨는 관계없']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['object', 'watchS', 'weather']);
+    // 첫 활동은 그대로다.
+    expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['heightCm', 'floor', 'load']);
+  });
+
+  it('물질의 연소 활동 2(연소 전과 후 비교하기)의 변인, 범주 결과, 안전, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(combustionJson);
+    expect([m.id, m.engine, m.standards]).toEqual(['g6-combustion', 'matter', ['6과14-02', '6과14-03']]);
+    expect(m.experiments.map((x) => x.id)).toEqual(['candle-jar', 'combustion-products']);
+    const e = m.experiments[1] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question]).toEqual(['combustion-products', 'combustion-products', '연소 전과 후 비교하기', '초가 타고 난 뒤에는 어떤 물질이 생길까?']);
+    expect(e.safety).toEqual(['fire', 'hot']);
+    // 불 점검표와 경고 문구는 첫 활동(집기병으로 덮은 촛불)과 같다.
+    const first = m.experiments[0] as VariableExperiment;
+    expect(e.safetyChecklist).toEqual(first.safetyChecklist);
+    expect(e.safetyMessages).toEqual(first.safetyMessages);
+    expect(e.variables.map((v) => v.key)).toEqual(['burnMin', 'test', 'jar']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([[0, 1, 3], ['paper', 'limewater'], ['clear', 'blue']]);
+    expect(e.variables.map((v) => v.default)).toEqual([0, 'paper', 'clear']);
+    // 검사 결과는 범주 결과 칸이라 단위가 없다(전자석의 "못 머리 쪽의 극"과 같다).
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['result', ''], ['cloud', '눈금'], ['shorterMm', 'mm'], ['stage', '단계']]);
+    expect(e.limits).toEqual(['산화', '탄화수소', '화학 반응식', '수증기 응결']);
+    for (const f of ['물이 생겨', '물이 생긴', '이산화 탄소가 생겨', '이산화 탄소가 생긴', '물과 이산화 탄소', '집기병 색은 관계없']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['burnMin', 'test', 'jar']);
+    expect(first.variables.map((v) => v.key)).toEqual(['jarMl', 'candle', 'candleCount', 'candleColor']);
   });
 
   it('날씨와 우리 생활 매니페스트의 변인, 측정, 안전, 한계 용어, 탐침을 읽는다', () => {

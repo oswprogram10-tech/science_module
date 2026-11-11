@@ -3,6 +3,7 @@
   "title": "물체의 운동",
   "grade": 6,
   "standards": [
+    "6과10-01",
     "6과10-02"
   ],
   "engine": "physics",
@@ -149,6 +150,158 @@
           {
             "when": "prediction-mismatch",
             "text": "예측과 결과가 달랐네요. 위치 그래프에서 1 m에 먼저 닿은 선이 어느 것인지 볼까요?"
+          }
+        ]
+      }
+    },
+    {
+      "id": "position-time",
+      "module": "position-time",
+      "title": "시간에 따른 위치 변화",
+      "question": "어떤 물체가 운동했는지 어떻게 알 수 있을까?",
+      "predictionPrompt": "예측: 관찰하는 동안 물체가 움직인 거리는?",
+      "variables": [
+        {
+          "key": "object",
+          "label": "보는 물체",
+          "type": "choice",
+          "options": [
+            {
+              "value": "bike",
+              "label": "자전거"
+            },
+            {
+              "value": "walker",
+              "label": "걷는 사람"
+            },
+            {
+              "value": "snail",
+              "label": "달팽이"
+            },
+            {
+              "value": "tree",
+              "label": "나무"
+            }
+          ],
+          "default": "bike"
+        },
+        {
+          "key": "watchS",
+          "label": "관찰 시간",
+          "type": "choice",
+          "unit": "초",
+          "options": [
+            {
+              "value": 5,
+              "label": "5초"
+            },
+            {
+              "value": 10,
+              "label": "10초"
+            }
+          ],
+          "default": 5
+        },
+        {
+          "key": "weather",
+          "label": "날씨",
+          "type": "choice",
+          "options": [
+            {
+              "value": "sunny",
+              "label": "맑음"
+            },
+            {
+              "value": "cloudy",
+              "label": "흐림"
+            }
+          ],
+          "default": "sunny"
+        }
+      ],
+      "dependent": [
+        {
+          "key": "distM",
+          "label": "움직인 거리",
+          "unit": "m"
+        },
+        {
+          "key": "endM",
+          "label": "나중 위치",
+          "unit": "m"
+        }
+      ],
+      "gateway": {
+        "mode": "open",
+        "requirePrediction": true,
+        "requireSingleIV": true
+      },
+      "safety": [],
+      "safetyNotices": [],
+      "limits": [
+        "속도",
+        "가속도",
+        "변위",
+        "등속",
+        "벡터"
+      ],
+      "tutor": {
+        "forbiddenAnswers": [
+          "위치가 변하면 운동",
+          "위치가 바뀌면 운동",
+          "위치가 변하지 않으면 운동하지 않",
+          "위치가 바뀌지 않으면 운동하지 않",
+          "나무는 운동하지 않",
+          "달팽이도 운동",
+          "날씨는 관계없",
+          "날씨는 상관없",
+          "날씨는 영향이 없",
+          "날씨와 관계없",
+          "날씨가 달라도"
+        ],
+        "probes": [
+          {
+            "when": "before-run",
+            "text": "{iv}을(를) 바꾸면 관찰하는 동안 물체가 움직인 거리가 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?"
+          },
+          {
+            "when": "first-trial",
+            "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?"
+          },
+          {
+            "when": "confounded",
+            "text": "{changed}이(가) 함께 바뀌었어요. 움직인 거리가 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?"
+          },
+          {
+            "when": "iv-unchanged",
+            "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?"
+          },
+          {
+            "when": "repeat",
+            "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?"
+          },
+          {
+            "when": "fair-test",
+            "text": "{iv}만 바꾸었을 때 움직인 거리와 나중 위치는 어떻게 달라졌나요? 그래프에서 시간에 따른 위치의 변화도 견주어 볼까요?"
+          },
+          {
+            "when": "fair-test",
+            "iv": "object",
+            "text": "보는 물체만 바꾸었어요. 같은 시간 동안 물체마다 움직인 거리는 어떻게 달랐나요? 시간이 지나면서 위치가 어떻게 달라지는지 그래프에서 찾아볼까요?"
+          },
+          {
+            "when": "fair-test",
+            "iv": "watchS",
+            "text": "관찰 시간만 바꾸었어요. 시간이 달라지면 같은 물체의 위치는 어떻게 달라졌나요? 그래프의 선에서 5초와 10초일 때의 위치를 읽어 볼까요?"
+          },
+          {
+            "when": "fair-test",
+            "iv": "weather",
+            "text": "날씨만 바꾸었을 때 움직인 거리는 달라졌나요? 이 결과로 무엇을 알 수 있을까요?"
+          },
+          {
+            "when": "prediction-mismatch",
+            "text": "예측과 결과가 달랐네요. 1초마다 겹쳐 그린 그림에서 물체의 위치가 어떻게 바뀌었는지 하나씩 짚어 볼까요?"
           }
         ]
       }
