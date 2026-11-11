@@ -1,6 +1,6 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import websocket from '@fastify/websocket';
-import { MAX_MESSAGE_BYTES } from '@sci/classroom';
+import { MAX_TUTOR_MESSAGE_BYTES } from '@sci/classroom';
 import { Hub, type Conn, type HubOptions } from './hub';
 import { isLoopback, type HostInfo } from './hostInfo';
 
@@ -37,7 +37,7 @@ export async function buildServer(opts: ServerOptions = {}): Promise<{ app: Fast
     app.log.warn('ALLOWED_ORIGINS가 비어 있어 모든 Origin을 허용해요(개발용). 운영에서는 꼭 지정해 주세요.');
   }
 
-  await app.register(websocket, { options: { maxPayload: MAX_MESSAGE_BYTES } });
+  await app.register(websocket, { options: { maxPayload: MAX_TUTOR_MESSAGE_BYTES } });
 
   const alive = new WeakSet<object>();
 

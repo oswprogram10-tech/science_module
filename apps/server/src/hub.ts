@@ -2,7 +2,7 @@ import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import {
   CODE_ALPHABET,
   CODE_LENGTH,
-  MAX_MESSAGE_BYTES,
+  MAX_TUTOR_MESSAGE_BYTES,
   TEACHERLESS_EXPIRE_MS,
   TEACHER_GONE_UNPAUSE_MS,
   checkJoin,
@@ -16,6 +16,7 @@ import {
   type ClientMessage,
   type ErrorCode,
   type ServerMessage,
+  type TutorEdits,
 } from '@sci/classroom';
 
 export const MAX_CLASSES = 50;
@@ -57,6 +58,8 @@ interface ClassRec {
   snapshotTimer: ReturnType<typeof setTimeout> | null;
   /** 교사 연결이 마지막으로 하나도 없게 된 때. 교사가 있으면 null. */
   noTeacherSince: number | null;
+  /** 교사가 마지막으로 보낸 튜터 질문 덧씌우기. 메모리에만 두고 파일로 쓰지 않는다. 수업이 끝나면 버린다. */
+  tutorEdits: TutorEdits | null;
 }
 
 interface ConnMeta {
@@ -187,8 +190,8 @@ export class Hub {
       this.send(conn, { t: 'error', code: 'rate_limited' });
       return;
     }
-    // 글자 수가 8 KB의 절반도 안 되면 바이트 수를 따로 세지 않아도 된다(parseClientMessage가 다시 확인한다).
-    const msg = raw.length > MAX_MESSAGE_BYTES * 2 ? null : parseClientMessage(raw);
+    // 글자 수가 가장 큰 메시지(tutor)의 바이트 상한보다 길면 바이트 수를 따로 세지 않아도 된다(parseClientMessage가 다시 확인한다).
+    const msg = raw.length > MAX_TUTOR_MESSAGE_BYTES ? null : parseClientMessage(raw);
     if (!msg) {
       this.send(conn, { t: 'error', code: 'bad_message' });
       if (++m.bad >= MAX_BAD_MESSAGES) {
@@ -323,6 +326,7 @@ export class Hub {
           lastSnapshotAt: 0,
           snapshotTimer: null,
           noTeacherSince: null,
+          tutorEdits: null,
         };
         this.classes.set(code, rec);
         m.role = 'teacher';
@@ -389,6 +393,7 @@ export class Hub {
         this.apply(rec, { type: 'join', group: msg.group, ...(msg.deviceTier ? { deviceTier: msg.deviceTier } : {}), now: t });
         this.log('group_joined', msg.code, msg.group);
         this.send(conn, { t: 'joined', code: msg.code, group: msg.group });
+        if (rec.tutorEdits) this.send(conn, { t: 'tutor', edits: rec.tutorEdits });
         if (rec.state.paused) this.send(conn, { t: 'pause', on: true });
         return;
       }
@@ -408,6 +413,16 @@ export class Hub {
         } else {
           this.apply(rec, { type: 'safetyClear', group, safetyType: msg.type, now });
         }
+        return;
+      }
+      case 'tutor': {
+        // 이 수업을 만든 교사 연결(또는 token으로 watch한 연결)만 보낼 수 있다.
+        const rec = m.role === 'teacher' && m.code ? this.classes.get(m.code) : undefined;
+        if (!rec) return this.error(conn, 'bad_message');
+        rec.tutorEdits = msg.edits;
+        rec.state = reduce(rec.state, { type: 'touch', now: this.now() });
+        for (const s of rec.students.values()) this.send(s, { t: 'tutor', edits: msg.edits });
+        this.log('tutor_edits', rec.state.code);
         return;
       }
       case 'pause':

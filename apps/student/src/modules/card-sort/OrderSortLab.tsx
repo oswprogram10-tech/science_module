@@ -2,7 +2,8 @@ import { useMemo, useSyncExternalStore } from 'react';
 import { ActivityTabsSlot } from '../../components/ActivityTabs';
 import { orderPile } from '@sci/cardsort';
 import type { CardSortExperiment } from '@sci/schema';
-import { renderAndGuard } from '@sci/tutor';
+import { TUTOR_SILENT, renderAndGuard } from '@sci/tutor';
+import { useTutorProbes } from '../../tutorProbes';
 import {
   checkFollowUp,
   checkOrder,
@@ -116,10 +117,11 @@ export function OrderSortLab({
 
   // 튜터
   const situation = orderTutorSituation(state, exp);
+  const probes = useTutorProbes(unitId, exp.id, exp.tutor.probes);
   const tutorText = renderAndGuard(
     situation.when,
     { card: situation.card, criterion: situation.criterion },
-    exp.tutor.probes,
+    probes,
     { forbiddenAnswers: exp.tutor.forbiddenAnswers, limits: exp.limits },
   );
   const feedbackText = state.followUp.checked ? followUpFeedback(exp, state.followUp.checked) : orderFeedback(exp, state.checked);
@@ -286,10 +288,12 @@ export function OrderSortLab({
               <h2>피드백</h2>
               <p>{feedbackText}</p>
             </div>
-            <div className="box tutor" aria-live="polite">
-              <h2>생각해 볼까요?</h2>
-              <p>{tutorText}</p>
-            </div>
+            {tutorText !== TUTOR_SILENT && (
+              <div className="box tutor" aria-live="polite">
+                <h2>생각해 볼까요?</h2>
+                <p>{tutorText}</p>
+              </div>
+            )}
           </div>
         </div>
       </main>

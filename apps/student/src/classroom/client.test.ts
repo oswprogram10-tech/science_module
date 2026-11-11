@@ -49,6 +49,7 @@ afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
   bus.setPaused(false);
+  bus.setTutorEdits(null);
 });
 
 describe('학생 수업 연결', () => {
@@ -165,5 +166,64 @@ describe('학생 수업 연결', () => {
     ws.recv({ t: 'pause', on: false });
     expect(bus.getPaused()).toBe(false);
     c.leave();
+  });
+  describe('튜터 질문 덧씌우기', () => {
+    const edits = { v: 1 as const, units: { 'g6-motion': { 'ramp-cart': { changed: { '|before-run|': { text: '먼저 적어 볼까요?' } }, added: [] } } } };
+
+    it('서버가 보낸 tutor를 메모리에만 두고, 수업에서 나오면 지운다', () => {
+      const writes: string[] = [];
+      const store = (name: string) => ({ getItem: () => null, setItem: (k: string, v: string) => void writes.push(`${name}:${k}=${v}`), removeItem: () => {} });
+      vi.stubGlobal('sessionStorage', store('session'));
+      vi.stubGlobal('localStorage', store('local'));
+      const c = new StudentClassroom();
+      const ws = connect(c);
+      expect(bus.getTutorEdits()).toBeNull();
+      let notified = 0;
+      const off = bus.subscribeTutorEdits(() => notified++);
+      ws.recv({ t: 'tutor', edits });
+      expect(bus.getTutorEdits()).toEqual(edits);
+      expect(notified).toBe(1);
+      // 학생 기기의 저장소에는 참여 정보(세션)만 있고 덧씌우기는 없다.
+      expect(writes.some((w) => w.includes('g6-motion') || w.includes('먼저 적어'))).toBe(false);
+      expect(writes.every((w) => w.startsWith('session:sci.classroom.session='))).toBe(true);
+      c.leave();
+      expect(bus.getTutorEdits()).toBeNull();
+      expect(notified).toBe(2);
+      off();
+    });
+
+    it('선생님이 수업을 끝내면 지운다', () => {
+      const c = new StudentClassroom();
+      const ws = connect(c);
+      ws.recv({ t: 'tutor', edits });
+      expect(bus.getTutorEdits()).not.toBeNull();
+      ws.recv({ t: 'ended' });
+      expect(bus.getTutorEdits()).toBeNull();
+    });
+
+    it('끊겼다 다시 이어지는 동안은 유지하고, 서버가 다시 보내면 새 것으로 바꾼다', () => {
+      const c = new StudentClassroom();
+      const ws = connect(c);
+      ws.recv({ t: 'tutor', edits });
+      ws.onclose?.();
+      expect(c.getState().link).toBe('retrying');
+      expect(bus.getTutorEdits()).toEqual(edits);
+      vi.advanceTimersByTime(1000);
+      const ws2 = last();
+      ws2.onopen?.();
+      ws2.recv(joined);
+      const empty = { v: 1 as const, units: {} };
+      ws2.recv({ t: 'tutor', edits: empty });
+      expect(bus.getTutorEdits()).toEqual(empty);
+      c.leave();
+    });
+
+    it('규격에 맞지 않는 tutor는 무시한다', () => {
+      const c = new StudentClassroom();
+      const ws = connect(c);
+      ws.recv({ t: 'tutor', edits: { v: 2, units: {} } });
+      expect(bus.getTutorEdits()).toBeNull();
+      c.leave();
+    });
   });
 });

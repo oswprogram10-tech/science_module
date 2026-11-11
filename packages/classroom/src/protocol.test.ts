@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CODE_ALPHABET,
   MAX_MESSAGE_BYTES,
+  MAX_TUTOR_MESSAGE_BYTES,
   normalizeCode,
   parseClientMessage,
   parseServerMessage,
@@ -90,6 +91,40 @@ describe('status의 experimentId (선택, 하위 호환)', () => {
     for (const g of [group, { ...group, experimentId: 'separation-methods' }]) {
       expect(parseServerMessage(j({ t: 'snapshot', code: 'ABC234', paused: false, groups: [g] }))).not.toBeNull();
     }
+  });
+});
+
+describe('tutor 메시지와 크기 규칙', () => {
+  const edits = { v: 1, units: { 'g6-motion': { 'ramp-cart': { changed: { '|before-run|': { text: '무엇이 달라질까요?' } }, added: [] } } } };
+  /** 8 KB를 넘는 덧씌우기(목표 바이트 수 근처). */
+  const big = (n: number) => ({
+    v: 1,
+    units: { u: { e: { changed: {}, added: Array.from({ length: n }, (_, i) => ({ when: `w${i}`, text: '가'.repeat(60) })) } } },
+  });
+  it('tutor를 읽는다(클라이언트와 서버 방향 모두)', () => {
+    expect(parseClientMessage(j({ t: 'tutor', edits }))).toMatchObject({ t: 'tutor' });
+    expect(parseServerMessage(j({ t: 'tutor', edits }))).toMatchObject({ t: 'tutor' });
+    expect(parseClientMessage(j({ t: 'tutor', edits: { v: 2, units: {} } }))).toBeNull();
+    expect(parseClientMessage(j({ t: 'tutor' }))).toBeNull();
+  });
+  it('8 KB를 넘는 tutor는 허용하고, 넘는 다른 메시지는 거부한다', () => {
+    // 한글 60자(180바이트) x 20개 x 활동 8개: 8 KB를 넘고 48 KB보다 작다.
+    const bigger = j({ t: 'tutor', edits: { v: 1, units: Object.fromEntries(Array.from({ length: 2 }, (_, u) => [`u${u}`, Object.fromEntries(Array.from({ length: 4 }, (_, e) => [`e${e}`, big(20).units.u.e]))])) } });
+    expect(new TextEncoder().encode(bigger).length).toBeGreaterThan(MAX_MESSAGE_BYTES);
+    expect(parseClientMessage(bigger)).toMatchObject({ t: 'tutor' });
+    expect(parseServerMessage(bigger)).toMatchObject({ t: 'tutor' });
+    expect(parseClientMessage(j({ t: 'status', phase: 'idle', trials: 0, safetyLocked: false, lastKind: 'x'.repeat(MAX_MESSAGE_BYTES) }))).toBeNull();
+    expect(parseServerMessage(j({ t: 'error', code: 'bad_message', pad: 'x'.repeat(MAX_MESSAGE_BYTES) }))).toBeNull();
+  });
+  it('tutor가 아닌 메시지는 tutor처럼 시작해도 8 KB를 넘으면 거부한다', () => {
+    expect(parseClientMessage(`{"t":"tutor","pad":"${'x'.repeat(MAX_MESSAGE_BYTES)}"}`)).toBeNull();
+  });
+  it('48 KB를 넘는 tutor는 거부한다', () => {
+    const units = Object.fromEntries(Array.from({ length: 6 }, (_, u) => [`u${u}`, Object.fromEntries(Array.from({ length: 6 }, (_, e) => [`e${e}`, big(20).units.u.e]))]));
+    const huge = j({ t: 'tutor', edits: { v: 1, units } });
+    expect(new TextEncoder().encode(huge).length).toBeGreaterThan(MAX_TUTOR_MESSAGE_BYTES);
+    expect(parseClientMessage(huge)).toBeNull();
+    expect(parseServerMessage(huge)).toBeNull();
   });
 });
 

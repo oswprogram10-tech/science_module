@@ -54,3 +54,38 @@ button:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
 /* QR은 어두운 화면에서도 흰 바탕에 검은 칸이어야 읽힌다. */
 .host-qr { background:#fff; padding:6px; border-radius:6px; width:132px; height:132px; flex:none; }
 .host-qr svg { display:block; width:100%; height:100%; }
+
+.top { display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
+.top h1 { margin:0; }
+.tutor-note { margin:0; padding:8px 12px; border:1px solid var(--line); border-radius:8px; background:var(--card); font-size:.95rem; }
+
+/* 튜터 질문 고치기(편집 화면) */
+.te-backdrop { position:fixed; inset:0; z-index:25; background:var(--bg); overflow:auto; }
+.te { max-width:960px; margin:0 auto; padding:12px 16px 32px; display:flex; flex-direction:column; gap:12px; }
+.te-head { display:flex; gap:12px; align-items:center; justify-content:space-between; }
+.te-head h2 { margin:0; font-size:1.4rem; }
+.te-summary { margin:0; font-weight:700; }
+.te-tools .danger { margin-left:auto; }
+.te-state p { margin:0 0 4px; }
+.te-pick { display:flex; gap:12px; flex-wrap:wrap; }
+.te-pick label, .te-add-pick, .te-field { display:flex; flex-direction:column; gap:4px; font-size:.95rem; min-width:0; }
+.te-pick select, .te-add-pick select, .te-field textarea { font:inherit; padding:8px 10px; min-height:44px; border:2px solid var(--line); border-radius:8px; background:var(--card); color:var(--fg); max-width:100%; }
+.te-pick select { min-width:220px; }
+.te-field textarea { width:100%; resize:vertical; line-height:1.5; }
+.te-field textarea:disabled { opacity:.6; }
+.te-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; }
+.te-line { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; display:flex; flex-direction:column; gap:8px; min-width:0; }
+.te-line h3 { font-size:1rem; }
+.te-line.te-off { border-style:dashed; }
+.te-line.te-added { border-color:var(--accent); }
+.te-default { margin:0; font-size:.9rem; color:color-mix(in srgb, var(--fg) 72%, var(--card)); overflow-wrap:anywhere; }
+.te-switch { display:flex; align-items:center; gap:8px; min-height:44px; }
+.te-switch input { width:22px; height:22px; }
+.te-check { min-height:0; }
+.te-ok { margin:0; color:var(--ok-fg); font-weight:700; }
+.te-bad { margin:0; padding-left:1.2rem; color:var(--danger); font-weight:700; }
+.te-add { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; }
+.te-add h3 { margin-bottom:8px; }
+.te-add .actions { align-items:flex-end; }
+.te-backdrop input:focus-visible, .te-backdrop select:focus-visible, .te-backdrop textarea:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+@media (max-width: 560px) { .te-pick select { min-width:0; width:100%; } .te-pick label { width:100%; } .te-tools .danger { margin-left:0; } }

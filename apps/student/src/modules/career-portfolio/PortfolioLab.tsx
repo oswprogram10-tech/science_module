@@ -1,7 +1,8 @@
 import { useCallback, useId, useMemo, useState } from 'react';
 import { ActivityTabsSlot } from '../../components/ActivityTabs';
 import type { PortfolioExperiment, PortfolioJob } from '@sci/schema';
-import { renderAndGuard } from '@sci/tutor';
+import { TUTOR_SILENT, renderAndGuard } from '@sci/tutor';
+import { useTutorProbes } from '../../tutorProbes';
 import { MemoryRecorder, buildStatement, toExtensions } from '@sci/xapi';
 import { MAX_MORE_CHARS, UNAVAILABLE_TEXT, logbook, useLogbookVersion } from '../../logbook';
 import { LogbookTurnOnButton } from '../../logbook/LogbookCard';
@@ -80,7 +81,8 @@ export function PortfolioLab({
     safetyLocked: false,
   });
 
-  const tutorText = renderAndGuard(`stage-${stage}`, {}, exp.tutor.probes, {
+  const probes = useTutorProbes(unitId, exp.id, exp.tutor.probes);
+  const tutorText = renderAndGuard(`stage-${stage}`, {}, probes, {
     forbiddenAnswers: exp.tutor.forbiddenAnswers,
     limits: exp.limits,
   });
@@ -131,10 +133,12 @@ export function PortfolioLab({
           </ol>
         </nav>
 
-        <div className="box tutor no-print" aria-live="polite">
-          <h2>생각해 볼까요?</h2>
-          <p>{tutorText}</p>
-        </div>
+        {tutorText !== TUTOR_SILENT && (
+          <div className="box tutor no-print" aria-live="polite">
+            <h2>생각해 볼까요?</h2>
+            <p>{tutorText}</p>
+          </div>
+        )}
 
         {stage === 1 && (
           <section className="career-stage" aria-labelledby="career-s1">

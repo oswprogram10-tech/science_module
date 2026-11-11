@@ -199,9 +199,11 @@ describe('거절', () => {
     expect(c.msgs.filter((m) => m.t === 'error' && m.code === 'bad_message').length).toBeGreaterThanOrEqual(2);
   });
 
-  it('8 KB를 넘는 메시지는 연결을 닫는다', async () => {
+  it('8 KB를 넘는 일반 메시지는 거절하고(bad_message), ws 상한(tutor 48 KB)을 넘는 메시지는 연결을 닫는다', async () => {
     const c = await Client.connect();
     c.send(JSON.stringify({ t: 'status', lastKind: 'x'.repeat(9000) }));
+    expect(await c.until((m) => m.t === 'error')).toEqual({ t: 'error', code: 'bad_message' });
+    c.send(JSON.stringify({ t: 'status', lastKind: 'x'.repeat(60_000) }));
     expect(await c.closed()).toBe(1009);
   });
 
@@ -609,5 +611,113 @@ describe('교사 PC 수업 서버 모드(서버)', () => {
   it('hostInfo를 주지 않으면 /host-info는 없다(학교 서버 모드)', async () => {
     const res = await srv.app.inject({ method: 'GET', url: '/host-info', remoteAddress: '127.0.0.1' });
     expect(res.statusCode).toBe(404);
+  });
+});
+
+describe('튜터 질문 덧씌우기(tutor)', () => {
+  const edits = { v: 1, units: { 'g6-motion': { 'ramp-cart': { changed: { '|before-run|': { text: '출발 높이를 바꾸면 무엇이 달라질까요?' }, '|repeat|': { off: true } }, added: [] } } } };
+  /** 8 KB를 넘는 덧씌우기: 질문 20개 x 200자 x 여러 활동. */
+  const bigEdits = () => {
+    const units: Record<string, Record<string, unknown>> = {};
+    for (let u = 0; u < 3; u++) {
+      const exps: Record<string, unknown> = {};
+      for (let e = 0; e < 3; e++) exps[`e${e}`] = { changed: {}, added: Array.from({ length: 20 }, (_, i) => ({ when: `w${i}`, text: `${'가'.repeat(60)}?` })) };
+      units[`u${u}`] = exps;
+    }
+    return { v: 1, units };
+  };
+
+  it('교사가 보내면 모든 학생에게 전달되고, 나중에 join한 학생도 joined 바로 뒤에 받는다', async () => {
+    const { teacher, code } = await makeClass();
+    const s1 = await student(code, 2);
+    await s1.until((m) => m.t === 'joined');
+    teacher.send({ t: 'tutor', edits });
+    expect(await s1.until((m) => m.t === 'tutor')).toEqual({ t: 'tutor', edits });
+    const s2 = await student(code, 5);
+    await s2.until((m) => m.t === 'tutor');
+    expect(s2.msgs.map((m) => m.t).slice(0, 2)).toEqual(['joined', 'tutor']);
+    // 고쳐 보내면 마지막 것이 남는다.
+    const edits2 = { v: 1, units: {} };
+    teacher.send({ t: 'tutor', edits: edits2 });
+    await s1.until((m) => m.t === 'tutor' && Object.keys(m.edits.units).length === 0);
+    const s3 = await student(code, 7);
+    expect((await s3.until((m) => m.t === 'tutor')) as { edits: unknown }).toMatchObject({ edits: edits2 });
+  });
+
+  it('8 KB를 넘는 덧씌우기도 교사가 보낼 수 있다', async () => {
+    const { teacher, code } = await makeClass();
+    const s = await student(code, 1);
+    await s.until((m) => m.t === 'joined');
+    const big = bigEdits();
+    const raw = JSON.stringify({ t: 'tutor', edits: big });
+    expect(raw.length).toBeGreaterThan(8 * 1024);
+    expect(raw.length).toBeLessThan(48 * 1024);
+    teacher.send(raw);
+    const got = await s.until((m) => m.t === 'tutor');
+    expect(got).toEqual({ t: 'tutor', edits: big });
+  });
+
+  it('학생이 보내면 bad_message이고 다른 학생에게 전달되지 않는다', async () => {
+    const { code } = await makeClass();
+    const a = await student(code, 1);
+    const b = await student(code, 2);
+    await a.until((m) => m.t === 'joined');
+    await b.until((m) => m.t === 'joined');
+    a.send({ t: 'tutor', edits });
+    expect(await a.until((m) => m.t === 'error')).toEqual({ t: 'error', code: 'bad_message' });
+    await new Promise((r) => setTimeout(r, 150));
+    expect(b.msgs.some((m) => m.t === 'tutor')).toBe(false);
+    expect(srv.hub.classes.get(code)!.tutorEdits).toBeNull();
+  });
+
+  it('규격에 맞지 않는 덧씌우기는 거절한다', async () => {
+    const { teacher, code } = await makeClass();
+    const s = await student(code, 1);
+    await s.until((m) => m.t === 'joined');
+    teacher.send({ t: 'tutor', edits: { v: 1, units: { 'G6 Motion': {} } } });
+    expect(await teacher.until((m) => m.t === 'error')).toEqual({ t: 'error', code: 'bad_message' });
+    expect(srv.hub.classes.get(code)!.tutorEdits).toBeNull();
+  });
+
+  it('token으로 watch한 교사 연결도 보낼 수 있다', async () => {
+    const { code, token } = await makeClass();
+    const s = await student(code, 1);
+    await s.until((m) => m.t === 'joined');
+    const t2 = await Client.connect();
+    t2.send({ t: 'watch', code, token });
+    await t2.snapshot();
+    t2.send({ t: 'tutor', edits });
+    await s.until((m) => m.t === 'tutor');
+  });
+
+  it('연결하지 않은 소켓이 보내면 bad_message', async () => {
+    const c = await Client.connect();
+    c.send({ t: 'tutor', edits });
+    expect(await c.until((m) => m.t === 'error')).toEqual({ t: 'error', code: 'bad_message' });
+  });
+
+  it('수업이 끝나면 버린다(같은 코드의 수업은 다시 만들어지지 않고, 허브에 남지 않는다)', async () => {
+    const { teacher, code } = await makeClass();
+    teacher.send({ t: 'tutor', edits });
+    await new Promise((r) => setTimeout(r, 100));
+    const rec = srv.hub.classes.get(code)!;
+    expect(rec.tutorEdits).toEqual(edits);
+    teacher.send({ t: 'end' });
+    await teacher.closed();
+    expect(srv.hub.classes.has(code)).toBe(false);
+    const { teacher: t2, code: code2 } = await makeClass();
+    expect(code2).not.toBe(code);
+    expect(srv.hub.classes.get(code2)!.tutorEdits).toBeNull();
+    const late = await student(code2, 1);
+    await late.until((m) => m.t === 'joined');
+    await new Promise((r) => setTimeout(r, 100));
+    expect(late.msgs.some((m) => m.t === 'tutor')).toBe(false);
+    void t2;
+  });
+
+  it('기존 rate limit이 그대로 적용된다', async () => {
+    const { teacher } = await makeClass();
+    for (let i = 0; i < 30; i++) teacher.send({ t: 'tutor', edits });
+    expect(await teacher.until((m) => m.t === 'error' && m.code === 'rate_limited')).toEqual({ t: 'error', code: 'rate_limited' });
   });
 });
