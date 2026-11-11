@@ -32,7 +32,7 @@ jobs:
   e2e:
     name: 화면 테스트 (Playwright)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -42,7 +42,20 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       # @playwright/test 버전(1.63.0)에 맞는 크로미움과 시스템 의존성을 설치한다.
-      - run: pnpm --filter student exec playwright install --with-deps chromium
+      # 러너의 기본 apt 미러(azure.archive.ubuntu.com)가 이름 풀이에 실패할 때가 있다.
+      # 1) 그대로 시도 2) 미러를 archive.ubuntu.com으로 바꿔 시도
+      # 3) 그래도 안 되면 apt 없이 브라우저만 받는다(러너에 필요한 라이브러리는 이미 있고, 빠지는 것은 추가 글꼴뿐이다).
+      - name: 크로미움과 시스템 의존성 설치(미러 대체·재시도)
+        timeout-minutes: 15
+        run: |
+          inst() { timeout 300 pnpm --filter student exec playwright install --with-deps chromium; }
+          inst && exit 0
+          echo "기본 미러 실패: archive.ubuntu.com으로 바꿔 다시 시도"
+          sudo sed -i 's#http://azure.archive.ubuntu.com#http://archive.ubuntu.com#g' /etc/apt/sources.list.d/*.sources /etc/apt/sources.list 2>/dev/null || true
+          timeout 120 sudo apt-get update -o Acquire::Retries=2 -o Acquire::http::Timeout=15 || true
+          inst && exit 0
+          echo "apt 설치 실패: 브라우저만 설치"
+          pnpm --filter student exec playwright install chromium
       # playwright.config.ts의 webServer가 학생 앱(4174), 교사 앱(4175), 수업 중계 서버(8787)를 함께 띄운다.
       - run: pnpm e2e
       - name: 실패 시 리포트·트레이스 업로드

@@ -276,7 +276,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('생물과 환경 매니페스트의 변인, 안전 종류, 탐침을 읽는다', () => {
     const m = parseManifest(ecosystemJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-ecosystem', 4, 'life', ['4과14-02']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-ecosystem', 4, 'life', ['4과14-01', '4과14-02']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('food-web');
     expect(e.safety).toEqual([]);

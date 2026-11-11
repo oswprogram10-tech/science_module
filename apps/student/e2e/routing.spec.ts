@@ -120,11 +120,11 @@ test('예전 주소 #/unit/g3-earth-sea는 이제 새 「지구와 바다」 단
 
 // ---- 한 단원에 여러 활동 ----
 
-test('단원 목록 카드: 활동이 둘인 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활만 "활동 2개"를 보이고 카드는 단원당 하나다', async ({ page }) => {
+test('단원 목록 카드: 활동이 둘인 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활, 동물의 생활, 식물의 생활, 생물과 환경, 지층과 화석만 "활동 2개"를 보이고 카드는 단원당 하나다', async ({ page }) => {
   await page.goto('/');
   const cards = page.getByRole('button', { name: /탐구 질문:/ });
   await expect(cards).toHaveCount(32);
-  await expect(page.getByText(/^활동 \d+개$/)).toHaveCount(4);
+  await expect(page.getByText(/^활동 \d+개$/)).toHaveCount(8);
   await expect(page.getByRole('region', { name: '3학년' }).getByRole('button', { name: /지구와 바다/ })).toContainText('활동 2개');
   await expect(page.getByRole('region', { name: '4학년' }).getByRole('button', { name: /땅의 변화/ })).toContainText('활동 2개');
   const weather = page.getByRole('region', { name: '5학년' }).getByRole('button', { name: /날씨와 우리 생활/ });
@@ -132,6 +132,18 @@ test('단원 목록 카드: 활동이 둘인 땅의 변화, 혼합물의 분리,
   await expect(weather).toContainText('활동 2개');
   // 카드의 탐구 질문은 첫 활동(해륙풍)의 것이다.
   await expect(weather).toContainText('낮과 밤에 바닷가에서는 바람이 어느 쪽으로 불까?');
+  // 카드 분류 두 번째 활동을 더한 네 단원(카드의 탐구 질문은 모두 첫 활동의 것이다).
+  for (const [grade, name, q] of [
+    ['3학년', /동물의 생활/, '동물을 어떤 기준으로 분류할 수 있을까?'],
+    ['3학년', /식물의 생활/, '잎의 생김새에 따라 식물을 어떻게 분류할 수 있을까?'],
+    ['4학년', /생물과 환경/, '풀, 토끼, 여우가 사는 곳에서 어떤 조건이 바뀌면 생물의 수는 어떻게 달라질까?'],
+    ['5학년', /지층과 화석/, '지층이 쌓인 순서와 그때의 환경을 어떻게 알 수 있을까?'],
+  ] as const) {
+    const card = page.getByRole('region', { name: grade }).getByRole('button', { name });
+    await expect(card).toHaveCount(1);
+    await expect(card).toContainText('활동 2개');
+    await expect(card).toContainText(q);
+  }
   const mixture = page.getByRole('region', { name: '5학년' }).getByRole('button', { name: /혼합물의 분리/ });
   await expect(mixture).toHaveCount(1);
   await expect(mixture).toContainText('활동 2개');
@@ -229,7 +241,7 @@ test('키보드로 탭을 옮긴다: 화살표, Home, End', async ({ page }) => 
 });
 
 test('활동이 하나인 단원은 탭을 그리지 않고 머리 바로 아래가 본문이다(구조 그대로)', async ({ page }) => {
-  for (const id of ['g4-gases', 'g5-solution', 'g6-acid-base', 'g3-animal', 'g3-material', 'g5-strata', 'g4-night-sky', 'g6-career']) {
+  for (const id of ['g4-gases', 'g5-solution', 'g6-acid-base', 'g3-material', 'g4-night-sky', 'g6-career']) {
     await gotoUnit(page, id);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await expect(page.getByRole('tablist'), id).toHaveCount(0);
@@ -255,16 +267,24 @@ const BASELINE_DOM: Record<string, string> = {
   'g4-gases': '88a2f9af0f667dc4e24ed3a4e713a33551ad13e9906629f9ab60a4c7f43c7bbb',
   'g5-solution': '5a419295a21b415e3bd24ed2b086ac4d851b453cbf4953b1bb9f42c93e4586ae',
   'g6-acid-base': '82cf6aa6cc7d15ec3e3db7f9eee55708f52ba91d06bb59d6bf3f7aa2d914f073',
-  'g3-animal': 'ba0769772093ae57a65c339e59359328fb904c4c825cd47dc3282b58d69ce133',
   'g3-material': 'ccfbecacc9872a8c06aa62ccb273a21781f1841ae715a1fec7b80ca7528e94aa',
-  'g5-strata': '37617a9f885625557bf0b125484a688f4140ef72fc7f11f6d50e4f30fae817e7',
-  'g3-plantlife': '9d2d201024b82e7fcf7d7b4a5d643ba423e0e66db84606e3e8ed1562b1ea8c10',
   // 진로 단원 안 "기록장 켜기" 버튼(1단계)과 안내 한 문장을 더한 뒤의 값. 그 둘을 되돌리면 앞의 값(8483518f…)과 같음을 확인했다.
   'g6-career': '42ee7d70874a9f08c896311d310ecb85e56fd2ed61ec90f1868ad02606bed06f',
 };
 
-test('활동이 하나인 대표 단원 8개의 화면(DOM)이 활동 탭을 더하기 전과 같다', async ({ page }) => {
-  for (const [id, sha] of Object.entries(BASELINE_DOM)) {
+/**
+ * 카드 분류 두 번째 활동을 더하기 전에는 활동이 하나여서 위 BASELINE_DOM에 있던 세 단원. 두 번째 활동을 더하자 활동 탭이 생겨 첫 활동 화면(DOM)이
+ * 바뀌었다. 옛 값은 동물의 생활 ba076977…, 지층과 화석 37617a9f…, 식물의 생활 9d2d2010…이었고, 세 단원 매니페스트에서 두 번째 활동(과 standards)만
+ * 되돌렸을 때 이 옛 값이 그대로 나오는 것을 확인했다(탭 자리 말고 달라진 것이 없다).
+ */
+const TABBED_DOM: Record<string, string> = {
+  'g3-animal': '90e53c3aa7bda823a380c9f0a8f31192bfaa143092158edfe2ce65836bf48217',
+  'g5-strata': '1e3d8f571fcc15ee89a343380d19b6d1548a400ab1457cdc79cc0966a5ed01f7',
+  'g3-plantlife': '1c312401ae692c183cb52f7fab8de4c23b1ac16838e8e7360abed699a45eaa22',
+};
+
+test('활동이 하나인 대표 단원 5개의 화면(DOM)이 활동 탭을 더하기 전과 같고, 활동이 둘이 된 세 단원은 탭이 더해진 화면과 같다', async ({ page }) => {
+  for (const [id, sha] of Object.entries({ ...BASELINE_DOM, ...TABBED_DOM })) {
     await gotoUnit(page, id);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await page.waitForTimeout(300);

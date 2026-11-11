@@ -64,6 +64,45 @@ describe('카탈로그', () => {
   });
 });
 
+describe('카드 분류 두 번째 활동 넷(1차 묶음)이 교사 앱 튜터 질문 편집에 자동으로 나타난다', () => {
+  // [단원, 첫 활동 id와 종류, 새 활동 id]. 첫 활동의 종류가 서로 달라(무리·트리·변인·순서) 활동이 여럿인 단원의 처리가 새로 시험된다.
+  const CASES: Array<[string, [string, string], string]> = [
+    ['g3-animal', ['animal-sort', 'groups'], 'animal-habitat'],
+    ['g3-plantlife', ['leaf-tree', 'tree'], 'plant-habitat'],
+    ['g4-ecosystem', ['food-web', 'variable'], 'living-nonliving'],
+    ['g5-strata', ['strata-order', 'order'], 'rock-grain'],
+  ];
+  for (const [id, [firstId, firstKind], newId] of CASES) {
+    it(`${id}: 활동 ${firstId}(${firstKind})와 ${newId}(groups)가 카탈로그에 있고 새 활동의 기본 질문 10개가 보인다`, () => {
+      const u = unit(id);
+      expect(u.experiments.map((e) => [e.id, e.kind])).toEqual([[firstId, firstKind], [newId, 'groups']]);
+      const e = u.experiments[1]!;
+      expect(e.probes.map((p) => p.when).sort()).toEqual(
+        ['before-observe', 'check-complete', 'check-inconsistent', 'check-subjective', 'check-unobserved', 'check-unplaced', 'choose-criterion', 'finished', 'pick-card', 'sorting'],
+      );
+      // 새 활동의 금지 구절과 제한 용어가 이 활동 것이다(첫 활동 것을 섞어 쓰지 않는다).
+      expect(e.forbiddenAnswers.length).toBeGreaterThan(0);
+      expect(e.limits.length).toBeGreaterThan(0);
+      expect(e.forbiddenAnswers).not.toEqual(u.experiments[0]!.forbiddenAnswers);
+      // 이미 켜진 기본 질문이 모두 있으니 질문 더하기 후보는 카드 분류 상황 가운데 없는 것뿐이다.
+      for (const x of addCandidates(e, ['choose-criterion', 'pick-card', 'before-observe', 'sorting', 'check-subjective', 'check-unplaced', 'check-unobserved', 'check-inconsistent', 'check-complete', 'finished'], [])) {
+        expect(PROBE_KEY_PATTERN.test(x.key), x.key).toBe(true);
+      }
+    });
+  }
+  it('g5-strata 활동 2의 질문 고치기는 활동 2의 금지 구절(이암·사암·역암)에 걸리고, 첫 활동은 그대로 쓸 수 있다', () => {
+    const [first, second] = unit('g5-strata').experiments;
+    expect(lineCheck(second!, '|pick-card|', { text: '이암 카드부터 살펴볼까요?' })?.ok).toBe(false);
+    expect(lineCheck(first!, '|pick-card|', { text: '이암 카드부터 살펴볼까요?' })?.ok).toBe(true);
+    expect(lineCheck(second!, '|pick-card|', { text: '어떤 암석 카드부터 살펴볼까요?' })).toEqual({ ok: true, messages: [] });
+  });
+  it('g4-ecosystem 활동 2의 질문 고치기는 "생물 요소"에 걸린다', () => {
+    const second = unit('g4-ecosystem').experiments[1]!;
+    expect(lineCheck(second, '|finished|', { text: '이 카드는 생물 요소일까요?' })?.ok).toBe(false);
+    expect(lineCheck(second, '|finished|', { text: '이 카드들은 어떤 점이 같고 다를까요?' })).toEqual({ ok: true, messages: [] });
+  });
+});
+
 describe('초안 <-> 덧씌우기', () => {
   it('저장하면 자리표시가 {…}로 돌아가고, 다시 읽으면 〔…〕로 보인다', () => {
     const draft: Draft = { 'g6-motion': { 'ramp-cart': { changed: { [HEIGHT_KEY]: { text: '〔바꾼 조건〕을(를) 바꾸면 무엇이 달라질지 먼저 적어 볼까요?' }, '|repeat|': { off: true } }, added: [] } } };

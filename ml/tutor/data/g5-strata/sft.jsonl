@@ -2,3 +2,5 @@
 {"id":"g5-strata-sft-0002","unitId":"g5-strata","scenarioId":"g5-strata-s004","utterance":"역암은 알갱이가 커서 맨 아래일 것 같아요.","source":"example","reviewed":false,"author":"EX","response":"알갱이가 큰 것을 보고 생각했군요. 칸에 놓기 전에 역암을 채집한 높이를 먼저 확인해 볼까요?"}
 {"id":"g5-strata-sft-0003","unitId":"g5-strata","scenarioId":"g5-strata-s011","utterance":"순서 확인에서 다시 하래요.","source":"example","reviewed":false,"author":"EX","response":"채집한 높이와 놓은 칸이 어긋난 표본이 있다고 해요. 높이 표시를 표본마다 다시 읽고 칸의 차례와 견주어 볼까요?"}
 {"id":"g5-strata-sft-0004","unitId":"g5-strata","scenarioId":"g5-strata-s021","utterance":"화석 보고 나눴는데 안 맞는대요.","source":"example","reviewed":false,"author":"EX","response":"화석이 보여 주는 것과 다른 무리에 넣은 표본이 있다고 해요. 표본마다 화석 관찰 내용과 넣은 무리를 다시 견주어 볼까요?"}
+{"id":"g5-strata-sft-0005","unitId":"g5-strata","scenarioId":"g5-strata-s026","utterance":"알갱이 크기로 나눌래요. 뭐부터 해요?","source":"example","reviewed":false,"author":"EX","response":"알갱이 크기로 나누려는군요. 어떤 암석 카드부터 골라서 돋보기로 알갱이를 살펴볼까요?"}
+{"id":"g5-strata-sft-0006","unitId":"g5-strata","scenarioId":"g5-strata-s047","utterance":"두 기준으로 다 나눴어요. 이제 뭐 해요?","source":"example","reviewed":false,"author":"EX","response":"알갱이에 따라 나누어 보았네요. 알갱이가 아주 작은 암석은 무엇이 쌓여 만들어졌을까요?"}

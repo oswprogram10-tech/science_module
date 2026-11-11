@@ -2,9 +2,13 @@ import { useCallback, useMemo } from 'react';
 import type { CardSortExperiment, SortCard } from '@sci/schema';
 import { MemoryRecorder, buildStatement, toExtensions } from '@sci/xapi';
 import { ANIMAL_ICON_KEYS, AnimalIcon } from './AnimalIcons';
+import { ECO_ICON_KEYS, EcoIcon } from './EcoIcons';
+import { GRAIN_ICON_KEYS, GrainIcon } from './GrainIcons';
+import { HABITAT_ICON_KEYS, HabitatIcon } from './HabitatIcons';
 import { LEAF_ICON_KEYS, LeafIcon } from './LeafIcons';
 import { MATERIAL_ICON_KEYS, MaterialIcon } from './MaterialIcons';
 import { MIXTURE_ICON_KEYS, MixtureIcon } from './MixtureIcons';
+import { PLANT_HABITAT_ICON_KEYS, PlantHabitatIcon } from './PlantHabitatIcons';
 import { STRATA_ICON_KEYS, StrataIcon } from './StrataIcons';
 import { WEATHER_ICON_KEYS, WeatherIcon } from './WeatherIcons';
 
@@ -34,13 +38,17 @@ export function useSortEmit(unitId: string, expId: string) {
 
 /**
  * 카드 그림. 물체 그림 key면 물체, 혼합물 그림 key면 혼합물, 잎 그림 key면 잎, 아니면 동물 그림.
- * shown은 시험해 본 특징 key들이다(물체·혼합물·암석 그림만 쓰며, 그 특징의 결과 그림이 겹쳐진다).
+ * shown은 시험해 본 특징 key들이다(물체·혼합물·암석·날씨·동물 사는 곳·식물 사는 곳·생태계·알갱이 그림만 쓰며, 그 특징의 결과 그림이 겹쳐진다).
  */
 export function CardIcon({ icon, size, shown }: { icon: string; size: number; shown?: string[] }) {
   if (MATERIAL_ICON_KEYS.includes(icon)) return <MaterialIcon icon={icon} size={size} shown={shown} />;
   if (MIXTURE_ICON_KEYS.includes(icon)) return <MixtureIcon icon={icon} size={size} shown={shown} />;
   if (STRATA_ICON_KEYS.includes(icon)) return <StrataIcon icon={icon} size={size} shown={shown} />;
   if (WEATHER_ICON_KEYS.includes(icon)) return <WeatherIcon icon={icon} size={size} shown={shown} />;
+  if (HABITAT_ICON_KEYS.includes(icon)) return <HabitatIcon icon={icon} size={size} shown={shown} />;
+  if (PLANT_HABITAT_ICON_KEYS.includes(icon)) return <PlantHabitatIcon icon={icon} size={size} shown={shown} />;
+  if (ECO_ICON_KEYS.includes(icon)) return <EcoIcon icon={icon} size={size} shown={shown} />;
+  if (GRAIN_ICON_KEYS.includes(icon)) return <GrainIcon icon={icon} size={size} shown={shown} />;
   return LEAF_ICON_KEYS.includes(icon) && !ANIMAL_ICON_KEYS.includes(icon) ? (
     <LeafIcon icon={icon} size={size} />
   ) : (

@@ -42,7 +42,7 @@ function ordered(features: string[] = ['height']): OrderLabState {
 describe('지층과 화석 매니페스트 (사양 §1, §4)', () => {
   it('단원 정보와 활동 정보', () => {
     const m = parseManifest(strataJson);
-    expect([m.id, m.title, m.grade, m.engine, m.standards]).toEqual(['g5-strata', '지층과 화석', 5, 'earth', ['6과01-01', '6과01-03']]);
+    expect([m.id, m.title, m.grade, m.engine, m.standards]).toEqual(['g5-strata', '지층과 화석', 5, 'earth', ['6과01-01', '6과01-02', '6과01-03']]);
     expect([exp.id, exp.module, exp.layout]).toEqual(['strata-order', 'card-sort', 'order']);
     expect(exp.title).toBe('지층이 쌓인 순서와 과거 환경 알아보기');
     expect(exp.question).toBe('지층이 쌓인 순서와 그때의 환경을 어떻게 알 수 있을까?');
