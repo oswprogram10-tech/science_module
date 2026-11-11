@@ -30,6 +30,11 @@ import {
   mixtureFinishCriterion,
   mixtureObserveButton,
   mixtureSortAll,
+  gotoWeatherSort,
+  weatherCard,
+  weatherFinishCriterion,
+  weatherObserveButton,
+  weatherSortAll,
   strataCard,
   strataFill,
   strataFinishEnv,
@@ -719,8 +724,8 @@ for (const scheme of ['light', 'dark'] as const) {
     await page.emulateMedia({ colorScheme: scheme });
     // 단원 목록의 "활동 2개" 표시
     await page.goto('/');
-    // 활동이 둘인 단원은 땅의 변화, 혼합물의 분리, 지구와 바다 세 곳이다.
-    await expect(page.getByText('활동 2개')).toHaveCount(3);
+    // 활동이 둘인 단원은 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활 네 곳이다.
+    await expect(page.getByText('활동 2개')).toHaveCount(4);
     await expect(page.getByText('활동 2개').first()).toBeVisible();
     await expectNoSeriousViolations(page);
     // 첫 활동 화면의 활동 탭
@@ -755,6 +760,49 @@ for (const scheme of ['light', 'dark'] as const) {
     await sortCheckButton(page).click();
     await expect(page.getByText('관찰한 특징과 분류가 서로 잘 맞아요.')).toBeVisible();
     await mixtureFinishCriterion(page, 'dissolve');
+    await expect(page.getByText('두 가지 기준으로 분류했어요!')).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+}
+
+// ---- g5-weather 두 번째 활동(활동 탭, 이슬·안개·구름 비교하기) ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`g5-weather 활동 탭 ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 첫 활동의 탭, 이슬·안개·구름 비교하기 처음, 결과 그림, 다시 비교하기, 두 기준을 끝낸 뒤`, async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.emulateMedia({ colorScheme: scheme });
+    // 첫 활동 화면의 활동 탭
+    await gotoUnit(page, 'g5-weather');
+    await expect(page.getByRole('tablist', { name: '활동 고르기' })).toBeVisible();
+    await expectNoSeriousViolations(page);
+
+    await gotoWeatherSort(page);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('tab', { name: /^활동 2 · / })).toHaveAttribute('aria-selected', 'true');
+    await expectNoSeriousViolations(page);
+
+    await sortChoose(page, '물체의 겉에 붙어 있나요?');
+    await weatherCard(page, '새벽 강가를 덮은 뿌연 공기').click();
+    await weatherObserveButton(page, 'surface').click();
+    await weatherObserveButton(page, 'air').click();
+    await weatherObserveButton(page, 'high').click();
+    await expect(page.locator('svg .wx-result')).not.toHaveCount(0);
+    await expectNoSeriousViolations(page);
+    await weatherCard(page, '하늘 높이 떠 있는 하얀 구름').click();
+    await weatherObserveButton(page, 'high').click();
+    await expect(page.locator('svg .wx-high')).toHaveCount(1);
+    await expectNoSeriousViolations(page);
+
+    await weatherSortAll(page, 'surface', { override: { '새벽 강가를 덮은 뿌연 공기': '붙어 있다' } });
+    await sortCheckButton(page).click();
+    await expect(page.getByText('새벽 강가를 덮은 뿌연 공기는 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?')).toBeVisible();
+    await expectNoSeriousViolations(page);
+
+    await weatherCard(page, '새벽 강가를 덮은 뿌연 공기').click();
+    await sortPutButton(page, '붙어 있지 않다').click();
+    await sortCheckButton(page).click();
+    await expect(page.getByText('관찰한 특징과 분류가 서로 잘 맞아요.')).toBeVisible();
+    await weatherFinishCriterion(page, 'high');
     await expect(page.getByText('두 가지 기준으로 분류했어요!')).toBeVisible();
     await expectNoSeriousViolations(page);
   });

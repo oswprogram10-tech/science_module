@@ -120,13 +120,18 @@ test('예전 주소 #/unit/g3-earth-sea는 이제 새 「지구와 바다」 단
 
 // ---- 한 단원에 여러 활동 ----
 
-test('단원 목록 카드: 활동이 둘인 땅의 변화, 혼합물의 분리, 지구와 바다만 "활동 2개"를 보이고 카드는 단원당 하나다', async ({ page }) => {
+test('단원 목록 카드: 활동이 둘인 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활만 "활동 2개"를 보이고 카드는 단원당 하나다', async ({ page }) => {
   await page.goto('/');
   const cards = page.getByRole('button', { name: /탐구 질문:/ });
   await expect(cards).toHaveCount(32);
-  await expect(page.getByText(/^활동 \d+개$/)).toHaveCount(3);
+  await expect(page.getByText(/^활동 \d+개$/)).toHaveCount(4);
   await expect(page.getByRole('region', { name: '3학년' }).getByRole('button', { name: /지구와 바다/ })).toContainText('활동 2개');
   await expect(page.getByRole('region', { name: '4학년' }).getByRole('button', { name: /땅의 변화/ })).toContainText('활동 2개');
+  const weather = page.getByRole('region', { name: '5학년' }).getByRole('button', { name: /날씨와 우리 생활/ });
+  await expect(weather).toHaveCount(1);
+  await expect(weather).toContainText('활동 2개');
+  // 카드의 탐구 질문은 첫 활동(해륙풍)의 것이다.
+  await expect(weather).toContainText('낮과 밤에 바닷가에서는 바람이 어느 쪽으로 불까?');
   const mixture = page.getByRole('region', { name: '5학년' }).getByRole('button', { name: /혼합물의 분리/ });
   await expect(mixture).toHaveCount(1);
   await expect(mixture).toContainText('활동 2개');

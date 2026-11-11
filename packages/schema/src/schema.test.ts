@@ -485,7 +485,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('날씨와 우리 생활 매니페스트의 변인, 측정, 안전, 한계 용어, 탐침을 읽는다', () => {
     const m = parseManifest(weatherJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g5-weather', 5, 'earth', ['6과06-03']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g5-weather', 5, 'earth', ['6과06-02', '6과06-03']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('land-sea-breeze');
     expect(e.safety).toEqual(['heat', 'fire']);

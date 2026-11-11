@@ -276,8 +276,8 @@ button.unit-card:hover { border-color:var(--accent); }
 .dot.on { background:var(--accent); border-color:var(--accent); }
 .obs-count { grid-area:count; font-size:.8rem; }
 .sort-card.small { padding:4px 8px; }
-/* 혼합물 카드는 이름이 길어("철 구슬과 유리 구슬") 넓은 화면에서도 그림 위·이름 아래로 쌓는다. */
-.sort-pile .sort-card:has(.mixture-icon) { grid-template-columns:auto; grid-template-areas:"icon" "name" "dots" "count"; justify-items:center; text-align:center; }
+/* 혼합물·날씨 카드는 이름이 길어("철 구슬과 유리 구슬", "겨울 아침 창문 안쪽에 맺힌 물방울") 넓은 화면에서도 그림 위·이름 아래로 쌓는다. */
+.sort-pile .sort-card:has(.mixture-icon), .sort-pile .sort-card:has(.weather-icon) { grid-template-columns:auto; grid-template-areas:"icon" "name" "dots" "count"; justify-items:center; text-align:center; }
 .sort-placed { display:flex; gap:4px; align-items:center; }
 .sort-placed .sort-card { width:auto; flex:1 1 auto; min-width:0; }
 .sort-placed > button:not(.sort-card) { flex:none; }
