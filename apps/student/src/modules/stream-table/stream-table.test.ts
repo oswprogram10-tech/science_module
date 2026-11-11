@@ -30,7 +30,7 @@ const attr = (html: string, id: string, name: string) => new RegExp(`data-testid
 describe('레지스트리', () => {
   it('g4-land의 두 번째 활동은 stream-table 모듈로 로드된다', () => {
     expect(land.ok && land.manifest.grade).toBe(4);
-    expect(land.ok && land.activities.map((a) => a.experiment.id)).toEqual(['magma-cooling', 'stream-table']);
+    expect(land.ok && land.activities.map((a) => a.experiment.id)).toEqual(['magma-cooling', 'stream-table', 'volcano-ejecta']);
     expect(unit.module).toBe(streamTableModule);
     expect(MODULES['stream-table'].kind).toBe('stream-table');
     expect(experiment.safety).toEqual([]);

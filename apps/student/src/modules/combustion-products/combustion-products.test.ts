@@ -39,8 +39,8 @@ const graphOf = (v: V, prev?: V) => renderToStaticMarkup(createElement(GraphView
 
 describe('레지스트리', () => {
   it('g6-combustion 활동 2는 combustion-products 모듈로 로드되고 첫 활동(candle-jar)은 그대로다', () => {
-    expect([unit.manifest.title, unit.manifest.grade, unit.manifest.engine, unit.manifest.standards]).toEqual(['물질의 연소', 6, 'matter', ['6과14-02', '6과14-03']]);
-    expect(unit.activities.map((a) => [a.activity, a.experiment.id, a.module.kind])).toEqual([['variable', 'candle-jar', 'candle-jar'], ['variable', 'combustion-products', 'combustion-products']]);
+    expect([unit.manifest.title, unit.manifest.grade, unit.manifest.engine, unit.manifest.standards]).toEqual(['물질의 연소', 6, 'matter', ['6과14-01', '6과14-02', '6과14-03']]);
+    expect(unit.activities.map((a) => [a.activity, a.experiment.id, a.module.kind])).toEqual([['variable', 'candle-jar', 'candle-jar'], ['variable', 'combustion-products', 'combustion-products'], ['card-sort', 'property-change', 'card-sort']]);
     expect(unit.module.kind).toBe('candle-jar');
     expect(activity.module).toBe(combustionProductsModule);
     expect(MODULES['combustion-products'].kind).toBe('combustion-products');

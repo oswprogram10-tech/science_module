@@ -114,10 +114,15 @@ for (const vp of VIEWPORTS) {
       ['g3-plantlife', 'plant-habitat', 8],
       ['g4-ecosystem', 'living-nonliving', 10],
       ['g5-strata', 'rock-grain', 8],
+      // 3차 묶음: 물체와 물질·물의 상태 변화는 활동 2, 땅의 변화·물질의 연소는 활동 3(탭 셋이 폭 안에 들어가야 한다).
+      ['g3-material', 'matter-shape-volume', 9],
+      ['g4-water-state', 'water-around', 10],
+      ['g4-land', 'volcano-ejecta', 8],
+      ['g6-combustion', 'property-change', 10],
     ] as const) {
       test(`${unit} 두 번째 활동(${experiment}, 활동 탭 포함)에 가로 스크롤이 없다`, async ({ page }) => {
         await gotoUnit(page, unit, { experiment });
-        await expect(page.getByRole('tab', { name: /^활동 2 · / })).toBeVisible();
+        await expect(page.getByRole('tab', { name: new RegExp(`^활동 ${unit === 'g4-land' || unit === 'g6-combustion' ? 3 : 2} · `) })).toBeVisible();
         await expect(page.getByRole('link', { name: '← 단원 목록' })).toBeVisible();
         const { sw, iw } = await scrollWidth(page);
         expect(sw).toBeLessThanOrEqual(iw);

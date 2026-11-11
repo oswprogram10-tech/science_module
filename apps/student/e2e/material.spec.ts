@@ -13,6 +13,8 @@ import {
   sortFeedback,
   sortPutButton,
   sortTutor,
+  defineSortSuite,
+  MATTER_SHAPE_VOLUME_CFG,
 } from './helpers';
 import type { Page } from '@playwright/test';
 
@@ -179,3 +181,7 @@ test.describe('휴대폰 폭', () => {
     await noScroll();
   });
 });
+
+// ---- 물체와 물질 두 번째 활동: 모양과 부피로 물질 나누기(카드 분류 groups, 활동 탭) ----
+
+defineSortSuite(MATTER_SHAPE_VOLUME_CFG);

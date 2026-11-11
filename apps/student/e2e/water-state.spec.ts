@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { test, expect, gotoUnit, setValue, selectIV, predict, runButton, resultRows, confirmSafetyDialog, sensor } from './helpers';
+import { test, expect, gotoUnit, setValue, selectIV, predict, runButton, resultRows, confirmSafetyDialog, sensor, defineSortSuite, WATER_AROUND_CFG } from './helpers';
 
 const tutorBox = (page: Page) => page.getByRole('heading', { name: '생각해 볼까요?' }).locator('..');
 const macro = (page: Page) => page.getByRole('figure', { name: '눈으로 보기' });
@@ -272,3 +272,7 @@ test.describe('1280x800 화면', () => {
     await check();
   });
 });
+
+// ---- 물의 상태 변화 두 번째 활동: 우리 주변의 물 나누기(카드 분류 groups, 활동 탭) ----
+
+defineSortSuite(WATER_AROUND_CFG);

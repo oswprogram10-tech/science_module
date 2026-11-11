@@ -36,6 +36,10 @@ import {
   PLANT_HABITAT_CFG,
   LIVING_NONLIVING_CFG,
   ROCK_GRAIN_CFG,
+  MATTER_SHAPE_VOLUME_CFG,
+  WATER_AROUND_CFG,
+  VOLCANO_EJECTA_CFG,
+  PROPERTY_CHANGE_CFG,
   weatherCard,
   weatherFinishCriterion,
   weatherObserveButton,
@@ -730,7 +734,9 @@ for (const scheme of ['light', 'dark'] as const) {
     // 단원 목록의 "활동 2개" 표시
     await page.goto('/');
     // 활동이 둘인 단원은 힘과 우리 생활, 소리의 성질, 자석의 이용, 용해와 용액, 열과 우리 생활, 산과 염기, 물체의 운동, 물질의 연소, 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활, 동물의 생활, 식물의 생활, 생물과 환경, 지층과 화석 열여섯 곳이다.
+    // 카드 분류 활동을 더한 물체와 물질·물의 상태 변화가 둘이 되고, 땅의 변화·물질의 연소는 셋이 되어 "활동 2개"는 16곳, "활동 3개"는 2곳이다.
     await expect(page.getByText('활동 2개')).toHaveCount(16);
+    await expect(page.getByText('활동 3개')).toHaveCount(2);
     await expect(page.getByText('활동 2개').first()).toBeVisible();
     await expectNoSeriousViolations(page);
     // 첫 활동 화면의 활동 탭
@@ -815,7 +821,7 @@ for (const scheme of ['light', 'dark'] as const) {
 
 // ---- 카드 분류 두 번째 활동 넷(활동 탭): 동물의 생활·식물의 생활·생물과 환경·지층과 화석 ----
 
-for (const cfg of [ANIMAL_HABITAT_CFG, PLANT_HABITAT_CFG, LIVING_NONLIVING_CFG, ROCK_GRAIN_CFG]) {
+for (const cfg of [ANIMAL_HABITAT_CFG, PLANT_HABITAT_CFG, LIVING_NONLIVING_CFG, ROCK_GRAIN_CFG, MATTER_SHAPE_VOLUME_CFG, WATER_AROUND_CFG, VOLCANO_EJECTA_CFG, PROPERTY_CHANGE_CFG]) {
   for (const scheme of ['light', 'dark'] as const) {
     test(`${cfg.unit} 활동 탭 ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 첫 활동의 탭, ${cfg.expTitle} 처음, 결과 그림, 다시 비교하기, 두 기준을 끝낸 뒤`, async ({ page }) => {
       test.setTimeout(90_000);
@@ -829,7 +835,7 @@ for (const cfg of [ANIMAL_HABITAT_CFG, PLANT_HABITAT_CFG, LIVING_NONLIVING_CFG, 
 
       await kit.goto(page);
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-      await expect(page.getByRole('tab', { name: /^활동 2 · / })).toHaveAttribute('aria-selected', 'true');
+      await expect(page.getByRole('tab', { name: new RegExp(`^활동 ${cfg.tab ?? 2} · `) })).toHaveAttribute('aria-selected', 'true');
       await expectNoSeriousViolations(page);
 
       await sortChoose(page, cfg.criteria[k1]!.label);

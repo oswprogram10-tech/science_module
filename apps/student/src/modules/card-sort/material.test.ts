@@ -47,8 +47,8 @@ const OBS: Record<string, [string, string, string]> = {
 describe('물체와 물질 매니페스트 (사양 §1, §2)', () => {
   it('단원 정보와 활동 정보', () => {
     const m = parseManifest(materialJson);
-    expect([m.id, m.title, m.grade, m.engine, m.standards]).toEqual(['g3-material', '물체와 물질', 3, 'matter', ['4과05-01']]);
-    expect(m.experiments).toHaveLength(1);
+    expect([m.id, m.title, m.grade, m.engine, m.standards]).toEqual(['g3-material', '물체와 물질', 3, 'matter', ['4과05-01', '4과05-02']]);
+    expect(m.experiments.map((e) => e.id)).toEqual(['material-sort', 'matter-shape-volume']); // 두 번째 활동은 3차 묶음에서 덧붙음
     expect([exp.id, exp.module, exp.layout]).toEqual(['material-sort', 'card-sort', 'groups']);
     expect(exp.title).toBe('물질의 성질에 따라 물체 분류하기');
     expect(exp.question).toBe('물체를 이루는 물질의 성질에 따라 물체를 어떻게 분류할 수 있을까?');

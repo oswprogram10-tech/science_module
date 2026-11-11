@@ -401,8 +401,13 @@ function genGroups(unitId: string, exp: CardSortExperiment): Draft[] {
     sortStore.check(placeAll(watch(withCrit(key, s), key, cards)), exp);
 
   const out: Draft[] = [];
+  const seen = new Set<string>();
   const add = (s: sortStore.CardSortState) => {
     const state = fromCardSortState(exp, { ...s, checked: s.checked }, unitId);
+    // 객관적 기준이 둘뿐인 활동은 O(i)가 되돌아와 같은 상태가 다시 만들어진다. 같은 상태는 한 번만 담는다(기준이 셋 이상이면 겹치지 않아 그대로다).
+    const key = JSON.stringify(state);
+    if (seen.has(key)) return;
+    seen.add(key);
     out.push({ title: describeSort(exp, state), state });
   };
 

@@ -103,6 +103,44 @@ describe('카드 분류 두 번째 활동 넷(1차 묶음)이 교사 앱 튜터 
   });
 });
 
+describe('카드 분류 활동 넷(3차 묶음)이 교사 앱 튜터 질문 편집에 자동으로 나타난다(활동이 셋인 단원 포함)', () => {
+  // [단원, 앞 활동 [id, 종류]들, 새 활동 id]. 땅의 변화·물질의 연소는 활동이 셋이다.
+  const CASES: Array<[string, Array<[string, string]>, string]> = [
+    ['g3-material', [['material-sort', 'groups']], 'matter-shape-volume'],
+    ['g4-water-state', [['freeze-melt', 'variable']], 'water-around'],
+    ['g4-land', [['magma-cooling', 'variable'], ['stream-table', 'variable']], 'volcano-ejecta'],
+    ['g6-combustion', [['candle-jar', 'variable'], ['combustion-products', 'variable']], 'property-change'],
+  ];
+  for (const [id, prev, newId] of CASES) {
+    it(`${id}: 활동 ${prev.length + 1}개(${[...prev.map(([x]) => x), newId].join(', ')})가 카탈로그에 있고 새 활동의 기본 질문 10개가 보인다`, () => {
+      const u = unit(id);
+      expect(u.experiments.map((e) => [e.id, e.kind])).toEqual([...prev, [newId, 'groups']]);
+      const e = u.experiments[u.experiments.length - 1]!;
+      expect(e.probes.map((p) => p.when).sort()).toEqual(
+        ['before-observe', 'check-complete', 'check-inconsistent', 'check-subjective', 'check-unobserved', 'check-unplaced', 'choose-criterion', 'finished', 'pick-card', 'sorting'],
+      );
+      expect(e.forbiddenAnswers.length).toBeGreaterThan(0);
+      expect(e.limits.length).toBeGreaterThan(0);
+      // 새 활동의 금지 구절은 앞 활동 것과 다르다(섞어 쓰지 않는다).
+      for (const p of u.experiments.slice(0, -1)) expect(e.forbiddenAnswers).not.toEqual(p.forbiddenAnswers);
+      for (const x of addCandidates(e, ['choose-criterion', 'pick-card', 'before-observe', 'sorting', 'check-subjective', 'check-unplaced', 'check-unobserved', 'check-inconsistent', 'check-complete', 'finished'], [])) {
+        expect(PROBE_KEY_PATTERN.test(x.key), x.key).toBe(true);
+      }
+    });
+  }
+  it('g4-land 활동 3의 질문 고치기는 "용암은 액체"에 걸리고 앞 활동은 그대로 쓸 수 있다', () => {
+    const [first, , third] = unit('g4-land').experiments;
+    expect(lineCheck(third!, '|finished|', { text: '용암은 액체일까요?' })?.ok).toBe(false);
+    expect(lineCheck(third!, '|finished|', { text: '용암은 어떻게 움직였나요?' })).toEqual({ ok: true, messages: [] });
+    expect(lineCheck(first!, '|before-run|', { text: '용암은 액체일까요?' })?.ok).toBe(true);
+  });
+  it('g6-combustion 활동 3의 질문 고치기는 "열을 가하면 성질이"에 걸린다', () => {
+    const third = unit('g6-combustion').experiments[2]!;
+    expect(lineCheck(third, '|finished|', { text: '열을 가하면 성질이 달라질까요?' })?.ok).toBe(false);
+    expect(lineCheck(third, '|finished|', { text: '두 기준의 무리를 견주어 볼까요?' })).toEqual({ ok: true, messages: [] });
+  });
+});
+
 describe('초안 <-> 덧씌우기', () => {
   it('저장하면 자리표시가 {…}로 돌아가고, 다시 읽으면 〔…〕로 보인다', () => {
     const draft: Draft = { 'g6-motion': { 'ramp-cart': { changed: { [HEIGHT_KEY]: { text: '〔바꾼 조건〕을(를) 바꾸면 무엇이 달라질지 먼저 적어 볼까요?' }, '|repeat|': { off: true } }, added: [] } } };

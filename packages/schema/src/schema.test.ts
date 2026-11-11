@@ -221,7 +221,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('땅의 변화 매니페스트의 점검표, 경고 문구, 안전 종류, 변인을 읽는다', () => {
     const m = parseManifest(landJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-land', 4, 'earth', ['4과11-01', '4과11-03']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-land', 4, 'earth', ['4과11-01', '4과11-02', '4과11-03']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('magma-cooling');
     expect(e.safetyChecklist).toHaveLength(3);
@@ -403,7 +403,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('물의 상태 변화 매니페스트의 변인, 측정, 안전, 금지 구절, 한계 용어, 탐침을 읽는다', () => {
     const m = parseManifest(waterStateJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-water-state', 4, 'matter', ['4과10-02']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-water-state', 4, 'matter', ['4과10-01', '4과10-02']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('freeze-melt');
     expect(e.safety).toEqual(['cold']);
@@ -441,8 +441,8 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('땅의 변화 두 번째 활동(흐르는 물)의 변인, 측정, 안전 없음, 한계 용어, 탐침을 읽는다', () => {
     const m = parseManifest(landJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-land', 4, 'earth', ['4과11-01', '4과11-03']]);
-    expect(m.experiments.map((x) => x.id)).toEqual(['magma-cooling', 'stream-table']);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-land', 4, 'earth', ['4과11-01', '4과11-02', '4과11-03']]);
+    expect(m.experiments.map((x) => x.id)).toEqual(['magma-cooling', 'stream-table', 'volcano-ejecta']);
     const e = m.experiments[1] as VariableExperiment;
     expect(e.module).toBe('stream-table');
     expect(e.safety).toEqual([]);
@@ -624,8 +624,8 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('물질의 연소 활동 2(연소 전과 후 비교하기)의 변인, 범주 결과, 안전, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
     const m = parseManifest(combustionJson);
-    expect([m.id, m.engine, m.standards]).toEqual(['g6-combustion', 'matter', ['6과14-02', '6과14-03']]);
-    expect(m.experiments.map((x) => x.id)).toEqual(['candle-jar', 'combustion-products']);
+    expect([m.id, m.engine, m.standards]).toEqual(['g6-combustion', 'matter', ['6과14-01', '6과14-02', '6과14-03']]);
+    expect(m.experiments.map((x) => x.id)).toEqual(['candle-jar', 'combustion-products', 'property-change']);
     const e = m.experiments[1] as VariableExperiment;
     expect([e.id, e.module, e.title, e.question]).toEqual(['combustion-products', 'combustion-products', '연소 전과 후 비교하기', '초가 타고 난 뒤에는 어떤 물질이 생길까?']);
     expect(e.safety).toEqual(['fire', 'hot']);

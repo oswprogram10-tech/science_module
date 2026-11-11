@@ -2,7 +2,7 @@
   "id": "g6-combustion",
   "title": "물질의 연소",
   "grade": 6,
-  "standards": ["6과14-02", "6과14-03"],
+  "standards": ["6과14-01", "6과14-02", "6과14-03"],
   "engine": "matter",
   "experiments": [
     {
@@ -177,6 +177,297 @@
           { "when": "fair-test", "iv": "test", "text": "검사 방법만 바꾸었어요. 같은 시간 동안 태운 집기병에서 두 검사의 결과는 각각 어떻게 나타났나요? 검사마다 무엇을 알아보는 방법인지 이야기해 볼까요?" },
           { "when": "fair-test", "iv": "jar", "text": "집기병 색만 바꾸었을 때 검사 결과는 달라졌나요? 이 결과로 무엇을 알 수 있을까요?" },
           { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 눈으로 보기의 검사 도구와 결과표의 검사 결과를 함께 살펴보며 어느 부분이 예상과 달랐는지 찾아볼까요?" }
+        ]
+      }
+    },
+    {
+      "id": "property-change",
+      "module": "card-sort",
+      "layout": "groups",
+      "title": "변하기 전과 후의 성질 비교하기",
+      "question": "물질이 변할 때 처음 물질의 성질이 달라지는 경우와 그렇지 않은 경우는 어떻게 다를까?",
+      "features": [
+        {
+          "key": "newprop",
+          "label": "새 성질",
+          "action": "변하기 전과 후 견주어 보기"
+        },
+        {
+          "key": "heat",
+          "label": "열을 가함",
+          "action": "어떻게 했는지 읽기"
+        }
+      ],
+      "criteria": [
+        {
+          "key": "newprop",
+          "label": "색·냄새·맛처럼 처음 물질에 없던 성질이 생겼나요?",
+          "feature": "newprop",
+          "objective": true,
+          "groups": [
+            {
+              "value": "yes",
+              "label": "생겼다"
+            },
+            {
+              "value": "no",
+              "label": "생기지 않았다"
+            }
+          ]
+        },
+        {
+          "key": "heat",
+          "label": "열을 가했나요?",
+          "feature": "heat",
+          "objective": true,
+          "groups": [
+            {
+              "value": "yes",
+              "label": "가했다"
+            },
+            {
+              "value": "no",
+              "label": "가하지 않았다"
+            }
+          ]
+        },
+        {
+          "key": "fun",
+          "label": "재미있어 보이나요?",
+          "objective": false,
+          "groups": [
+            {
+              "value": "fun",
+              "label": "재미있어 보인다"
+            },
+            {
+              "value": "notFun",
+              "label": "재미있어 보이지 않는다"
+            }
+          ]
+        }
+      ],
+      "cards": [
+        {
+          "key": "paperCut",
+          "label": "종이 자르기",
+          "icon": "pc-paper-cut",
+          "features": {
+            "newprop": "no",
+            "heat": "no"
+          },
+          "observations": {
+            "newprop": "자른 조각도 처음 종이처럼 흰색이고 냄새가 같아요. 크기와 모양만 달라졌어요.",
+            "heat": "가위로 잘랐어요."
+          }
+        },
+        {
+          "key": "paperBurn",
+          "label": "종이 태우기",
+          "icon": "pc-paper-burn",
+          "features": {
+            "newprop": "yes",
+            "heat": "yes"
+          },
+          "observations": {
+            "newprop": "흰 종이가 검은 재가 되고, 타는 냄새가 나요. 재는 부서져요.",
+            "heat": "불을 붙였어요."
+          }
+        },
+        {
+          "key": "iceMelt",
+          "label": "얼음 녹기",
+          "icon": "pc-ice-melt",
+          "features": {
+            "newprop": "no",
+            "heat": "yes"
+          },
+          "observations": {
+            "newprop": "녹은 물을 다시 얼리면 처음 얼음처럼 투명한 얼음이 돼요. 색과 냄새도 같아요.",
+            "heat": "따뜻한 곳에 두었어요."
+          }
+        },
+        {
+          "key": "sugarWater",
+          "label": "설탕을 물에 녹이기",
+          "icon": "pc-sugar-water",
+          "features": {
+            "newprop": "no",
+            "heat": "no"
+          },
+          "observations": {
+            "newprop": "설탕이 보이지 않게 되지만, 물을 맛보면 설탕처럼 달아요.",
+            "heat": "따뜻하게 하지 않고 저어 주었어요."
+          }
+        },
+        {
+          "key": "egg",
+          "label": "달걀 삶기",
+          "icon": "pc-egg",
+          "features": {
+            "newprop": "yes",
+            "heat": "yes"
+          },
+          "observations": {
+            "newprop": "투명하던 흰자가 하얗고 단단하게 변하고 고소한 냄새가 나요. 식혀도 처음처럼 되돌아가지 않아요.",
+            "heat": "끓는 물에 넣어 익혔어요."
+          }
+        },
+        {
+          "key": "nail",
+          "label": "철못이 녹슬기",
+          "icon": "pc-nail",
+          "features": {
+            "newprop": "yes",
+            "heat": "no"
+          },
+          "observations": {
+            "newprop": "반짝이던 회색 못에 붉은 갈색 가루가 생기고, 손으로 문지르면 묻어나요.",
+            "heat": "젖은 채로 며칠 두었어요."
+          }
+        },
+        {
+          "key": "clay",
+          "label": "찰흙 모양 바꾸기",
+          "icon": "pc-clay",
+          "features": {
+            "newprop": "no",
+            "heat": "no"
+          },
+          "observations": {
+            "newprop": "주무르고 눌러 다른 모양이 되었지만 색과 냄새는 처음과 같아요.",
+            "heat": "손으로 주물렀어요."
+          }
+        },
+        {
+          "key": "milk",
+          "label": "우유가 상하기",
+          "icon": "pc-milk",
+          "features": {
+            "newprop": "yes",
+            "heat": "no"
+          },
+          "observations": {
+            "newprop": "처음 우유에 없던 시큼한 냄새가 나고 몽글몽글한 덩어리가 생겼어요.",
+            "heat": "따뜻하게 하지 않고 며칠 두었어요."
+          }
+        },
+        {
+          "key": "candleBurn",
+          "label": "초가 타기",
+          "icon": "pc-candle-burn",
+          "features": {
+            "newprop": "yes",
+            "heat": "yes"
+          },
+          "observations": {
+            "newprop": "초가 줄어들고 그을음이 생기며 타는 냄새가 나요. 줄어든 초는 다시 처음 초로 되돌릴 수 없어요.",
+            "heat": "심지에 불을 붙였어요."
+          }
+        },
+        {
+          "key": "candleMelt",
+          "label": "초가 녹기",
+          "icon": "pc-candle-melt",
+          "features": {
+            "newprop": "no",
+            "heat": "yes"
+          },
+          "observations": {
+            "newprop": "녹은 촛농이 식으면 다시 처음 초와 같은 색과 냄새의 굳은 덩어리가 돼요.",
+            "heat": "초 옆에 따뜻한 것을 대었어요."
+          }
+        }
+      ],
+      "limits": [
+        "화학 변화",
+        "물리 변화",
+        "산화",
+        "분자"
+      ],
+      "safetyChecklist": [],
+      "safetyNotices": [],
+      "tutor": {
+        "forbiddenAnswers": [
+          "타면 성질이 달라",
+          "타면 성질이 변",
+          "타면 새로운 성질",
+          "타면 다른 물질",
+          "타면 성질이 생",
+          "태우면 성질이 달라",
+          "태우면 성질이 변",
+          "태우면 새로운 성질",
+          "태우면 다른 물질",
+          "태우면 성질이 생",
+          "녹는 것은 성질이 그대로",
+          "녹는 것은 성질이 변하지 않",
+          "녹는 것은 성질이 같",
+          "녹는 것은 성질이 달라지지 않",
+          "녹으면 성질이 그대로",
+          "녹으면 성질이 변하지 않",
+          "녹으면 성질이 같",
+          "녹으면 성질이 달라지지 않",
+          "녹아도 성질이 그대로",
+          "녹아도 성질이 변하지 않",
+          "녹아도 성질이 같",
+          "설탕은 녹아도 성질",
+          "설탕이 녹아도 성질",
+          "열을 가하면 성질이",
+          "열을 가하면 새로운 성질",
+          "열을 가하면 다른 물질",
+          "열을 가하면 항상",
+          "열을 가해야 성질",
+          "재미있어 보이나는 분류 기준이 될 수 없",
+          "재미있어 보이나는 분류 기준이 아니",
+          "재미있어 보이나는 기준이 될 수 없",
+          "재미있어 보이는지는 분류 기준이 될 수 없",
+          "재미있어 보이는지는 분류 기준이 아니",
+          "재미있어 보이는지는 기준이 될 수 없",
+          "재미있어 보이는 것은 분류 기준이 될 수 없",
+          "재미있어 보이는 것은 분류 기준이 아니",
+          "재미있어 보이는 것은 기준이 될 수 없"
+        ],
+        "probes": [
+          {
+            "when": "choose-criterion",
+            "text": "카드들을 어떤 기준으로 나누어 볼까요? 누가 나누어도 같은 결과가 나오는 기준을 골라 보세요."
+          },
+          {
+            "when": "pick-card",
+            "text": "어떤 카드부터 살펴볼까요? 카드를 하나 골라 보세요."
+          },
+          {
+            "when": "before-observe",
+            "text": "{card}을(를) 무리에 넣기 전에 '{criterion}'에 맞는 특징을 먼저 살펴볼까요?"
+          },
+          {
+            "when": "sorting",
+            "text": "{card}의 관찰 내용을 보고 어느 무리에 넣을지 정해 볼까요? 왜 그 무리라고 생각했나요?"
+          },
+          {
+            "when": "check-subjective",
+            "text": "'{criterion}'로 나누면 친구와 내 결과가 같을까요? 누가 나누어도 같게 나오는 기준인지 생각해 볼까요?"
+          },
+          {
+            "when": "check-unplaced",
+            "text": "아직 무리에 넣지 않은 카드가 있어요. 모든 카드를 넣어 볼까요?"
+          },
+          {
+            "when": "check-unobserved",
+            "text": "{card}은(는) 아직 살펴보지 않았어요. 돋보기로 특징을 먼저 관찰해 볼까요?"
+          },
+          {
+            "when": "check-inconsistent",
+            "text": "{card}에서 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?"
+          },
+          {
+            "when": "check-complete",
+            "text": "관찰한 특징과 분류가 잘 맞아요. 이번에는 다른 기준으로도 나누어 볼까요?"
+          },
+          {
+            "when": "finished",
+            "text": "초가 탈 때와 초가 녹을 때는 어떻게 다를까요? 열을 가한 카드끼리 모두 같은 무리에 들어갔나요?"
+          }
         ]
       }
     }
