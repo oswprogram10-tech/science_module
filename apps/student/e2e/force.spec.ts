@@ -31,7 +31,7 @@ test('기준(2개, 4칸, 원기둥)은 수평이고 오른쪽 끝의 높이 10�
   await gotoUnit(page, 'g3-force');
   await expect(page.getByRole('heading', { level: 1, name: '힘과 우리 생활' })).toBeVisible();
   await expect(page.getByText('탐구 질문: 막대의 수평을 잡으려면 물체를 어디에 놓아야 할까?')).toBeVisible();
-  for (const term of ['지레', '돌림힘', '모멘트', '평형', '관성', '토크']) await expect(page.getByText(term)).toHaveCount(0);
+  for (const term of ['지레', '돌림힘', '모멘트', '평형', '관성', '토크']) await expect(page.locator('main').getByText(term)).toHaveCount(0);
   await expect(page.getByText('예측: 오른쪽 끝의 높이는?')).toBeVisible();
   await baselineRun(page, DISTANCE);
 

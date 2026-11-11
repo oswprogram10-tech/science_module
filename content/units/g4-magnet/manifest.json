@@ -2,7 +2,7 @@
   "id": "g4-magnet",
   "title": "자석의 이용",
   "grade": 4,
-  "standards": ["4과09-01"],
+  "standards": ["4과09-01", "4과09-02"],
   "engine": "physics",
   "experiments": [
     {
@@ -85,6 +85,126 @@
           { "when": "fair-test", "iv": "gapCm", "text": "거리만 바꾸었어요. '자석의 힘이 미치는 곳' 그림에서 클립 더미는 어디쯤에 있었나요?" },
           { "when": "fair-test", "iv": "between", "text": "사이에 둔 물체만 바꾸었어요. 어떤 물체를 두었을 때 클립이 끌려왔고, 어떤 물체일 때 달랐나요? 그 물체는 무엇으로 만들어졌을까요?" },
           { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 그래프에서 자석이 내려오는 동안 클립 수가 언제 늘었는지 살펴볼까요?" }
+        ]
+      }
+    },
+    {
+      "id": "magnet-poles",
+      "module": "magnet-poles",
+      "title": "자석과 자석 사이",
+      "question": "자석과 자석을 가까이 하면 어떤 일이 생길까?",
+      "predictionPrompt": "예측: 오른쪽 자석은 어느 쪽으로 움직일까?",
+      "variables": [
+        {
+          "key": "facing",
+          "label": "마주 보는 극",
+          "type": "choice",
+          "options": [
+            { "value": "NN", "label": "N극–N극" },
+            { "value": "NS", "label": "N극–S극" },
+            { "value": "SS", "label": "S극–S극" }
+          ],
+          "default": "NS"
+        },
+        {
+          "key": "gapCm",
+          "label": "두 자석 사이 거리",
+          "type": "choice",
+          "unit": "cm",
+          "options": [
+            { "value": 1, "label": "1 cm" },
+            { "value": 2, "label": "2 cm" },
+            { "value": 4, "label": "4 cm" }
+          ],
+          "default": 1
+        },
+        {
+          "key": "size",
+          "label": "자석 크기",
+          "type": "choice",
+          "options": [
+            { "value": "small", "label": "작은 자석" },
+            { "value": "large", "label": "큰 자석" }
+          ],
+          "default": "small"
+        },
+        {
+          "key": "cover",
+          "label": "자석 겉 색칠",
+          "type": "choice",
+          "options": [
+            { "value": "color", "label": "빨강·파랑" },
+            { "value": "gray", "label": "회색" }
+          ],
+          "default": "color"
+        }
+      ],
+      "dependent": [
+        { "key": "motion", "label": "오른쪽 자석의 움직임", "unit": "" },
+        { "key": "moveCm", "label": "움직인 거리", "unit": "cm" }
+      ],
+      "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
+      "safety": [],
+      "safetyNotices": [],
+      "limits": ["자기장", "자기력선", "테슬라", "인력", "척력"],
+      "tutor": {
+        "forbiddenAnswers": [
+          "같은 극끼리 밀",
+          "같은 극끼리는 밀",
+          "같은 극끼리는 밀어",
+          "같은 극은 서로 밀",
+          "같은 극이면 밀",
+          "같은 극을 마주 대면 밀",
+          "같은 극끼리 미는",
+          "같은 극끼리 서로 밀",
+          "같은 극끼리는 서로 밀",
+          "같은 극은 서로 미는",
+          "다른 극끼리 끌",
+          "다른 극끼리는 끌",
+          "다른 극끼리는 끌어",
+          "다른 극은 서로 끌",
+          "다른 극이면 끌",
+          "다른 극을 마주 대면 끌",
+          "다른 극끼리 끄는",
+          "다른 극끼리 서로 끌",
+          "다른 극끼리는 서로 끌",
+          "다른 극끼리 서로 당",
+          "다른 극끼리는 서로 당",
+          "다른 극은 서로 끄는",
+          "다른 극끼리 당",
+          "다른 극끼리는 당",
+          "다른 극은 서로 당",
+          "가까울수록 세게",
+          "가까울수록 힘이 세",
+          "가까우면 세게",
+          "가까울수록 힘이",
+          "가까워질수록 힘이",
+          "가까울수록 강",
+          "가까울수록 세",
+          "가까울수록 커",
+          "멀수록 약해",
+          "멀수록 약",
+          "멀어질수록 약",
+          "멀수록 힘이",
+          "멀어질수록 힘이",
+          "색칠은 관계없",
+          "색칠은 상관없",
+          "색칠은 영향이 없",
+          "색칠과 관계없",
+          "색칠이 달라도"
+        ],
+        "probes": [
+          { "when": "before-run", "text": "{iv}을(를) 바꾸면 오른쪽 자석이 어느 쪽으로 움직일지 예측해 볼까요? 왜 그렇게 생각했나요?" },
+          { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?" },
+          { "when": "confounded", "text": "{changed}이(가) 함께 바뀌었어요. 오른쪽 자석이 달리 움직인 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
+          { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },
+          { "when": "repeat", "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
+          { "when": "fair-test", "text": "{iv}만 바꾸었을 때 오른쪽 자석의 움직임과 움직인 거리는 각각 어떻게 달라졌나요? 눈으로 보기 그림과 그래프를 함께 볼까요?" },
+          { "when": "fair-test", "iv": "facing", "text": "마주 보는 극만 바꾸었어요. 오른쪽 자석은 어느 쪽으로 움직였나요? 나침반 바늘은 두 자석에서 각각 어느 쪽을 가리켰나요?" },
+          { "when": "fair-test", "iv": "gapCm", "text": "두 자석 사이 거리만 바꾸었어요. 오른쪽 자석이 움직인 모습은 어떻게 달라졌나요? 움직이지 않은 때도 있었나요?" },
+          { "when": "fair-test", "iv": "size", "text": "자석 크기만 바꾸었어요. 같은 거리에서 오른쪽 자석이 움직인 거리는 어떻게 달라졌나요?" },
+          { "when": "fair-test", "iv": "cover", "text": "자석 겉 색칠만 바꾸었을 때 결과가 달라졌나요? 이 결과로 무엇을 알 수 있을까요?" },
+          { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 그래프에서 두 자석 사이 거리가 어떻게 바뀌었는지 보고, '거리 재기' 그림으로 얼마나 움직였는지 확인해 볼까요?" }
         ]
       }
     }

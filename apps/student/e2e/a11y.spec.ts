@@ -725,7 +725,7 @@ for (const scheme of ['light', 'dark'] as const) {
     // 단원 목록의 "활동 2개" 표시
     await page.goto('/');
     // 활동이 둘인 단원은 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활 네 곳이다.
-    await expect(page.getByText('활동 2개')).toHaveCount(4);
+    await expect(page.getByText('활동 2개')).toHaveCount(7);
     await expect(page.getByText('활동 2개').first()).toBeVisible();
     await expectNoSeriousViolations(page);
     // 첫 활동 화면의 활동 탭
@@ -1489,6 +1489,98 @@ for (const scheme of ['light', 'dark'] as const) {
     await page.emulateMedia({ colorScheme: scheme });
     await page.goto('/#/unit/g6-career');
     await expect(page.getByText('기록이 없어요')).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+}
+
+// ---- 변인 실험 두 번째 활동: 지레와 빗면, 소리 나는 물체의 떨림, 자석과 자석 사이 ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  const label = scheme === 'dark' ? '어두운 화면' : '밝은 화면';
+
+  test(`g3-force 활동 2(지레와 빗면) ${label}: 처음, 실행 뒤(도구 없이), 지레, 빗면, 파란 상자`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g3-force', { experiment: 'lever-lift' });
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '쓰는 도구');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('손으로 20 cm 당김 · 저울 눈금 200 g').first()).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await setValue(page, '쓰는 도구', '지레');
+    await setValue(page, '힘을 주는 쪽 길이', '길게');
+    await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('lever-bar')).toHaveCount(1);
+    await expectNoSeriousViolations(page);
+    await setValue(page, '쓰는 도구', '빗면');
+    await setValue(page, '물체 색깔', '파란 상자');
+    await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('ramp-surface')).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+
+  test(`g3-sound 활동 2(소리 나는 물체의 떨림) ${label}: 처음, 실행 뒤(소리를 내지 않음), 소리를 냄(작은북), 소리굽쇠, 스피커`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g3-sound', { experiment: 'sound-vibration' });
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '소리 내기');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    await setValue(page, '소리 내기', '소리를 냄');
+    await setValue(page, '소리의 세기', '세게');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('vib-marks')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await page.reload();
+    await setValue(page, '소리 내기', '소리를 냄');
+    await setValue(page, '물체', '소리굽쇠');
+    await selectIV(page, '물체');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    await setValue(page, '물체', '스피커');
+    await setValue(page, '좁쌀 색', '흰 좁쌀');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+  });
+
+  test(`g4-magnet 활동 2(자석과 자석 사이) ${label}: 처음, 실행 뒤(붙음), 같은 극(밀려남), 큰 자석, 회색`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g4-magnet', { experiment: 'magnet-poles' });
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '마주 보는 극');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('2.0초 · 두 자석 사이 0.0 cm').first()).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await setValue(page, '마주 보는 극', 'N극–N극');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('2.0초 · 두 자석 사이 5.0 cm').first()).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await setValue(page, '자석 크기', '큰 자석');
+    await setValue(page, '자석 겉 색칠', '회색');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('2.0초 · 두 자석 사이 7.0 cm').first()).toBeVisible();
     await expectNoSeriousViolations(page);
   });
 }
