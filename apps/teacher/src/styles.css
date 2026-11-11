@@ -47,3 +47,10 @@ button:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
 .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
 @media (max-width: 560px) { .code { font-size:2.2rem; } }
 @media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+
+.host-address { display:flex; gap:16px; align-items:center; justify-content:space-between; flex-wrap:wrap; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 16px; }
+.host-address strong { font-size:1.4rem; letter-spacing:.02em; font-variant-numeric: tabular-nums; }
+.host-address .hint button { min-height:36px; margin:2px 4px 2px 0; }
+/* QR은 어두운 화면에서도 흰 바탕에 검은 칸이어야 읽힌다. */
+.host-qr { background:#fff; padding:6px; border-radius:6px; width:132px; height:132px; flex:none; }
+.host-qr svg { display:block; width:100%; height:100%; }

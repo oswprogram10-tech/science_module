@@ -275,9 +275,9 @@ describe('레지스트리 activities', () => {
       expect([u.activity, u.experiment, u.module], u.id).toEqual([first.activity, first.experiment, first.module]);
     }
   });
-  it('활동이 둘 이상인 단원은 g4-land, g5-mixture, g3-earth-sea뿐이다', () => {
+  it('활동이 둘 이상인 단원은 g4-land, g5-mixture, g3-earth-sea, g5-weather뿐이다', () => {
     const multi = UNITS.filter((u) => u.ok && u.activities.length > 1).map((u) => u.id);
-    expect(multi).toEqual(['g4-land', 'g5-mixture', 'g3-earth-sea']);
+    expect(multi).toEqual(['g4-land', 'g5-mixture', 'g3-earth-sea', 'g5-weather']);
     const land = UNITS.find((u) => u.id === 'g4-land')!;
     expect(land.ok && land.activities.map((a) => [a.activity, a.experiment.id, a.module.kind])).toEqual([['variable', 'magma-cooling', 'magma-cooling'], ['variable', 'stream-table', 'stream-table']]);
     expect(land.ok && land.manifest.standards).toEqual(['4과11-01', '4과11-03']);
@@ -288,6 +288,9 @@ describe('레지스트리 activities', () => {
     const m = UNITS.find((u) => u.id === 'g5-mixture')!;
     expect(m.ok && m.activities.map((a) => [a.activity, a.experiment.id])).toEqual([['variable', 'salt-sand'], ['card-sort', 'separation-methods']]);
     expect(m.ok && m.module.kind).toBe('salt-sand');
+    const w = UNITS.find((u) => u.id === 'g5-weather')!;
+    expect(w.ok && w.activities.map((a) => [a.activity, a.experiment.id, a.module.kind])).toEqual([['variable', 'land-sea-breeze', 'land-sea-breeze'], ['card-sort', 'dew-fog-cloud', 'card-sort']]);
+    expect(w.ok && w.manifest.standards).toEqual(['6과06-02', '6과06-03']);
   });
   it('두 번째 활동이 깨져도 그 단원만 오류 항목이 된다(모든 experiment를 검사)', () => {
     const broken = clone(mixtureJson);
@@ -306,7 +309,7 @@ describe('활동 탭 화면', () => {
     expect(renderToStaticMarkup(createElement('div', null, createElement(ActivityTabsSlot)))).toBe('<div></div>');
     expect(renderToStaticMarkup(createElement(ActivityTabsContext.Provider, { value: null }, createElement('div', null, createElement(ActivityTabsSlot))))).toBe('<div></div>');
     // 활동이 하나인 단원은 탭을 만들 필요가 없다.
-    for (const u of UNITS) if (u.ok && u.id !== 'g5-mixture' && u.id !== 'g4-land' && u.id !== 'g3-earth-sea') expect(u.activities, u.id).toHaveLength(1);
+    for (const u of UNITS) if (u.ok && u.id !== 'g5-mixture' && u.id !== 'g4-land' && u.id !== 'g3-earth-sea' && u.id !== 'g5-weather') expect(u.activities, u.id).toHaveLength(1);
   });
   it('탭은 tablist와 tab, aria-selected, "활동 n · 제목" 이름을 가진다', () => {
     const html = renderToStaticMarkup(

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  교실 LAN 전용 앱이다. 학생 기기가 같은 무선망의 선생님 PC 수업 서버(ws://192.168.x.x:8787/ws)에 붙으려면
+  암호화하지 않은(cleartext) 연결이 필요하다.
+  Android는 "사설 IP 대역 전체"를 도메인 단위로 허용하는 방법을 지원하지 않는다(domain-config는 호스트 이름만 받고 CIDR을 못 쓴다).
+  그래서 base-config로 평문을 허용한다. 보내는 내용은 수업 코드·모둠 번호·진행 요약뿐이고(docs/classroom.md 개인정보 원칙),
+  이름·학번·튜터 대화·카메라·센서 원자료는 서버로 보내지 않는다.
+  학교 서버를 인터넷에 열 때는 wss://(TLS)를 쓴다. 자세한 근거는 docs/app-packaging.md.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

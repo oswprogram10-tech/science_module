@@ -1,12 +1,12 @@
 import { Suspense, useMemo } from 'react';
-import { classroomUrl } from '../classroom/config';
+import { classroomEnabled } from '../classroom/config';
 import { ErrorBoundary } from '../classroom/ErrorBoundary';
 import { LazyControl } from '../classroom/lazy';
 import { LogbookCard } from '../logbook/LogbookCard';
 import type { UnitEntry } from '../units';
 
 export function UnitList({ units, hrefOf }: { units: UnitEntry[]; hrefOf: (id: string) => string }) {
-  const classroomOn = useMemo(() => classroomUrl() !== null, []);
+  const classroomOn = useMemo(() => classroomEnabled(), []);
   const grades = [
     ...new Set(units.filter((u) => u.ok).map((u) => (u as Extract<UnitEntry, { ok: true }>).manifest.grade)),
   ].sort((a, b) => a - b);

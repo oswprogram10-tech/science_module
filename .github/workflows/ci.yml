@@ -89,3 +89,56 @@ jobs:
           name: android-debug-apk
           path: apps/student/android/app/build/outputs/apk/debug/*.apk
           retention-days: 90
+
+  # 교사 PC 수업 서버(Windows 실행 파일 하나: 서버 + 교사 화면). Node 22 SEA로 만들고, 만든 exe를 실제로 띄워 시험한다.
+  windows-host:
+    name: 교사 PC 수업 서버 (Windows exe)
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      # Node 실행 파일 자체가 exe의 바탕이 된다. 내려받기가 가끔 실패하므로 setup-node를 최대 3번 시도한다.
+      - uses: actions/setup-node@v4
+        id: node1
+        continue-on-error: true
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-node@v4
+        id: node2
+        if: steps.node1.outcome == 'failure'
+        continue-on-error: true
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-node@v4
+        if: steps.node1.outcome == 'failure' && steps.node2.outcome == 'failure'
+        with:
+          node-version: 22
+          cache: pnpm
+      # 패키지 내려받기(레지스트리)도 기존 Gradle 단계처럼 몇 번 다시 시도한다.
+      - name: 의존성 설치(재시도)
+        shell: pwsh
+        run: |
+          for ($i = 1; $i -le 4; $i++) {
+            pnpm install --frozen-lockfile
+            if ($LASTEXITCODE -eq 0) { exit 0 }
+            Write-Host "다시 시도 $i"
+            Start-Sleep -Seconds ($i * 20)
+          }
+          exit 1
+      - run: node --version
+      - run: pnpm host:build
+      - name: 실행 파일 확인
+        shell: pwsh
+        run: Get-ChildItem apps/classroom-host/dist | Format-Table Name, Length
+      # exe를 백그라운드로 띄우고 http://localhost:8787/ 교사 화면 HTML, /host-info, ws://localhost:8787/ws 수업 만들기 응답을 확인한 뒤 끈다.
+      - name: 스모크 시험(exe 실행)
+        run: node apps/classroom-host/scripts/smoke.mjs "apps/classroom-host/dist/SciBridgeON-수업서버.exe"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-classroom-host
+          path: apps/classroom-host/dist/*.exe
+          retention-days: 90
+          if-no-files-found: error

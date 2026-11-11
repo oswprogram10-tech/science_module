@@ -9,6 +9,7 @@ import {
   type SafetyType,
 } from '@sci/classroom';
 import { TeacherClient, type TeacherState } from './client';
+import { HostAddress } from './HostAddress';
 import { serverUrl } from './serverUrl';
 import { beep, enableSound } from './sound';
 import { activityTitle, unitTitle } from './units';
@@ -50,7 +51,7 @@ function Screen({ client, soundOn, onSound }: { client: TeacherClient; soundOn: 
   }, [created]);
   const inClass = state.snapshot !== null || created !== null || (readCreds(window.location.hash) !== null && state.error === null);
 
-  if (state.error && state.error !== 'class_full' && state.error !== 'rate_limited' && state.error !== 'bad_secret') {
+  if (state.error && state.error !== 'class_full' && state.error !== 'rate_limited' && state.error !== 'bad_secret' && state.error !== 'not_local') {
     return <GoneScreen onBack={() => { writeHash(null); client.leave(); }} />;
   }
   if (!inClass) return <StartScreen state={state} soundOn={soundOn} onSound={onSound} onCreate={(secret) => client.create(secret)} />;
@@ -93,6 +94,7 @@ function StartScreen({ state, soundOn, onSound, onCreate }: { state: TeacherStat
       <header className="top">
         <h1>교사 대시보드</h1>
       </header>
+      <HostAddress />
       <main className="panel start">
         <p className="conn" role="status" data-conn={state.conn}>
           {CONN_TEXT[state.conn]}
@@ -123,6 +125,7 @@ function StartScreen({ state, soundOn, onSound, onCreate }: { state: TeacherStat
         </div>
         <p className="hint">수업을 만들면 학생에게 보여 줄 6자리 코드가 생겨요. 안전 경고가 생기면 소리로도 알려 드려요.</p>
         {full && <p role="alert" className="error-text">지금은 수업을 더 만들 수 없어요. 끝난 수업을 정리한 뒤 다시 해 보세요.</p>}
+        {state.error === 'not_local' && <p role="alert" className="error-text">수업은 수업 서버가 켜진 PC에서 연 교사 화면에서만 만들 수 있어요.</p>}
         {state.error === 'rate_limited' && <p role="alert" className="error-text">수업을 너무 자주 만들었어요. 잠시 뒤에 다시 해 보세요.</p>}
       </main>
     </div>
@@ -211,6 +214,7 @@ function ClassScreen({ client, state, soundOn, onEnd }: { client: TeacherClient;
           </button>
         </div>
       </header>
+      <HostAddress />
       {paused && <p className="paused-note">지금 모든 학생 화면이 멈춰 있어요.</p>}
 
       <main>

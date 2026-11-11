@@ -31,7 +31,7 @@ import { SafetyAlertBanner } from './components/safety/SafetyAlertBanner';
 import { SafetyDialog } from './components/safety/SafetyDialog';
 import { devMode } from './components/safety/devMode';
 import { ExperimentIdContext, reportSafety, reportSafetyClear, useClassroomStatus, usePaused } from './classroom/bus';
-import { classroomUrl } from './classroom/config';
+import { classroomEnabled } from './classroom/config';
 import { ErrorBoundary } from './classroom/ErrorBoundary';
 import { LazyHost } from './classroom/lazy';
 import { resolveSafetyMessages, speak } from './components/safety/safetyMessages';
@@ -45,7 +45,7 @@ const getHash = () => window.location.hash;
 export function App() {
   const hash = useSyncExternalStore(subscribeHash, getHash);
   const paused = usePaused();
-  const classroomOn = useMemo(() => classroomUrl() !== null, []);
+  const classroomOn = useMemo(() => classroomEnabled(), []);
   return (
     <>
       {/* 선생님이 "모두 멈춤"을 누르면 아래 화면은 입력을 받지 않는다. */}

@@ -80,6 +80,21 @@ for (const vp of VIEWPORTS) {
       const tabs = await page.getByRole('tab').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().right));
       for (const right of tabs) expect(right).toBeLessThanOrEqual(vp.width + 1);
     });
+
+    // 날씨와 우리 생활의 두 번째 활동(이슬·안개·구름 비교하기)도 활동 탭과 긴 카드 이름 포함 가로 스크롤이 없다.
+    test('g5-weather 두 번째 활동(활동 탭 포함)에 가로 스크롤이 없다', async ({ page }) => {
+      await gotoUnit(page, 'g5-weather', { experiment: 'dew-fog-cloud' });
+      await expect(page.getByRole('tab', { name: /^활동 2 · / })).toBeVisible();
+      await expect(page.getByRole('link', { name: '← 단원 목록' })).toBeVisible();
+      const { sw, iw } = await scrollWidth(page);
+      expect(sw).toBeLessThanOrEqual(iw);
+      const tabs = await page.getByRole('tab').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().right));
+      for (const right of tabs) expect(right).toBeLessThanOrEqual(vp.width + 1);
+      // 카드 8장이 화면 폭 안에 들어온다.
+      const cards = await page.locator('.sort-pile .sort-card').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().right));
+      expect(cards).toHaveLength(8);
+      for (const right of cards) expect(right).toBeLessThanOrEqual(vp.width + 1);
+    });
   });
 }
 

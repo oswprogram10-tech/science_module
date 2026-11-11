@@ -1,9 +1,10 @@
-import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { normalizeCode } from '@sci/classroom';
 import { useDeviceInfo } from '../platform/DeviceTierContext';
 import { usePaused } from './bus';
 import { classroom, type ClassroomState } from './client';
-import { classroomUrl } from './config';
+import { classroomUrl, configuredClassroomUrl } from './config';
+import { isAppMode, loadHostAddress, parseHostAddress, saveHostAddress } from './hostAddress';
 
 const useClassroom = (): ClassroomState => useSyncExternalStore(classroom.subscribe, classroom.getState);
 
@@ -99,6 +100,13 @@ function JoinDialog({ onClose }: { onClose: () => void }) {
   const { tier } = useDeviceInfo();
   const [code, setCode] = useState('');
   const [group, setGroup] = useState<number | null>(null);
+  // 앱(APK)에서는 선생님 PC 주소를 입력받는다. 웹은 지금까지처럼 주소창의 ?classroom=·빌드 변수만 쓴다.
+  const appMode = useMemo(() => isAppMode(), []);
+  const [host, setHost] = useState(() => (appMode ? loadHostAddress() : ''));
+  const hostUrl = appMode && host.trim() ? parseHostAddress(host) : null;
+  const hostBad = appMode && host.trim() !== '' && hostUrl === null;
+  // 앱에서 칸을 비우면 빌드 변수·?classroom=로 정한 주소를 쓴다(없으면 참여할 수 없다).
+  const targetUrl = appMode ? (host.trim() ? hostUrl : configuredClassroomUrl()) : classroomUrl();
   const normalized = normalizeCode(code);
   const joining = state.link === 'connecting';
   const joined = state.session !== null && state.link === 'online';
@@ -116,8 +124,10 @@ function JoinDialog({ onClose }: { onClose: () => void }) {
   }, []);
 
   const submit = () => {
-    const url = classroomUrl();
+    const url = targetUrl;
     if (!url || !normalized || group === null || joining) return;
+    // 쓴 주소를 기억한다(앱을 다시 켜도 다시 참여할 수 있게). 주소 문자열만 저장한다.
+    if (appMode && host.trim()) saveHostAddress(host);
     classroom.join(url, tier, { code: normalized, group });
   };
 
@@ -146,6 +156,31 @@ function JoinDialog({ onClose }: { onClose: () => void }) {
     <div className="modal-backdrop">
       <div ref={ref} className="modal" role="dialog" aria-modal="true" aria-labelledby={titleId} onKeyDown={onKeyDown}>
         <h2 id={titleId}>수업 참여</h2>
+        {appMode && (
+          <div className="host-field-wrap">
+            <label className="code-field host-field">
+              <span>선생님 PC 주소</span>
+              <input
+                type="text"
+                value={host}
+                maxLength={200}
+                inputMode="url"
+                autoCapitalize="none"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                placeholder="192.168.0.10:8787"
+                aria-invalid={hostBad}
+                aria-describedby={`${titleId}-host`}
+                onChange={(e) => setHost(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') submit();
+                }}
+              />
+            </label>
+            <small id={`${titleId}-host`}>{hostBad ? '주소를 다시 확인해 주세요. 예: 192.168.0.10:8787' : '선생님 화면에 보이는 「학생 앱에 입력할 주소」를 쓰세요.'}</small>
+          </div>
+        )}
         <p>선생님이 칠판에 쓴 수업 코드 6자와 우리 모둠 번호를 골라 주세요.</p>
         <label className="code-field">
           <span>수업 코드 (6자)</span>
@@ -179,7 +214,7 @@ function JoinDialog({ onClose }: { onClose: () => void }) {
           <button type="button" onClick={onClose}>
             닫기
           </button>
-          <button type="button" className="run" disabled={!normalized || group === null || joining} onClick={submit}>
+          <button type="button" className="run" disabled={!normalized || group === null || joining || !targetUrl} onClick={submit}>
             {joining ? '연결 중…' : '참여하기'}
           </button>
         </div>

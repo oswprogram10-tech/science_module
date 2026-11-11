@@ -1,5 +1,30 @@
 import type { Locator, Page } from '@playwright/test';
-import { test, expect, gotoUnit, setValue, selectIV, predict, runButton, resultRows, confirmSafetyDialog } from './helpers';
+import {
+  test,
+  expect,
+  gotoUnit,
+  setValue,
+  selectIV,
+  predict,
+  runButton,
+  resultRows,
+  confirmSafetyDialog,
+  scrollWidth,
+  activityTab,
+  activityTabs,
+  gotoWeatherSort,
+  weatherCard,
+  weatherFinishCriterion,
+  weatherObserveButton,
+  weatherSortAll,
+  WEATHER_CARDS,
+  WEATHER_SORT_TITLE,
+  sortCheckButton,
+  sortChoose,
+  sortFeedback,
+  sortPutButton,
+  sortTutor,
+} from './helpers';
 
 const tutorBox = (page: Page) => page.getByRole('heading', { name: '생각해 볼까요?' }).locator('..');
 const macro = (page: Page) => page.getByRole('figure', { name: '눈으로 보기' });
@@ -264,4 +289,167 @@ test.describe('1280x800 화면', () => {
     await run(page, '줄어든다');
     await check();
   });
+});
+
+// ---- 두 번째 활동: 이슬·안개·구름 비교하기(카드 분류 groups) ----
+
+test.describe('이슬·안개·구름 비교하기 (두 번째 활동)', () => {
+  const progress = (page: Page) => page.getByRole('region', { name: '진행 상황' });
+  const magnifier = (page: Page) => page.getByRole('region', { name: '돋보기' });
+
+  test('첫 활동 화면의 활동 탭으로 이동한다: 탭 이름, 주소, 질문', async ({ page }) => {
+    await gotoUnit(page, 'g5-weather');
+    await expect(activityTabs(page)).toBeVisible();
+    await expect(page.getByRole('tab')).toHaveCount(2);
+    await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+    await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'false');
+    await expect(activityTab(page, 2)).toHaveText(`활동 2 · ${WEATHER_SORT_TITLE}`);
+    await activityTab(page, 2).click();
+    await expect(page).toHaveURL(/#\/unit\/g5-weather\/dew-fog-cloud$/);
+    await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('heading', { level: 1, name: '날씨와 우리 생활' })).toBeVisible();
+    await expect(page.getByText('탐구 질문: 이슬, 안개, 구름은 어떤 점이 같고 어떤 점이 다를까?')).toBeVisible();
+    await expect(page.getByRole('radio')).toHaveCount(4);
+    for (const card of WEATHER_CARDS) await expect(weatherCard(page, card)).toBeVisible();
+    await expect(page.locator('.sort-card-sub')).toHaveCount(0);
+    await expect(sortCheckButton(page)).toBeDisabled();
+    await expect(sortTutor(page)).toContainText('카드들을 어떤 점으로 나누어 볼까요?');
+    // 첫 활동으로 돌아가면 해륙풍 실험이 그대로 있다.
+    await activityTab(page, 1).click();
+    await expect(page).toHaveURL(/#\/unit\/g5-weather\/land-sea-breeze$/);
+    await expect(page.getByRole('group', { name: '때', exact: true })).toBeVisible();
+  });
+
+  test('돋보기 버튼 문구는 "가까이에서 만져 보기", "주변 공기 살펴보기", "어디쯤 있는지 올려다보기"이다', async ({ page }) => {
+    await gotoWeatherSort(page);
+    await expect(magnifier(page).getByRole('button')).toHaveCount(0);
+    await weatherCard(page, '새벽 강가를 덮은 뿌연 공기').click();
+    for (const name of ['가까이에서 만져 보기', '주변 공기 살펴보기', '어디쯤 있는지 올려다보기']) {
+      await expect(magnifier(page).getByRole('button', { name, exact: true })).toBeVisible();
+    }
+  });
+
+  test('"물체의 겉에 붙어 있나요?"로 관찰 없이 넣으면 미관찰 문장이, 관찰 뒤 새벽 강가를 "붙어 있다"에 넣으면 비교 문장이, 고치면 맞음 문장이 보인다', async ({ page }) => {
+    await gotoWeatherSort(page);
+    await sortChoose(page, '물체의 겉에 붙어 있나요?');
+    // 관찰 없이 넣는다.
+    await weatherSortAll(page, 'surface', { observe: false });
+    await sortCheckButton(page).click();
+    await expect(page.getByText('아직 이 기준의 특징을 살펴보지 않았어요.')).toBeVisible();
+    await expect(sortTutor(page)).toContainText('아직 관찰해 보지 않았어요. 먼저 관찰해 볼까요?');
+    // 관찰하되 새벽 강가를 "붙어 있다"에 넣는다.
+    for (const card of WEATHER_CARDS) {
+      await weatherCard(page, card).click();
+      await weatherObserveButton(page, 'surface').click();
+    }
+    await weatherCard(page, '새벽 강가를 덮은 뿌연 공기').click();
+    await sortPutButton(page, '붙어 있다').click();
+    await sortCheckButton(page).click();
+    await expect(page.getByText('새벽 강가를 덮은 뿌연 공기는 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?')).toBeVisible();
+    await expect(sortTutor(page)).toContainText('새벽 강가를 덮은 뿌연 공기를 관찰한 결과와 넣은 무리를 다시 비교해 볼까요?');
+    // 어느 무리가 맞는지는 말하지 않는다.
+    for (const box of [sortFeedback(page), sortTutor(page)]) {
+      await expect(box).not.toContainText('붙어 있지 않다');
+      await expect(box).not.toContainText('안개');
+    }
+    await expect(progress(page)).toContainText('끝낸 기준: 없음 (0/2)');
+    // 고친다.
+    await weatherCard(page, '새벽 강가를 덮은 뿌연 공기').click();
+    await sortPutButton(page, '붙어 있지 않다').click();
+    await sortCheckButton(page).click();
+    await expect(page.getByText('관찰한 특징과 분류가 서로 잘 맞아요.')).toBeVisible();
+    await expect(progress(page)).toContainText('끝낸 기준: 물체의 겉에 붙어 있나요? (1/2)');
+  });
+
+  test('"보기에 아름다운가요?"는 판정하지 않고 사람마다 다르다고만 한다', async ({ page }) => {
+    await gotoWeatherSort(page);
+    await sortChoose(page, '보기에 아름다운가요?');
+    for (const [i, card] of WEATHER_CARDS.entries()) {
+      await weatherCard(page, card).click();
+      await sortPutButton(page, i % 2 === 0 ? '아름답다' : '아름답지 않다').click();
+    }
+    await sortCheckButton(page).click();
+    await expect(page.getByText('이 기준은 사람마다 다르게 나눌 수 있어요.')).toBeVisible();
+    await expect(sortTutor(page)).toContainText("'보기에 아름다운가요?'로 나누면 친구와 내 결과가 같을까요?");
+    await expect(progress(page)).toContainText('끝낸 기준: 없음 (0/2)');
+  });
+
+  test('객관 기준 두 개를 끝내면 완료 문구와 "어떤 점이 같을까요?" 마무리 질문이 나온다', async ({ page }) => {
+    await gotoWeatherSort(page);
+    await weatherFinishCriterion(page, 'surface');
+    await expect(page.getByText('두 가지 기준으로 분류했어요!')).toHaveCount(0);
+    await weatherFinishCriterion(page, 'high');
+    await expect(progress(page)).toContainText('끝낸 기준: 물체의 겉에 붙어 있나요?, 땅에서 먼 높은 하늘에 있나요? (2/2)');
+    await expect(page.getByText('두 가지 기준으로 분류했어요!')).toBeVisible();
+    await expect(sortTutor(page)).toContainText('어디에 생기는지에 따라 나누어 보았어요.');
+    await expect(sortTutor(page)).toContainText('그러면 이슬, 안개, 구름은 어떤 점이 같을까요?');
+    await expect(sortTutor(page)).toContainText('셋 다 무엇으로 이루어져 있을지 생각해 볼까요?');
+    // 정답(공통점)과 제한 용어는 화면 어디에도 없다.
+    const body = page.locator('body');
+    for (const w of ['수증기', '응결', '모두 물방울', '셋 다 물방울', '이슬점', '응결핵', '포화', '상대 습도', '단열 팽창']) await expect(body).not.toContainText(w);
+  });
+
+  test('관찰하기 전에는 기본 그림만 보이고, 살펴본 특징의 결과 그림만 나타난다', async ({ page }) => {
+    await gotoWeatherSort(page);
+    await weatherCard(page, '새벽 강가를 덮은 뿌연 공기').click();
+    await expect(page.locator('svg.weather-icon')).toHaveCount(9); // 더미 8장 + 돋보기 1장
+    await expect(page.locator('svg .wx-result')).toHaveCount(0);
+
+    await weatherObserveButton(page, 'air').click();
+    await expect(page.locator('svg .wx-air')).toHaveCount(1);
+    await expect(page.locator('svg .wx-floating')).toHaveCount(1); // 뿌연 공기는 공기 중에 떠 있다
+    await expect(page.locator('svg .wx-surface, svg .wx-high')).toHaveCount(0);
+    await expect(magnifier(page)).toContainText('강 위 공기가 뿌옇게 흐려 멀리가 잘 보이지 않아요.');
+
+    await weatherObserveButton(page, 'surface').click();
+    await expect(page.locator('svg .wx-surface[data-attached="false"]')).toHaveCount(1);
+    await weatherObserveButton(page, 'high').click();
+    await expect(page.locator('svg .wx-high')).toHaveCount(1);
+    await expect(magnifier(page)).toContainText('강물 바로 위, 땅 가까이에 깔려 있어요.');
+
+    // 다른 카드를 고르면 그 카드에서 살펴본 것만 그려진다.
+    await weatherCard(page, '차가운 컵 겉에 맺힌 물방울').click();
+    await expect(page.locator('svg .wx-result')).toHaveCount(0);
+    await weatherObserveButton(page, 'surface').click();
+    await expect(page.locator('svg .wx-surface[data-attached="true"]')).toHaveCount(1);
+    await expect(page.locator('svg .wx-air, svg .wx-high')).toHaveCount(0);
+  });
+
+  test('아직 관찰하지 않은 문장은 화면에 없다', async ({ page }) => {
+    await gotoWeatherSort(page);
+    const body = page.locator('body');
+    await weatherCard(page, '하늘 높이 떠 있는 하얀 구름').click();
+    for (const s of ['하늘에 하얗게 떠 있어요.', '고개를 들어야 보일 만큼 높은 하늘에 있어요.']) await expect(body).not.toContainText(s);
+    await weatherObserveButton(page, 'air').click();
+    await expect(body).toContainText('하늘에 하얗게 떠 있어요.');
+    await expect(body).not.toContainText('고개를 들어야 보일 만큼 높은 하늘에 있어요.');
+  });
+
+  test('첫 활동(해륙풍) 화면은 그대로이고 탭만 더해졌다', async ({ page }) => {
+    await gotoUnit(page, 'g5-weather');
+    await expect(page.getByRole('heading', { level: 1, name: '날씨와 우리 생활' })).toBeVisible();
+    await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('group', { name: '때', exact: true })).toBeVisible();
+  });
+
+  for (const vp of [{ width: 390, height: 800 }, { width: 1280, height: 800 }]) {
+    test.describe(`${vp.width}px`, () => {
+      test.use({ viewport: vp });
+      test('가로 스크롤이 없다 (처음, 카드를 관찰한 뒤, 모두 넣은 뒤)', async ({ page }) => {
+        await gotoWeatherSort(page);
+        const noScroll = async () => {
+          const { sw, iw } = await scrollWidth(page);
+          expect(sw).toBeLessThanOrEqual(iw);
+        };
+        await noScroll();
+        await sortChoose(page, '땅에서 먼 높은 하늘에 있나요?');
+        await weatherCard(page, '겨울 아침 창문 안쪽에 맺힌 물방울').click();
+        await weatherObserveButton(page, 'high').click();
+        await noScroll();
+        await weatherSortAll(page, 'high');
+        await sortCheckButton(page).click();
+        await noScroll();
+      });
+    });
+  }
 });

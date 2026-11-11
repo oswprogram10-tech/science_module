@@ -464,3 +464,66 @@ export async function mixtureFinishCriterion(page: Page, key: MixtureCriterionKe
 /** 활동 탭(활동이 둘 이상인 단원에만 있다). */
 export const activityTabs = (page: Page) => page.getByRole('tablist', { name: '활동 고르기' });
 export const activityTab = (page: Page, n: number) => page.getByRole('tab', { name: new RegExp(`^활동 ${n} · `) });
+
+// ---- 날씨와 우리 생활 두 번째 활동: 이슬·안개·구름 비교하기(카드 분류 groups, 활동 탭) ----
+
+export const WEATHER_UNIT = 'g5-weather';
+export const WEATHER_SORT = 'dew-fog-cloud';
+export const WEATHER_SORT_TITLE = '이슬·안개·구름 비교하기';
+
+/** 두 번째 활동으로 간다(주소 #/unit/g5-weather/dew-fog-cloud). */
+export const gotoWeatherSort = (page: Page, opts: { dev?: boolean } = {}) => gotoUnit(page, WEATHER_UNIT, { ...opts, experiment: WEATHER_SORT });
+
+export const WEATHER_CARDS = [
+  '아침 풀잎에 맺힌 물방울',
+  '차가운 컵 겉에 맺힌 물방울',
+  '겨울 아침 창문 안쪽에 맺힌 물방울',
+  '새벽 강가를 덮은 뿌연 공기',
+  '산골짜기에 낮게 깔린 뿌연 공기',
+  '하늘 높이 떠 있는 하얀 구름',
+  '비행기 창밖으로 보이는 구름',
+  '비가 오기 전 하늘을 덮은 먹구름',
+] as const;
+export type WeatherCard = (typeof WEATHER_CARDS)[number];
+export type WeatherCriterionKey = 'surface' | 'air' | 'high';
+export const WEATHER_CRITERION_LABEL: Record<WeatherCriterionKey, string> = {
+  surface: '물체의 겉에 붙어 있나요?',
+  air: '공기 중에 떠 있나요?',
+  high: '땅에서 먼 높은 하늘에 있나요?',
+};
+/** 돋보기 버튼 문구(매니페스트 features[].action). */
+export const WEATHER_ACTION: Record<WeatherCriterionKey, string> = { surface: '가까이에서 만져 보기', air: '주변 공기 살펴보기', high: '어디쯤 있는지 올려다보기' };
+const DROPS: WeatherCard[] = ['아침 풀잎에 맺힌 물방울', '차가운 컵 겉에 맺힌 물방울', '겨울 아침 창문 안쪽에 맺힌 물방울'];
+const CLOUDS: WeatherCard[] = ['하늘 높이 떠 있는 하얀 구름', '비행기 창밖으로 보이는 구름', '비가 오기 전 하늘을 덮은 먹구름'];
+const pick = (yes: WeatherCard[], a: string, b: string) => Object.fromEntries(WEATHER_CARDS.map((c) => [c, yes.includes(c) ? a : b])) as Record<WeatherCard, string>;
+/** 카드를 관찰 결과에 맞게 넣을 무리(테스트가 정답을 알고 있어야 올바른 분류를 재현할 수 있다). */
+export const WEATHER_GROUP: Record<WeatherCriterionKey, Record<WeatherCard, string>> = {
+  surface: pick(DROPS, '붙어 있다', '붙어 있지 않다'),
+  air: pick(WEATHER_CARDS.filter((c) => !DROPS.includes(c)), '떠 있다', '떠 있지 않다'),
+  high: pick(CLOUDS, '높은 하늘에 있다', '땅 가까이에 있다'),
+};
+
+/** 카드 버튼(이름 아래 물질 이름이 없다). 접근 가능한 이름은 "이름 관찰 n/3"이다. */
+export const weatherCard = (page: Page, card: WeatherCard) => page.getByRole('button', { name: new RegExp(`^${card} 관찰 \\d/3$`) });
+export const weatherObserveButton = (page: Page, key: WeatherCriterionKey) =>
+  page.getByRole('region', { name: '돋보기' }).getByRole('button', { name: WEATHER_ACTION[key], exact: true });
+
+/** 8장을 모두 살펴보고 나눈다. override는 일부러 다른 무리에 넣을 카드. */
+export async function weatherSortAll(
+  page: Page,
+  key: WeatherCriterionKey,
+  opts: { observe?: boolean; override?: Partial<Record<WeatherCard, string>> } = {},
+) {
+  for (const card of WEATHER_CARDS) {
+    await weatherCard(page, card).click();
+    if (opts.observe !== false) await weatherObserveButton(page, key).click();
+    await sortPutButton(page, opts.override?.[card] ?? WEATHER_GROUP[key][card]).click();
+  }
+}
+
+/** 기준 하나를 관찰 결과에 맞게 끝낸다(고르기 -> 관찰 -> 넣기 -> 확인). */
+export async function weatherFinishCriterion(page: Page, key: WeatherCriterionKey) {
+  await sortChoose(page, WEATHER_CRITERION_LABEL[key]);
+  await weatherSortAll(page, key);
+  await sortCheckButton(page).click();
+}

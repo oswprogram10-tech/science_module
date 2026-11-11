@@ -1,3 +1,5 @@
+import { isAppMode, loadHostAddress, parseHostAddress } from './hostAddress';
+
 /** 쉼표로 구분된 호스트 목록을 소문자 배열로 바꾼다. */
 const parseHosts = (v: unknown): string[] =>
   typeof v === 'string'
@@ -37,7 +39,14 @@ export function resolveClassroomUrl(env: ClassroomUrlEnv): string | null {
   return typeof env.buildUrl === 'string' && env.buildUrl ? env.buildUrl : null;
 }
 
-export function classroomUrl(): string | null {
+/** 앱(Capacitor)에서 학생이 입력해 기억해 둔 "선생님 PC 주소"를 WebSocket 주소로 바꾼 값. 없으면 null. */
+export function storedHostUrl(): string | null {
+  const saved = loadHostAddress();
+  return saved ? parseHostAddress(saved) : null;
+}
+
+/** 주소의 `?classroom=`와 빌드 변수로 정한 서버 주소(앱에서 입력한 주소는 보지 않는다). */
+export function configuredClassroomUrl(): string | null {
   let search = '';
   try {
     search = window.location.search;
@@ -50,6 +59,19 @@ export function classroomUrl(): string | null {
     allowedHosts: import.meta.env.VITE_CLASSROOM_ALLOWED_HOSTS,
     buildUrl: import.meta.env.VITE_CLASSROOM_URL,
   });
+}
+
+/**
+ * 지금 쓸 서버 주소. 앱 모드(APK 또는 `?app=1`)에서는 학생이 입력해 둔 선생님 PC 주소가 먼저이고,
+ * 웹에서는 지금까지처럼 `?classroom=`와 빌드 변수만 본다.
+ */
+export function classroomUrl(): string | null {
+  return (isAppMode() ? storedHostUrl() : null) ?? configuredClassroomUrl();
+}
+
+/** 「수업 참여」를 보여 줄까: 서버 주소가 있거나, 앱 모드(주소를 대화 상자에서 입력받는다). */
+export function classroomEnabled(): boolean {
+  return isAppMode() || classroomUrl() !== null;
 }
 
 export const APP_VERSION = '0.0.0';

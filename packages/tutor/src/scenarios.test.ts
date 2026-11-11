@@ -43,11 +43,31 @@ describe('활동이 여럿인 단원의 시나리오(id 안정성)', () => {
   });
   it('활동이 하나인 단원은 활동마다 시나리오를 한 번만 만들고 모두 첫 활동 것이다', () => {
     for (const id of TUTOR_UNITS) {
-      if (id === 'g5-mixture' || id === 'g4-land' || id === 'g3-earth-sea') continue;
+      if (id === 'g5-mixture' || id === 'g4-land' || id === 'g3-earth-sea' || id === 'g5-weather') continue;
       const only = units[id]!.manifest.experiments;
       expect(only, id).toHaveLength(1);
       expect(new Set(generateScenarios(id, units[id]!).map((s) => s.state.experimentId)), id).toEqual(new Set([only[0]!.id]));
     }
+  });
+});
+
+describe('날씨와 우리 생활 시나리오(활동 2 덧붙임)', () => {
+  const weather = units['g5-weather']!;
+  const list = generateScenarios('g5-weather', weather);
+  it('첫 활동(해륙풍) 시나리오 s001~s020은 활동 2를 더하기 전과 한 글자도 같고, 이슬·안개·구름 시나리오 24개가 뒤에 덧붙는다', () => {
+    expect(weather.manifest.experiments.map((e) => e.id)).toEqual(['land-sea-breeze', 'dew-fog-cloud']);
+    expect(list.map((s) => s.scenarioId)).toEqual(list.map((_, i) => `g5-weather-s${String(i + 1).padStart(3, '0')}`));
+    expect(list).toHaveLength(44);
+    expect(list.slice(0, 20).every((s) => s.state.experimentId === 'land-sea-breeze')).toBe(true);
+    expect(list.slice(20).every((s) => s.state.experimentId === 'dew-fog-cloud')).toBe(true);
+    // 이 해시는 활동 2를 더하기 전 ml/tutor/scenarios/g5-weather.jsonl 20줄(줄바꿈으로 이은 글자)의 SHA-256이다.
+    const first = list.slice(0, 20).map((s) => JSON.stringify(s)).join('\n');
+    expect(createHash('sha256').update(first).digest('hex')).toBe('49d6c3140fd5be2819f91d386147414c4c7e46d5b5629a33cbef0cc77cb39d79');
+  });
+  it('카드 분류의 모든 상황이 시나리오에 있다', () => {
+    const exp = weather.manifest.experiments[1]!;
+    const keys = new Set(list.slice(20).map((s) => situationOf(s.state, exp)));
+    for (const k of ['choose-criterion', 'pick-card', 'before-observe', 'sorting', 'check-subjective', 'check-unobserved', 'check-inconsistent', 'check-complete', 'finished']) expect(keys.has(k), k).toBe(true);
   });
 });
 
