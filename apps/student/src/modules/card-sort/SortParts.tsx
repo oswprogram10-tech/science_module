@@ -7,9 +7,13 @@ import { GRAIN_ICON_KEYS, GrainIcon } from './GrainIcons';
 import { HABITAT_ICON_KEYS, HabitatIcon } from './HabitatIcons';
 import { LEAF_ICON_KEYS, LeafIcon } from './LeafIcons';
 import { MATERIAL_ICON_KEYS, MaterialIcon } from './MaterialIcons';
+import { MATTER_ICON_KEYS, MatterShapeIcon } from './MatterShapeIcons';
 import { MIXTURE_ICON_KEYS, MixtureIcon } from './MixtureIcons';
 import { PLANT_HABITAT_ICON_KEYS, PlantHabitatIcon } from './PlantHabitatIcons';
+import { PROPERTY_ICON_KEYS, PropertyChangeIcon } from './PropertyChangeIcons';
 import { STRATA_ICON_KEYS, StrataIcon } from './StrataIcons';
+import { VOLCANO_ICON_KEYS, VolcanoIcon } from './VolcanoIcons';
+import { WATER_AROUND_ICON_KEYS, WaterAroundIcon } from './WaterAroundIcons';
 import { WEATHER_ICON_KEYS, WeatherIcon } from './WeatherIcons';
 
 /** 무리 나누기와 트리 화면이 함께 쓰는 조각들: 카드 그림, 카드 버튼, 돋보기와 관찰 기록, xAPI 기록. */
@@ -38,7 +42,7 @@ export function useSortEmit(unitId: string, expId: string) {
 
 /**
  * 카드 그림. 물체 그림 key면 물체, 혼합물 그림 key면 혼합물, 잎 그림 key면 잎, 아니면 동물 그림.
- * shown은 시험해 본 특징 key들이다(물체·혼합물·암석·날씨·동물 사는 곳·식물 사는 곳·생태계·알갱이 그림만 쓰며, 그 특징의 결과 그림이 겹쳐진다).
+ * shown은 시험해 본 특징 key들이다(물체·혼합물·암석·날씨·동물 사는 곳·식물 사는 곳·생태계·알갱이·물질의 모양과 부피·주변의 물·화산에서 나오는 것·변하기 전과 후 그림만 쓰며, 그 특징의 결과 그림이 겹쳐진다).
  */
 export function CardIcon({ icon, size, shown }: { icon: string; size: number; shown?: string[] }) {
   if (MATERIAL_ICON_KEYS.includes(icon)) return <MaterialIcon icon={icon} size={size} shown={shown} />;
@@ -49,6 +53,10 @@ export function CardIcon({ icon, size, shown }: { icon: string; size: number; sh
   if (PLANT_HABITAT_ICON_KEYS.includes(icon)) return <PlantHabitatIcon icon={icon} size={size} shown={shown} />;
   if (ECO_ICON_KEYS.includes(icon)) return <EcoIcon icon={icon} size={size} shown={shown} />;
   if (GRAIN_ICON_KEYS.includes(icon)) return <GrainIcon icon={icon} size={size} shown={shown} />;
+  if (MATTER_ICON_KEYS.includes(icon)) return <MatterShapeIcon icon={icon} size={size} shown={shown} />;
+  if (WATER_AROUND_ICON_KEYS.includes(icon)) return <WaterAroundIcon icon={icon} size={size} shown={shown} />;
+  if (VOLCANO_ICON_KEYS.includes(icon)) return <VolcanoIcon icon={icon} size={size} shown={shown} />;
+  if (PROPERTY_ICON_KEYS.includes(icon)) return <PropertyChangeIcon icon={icon} size={size} shown={shown} />;
   return LEAF_ICON_KEYS.includes(icon) && !ANIMAL_ICON_KEYS.includes(icon) ? (
     <LeafIcon icon={icon} size={size} />
   ) : (

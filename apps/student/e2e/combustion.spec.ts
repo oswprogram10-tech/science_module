@@ -10,6 +10,8 @@ import {
   resultRows,
   sensor,
   confirmSafetyDialog,
+  defineSortSuite,
+  PROPERTY_CHANGE_CFG,
 } from './helpers';
 
 const tutorBox = (page: Page) => page.getByRole('heading', { name: '생각해 볼까요?' }).locator('..');
@@ -101,3 +103,7 @@ test('모의 보안경 경고가 뜨면 확인 전까지 실행 버튼이 잠긴
   await expect(banner).toBeHidden();
   await expect(runButton(page)).toBeEnabled();
 });
+
+// ---- 물질의 연소 세 번째 활동: 변하기 전과 후의 성질 비교하기(카드 분류 groups, 특징 2개, 활동 탭 3개) ----
+
+defineSortSuite(PROPERTY_CHANGE_CFG);

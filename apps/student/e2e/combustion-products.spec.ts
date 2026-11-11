@@ -42,7 +42,7 @@ const recordNames = async (page: Page) => await record(page).getByTestId('record
 test('두 번째 활동 탭으로 열리고, 첫 활동(집기병으로 덮은 촛불)으로 돌아갈 수 있다', async ({ page }) => {
   await open(page);
   await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByRole('tab')).toHaveCount(2);
+  await expect(page.getByRole('tab')).toHaveCount(3); // 세 번째 활동(property-change)이 더해져 탭이 셋이다
   await expect(page.getByText('탐구 질문: 초가 타고 난 뒤에는 어떤 물질이 생길까?')).toBeVisible();
   await expect(page.getByText('예측: 검사 결과의 변화 단계는?')).toBeVisible();
   await activityTab(page, 1).click();

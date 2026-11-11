@@ -225,7 +225,8 @@ export async function sortChoose(page: Page, criterion: string) {
 }
 
 /** 카드 버튼(카드 더미나 무리 칸 어디에 있든). */
-export const sortCard = (page: Page, card: string) => page.getByRole('button', { name: new RegExp(`^${card} 관찰 \\d/3$`) });
+/** total은 카드의 관찰 특징 수(기본 3). 특징이 둘인 활동은 2를 넘긴다. */
+export const sortCard = (page: Page, card: string, total = 3) => page.getByRole('button', { name: new RegExp(`^${card} 관찰 \\d/${total}$`) });
 export const sortObserveButton = (page: Page, feature: string) =>
   page.getByRole('region', { name: '돋보기' }).getByRole('button', { name: `${feature} 살펴보기`, exact: true });
 export const sortPutButton = (page: Page, group: string) => page.getByRole('button', { name: `${group}에 넣기`, exact: true });
@@ -539,6 +540,11 @@ export interface SortKitCfg {
   question: string;
   /** 첫 활동 id(활동 탭에서 돌아가는 주소). */
   firstExp: string;
+  /** 이 활동의 탭 번호(기본 2)와 단원의 활동 수(기본 2). 땅의 변화·물질의 연소는 3·3이다. */
+  tab?: number;
+  tabs?: number;
+  /** 카드마다 살펴볼 특징 수(기본 3). */
+  featureCount?: number;
   cards: readonly string[];
   /** 객관 기준: key -> 질문, 돋보기 버튼 이름, 카드 -> 넣을 무리 이름(관찰 결과에 맞는 것). */
   criteria: Record<string, { label: string; observe: string; group: Record<string, string> }>;
@@ -560,7 +566,7 @@ export interface SortKitCfg {
 
 export function sortKit(cfg: SortKitCfg) {
   const goto = (page: Page, opts: { dev?: boolean } = {}) => gotoUnit(page, cfg.unit, { ...opts, experiment: cfg.exp });
-  const card = (page: Page, name: string) => sortCard(page, name);
+  const card = (page: Page, name: string) => sortCard(page, name, cfg.featureCount ?? 3);
   const observeButton = (page: Page, key: string) =>
     page.getByRole('region', { name: '돋보기' }).getByRole('button', { name: cfg.criteria[key]!.observe, exact: true });
   /** 카드를 모두 살펴보고(observe) 나눈다. override는 일부러 다른 무리에 넣을 카드. */
@@ -586,18 +592,20 @@ export function defineSortSuite(cfg: SortKitCfg) {
   const magnifier = (page: Page) => page.getByRole('region', { name: '돋보기' });
   const [k1, k2] = cfg.finish;
   const label = (key: string) => cfg.criteria[key]!.label;
+  const tab = cfg.tab ?? 2;
+  const tabs = cfg.tabs ?? 2;
 
   test.describe(`${cfg.expTitle} (두 번째 활동)`, () => {
     test('첫 활동 화면의 활동 탭으로 이동한다: 탭 이름, 주소, 질문, 카드', async ({ page }) => {
       await gotoUnit(page, cfg.unit);
       await expect(activityTabs(page)).toBeVisible();
-      await expect(page.getByRole('tab')).toHaveCount(2);
+      await expect(page.getByRole('tab')).toHaveCount(tabs);
       await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
-      await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'false');
-      await expect(activityTab(page, 2)).toHaveText(`활동 2 · ${cfg.expTitle}`);
-      await activityTab(page, 2).click();
+      await expect(activityTab(page, tab)).toHaveAttribute('aria-selected', 'false');
+      await expect(activityTab(page, tab)).toHaveText(`활동 ${tab} · ${cfg.expTitle}`);
+      await activityTab(page, tab).click();
       await expect(page).toHaveURL(new RegExp(`#/unit/${cfg.unit}/${cfg.exp}$`));
-      await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'true');
+      await expect(activityTab(page, tab)).toHaveAttribute('aria-selected', 'true');
       await expect(page.getByRole('heading', { level: 1, name: cfg.unitTitle })).toBeVisible();
       await expect(page.getByText(`탐구 질문: ${cfg.question}`)).toBeVisible();
       await expect(page.getByRole('radio')).toHaveCount(cfg.radios);
@@ -857,3 +865,137 @@ export const ROCK_GRAIN_CFG: SortKitCfg = {
     other: { card: '얼룩 암석 사', key: 'pebble', sel: '.rg-pebble[data-pebble="true"]' },
   },
 };
+
+// ---- 카드 분류 활동 넷(3차 묶음): 물체와 물질·물의 상태 변화(활동 2), 땅의 변화·물질의 연소(활동 3) ----
+
+export const MATTER_SHAPE_VOLUME_CFG: SortKitCfg = {
+  unit: "g3-material",
+  unitTitle: "물체와 물질",
+  exp: "matter-shape-volume",
+  expTitle: "모양과 부피로 물질 나누기",
+  question: "다른 그릇에 옮겨 담으면 모양과 부피가 변하는 물질과 변하지 않는 물질이 있을까?",
+  firstExp: "material-sort",
+  tab: 2,
+  tabs: 2,
+  featureCount: 3,
+  cards: ["나무 토막", "돌", "지우개", "모래", "물", "우유", "식용유", "주사기 속 공기", "풍선 속 헬륨"],
+  criteria: {
+    shape: { label: "다른 그릇에 옮겨도 모양이 그대로인가요?", observe: "넓은 그릇과 좁은 그릇에 옮겨 보기", group: {"나무 토막": "그대로다", "돌": "그대로다", "지우개": "그대로다", "모래": "그대로다", "물": "바뀐다", "우유": "바뀐다", "식용유": "바뀐다", "주사기 속 공기": "바뀐다", "풍선 속 헬륨": "바뀐다"} },
+    volume: { label: "다른 그릇에 옮겨도 차지하는 부피가 그대로인가요?", observe: "눈금 있는 그릇에 옮겨 눈금 보기", group: {"나무 토막": "그대로다", "돌": "그대로다", "지우개": "그대로다", "모래": "그대로다", "물": "그대로다", "우유": "그대로다", "식용유": "그대로다", "주사기 속 공기": "바뀐다", "풍선 속 헬륨": "바뀐다"} },
+    see: { label: "눈에 보이나요?", observe: "가까이 들여다보기", group: {"나무 토막": "보인다", "돌": "보인다", "지우개": "보인다", "모래": "보인다", "물": "보인다", "우유": "보인다", "식용유": "보인다", "주사기 속 공기": "보이지 않는다", "풍선 속 헬륨": "보이지 않는다"} },
+  },
+  subjective: { label: "만지면 기분이 좋은가요?", groups: ["기분이 좋다", "기분이 좋지 않다"] },
+  radios: 4,
+  finish: ["shape", "volume"],
+  wrong: { card: "나무 토막", group: "바뀐다", sentence: "나무 토막은 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?", tutor: "나무 토막에서 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?" },
+  firstTutor: "물질들을 어떤 기준으로 나누어 볼까요?",
+  finishedTutor: ["두 기준으로 나눈 무리를 겹쳐 보면 몇 무리가 생기나요?", "각 무리를 무엇이라고 부르면 좋을까요?"],
+  banned: ["고체", "액체", "기체", "분자", "입자", "압축", "밀도"],
+  icon: {
+    svg: "matter-shape-icon",
+    result: "ms-result",
+    card: "주사기 속 공기",
+    obs: {"shape": "주사기, 비닐봉지, 풍선 어디에 넣어도 그 모양을 따라가요.", "volume": "주사기 끝을 막고 피스톤을 누르면 눈금이 줄어들어요. 손을 떼면 다시 늘어나요.", "see": "주사기 안이 비어 보여요."},
+    marks: [{ key: "shape", sel: ".ms-shape[data-shape=\"change\"]" }, { key: "volume", sel: ".ms-volume[data-volume=\"change\"]" }, { key: "see", sel: ".ms-see[data-see=\"false\"]" }],
+    other: { card: "돌", key: "see", sel: ".ms-see[data-see=\"true\"]" },
+  },
+};
+
+export const WATER_AROUND_CFG: SortKitCfg = {
+  unit: "g4-water-state",
+  unitTitle: "물의 상태 변화",
+  exp: "water-around",
+  expTitle: "우리 주변의 물 나누기",
+  question: "우리 주변의 물은 어떤 상태로 있을까?",
+  firstExp: "freeze-melt",
+  tab: 2,
+  tabs: 2,
+  featureCount: 3,
+  cards: ["고드름", "얼음물 속 얼음", "눈사람", "빗물", "어항 속 물", "이슬방울", "차가운 컵 겉의 물방울", "마르는 빨래에서 날아간 물", "끓는 물 속 거품 안의 물", "주전자 주둥이의 하얀 김"],
+  criteria: {
+    shape: { label: "모양이 일정한가요?", observe: "만져 보기", group: {"고드름": "일정하다", "얼음물 속 얼음": "일정하다", "눈사람": "일정하다", "빗물": "일정하지 않다", "어항 속 물": "일정하지 않다", "이슬방울": "일정하지 않다", "차가운 컵 겉의 물방울": "일정하지 않다", "마르는 빨래에서 날아간 물": "일정하지 않다", "끓는 물 속 거품 안의 물": "일정하지 않다", "주전자 주둥이의 하얀 김": "일정하지 않다"} },
+    flow: { label: "기울이면 흘러내리나요?", observe: "기울여 보기", group: {"고드름": "흘러내리지 않는다", "얼음물 속 얼음": "흘러내리지 않는다", "눈사람": "흘러내리지 않는다", "빗물": "흘러내린다", "어항 속 물": "흘러내린다", "이슬방울": "흘러내린다", "차가운 컵 겉의 물방울": "흘러내린다", "마르는 빨래에서 날아간 물": "흘러내리지 않는다", "끓는 물 속 거품 안의 물": "흘러내리지 않는다", "주전자 주둥이의 하얀 김": "흘러내리지 않는다"} },
+    see: { label: "눈에 보이나요?", observe: "가까이 보기", group: {"고드름": "보인다", "얼음물 속 얼음": "보인다", "눈사람": "보인다", "빗물": "보인다", "어항 속 물": "보인다", "이슬방울": "보인다", "차가운 컵 겉의 물방울": "보인다", "마르는 빨래에서 날아간 물": "보이지 않는다", "끓는 물 속 거품 안의 물": "보이지 않는다", "주전자 주둥이의 하얀 김": "보인다"} },
+  },
+  subjective: { label: "보기 좋은가요?", groups: ["보기 좋다", "보기 좋지 않다"] },
+  radios: 4,
+  finish: ["shape", "flow"],
+  wrong: { card: "고드름", group: "일정하지 않다", sentence: "고드름은 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?", tutor: "고드름에서 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?" },
+  firstTutor: "카드들을 어떤 기준으로 나누어 볼까요?",
+  finishedTutor: ["세 무리로 나누면 각 무리를 무엇이라고 부르면 좋을까요?", "하얀 김은 어느 무리와 더 닮았나요?"],
+  banned: ["고체", "액체", "기체", "수증기", "승화", "응결", "기화"],
+  icon: {
+    svg: "water-around-icon",
+    result: "wa-result",
+    card: "주전자 주둥이의 하얀 김",
+    obs: {"shape": "하얀 것이 피어오르다가 금방 모양이 바뀌어요.", "flow": "흘러내리지 않고 공중에서 흩어져요.", "see": "하얗게 보여요. 차가운 숟가락을 대면 숟가락에 물방울이 맺혀요."},
+    marks: [{ key: "shape", sel: ".wa-shape[data-shape=\"change\"]" }, { key: "flow", sel: ".wa-flow[data-flow=\"false\"]" }, { key: "see", sel: ".wa-see[data-see=\"true\"]" }],
+    other: { card: "눈사람", key: "flow", sel: ".wa-flow[data-flow=\"false\"]" },
+  },
+};
+
+export const VOLCANO_EJECTA_CFG: SortKitCfg = {
+  unit: "g4-land",
+  unitTitle: "땅의 변화",
+  exp: "volcano-ejecta",
+  expTitle: "화산에서 나오는 것 나누기",
+  question: "화산이 폭발하면 어떤 물질이 나올까?",
+  firstExp: "magma-cooling",
+  tab: 3,
+  tabs: 3,
+  featureCount: 3,
+  cards: ["화산 가스", "용암", "화산재", "화산 암석 조각", "모형 꼭대기의 연기", "모형 옆으로 흘러내린 녹은 것", "모형 둘레에 식어 굳은 조각", "모형 둘레에 흩어진 가루"],
+  criteria: {
+    source: { label: "어디에서 나왔나요?", observe: "사진 설명 읽기", group: {"화산 가스": "실제 화산", "용암": "실제 화산", "화산재": "실제 화산", "화산 암석 조각": "실제 화산", "모형 꼭대기의 연기": "화산 모형", "모형 옆으로 흘러내린 녹은 것": "화산 모형", "모형 둘레에 식어 굳은 조각": "화산 모형", "모형 둘레에 흩어진 가루": "화산 모형"} },
+    shape: { label: "알갱이나 조각 하나하나의 모양이 일정한가요?", observe: "돋보기로 보기", group: {"화산 가스": "일정하지 않다", "용암": "일정하지 않다", "화산재": "일정하다", "화산 암석 조각": "일정하다", "모형 꼭대기의 연기": "일정하지 않다", "모형 옆으로 흘러내린 녹은 것": "일정하지 않다", "모형 둘레에 식어 굳은 조각": "일정하다", "모형 둘레에 흩어진 가루": "일정하다"} },
+    flow: { label: "땅 위를 따라 흘러내리나요?", observe: "흘러가는 모습 지켜보기", group: {"화산 가스": "흘러내리지 않는다", "용암": "흘러내린다", "화산재": "흘러내리지 않는다", "화산 암석 조각": "흘러내리지 않는다", "모형 꼭대기의 연기": "흘러내리지 않는다", "모형 옆으로 흘러내린 녹은 것": "흘러내린다", "모형 둘레에 식어 굳은 조각": "흘러내리지 않는다", "모형 둘레에 흩어진 가루": "흘러내리지 않는다"} },
+  },
+  subjective: { label: "무서워 보이나요?", groups: ["무서워 보인다", "무서워 보이지 않는다"] },
+  radios: 4,
+  finish: ["shape", "flow"],
+  wrong: { card: "화산재", group: "일정하지 않다", sentence: "화산재는 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?", tutor: "화산재에서 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?" },
+  firstTutor: "카드들을 어떤 기준으로 나누어 볼까요?",
+  finishedTutor: ["모형에서 본 것과 실제 화산에서 나오는 것은 어떤 점이 같고, 어떤 점이 다를까요?"],
+  banned: ["고체", "액체", "기체", "마그마의 성분", "이산화 황", "판 구조"],
+  icon: {
+    svg: "volcano-icon",
+    result: "vc-result",
+    card: "용암",
+    obs: {"source": "화산 꼭대기에서 솟아 나온 것을 찍은 사진이에요.", "shape": "붉게 빛나며 계속 모양이 바뀌어요.", "flow": "산비탈을 따라 천천히 흘러내려요."},
+    marks: [{ key: "source", sel: ".vc-source[data-source=\"real\"]" }, { key: "shape", sel: ".vc-shape[data-shape=\"change\"]" }, { key: "flow", sel: ".vc-flow[data-flow=\"true\"]" }],
+    other: { card: "화산재", key: "flow", sel: ".vc-flow[data-flow=\"false\"]" },
+  },
+};
+
+export const PROPERTY_CHANGE_CFG: SortKitCfg = {
+  unit: "g6-combustion",
+  unitTitle: "물질의 연소",
+  exp: "property-change",
+  expTitle: "변하기 전과 후의 성질 비교하기",
+  question: "물질이 변할 때 처음 물질의 성질이 달라지는 경우와 그렇지 않은 경우는 어떻게 다를까?",
+  firstExp: "candle-jar",
+  tab: 3,
+  tabs: 3,
+  featureCount: 2,
+  cards: ["종이 자르기", "종이 태우기", "얼음 녹기", "설탕을 물에 녹이기", "달걀 삶기", "철못이 녹슬기", "찰흙 모양 바꾸기", "우유가 상하기", "초가 타기", "초가 녹기"],
+  criteria: {
+    newprop: { label: "색·냄새·맛처럼 처음 물질에 없던 성질이 생겼나요?", observe: "변하기 전과 후 견주어 보기", group: {"종이 자르기": "생기지 않았다", "종이 태우기": "생겼다", "얼음 녹기": "생기지 않았다", "설탕을 물에 녹이기": "생기지 않았다", "달걀 삶기": "생겼다", "철못이 녹슬기": "생겼다", "찰흙 모양 바꾸기": "생기지 않았다", "우유가 상하기": "생겼다", "초가 타기": "생겼다", "초가 녹기": "생기지 않았다"} },
+    heat: { label: "열을 가했나요?", observe: "어떻게 했는지 읽기", group: {"종이 자르기": "가하지 않았다", "종이 태우기": "가했다", "얼음 녹기": "가했다", "설탕을 물에 녹이기": "가하지 않았다", "달걀 삶기": "가했다", "철못이 녹슬기": "가하지 않았다", "찰흙 모양 바꾸기": "가하지 않았다", "우유가 상하기": "가하지 않았다", "초가 타기": "가했다", "초가 녹기": "가했다"} },
+  },
+  subjective: { label: "재미있어 보이나요?", groups: ["재미있어 보인다", "재미있어 보이지 않는다"] },
+  radios: 3,
+  finish: ["newprop", "heat"],
+  wrong: { card: "종이 태우기", group: "생기지 않았다", sentence: "종이 태우기는 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?", tutor: "종이 태우기에서 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?" },
+  firstTutor: "카드들을 어떤 기준으로 나누어 볼까요?",
+  finishedTutor: ["초가 탈 때와 초가 녹을 때는 어떻게 다를까요?", "열을 가한 카드끼리 모두 같은 무리에 들어갔나요?"],
+  banned: ["화학 변화", "물리 변화", "산화", "분자"],
+  icon: {
+    svg: "property-icon",
+    result: "pc-result",
+    card: "초가 타기",
+    obs: {"newprop": "초가 줄어들고 그을음이 생기며 타는 냄새가 나요. 줄어든 초는 다시 처음 초로 되돌릴 수 없어요.", "heat": "심지에 불을 붙였어요."},
+    marks: [{ key: "newprop", sel: ".pc-newprop[data-newprop=\"true\"]" }, { key: "heat", sel: ".pc-heat[data-heat=\"true\"]" }],
+    other: { card: "종이 태우기", key: "newprop", sel: ".pc-newprop[data-newprop=\"true\"]" },
+  },
+};
+

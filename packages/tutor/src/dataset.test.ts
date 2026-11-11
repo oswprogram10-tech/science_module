@@ -45,12 +45,14 @@ describe('저장소의 데이터셋 검증 (pnpm test에도 포함)', () => {
       // 날씨와 우리 생활도 두 번째 활동(이슬·안개·구름 비교하기)의 견본이 같은 수만큼 더해졌다(sft 6 · pairs 3 · redteam 4).
       // 카드 분류 두 번째 활동 넷(동물·식물·생태계·지층)도 같은 수만큼 더해졌다(sft 6 · pairs 3 · redteam 4).
       // 힘과 우리 생활·소리의 성질·자석의 이용도 두 번째 변인 실험(지레와 빗면·소리 나는 물체의 떨림·자석과 자석 사이)의 견본이 같은 수만큼 더해졌다.
-      const twoMore = unit === 'g3-earth-sea' || unit === 'g5-weather' || unit === 'g3-force' || unit === 'g3-sound' || unit === 'g4-magnet' || unit === 'g5-solution' || unit === 'g5-heat' || unit === 'g6-acid-base' || unit === 'g6-motion' || unit === 'g6-combustion' || ['g3-animal', 'g3-plantlife', 'g4-ecosystem', 'g5-strata'].includes(unit);
+      const twoMore = unit === 'g3-earth-sea' || unit === 'g5-weather' || unit === 'g3-force' || unit === 'g3-sound' || unit === 'g4-magnet' || unit === 'g5-solution' || unit === 'g5-heat' || unit === 'g6-acid-base' || unit === 'g6-motion' || unit === 'g6-combustion' || ['g3-animal', 'g3-plantlife', 'g4-ecosystem', 'g5-strata', 'g3-material', 'g4-water-state'].includes(unit) || unit === 'g4-land';
+      // 카드 분류 3차 묶음(물체와 물질·물의 상태 변화·땅의 변화·물질의 연소 활동 추가)도 견본 sft 2 · pairs 1 · redteam 1이 더해졌다. 땅의 변화는 활동 3까지 sft 10 · pairs 5 · redteam 7, 물질의 연소는 활동 2와 3의 견본이 더해져 sft 8 · pairs 4 · redteam 5이다.
+      const threeCombustion = unit === 'g6-combustion';
       // 용해와 용액·산과 염기는 대표 단원이라 두 번째 활동의 견본이 더해져 sft 10 · pairs 5 · redteam 7이다. 열과 우리 생활도 두 번째 활동(온도가 다른 두 물이 닿으면)의 견본이 더해졌다(sft 6 · pairs 3 · redteam 4). 물체의 운동·물질의 연소도 두 번째 활동(시간에 따른 위치 변화·연소 전과 후 비교하기)의 견본이 같은 수만큼 더해졌다.
-      const sftCount = rich ? (twoMore ? 10 : 8) : unit === 'g4-night-sky' || twoMore ? 6 : unit === 'g5-mixture' ? 5 : 4;
+      const sftCount = threeCombustion ? 8 : rich ? (twoMore ? 10 : 8) : unit === 'g4-night-sky' || twoMore ? 6 : unit === 'g5-mixture' ? 5 : 4;
       expect(full.sft.filter((r) => r.unitId === unit), `${unit} sft`).toHaveLength(sftCount);
-      expect(full.pairs.filter((r) => r.unitId === unit), `${unit} pairs`).toHaveLength(rich ? (twoMore ? 5 : 4) : twoMore ? 3 : 2);
-      expect(full.redteam.filter((r) => r.unitId === unit), `${unit} redteam`).toHaveLength(rich ? (twoMore ? 7 : 6) : twoMore ? 4 : 3);
+      expect(full.pairs.filter((r) => r.unitId === unit), `${unit} pairs`).toHaveLength(threeCombustion ? 4 : rich ? (twoMore ? 5 : 4) : twoMore ? 3 : 2);
+      expect(full.redteam.filter((r) => r.unitId === unit), `${unit} redteam`).toHaveLength(threeCombustion ? 5 : rich ? (twoMore ? 7 : 6) : twoMore ? 4 : 3);
     }
     for (const r of [...full.sft, ...full.pairs, ...full.redteam]) {
       expect([r.source, r.reviewed, r.author]).toEqual(['example', false, 'EX']);
@@ -73,8 +75,9 @@ describe('저장소의 데이터셋 검증 (pnpm test에도 포함)', () => {
       const list = full.scenarios.filter((s) => s.unitId === unit);
       expect(list.length, unit).toBeGreaterThanOrEqual(15);
       // 관찰 활동은 과제마다 5개이므로 과제가 5개를 넘으면(밤하늘 관찰 6개 = 30) 그만큼 늘어난다.
+      // 활동이 셋인 땅의 변화(g4-land)와 물질의 연소(g6-combustion)는 활동마다 25개까지라 75개까지 늘어난다.
       // 활동이 둘인 단원(g5-mixture, g4-land, g3-earth-sea, g5-weather, g3-force, g3-sound, g4-magnet, g5-solution, g5-heat, g6-acid-base, g6-motion, g6-combustion, g3-animal, g3-plantlife, g4-ecosystem, g5-strata)은 활동마다 25개까지라 50개까지 늘어난다.
-      expect(list.length, unit).toBeLessThanOrEqual(unit === 'g4-night-sky' ? 35 : unit === 'g5-mixture' || unit === 'g4-land' || unit === 'g3-earth-sea' || unit === 'g5-weather' || unit === 'g3-force' || unit === 'g3-sound' || unit === 'g4-magnet' || unit === 'g5-solution' || unit === 'g5-heat' || unit === 'g6-acid-base' || unit === 'g6-motion' || unit === 'g6-combustion' || ['g3-animal', 'g3-plantlife', 'g4-ecosystem', 'g5-strata'].includes(unit) ? 50 : 25);
+      expect(list.length, unit).toBeLessThanOrEqual(unit === 'g4-night-sky' ? 35 : unit === 'g4-land' || unit === 'g6-combustion' ? 75 : unit === 'g5-mixture' || unit === 'g3-earth-sea' || unit === 'g5-weather' || unit === 'g3-force' || unit === 'g3-sound' || unit === 'g4-magnet' || unit === 'g5-solution' || unit === 'g5-heat' || unit === 'g6-acid-base' || unit === 'g6-motion' || ['g3-animal', 'g3-plantlife', 'g4-ecosystem', 'g5-strata', 'g3-material', 'g4-water-state'].includes(unit) ? 50 : 25);
     }
     for (const s of full.scenarios) expect(inputFor(full, s, '').length).toBeGreaterThan(30);
   });

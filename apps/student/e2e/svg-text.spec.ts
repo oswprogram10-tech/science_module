@@ -24,14 +24,14 @@ const UNITS = readdirSync(UNITS_DIR)
     return manifest.experiments.map((e, i) => ({ id, name: i === 0 ? id : `${id}/${e.id}`, experiment: i === 0 ? undefined : e.id, module: e.module }));
   });
 
-const NO_SVG_TEXT = new Set(['g3-animal', 'g3-material', 'g3-plantlife', 'g5-strata', 'g6-acid-base', 'g6-career', 'g5-mixture/separation-methods', 'g5-weather/dew-fog-cloud', 'g3-animal/animal-habitat', 'g3-plantlife/plant-habitat', 'g4-ecosystem/living-nonliving', 'g5-strata/rock-grain']);
+const NO_SVG_TEXT = new Set(['g3-animal', 'g3-material', 'g3-plantlife', 'g5-strata', 'g6-acid-base', 'g6-career', 'g5-mixture/separation-methods', 'g5-weather/dew-fog-cloud', 'g3-animal/animal-habitat', 'g3-plantlife/plant-habitat', 'g4-ecosystem/living-nonliving', 'g5-strata/rock-grain', 'g3-material/matter-shape-volume', 'g4-water-state/water-around', 'g4-land/volcano-ejecta', 'g6-combustion/property-change']);
 
-test('단원 목록: 32개 단원의 모든 활동(48개)을 잰다', () => {
+test('단원 목록: 32개 단원의 모든 활동(52개)을 잰다', () => {
   expect(new Set(UNITS.map((u) => u.id)).size).toBe(32);
-  expect(UNITS.length).toBe(48);
+  expect(UNITS.length).toBe(52);
   expect(UNITS.map((u) => u.name)).toContain('g5-mixture/separation-methods');
   expect(UNITS.map((u) => u.name)).toContain('g5-weather/dew-fog-cloud');
-  for (const name of ['g3-animal/animal-habitat', 'g3-plantlife/plant-habitat', 'g4-ecosystem/living-nonliving', 'g5-strata/rock-grain']) expect(UNITS.map((u) => u.name)).toContain(name);
+  for (const name of ['g3-animal/animal-habitat', 'g3-plantlife/plant-habitat', 'g4-ecosystem/living-nonliving', 'g5-strata/rock-grain', 'g3-material/matter-shape-volume', 'g4-water-state/water-around', 'g4-land/volcano-ejecta', 'g6-combustion/property-change']) expect(UNITS.map((u) => u.name)).toContain(name);
   for (const n of ['g3-force/lever-lift', 'g3-sound/sound-vibration', 'g4-magnet/magnet-poles', 'g5-solution/concentration', 'g5-heat/heat-contact', 'g6-acid-base/acid-base-mix', 'g6-motion/position-time', 'g6-combustion/combustion-products']) expect(UNITS.map((u) => u.name), n).toContain(n);
 });
 
@@ -100,7 +100,7 @@ async function firstTrial(page: Page) {
 async function cardSortStates(page: Page, found: string[]) {
   const criterion = page.getByRole('radio').first();
   if ((await criterion.count()) > 0) await criterion.check();
-  await page.getByRole('button', { name: / 관찰 \d\/3$/ }).first().click();
+  await page.getByRole('button', { name: / 관찰 \d\/[23]$/ }).first().click();
   found.push(...(await smallTexts(page, '카드 고름')));
   // 돋보기로 살펴본다.
   const lens = region(page, '돋보기').getByRole('button');

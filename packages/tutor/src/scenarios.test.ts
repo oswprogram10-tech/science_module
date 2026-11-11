@@ -9,6 +9,8 @@ import { CONTENT_DIR, TUTOR_DIR, TUTOR_UNITS, loadUnits, scenarioFile } from './
 const units = loadUnits();
 /** 카드 분류 두 번째 활동을 더한 단원 넷(1차 묶음). */
 const CARD_SORT_BATCH_A = ['g3-animal', 'g3-plantlife', 'g4-ecosystem', 'g5-strata'];
+/** 카드 분류 활동을 더한 단원 넷(3차 묶음). 물체와 물질·물의 상태 변화는 두 번째, 땅의 변화·물질의 연소는 세 번째 활동이다. */
+const CARD_SORT_BATCH_C = ['g3-material', 'g4-water-state', 'g4-land', 'g6-combustion'];
 /** 활동을 더하기 전 HEAD의 ml/tutor/scenarios/g5-mixture.jsonl 20줄(줄바꿈으로 이은 글자)의 SHA-256. */
 const FIRST_ACTIVITY_SHA = '2b7ef4f3ed95a95828bffbfa1152bfba63813d89cf63d67f5c85b7259dd8a85e';
 
@@ -45,7 +47,7 @@ describe('활동이 여럿인 단원의 시나리오(id 안정성)', () => {
   });
   it('활동이 하나인 단원은 활동마다 시나리오를 한 번만 만들고 모두 첫 활동 것이다', () => {
     for (const id of TUTOR_UNITS) {
-      if (id === 'g5-mixture' || id === 'g4-land' || id === 'g3-earth-sea' || id === 'g5-weather' || id === 'g3-force' || id === 'g3-sound' || id === 'g4-magnet' || id === 'g5-solution' || id === 'g5-heat' || id === 'g6-acid-base' || id === 'g6-motion' || id === 'g6-combustion' || CARD_SORT_BATCH_A.includes(id)) continue;
+      if (id === 'g5-mixture' || id === 'g4-land' || id === 'g3-earth-sea' || id === 'g5-weather' || id === 'g3-force' || id === 'g3-sound' || id === 'g4-magnet' || id === 'g5-solution' || id === 'g5-heat' || id === 'g6-acid-base' || id === 'g6-motion' || id === 'g6-combustion' || CARD_SORT_BATCH_A.includes(id) || CARD_SORT_BATCH_C.includes(id)) continue;
       const only = units[id]!.manifest.experiments;
       expect(only, id).toHaveLength(1);
       expect(new Set(generateScenarios(id, units[id]!).map((s) => s.state.experimentId)), id).toEqual(new Set([only[0]!.id]));
@@ -104,6 +106,43 @@ describe('카드 분류 두 번째 활동 넷의 시나리오(덧붙임)', () =>
       // 생태계 활동은 주관 기준이 없어 check-subjective 상황이 없다.
       const want = ['choose-criterion', 'pick-card', 'before-observe', 'sorting', 'check-unobserved', 'check-inconsistent', 'check-complete', 'finished', ...(id === 'g4-ecosystem' ? [] : ['check-subjective'])];
       for (const k of want) expect(keys.has(k), k).toBe(true);
+    });
+  }
+});
+
+describe('카드 분류 활동을 더한 단원 넷의 시나리오(3차 묶음, 덧붙임)', () => {
+  // [단원, 앞 활동 id들, 새 활동 id, 앞 활동 시나리오 수, 새 활동 시나리오 수, 새 활동을 더하기 전 jsonl 줄(줄바꿈으로 이은 글자)의 SHA-256]
+  // 물체와 물질·물의 상태 변화는 두 번째 활동, 땅의 변화·물질의 연소는 세 번째 활동이다(활동이 셋이어도 앞 활동 줄은 그대로다).
+  // 물질의 연소는 객관적 기준이 둘뿐이라 같은 상태가 겹치는 한 개를 덜고 23개다.
+  const CASES: Array<[string, string[], string, number, number, string]> = [
+    ['g3-material', ['material-sort'], 'matter-shape-volume', 24, 24, 'f6154152eb8aee2906a129eef15a461b314b0ad5f3914e9c5e0444492d373851'],
+    ['g4-water-state', ['freeze-melt'], 'water-around', 20, 24, 'f323859e372a3014c272306bfd01ecc1efbd55bbc41ef319691a1c9830f761ff'],
+    ['g4-land', ['magma-cooling', 'stream-table'], 'volcano-ejecta', 42, 24, '111ab08a1a93681846f90455ad0a31aeac8ed2b84b75114954fa6a84b7e9763f'],
+    ['g6-combustion', ['candle-jar', 'combustion-products'], 'property-change', 42, 23, '1d79d698086d8735a12b8cd5b0bb916459c243fc057e9a2307ec35b45ff54b51'],
+  ];
+  for (const [id, prev, newId, nPrev, nNew, sha] of CASES) {
+    const unit = units[id]!;
+    const list = generateScenarios(id, unit);
+    it(`${id}: 앞 활동(${prev.join('·')}) 시나리오 ${nPrev}줄은 ${newId}를 더하기 전과 한 글자도 같고, ${newId} 시나리오 ${nNew}개가 뒤에 덧붙는다`, () => {
+      expect(unit.manifest.experiments.map((e) => e.id)).toEqual([...prev, newId]);
+      expect(list.map((s) => s.scenarioId)).toEqual(list.map((_, i) => `${id}-s${String(i + 1).padStart(3, '0')}`));
+      expect(list).toHaveLength(nPrev + nNew);
+      expect(list.slice(0, nPrev).every((s) => prev.includes(s.state.experimentId))).toBe(true);
+      expect(list.slice(nPrev).every((s) => s.state.experimentId === newId)).toBe(true);
+      const first = list.slice(0, nPrev).map((s) => JSON.stringify(s)).join('\n');
+      expect(createHash('sha256').update(first).digest('hex')).toBe(sha);
+    });
+    it(`${id}: ml/tutor/scenarios/${id}.jsonl이 생성 결과와 같고 앞 ${nPrev}줄이 그대로다`, () => {
+      const text = readFileSync(scenarioFile(TUTOR_DIR, id), 'utf8');
+      expect(text).toBe(list.map((s) => JSON.stringify(s)).join('\n') + '\n');
+      expect(createHash('sha256').update(text.split('\n').slice(0, nPrev).join('\n')).digest('hex')).toBe(sha);
+    });
+    it(`${id}: 카드 분류의 상황이 시나리오에 있고 입력이 서로 겹치지 않는다`, () => {
+      const exp = unit.manifest.experiments[unit.manifest.experiments.length - 1]!;
+      const added = list.slice(nPrev);
+      const keys = new Set(added.map((s) => situationOf(s.state, exp)));
+      for (const k of ['choose-criterion', 'pick-card', 'before-observe', 'sorting', 'check-subjective', 'check-unobserved', 'check-inconsistent', 'check-complete', 'finished']) expect(keys.has(k), k).toBe(true);
+      expect(new Set(added.map((s) => JSON.stringify(s.state))).size).toBe(added.length);
     });
   }
 });
@@ -204,21 +243,22 @@ describe('변인 실험 두 번째 활동을 더한 단원의 시나리오(물�
     const u = units[c.id]!;
     const list = generateScenarios(c.id, u);
     it(`${c.id}: 첫 활동(${c.first}) 시나리오 s001~s${String(c.n).padStart(3, '0')}은 활동 2를 더하기 전과 한 글자도 같고, ${c.second} 시나리오가 뒤에 덧붙는다`, () => {
-      expect(u.manifest.experiments.map((e) => e.id)).toEqual([c.first, c.second]);
+      // 물질의 연소는 이 뒤에 카드 분류 세 번째 활동(property-change)이 더해졌다. 활동 1·2의 줄(앞 total줄)만 본다.
+      expect(u.manifest.experiments.slice(0, 2).map((e) => e.id)).toEqual([c.first, c.second]);
       expect(list.map((s) => s.scenarioId)).toEqual(list.map((_, i) => `${c.id}-s${String(i + 1).padStart(3, '0')}`));
-      expect(list).toHaveLength(c.total);
+      expect(list.length).toBeGreaterThanOrEqual(c.total);
       expect(list.slice(0, c.n).every((s) => s.state.experimentId === c.first)).toBe(true);
-      expect(list.slice(c.n).every((s) => s.state.experimentId === c.second)).toBe(true);
+      expect(list.slice(c.n, c.total).every((s) => s.state.experimentId === c.second)).toBe(true);
       const first = list.slice(0, c.n).map((s) => JSON.stringify(s)).join('\n');
       expect(createHash('sha256').update(first).digest('hex')).toBe(c.sha);
       // 저장소 파일의 앞 줄도 같다(덧붙이기만 했다).
       const file = readFileSync(scenarioFile(TUTOR_DIR, c.id), 'utf8').trimEnd().split('\n');
       expect(createHash('sha256').update(file.slice(0, c.n).join('\n')).digest('hex')).toBe(c.sha);
-      expect(file).toHaveLength(c.total);
+      expect(file.length).toBeGreaterThanOrEqual(c.total);
     });
     it(`${c.id}: 활동 2의 모든 상황(실행 전·첫 시행·함께 바뀜·바꿀 조건 그대로·반복·공정한 비교·예측 불일치)이 시나리오에 있다`, () => {
       const exp = u.manifest.experiments[1]!;
-      const keys = new Set(list.slice(c.n).map((s) => situationOf(s.state, exp)));
+      const keys = new Set(list.slice(c.n, c.total).map((s) => situationOf(s.state, exp)));
       for (const k of ['before-run', 'first-trial', 'confounded', 'iv-unchanged', 'repeat', 'fair-test', 'prediction-mismatch']) expect(keys.has(k), k).toBe(true);
     });
   }

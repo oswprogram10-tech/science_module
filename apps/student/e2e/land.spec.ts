@@ -10,6 +10,8 @@ import {
   resultRows,
   confirmSafetyDialog,
   sensor,
+  defineSortSuite,
+  VOLCANO_EJECTA_CFG,
 } from './helpers';
 
 const tutorBox = (page: Page) => page.getByRole('heading', { name: '생각해 볼까요?' }).locator('..');
@@ -324,3 +326,7 @@ test.describe('1280x800 화면', () => {
     }
   });
 });
+
+// ---- 땅의 변화 세 번째 활동: 화산에서 나오는 것 나누기(카드 분류 groups, 활동 탭 3개) ----
+
+defineSortSuite(VOLCANO_EJECTA_CFG);

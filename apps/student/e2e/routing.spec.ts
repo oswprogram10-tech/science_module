@@ -120,11 +120,14 @@ test('예전 주소 #/unit/g3-earth-sea는 이제 새 「지구와 바다」 단
 
 // ---- 한 단원에 여러 활동 ----
 
-test('단원 목록 카드: 활동이 둘인 힘과 우리 생활, 소리의 성질, 자석의 이용, 용해와 용액, 열과 우리 생활, 산과 염기, 물체의 운동, 물질의 연소, 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활, 동물의 생활, 식물의 생활, 생물과 환경, 지층과 화석만 "활동 2개"를 보이고 카드는 단원당 하나다', async ({ page }) => {
+test('단원 목록 카드: 활동이 셋인 땅의 변화·물질의 연소는 "활동 3개", 활동이 둘인 물체와 물질, 물의 상태 변화, 힘과 우리 생활, 소리의 성질, 자석의 이용, 용해와 용액, 열과 우리 생활, 산과 염기, 물체의 운동, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활, 동물의 생활, 식물의 생활, 생물과 환경, 지층과 화석만 "활동 2개"를 보이고 카드는 단원당 하나다', async ({ page }) => {
   await page.goto('/');
   const cards = page.getByRole('button', { name: /탐구 질문:/ });
   await expect(cards).toHaveCount(32);
-  await expect(page.getByText(/^활동 \d+개$/)).toHaveCount(16);
+  await expect(page.getByText(/^활동 \d+개$/)).toHaveCount(18);
+  // 활동이 셋인 땅의 변화·물질의 연소(카드 분류 세 번째 활동)는 "활동 3개", 나머지 열여섯 곳은 "활동 2개"다.
+  await expect(page.getByText('활동 3개')).toHaveCount(2);
+  await expect(page.getByText('활동 2개')).toHaveCount(16);
   // 변인 실험을 두 번째 활동으로 더한 세 단원: 카드의 탐구 질문은 첫 활동의 것이다.
   for (const [grade, title, question] of [
     ['3학년', /힘과 우리 생활/, '막대의 수평을 잡으려면'],
@@ -136,7 +139,6 @@ test('단원 목록 카드: 활동이 둘인 힘과 우리 생활, 소리의 성
     ['6학년', /산과 염기/, '지시약을 이용하면 여러 가지 용액을 어떻게 분류할 수 있을까?'],
     // 시간에 따른 위치 변화·연소 전과 후 비교하기를 두 번째 활동으로 더한 두 단원(첫 활동의 탐구 질문이 카드에 나온다)
     ['6학년', /물체의 운동/, '수레를 놓는 높이를 바꾸면'],
-    ['6학년', /물질의 연소/, '촛불을 집기병으로 덮으면'],
   ] as const) {
     const card = page.getByRole('region', { name: grade }).getByRole('button', { name: title });
     await expect(card).toHaveCount(1);
@@ -144,7 +146,26 @@ test('단원 목록 카드: 활동이 둘인 힘과 우리 생활, 소리의 성
     await expect(card).toContainText(question);
   }
   await expect(page.getByRole('region', { name: '3학년' }).getByRole('button', { name: /지구와 바다/ })).toContainText('활동 2개');
-  await expect(page.getByRole('region', { name: '4학년' }).getByRole('button', { name: /땅의 변화/ })).toContainText('활동 2개');
+  for (const [grade, name, q] of [
+    ['6학년', /물질의 연소/, '촛불을 집기병으로 덮으면'],
+    ['4학년', /땅의 변화/, ''],
+  ] as const) {
+    const card = page.getByRole('region', { name: grade }).getByRole('button', { name });
+    await expect(card).toHaveCount(1);
+    await expect(card).toContainText('활동 3개');
+    await expect(card).not.toContainText('활동 2개');
+    if (q) await expect(card).toContainText(q);
+  }
+  // 카드 분류 활동을 더한 물체와 물질·물의 상태 변화(활동 2개, 탐구 질문은 첫 활동의 것이다).
+  for (const [grade, name, q] of [
+    ['3학년', /물체와 물질/, '물체를 이루는 물질의 성질에 따라 물체를 어떻게 분류할 수 있을까?'],
+    ['4학년', /물의 상태 변화/, '물이 얼거나 얼음이 녹을 때 부피와 무게는 어떻게 달라질까?'],
+  ] as const) {
+    const card = page.getByRole('region', { name: grade }).getByRole('button', { name });
+    await expect(card).toHaveCount(1);
+    await expect(card).toContainText('활동 2개');
+    await expect(card).toContainText(q);
+  }
   const weather = page.getByRole('region', { name: '5학년' }).getByRole('button', { name: /날씨와 우리 생활/ });
   await expect(weather).toHaveCount(1);
   await expect(weather).toContainText('활동 2개');
@@ -237,7 +258,8 @@ test('#/unit/{id}/{experimentId}로 변인 실험 두 번째 활동(시간에 �
   ] as const) {
     await page.goto(`/#/unit/${id}`);
     await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
-    await expect(page.getByRole('tab')).toHaveCount(2);
+    // 물질의 연소는 카드 분류 세 번째 활동이 더해져 탭이 셋이다.
+    await expect(page.getByRole('tab')).toHaveCount(id === 'g6-combustion' ? 3 : 2);
     await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByText(firstText)).toBeVisible();
     await page.goto(`/#/unit/${id}/${first}`);
@@ -327,8 +349,37 @@ test('키보드로 탭을 옮긴다: 화살표, Home, End', async ({ page }) => 
   await expect(activityTab(page, 2)).toHaveText(`활동 2 · ${MIXTURE_SORT_TITLE}`);
 });
 
+test('활동이 셋인 땅의 변화: 탭 셋, 세 번째 활동 주소, 화살표·Home·End로 옮긴다', async ({ page }) => {
+  await page.goto('/#/unit/g4-land');
+  await expect(page.getByRole('tab')).toHaveCount(3);
+  await activityTab(page, 3).click();
+  await expect(page).toHaveURL(/#\/unit\/g4-land\/volcano-ejecta$/);
+  await expect(activityTab(page, 3)).toHaveAttribute('aria-selected', 'true');
+  await expect(activityTab(page, 3)).toHaveText('활동 3 · 화산에서 나오는 것 나누기');
+  await expect(page.getByText('탐구 질문: 화산이 폭발하면 어떤 물질이 나올까?')).toBeVisible();
+  await expect(activityTab(page, 1)).toHaveAttribute('tabindex', '-1');
+  await expect(activityTab(page, 2)).toHaveAttribute('tabindex', '-1');
+  await activityTab(page, 3).focus();
+  await page.keyboard.press('ArrowRight'); // 끝에서 처음으로
+  await expect(activityTab(page, 1)).toBeFocused();
+  await expect(page).toHaveURL(/#\/unit\/g4-land\/magma-cooling$/);
+  await page.keyboard.press('ArrowRight');
+  await expect(activityTab(page, 2)).toBeFocused();
+  await expect(page).toHaveURL(/#\/unit\/g4-land\/stream-table$/);
+  await page.keyboard.press('End');
+  await expect(activityTab(page, 3)).toBeFocused();
+  await page.keyboard.press('Home');
+  await expect(activityTab(page, 1)).toBeFocused();
+  await page.keyboard.press('ArrowLeft'); // 처음에서 끝으로
+  await expect(activityTab(page, 3)).toBeFocused();
+  // 물질의 연소도 활동 셋이다.
+  await page.goto('/#/unit/g6-combustion/property-change');
+  await expect(page.getByRole('tab')).toHaveCount(3);
+  await expect(activityTab(page, 3)).toHaveAttribute('aria-selected', 'true');
+});
+
 test('활동이 하나인 단원은 탭을 그리지 않고 머리 바로 아래가 본문이다(구조 그대로)', async ({ page }) => {
-  for (const id of ['g4-gases', 'g3-material', 'g4-night-sky', 'g6-career']) {
+  for (const id of ['g4-gases', 'g4-night-sky', 'g6-career']) {
     await gotoUnit(page, id);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await expect(page.getByRole('tablist'), id).toHaveCount(0);
@@ -353,7 +404,6 @@ test('활동이 둘인 단원은 머리 바로 아래에 탭이 있다', async (
 const BASELINE_DOM: Record<string, string> = {
   'g4-gases': '88a2f9af0f667dc4e24ed3a4e713a33551ad13e9906629f9ab60a4c7f43c7bbb',
   // 용해와 용액(5a419295…)과 산과 염기(82cf6aa6…)는 두 번째 활동을 더해 활동 탭이 생겼으므로 이 목록에서 뺐다(옛 값은 TABBED_DOM 설명에). 두 번째 활동을 되돌리면 두 값이 그대로 다시 나옴을 확인했다.
-  'g3-material': 'ccfbecacc9872a8c06aa62ccb273a21781f1841ae715a1fec7b80ca7528e94aa',
   // 진로 단원 안 "기록장 켜기" 버튼(1단계)과 안내 한 문장을 더한 뒤의 값. 그 둘을 되돌리면 앞의 값(8483518f…)과 같음을 확인했다.
   'g6-career': '42ee7d70874a9f08c896311d310ecb85e56fd2ed61ec90f1868ad02606bed06f',
 };
@@ -365,6 +415,8 @@ const BASELINE_DOM: Record<string, string> = {
  * 변인 실험 두 번째 활동을 더한 용해와 용액·산과 염기도 같다(옛 값은 용해와 용액 5a419295…, 산과 염기 82cf6aa6…).
  */
 const TABBED_DOM: Record<string, string> = {
+  // 물체와 물질은 카드 분류 두 번째 활동(모양과 부피로 물질 나누기)을 더해 활동 탭이 생겼다. 옛 값은 ccfbecac…이었다.
+  'g3-material': '2d97f041ecb3aad719e4fc6e6aa5494dba62ea18b37e0ff09d4b7131e59d9cc4',
   'g3-animal': '90e53c3aa7bda823a380c9f0a8f31192bfaa143092158edfe2ce65836bf48217',
   'g5-strata': '1e3d8f571fcc15ee89a343380d19b6d1548a400ab1457cdc79cc0966a5ed01f7',
   'g3-plantlife': '1c312401ae692c183cb52f7fab8de4c23b1ac16838e8e7360abed699a45eaa22',

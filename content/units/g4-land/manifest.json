@@ -2,7 +2,7 @@
   "id": "g4-land",
   "title": "땅의 변화",
   "grade": 4,
-  "standards": ["4과11-01", "4과11-03"],
+  "standards": ["4과11-01", "4과11-02", "4과11-03"],
   "engine": "earth",
   "experiments": [
     {
@@ -192,6 +192,306 @@
           { "when": "fair-test", "iv": "slope", "text": "기울기만 바꾸었어요. 물이 흐르는 빠르기는 어떻게 달라 보였나요? 흙 알갱이 그림도 살펴볼까요?" },
           { "when": "fair-test", "iv": "vessel", "text": "그릇만 바꾸었을 때 결과가 달라졌나요? 이 결과로 무엇을 알 수 있을까요?" },
           { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 깎인 흙과 쌓인 흙은 각각 어디로 갔을지 그림에서 찾아볼까요?" }
+        ]
+      }
+    },
+    {
+      "id": "volcano-ejecta",
+      "module": "card-sort",
+      "layout": "groups",
+      "title": "화산에서 나오는 것 나누기",
+      "question": "화산이 폭발하면 어떤 물질이 나올까?",
+      "features": [
+        {
+          "key": "source",
+          "label": "나온 곳",
+          "action": "사진 설명 읽기"
+        },
+        {
+          "key": "shape",
+          "label": "모양",
+          "action": "돋보기로 보기"
+        },
+        {
+          "key": "flow",
+          "label": "흘러내림",
+          "action": "흘러가는 모습 지켜보기"
+        }
+      ],
+      "criteria": [
+        {
+          "key": "source",
+          "label": "어디에서 나왔나요?",
+          "feature": "source",
+          "objective": true,
+          "groups": [
+            {
+              "value": "real",
+              "label": "실제 화산"
+            },
+            {
+              "value": "model",
+              "label": "화산 모형"
+            }
+          ]
+        },
+        {
+          "key": "shape",
+          "label": "알갱이나 조각 하나하나의 모양이 일정한가요?",
+          "feature": "shape",
+          "objective": true,
+          "groups": [
+            {
+              "value": "keep",
+              "label": "일정하다"
+            },
+            {
+              "value": "change",
+              "label": "일정하지 않다"
+            }
+          ]
+        },
+        {
+          "key": "flow",
+          "label": "땅 위를 따라 흘러내리나요?",
+          "feature": "flow",
+          "objective": true,
+          "groups": [
+            {
+              "value": "yes",
+              "label": "흘러내린다"
+            },
+            {
+              "value": "no",
+              "label": "흘러내리지 않는다"
+            }
+          ]
+        },
+        {
+          "key": "scary",
+          "label": "무서워 보이나요?",
+          "objective": false,
+          "groups": [
+            {
+              "value": "scary",
+              "label": "무서워 보인다"
+            },
+            {
+              "value": "notScary",
+              "label": "무서워 보이지 않는다"
+            }
+          ]
+        }
+      ],
+      "cards": [
+        {
+          "key": "gas",
+          "label": "화산 가스",
+          "icon": "vc-gas",
+          "features": {
+            "source": "real",
+            "shape": "change",
+            "flow": "no"
+          },
+          "observations": {
+            "source": "화산 꼭대기의 입구에서 뿜어 나오는 것을 찍은 사진이에요.",
+            "shape": "뿜어 나오며 모양이 계속 바뀌고, 퍼지면서 점점 흐려져요.",
+            "flow": "하늘로 올라가고 땅 위를 따라 흘러내리지 않아요."
+          }
+        },
+        {
+          "key": "lava",
+          "label": "용암",
+          "icon": "vc-lava",
+          "features": {
+            "source": "real",
+            "shape": "change",
+            "flow": "yes"
+          },
+          "observations": {
+            "source": "화산 꼭대기에서 솟아 나온 것을 찍은 사진이에요.",
+            "shape": "붉게 빛나며 계속 모양이 바뀌어요.",
+            "flow": "산비탈을 따라 천천히 흘러내려요."
+          }
+        },
+        {
+          "key": "ash",
+          "label": "화산재",
+          "icon": "vc-ash",
+          "features": {
+            "source": "real",
+            "shape": "keep",
+            "flow": "no"
+          },
+          "observations": {
+            "source": "화산이 폭발한 뒤 마을에 쌓인 것을 찍은 사진이에요.",
+            "shape": "돋보기로 보면 작고 거친 알갱이가 하나하나 모양을 가지고 있어요.",
+            "flow": "하늘에서 내려와 쌓이고, 땅 위를 따라 흘러내리지 않아요."
+          }
+        },
+        {
+          "key": "rockPiece",
+          "label": "화산 암석 조각",
+          "icon": "vc-rock",
+          "features": {
+            "source": "real",
+            "shape": "keep",
+            "flow": "no"
+          },
+          "observations": {
+            "source": "화산이 폭발한 뒤 산비탈에 떨어져 있던 것을 찍은 사진이에요.",
+            "shape": "돋보기로 보면 구멍이 숭숭 뚫린 단단한 조각이고 모양이 그대로예요.",
+            "flow": "산비탈에 놓여 있고 땅 위를 따라 흘러내리지 않아요."
+          }
+        },
+        {
+          "key": "mSmoke",
+          "label": "모형 꼭대기의 연기",
+          "icon": "vc-m-smoke",
+          "features": {
+            "source": "model",
+            "shape": "change",
+            "flow": "no"
+          },
+          "observations": {
+            "source": "녹는 재료로 만든 화산 모형을 데울 때 찍은 사진이에요.",
+            "shape": "모형 꼭대기에서 올라오며 모양이 계속 바뀌어요.",
+            "flow": "위로 올라가고 모형 옆면을 따라 흘러내리지 않아요."
+          }
+        },
+        {
+          "key": "mLava",
+          "label": "모형 옆으로 흘러내린 녹은 것",
+          "icon": "vc-m-flow",
+          "features": {
+            "source": "model",
+            "shape": "change",
+            "flow": "yes"
+          },
+          "observations": {
+            "source": "녹는 재료로 만든 화산 모형을 데울 때 찍은 사진이에요.",
+            "shape": "흐르는 동안 모양이 계속 바뀌어요.",
+            "flow": "모형 옆면을 따라 흘러내려요."
+          }
+        },
+        {
+          "key": "mPiece",
+          "label": "모형 둘레에 식어 굳은 조각",
+          "icon": "vc-m-piece",
+          "features": {
+            "source": "model",
+            "shape": "keep",
+            "flow": "no"
+          },
+          "observations": {
+            "source": "녹는 재료로 만든 화산 모형이 식은 뒤 모형 둘레를 찍은 사진이에요.",
+            "shape": "돋보기로 보면 단단하게 굳은 조각이고 모양이 그대로예요.",
+            "flow": "모형 둘레에 놓여 있고 흘러내리지 않아요."
+          }
+        },
+        {
+          "key": "mPowder",
+          "label": "모형 둘레에 흩어진 가루",
+          "icon": "vc-m-powder",
+          "features": {
+            "source": "model",
+            "shape": "keep",
+            "flow": "no"
+          },
+          "observations": {
+            "source": "녹는 재료로 만든 화산 모형을 데운 뒤 모형 둘레를 찍은 사진이에요.",
+            "shape": "돋보기로 보면 작은 알갱이 하나하나의 모양이 그대로예요.",
+            "flow": "모형 둘레에 쌓여 있고 흘러내리지 않아요."
+          }
+        }
+      ],
+      "limits": [
+        "마그마의 성분",
+        "이산화 황",
+        "판 구조",
+        "섭씨 1000"
+      ],
+      "safetyChecklist": [],
+      "safetyNotices": [],
+      "tutor": {
+        "forbiddenAnswers": [
+          "용암은 액체",
+          "용암이 액체",
+          "용암도 액체",
+          "용암은 고체",
+          "용암은 기체",
+          "화산 가스는 기체",
+          "화산 가스가 기체",
+          "화산 가스도 기체",
+          "화산가스는 기체",
+          "화산재는 고체",
+          "화산재가 고체",
+          "화산재도 고체",
+          "암석 조각은 고체",
+          "암석 조각이 고체",
+          "암석 조각도 고체",
+          "모형의 연기는 화산 가스",
+          "모형의 연기가 화산 가스",
+          "모형 연기는 화산 가스",
+          "연기는 화산 가스",
+          "연기가 화산 가스",
+          "연기는 기체",
+          "흘러내린 것은 용암",
+          "흘러내린 것이 용암",
+          "녹은 것은 용암",
+          "녹은 것이 용암",
+          "흘러내린 녹은 것은 용암",
+          "무서워 보이나는 분류 기준이 될 수 없",
+          "무서워 보이나는 분류 기준이 아니",
+          "무서워 보이나는 기준이 될 수 없",
+          "무서워 보이는지는 분류 기준이 될 수 없",
+          "무서워 보이는지는 분류 기준이 아니",
+          "무서워 보이는지는 기준이 될 수 없",
+          "무서워 보이는 것은 분류 기준이 될 수 없",
+          "무서워 보이는 것은 분류 기준이 아니",
+          "무서워 보이는 것은 기준이 될 수 없"
+        ],
+        "probes": [
+          {
+            "when": "choose-criterion",
+            "text": "카드들을 어떤 기준으로 나누어 볼까요? 누가 나누어도 같은 결과가 나오는 기준을 골라 보세요."
+          },
+          {
+            "when": "pick-card",
+            "text": "어떤 카드부터 살펴볼까요? 카드를 하나 골라 보세요."
+          },
+          {
+            "when": "before-observe",
+            "text": "{card}을(를) 무리에 넣기 전에 '{criterion}'에 맞는 특징을 먼저 살펴볼까요?"
+          },
+          {
+            "when": "sorting",
+            "text": "{card}의 관찰 내용을 보고 어느 무리에 넣을지 정해 볼까요? 왜 그 무리라고 생각했나요?"
+          },
+          {
+            "when": "check-subjective",
+            "text": "'{criterion}'로 나누면 친구와 내 결과가 같을까요? 누가 나누어도 같게 나오는 기준인지 생각해 볼까요?"
+          },
+          {
+            "when": "check-unplaced",
+            "text": "아직 무리에 넣지 않은 카드가 있어요. 모든 카드를 넣어 볼까요?"
+          },
+          {
+            "when": "check-unobserved",
+            "text": "{card}은(는) 아직 살펴보지 않았어요. 돋보기로 특징을 먼저 관찰해 볼까요?"
+          },
+          {
+            "when": "check-inconsistent",
+            "text": "{card}에서 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?"
+          },
+          {
+            "when": "check-complete",
+            "text": "관찰한 특징과 분류가 잘 맞아요. 이번에는 다른 기준으로도 나누어 볼까요?"
+          },
+          {
+            "when": "finished",
+            "text": "모형에서 본 것과 실제 화산에서 나오는 것은 어떤 점이 같고, 어떤 점이 다를까요?"
+          }
         ]
       }
     }

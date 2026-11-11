@@ -2,3 +2,5 @@
 {"id":"g3-material-sft-0002","unitId":"g3-material","scenarioId":"g3-material-s007","utterance":"고무줄은 늘어나니까 알 것 같아요.","source":"example","reviewed":false,"author":"EX","response":"고무줄이 어느 무리일지 이미 떠올렸군요. 구부려 보기를 눌러 직접 시험하면 어떤 모습이 보이나요?"}
 {"id":"g3-material-sft-0003","unitId":"g3-material","scenarioId":"g3-material-s015","utterance":"다 넣었는데 확인이 안 돼요.","source":"example","reviewed":false,"author":"EX","response":"물체를 모두 넣었네요. 물을 떨어뜨려 보지 않은 물체가 어느 것인지 시험 기록에서 찾아볼까요?"}
 {"id":"g3-material-sft-0004","unitId":"g3-material","scenarioId":"g3-material-s018","utterance":"시험은 다 했는데 틀린 게 있대요.","source":"example","reviewed":false,"author":"EX","response":"시험한 결과와 다른 무리에 들어간 물체가 있다고 해요. 물을 떨어뜨렸을 때의 모습을 물체마다 다시 살펴볼까요?"}
+{"id":"g3-material-sft-0005","unitId":"g3-material","scenarioId":"g3-material-s027","utterance":"모양으로 나눌래요. 뭐부터 해요?","source":"example","reviewed":false,"author":"EX","response":"모양으로 나누려는군요. 어떤 카드부터 골라서 넓은 그릇과 좁은 그릇에 옮겨 볼까요?"}
+{"id":"g3-material-sft-0006","unitId":"g3-material","scenarioId":"g3-material-s046","utterance":"두 기준으로 다 나눴어요. 이제 뭐 해요?","source":"example","reviewed":false,"author":"EX","response":"두 기준으로 나누어 보았네요. 두 기준으로 나눈 무리를 겹쳐 보면 몇 무리가 생길까요?"}
