@@ -2,7 +2,7 @@
   "id": "g3-sound",
   "title": "소리의 성질",
   "grade": 3,
-  "standards": ["4과07-02"],
+  "standards": ["4과07-01", "4과07-02"],
   "engine": "physics",
   "experiments": [
     {
@@ -72,6 +72,108 @@
           { "when": "fair-test", "iv": "strength", "text": "튕기는 세기만 바꾸었어요. 물결의 높이와 물결의 개수 가운데 무엇이 달라졌나요? 소리의 크기 눈금도 함께 볼까요?" },
           { "when": "fair-test", "iv": "lengthCm", "text": "줄의 길이만 바꾸었어요. 같은 시간 동안 물결이 몇 개 있었나요? 소리는 어떻게 들렸을까요?" },
           { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 떨림 모양 그래프에서 앞 시행의 흐린 선과 물결 개수를 세어 비교해 볼까요?" }
+        ]
+      }
+    },
+    {
+      "id": "sound-vibration",
+      "module": "sound-vibration",
+      "title": "소리 나는 물체의 떨림",
+      "question": "소리가 나는 물체에는 어떤 공통점이 있을까?",
+      "predictionPrompt": "예측: 물체 위 좁쌀은 어떻게 될까?",
+      "variables": [
+        {
+          "key": "sound",
+          "label": "소리 내기",
+          "type": "choice",
+          "options": [
+            { "value": "off", "label": "소리를 내지 않음" },
+            { "value": "on", "label": "소리를 냄" }
+          ],
+          "default": "off"
+        },
+        {
+          "key": "loud",
+          "label": "소리의 세기",
+          "type": "choice",
+          "options": [
+            { "value": "weak", "label": "약하게" },
+            { "value": "strong", "label": "세게" }
+          ],
+          "default": "weak"
+        },
+        {
+          "key": "object",
+          "label": "물체",
+          "type": "choice",
+          "options": [
+            { "value": "drum", "label": "작은북" },
+            { "value": "fork", "label": "소리굽쇠" },
+            { "value": "speaker", "label": "스피커" }
+          ],
+          "default": "drum"
+        },
+        {
+          "key": "seed",
+          "label": "좁쌀 색",
+          "type": "choice",
+          "options": [
+            { "value": "yellow", "label": "노란 좁쌀" },
+            { "value": "white", "label": "흰 좁쌀" }
+          ],
+          "default": "yellow"
+        }
+      ],
+      "dependent": [
+        { "key": "bounce", "label": "좁쌀이 튄 높이", "unit": "mm" },
+        { "key": "level", "label": "소리의 크기", "unit": "눈금" }
+      ],
+      "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
+      "safety": [],
+      "safetyNotices": [],
+      "limits": ["진동수", "진폭", "파동", "헤르츠", "데시벨"],
+      "tutor": {
+        "forbiddenAnswers": [
+          "소리가 나는 물체는 떨",
+          "소리 나는 물체는 떨",
+          "소리 나는 물체는 모두 떨",
+          "소리가 나는 물체는 모두 떨",
+          "소리가 나면 물체가 떨",
+          "소리가 날 때 물체가 떨",
+          "소리를 내면 물체가 떨",
+          "소리를 멈추면 떨림이 멈",
+          "소리가 멈추면 떨림이 멈",
+          "떨림이 멈추면 소리",
+          "세게 칠수록 많이 떨",
+          "세게 치면 더 많이 떨",
+          "세게 칠수록 떨림이",
+          "떨림이 클수록 소리가 크",
+          "떨림이 클수록 소리가 커",
+          "떨림이 클수록 소리도 커",
+          "떨림이 클수록 소리가 큽",
+          "떨림이 크면 소리가 큽",
+          "떨림이 크면 소리가 크",
+          "떨림이 크면 소리가 커",
+          "떨림이 크면 소리도 커",
+          "떨림이 커질수록",
+          "좁쌀 색은 관계없",
+          "좁쌀 색은 상관없",
+          "좁쌀 색은 영향이 없",
+          "좁쌀 색과 관계없",
+          "좁쌀 색이 달라도"
+        ],
+        "probes": [
+          { "when": "before-run", "text": "{iv}을(를) 바꾸면 물체 위의 좁쌀이 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?" },
+          { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?" },
+          { "when": "confounded", "text": "{changed}이(가) 함께 바뀌었어요. 좁쌀이 달리 움직인 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
+          { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },
+          { "when": "repeat", "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
+          { "when": "fair-test", "text": "{iv}만 바꾸었을 때 좁쌀이 튄 높이와 소리의 크기는 각각 어떻게 달라졌나요? 눈으로 보기 그림과 그래프를 함께 볼까요?" },
+          { "when": "fair-test", "iv": "sound", "text": "소리 내기만 바꾸었어요. 두 경우에 물체 위의 좁쌀은 각각 어떻게 되었나요? 손을 대 보면 어떤 모습이 보이나요?" },
+          { "when": "fair-test", "iv": "loud", "text": "소리의 세기만 바꾸었어요. 좁쌀이 튄 높이와 소리의 크기는 각각 어떻게 달라졌나요?" },
+          { "when": "fair-test", "iv": "object", "text": "물체만 바꾸었어요. 물체마다 좁쌀이 튄 높이가 같았나요? 소리의 크기도 함께 견주어 볼까요?" },
+          { "when": "fair-test", "iv": "seed", "text": "좁쌀 색만 바꾸었을 때 결과가 달라졌나요? 이 결과로 무엇을 알 수 있을까요?" },
+          { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 그래프에서 좁쌀 높이가 가장 높은 때를 찾고, 그때 눈으로 보기 그림에서 좁쌀이 어디에 있는지 살펴볼까요?" }
         ]
       }
     }

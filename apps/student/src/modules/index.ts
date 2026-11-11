@@ -25,6 +25,9 @@ import { landSeaBreezeModule } from './land-sea-breeze';
 import { infectionSpreadModule } from './infection-spread';
 import { greenhouseBottleModule } from './greenhouse-bottle';
 import { solarPanelModule } from './solar-panel';
+import { leverLiftModule } from './lever-lift';
+import { soundVibrationModule } from './sound-vibration';
+import { magnetPolesModule } from './magnet-poles';
 
 export const MODULES: Record<ModuleKind, AnyModule> = {
   dissolution: dissolutionModule,
@@ -52,4 +55,7 @@ export const MODULES: Record<ModuleKind, AnyModule> = {
   'infection-spread': infectionSpreadModule,
   'greenhouse-bottle': greenhouseBottleModule,
   'solar-panel': solarPanelModule,
+  'lever-lift': leverLiftModule,
+  'sound-vibration': soundVibrationModule,
+  'magnet-poles': magnetPolesModule,
 };

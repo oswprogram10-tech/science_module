@@ -327,7 +327,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('힘과 우리 생활 매니페스트의 변인, 안전 종류, 금지 구절, 탐침을 읽는다', () => {
     const m = parseManifest(forceJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-force', 3, 'physics', ['4과01-02']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-force', 3, 'physics', ['4과01-02', '4과01-04']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('lever-balance');
     expect(e.safety).toEqual([]);
@@ -345,7 +345,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('소리의 성질 매니페스트의 변인, 안전 종류, 금지 구절, 한계 용어, 탐침을 읽는다', () => {
     const m = parseManifest(soundJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-sound', 3, 'physics', ['4과07-02']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-sound', 3, 'physics', ['4과07-01', '4과07-02']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('string-sound');
     expect(e.safety).toEqual([]);
@@ -364,7 +364,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('자석의 이용 매니페스트의 변인, 안전 종류와 점검표, 금지 구절, 한계 용어, 탐침을 읽는다', () => {
     const m = parseManifest(magnetJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-magnet', 4, 'physics', ['4과09-01']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-magnet', 4, 'physics', ['4과09-01', '4과09-02']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('magnet-distance');
     expect(e.safety).toEqual(['magnet']);
@@ -481,6 +481,62 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     for (const f of ['바닷물에는 소금이 녹아 있', '바닷물에는 소금이 들어 있', '바닷물에 소금이 녹아', '바닷물을 증발시키면 소금이 남', '바닷물은 하얀 가루가 남', '강물에는 소금이 거의 없', '강물은 아무것도 남지 않', '물이 많을수록 가루가 많이', '물을 많이 부을수록', '접시 모양은 관계없', '접시 모양은 상관없', '접시 모양은 영향이 없']) {
       expect(e.tutor.forbiddenAnswers, f).toContain(f);
     }
+  });
+
+  const WHENS = ['before-run', 'first-trial', 'confounded', 'iv-unchanged', 'repeat', 'fair-test', 'prediction-mismatch'];
+
+  it('힘과 우리 생활 활동 2(지레와 빗면으로 들어 올리기)의 변인, 측정, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(forceJson);
+    expect(m.experiments.map((x) => x.id)).toEqual(['lever-balance', 'lever-lift']);
+    const e = m.experiments[1] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['lever-lift', 'lever-lift', '지레와 빗면으로 들어 올리기', '도구를 쓰면 물체를 들어 올리는 힘이 어떻게 달라질까?', '예측: 용수철저울의 눈금은?']);
+    expect(e.safety).toEqual([]);
+    expect(e.variables.map((v) => v.key)).toEqual(['tool', 'armCm', 'color']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([['none', 'lever', 'ramp'], ['short', 'mid', 'long'], ['red', 'blue']]);
+    expect(e.variables.map((v) => v.default)).toEqual(['none', 'short', 'red']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['force', 'g'], ['pullCm', 'cm']]);
+    expect(e.gateway).toEqual({ mode: 'open', requirePrediction: true, requireSingleIV: true });
+    expect(e.limits).toEqual(['일의 원리', '에너지', '돌림힘', '모멘트', '마찰력', '뉴턴']);
+    for (const f of ['받침점에서 멀수록 힘이 적', '손이 받침점에서 멀수록', '빗면이 길수록 힘이 적', '빗면이 완만할수록', '지레를 쓰면 힘이 덜', '빗면을 쓰면 힘이 덜', '힘은 적게 드는 대신 더 많이 당', '색깔은 관계없', '색깔은 상관없']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['tool', 'armCm', 'color']);
+    // 첫 활동은 그대로다.
+    expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['count', 'distance', 'shape']);
+  });
+
+  it('소리의 성질 활동 2(소리 나는 물체의 떨림)의 변인, 측정, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(soundJson);
+    expect(m.experiments.map((x) => x.id)).toEqual(['string-sound', 'sound-vibration']);
+    const e = m.experiments[1] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['sound-vibration', 'sound-vibration', '소리 나는 물체의 떨림', '소리가 나는 물체에는 어떤 공통점이 있을까?', '예측: 물체 위 좁쌀은 어떻게 될까?']);
+    expect(e.safety).toEqual([]);
+    expect(e.variables.map((v) => v.key)).toEqual(['sound', 'loud', 'object', 'seed']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([['off', 'on'], ['weak', 'strong'], ['drum', 'fork', 'speaker'], ['yellow', 'white']]);
+    expect(e.variables.map((v) => v.default)).toEqual(['off', 'weak', 'drum', 'yellow']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['bounce', 'mm'], ['level', '눈금']]);
+    expect(e.limits).toEqual(['진동수', '진폭', '파동', '헤르츠', '데시벨']);
+    for (const f of ['소리가 나는 물체는 떨', '소리 나는 물체는 모두 떨', '소리를 멈추면 떨림이 멈', '떨림이 멈추면 소리', '세게 칠수록 많이 떨', '떨림이 클수록 소리가 크', '좁쌀 색은 관계없']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['sound', 'loud', 'object', 'seed']);
+    expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['strength', 'lengthCm', 'color']);
+  });
+
+  it('자석의 이용 활동 2(자석과 자석 사이)의 변인, 범주 결과, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(magnetJson);
+    expect(m.experiments.map((x) => x.id)).toEqual(['magnet-distance', 'magnet-poles']);
+    const e = m.experiments[1] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['magnet-poles', 'magnet-poles', '자석과 자석 사이', '자석과 자석을 가까이 하면 어떤 일이 생길까?', '예측: 오른쪽 자석이 움직인 거리는?']);
+    expect(e.safety).toEqual([]);
+    expect(e.variables.map((v) => v.key)).toEqual(['facing', 'gapCm', 'size', 'cover']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([['NN', 'NS', 'SS'], [1, 2, 4], ['small', 'large'], ['color', 'gray']]);
+    expect(e.variables.map((v) => v.default)).toEqual(['NS', 1, 'small', 'color']);
+    // 움직임은 범주 결과 칸이라 단위가 없다(전자석의 "못 머리 쪽의 극"과 같다).
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['motion', ''], ['moveCm', 'cm']]);
+    expect(e.limits).toEqual(['자기장', '자기력선', '테슬라', '인력', '척력']);
+    for (const f of ['같은 극끼리 밀', '같은 극끼리는 밀어', '다른 극끼리 끌', '다른 극끼리는 끌어', '가까울수록 세게', '멀수록 약해', '색칠은 관계없']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['facing', 'gapCm', 'size', 'cover']);
+    expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['gapCm', 'magnets', 'between']);
   });
 
   it('날씨와 우리 생활 매니페스트의 변인, 측정, 안전, 한계 용어, 탐침을 읽는다', () => {

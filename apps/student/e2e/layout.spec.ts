@@ -69,6 +69,33 @@ for (const vp of VIEWPORTS) {
       for (const right of tabs) expect(right).toBeLessThanOrEqual(vp.width + 1);
     });
 
+    // 변인 실험을 두 번째 활동으로 더한 세 단원(지레와 빗면, 소리 나는 물체의 떨림, 자석과 자석 사이): 활동 탭 포함 가로 스크롤이 없고 그림 셋이 폭 안에 들어온다.
+    for (const [id, experiment] of [['g3-force', 'lever-lift'], ['g3-sound', 'sound-vibration'], ['g4-magnet', 'magnet-poles']] as const) {
+      test(`${id} 두 번째 활동(${experiment}, 활동 탭 포함)에 가로 스크롤이 없다`, async ({ page }) => {
+        await gotoUnit(page, id, { experiment });
+        await expect(page.getByRole('tab', { name: /^활동 2 · / })).toBeVisible();
+        await expect(page.getByRole('link', { name: '← 단원 목록' })).toBeVisible();
+        const { sw, iw } = await scrollWidth(page);
+        expect(sw).toBeLessThanOrEqual(iw);
+        const tabs = await page.getByRole('tab').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().right));
+        for (const right of tabs) expect(right).toBeLessThanOrEqual(vp.width + 1);
+        // 눈으로 보기·둘째 그림·그래프 그림이 모두 화면 폭 안에 있다
+        const figures = await page.locator('.views svg').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().right));
+        expect(figures).toHaveLength(3);
+        for (const right of figures) expect(right).toBeLessThanOrEqual(vp.width + 1);
+        // 예측 문구가 실험 설계 패널 밖으로 넘치지 않는다
+        const overflow = await page.evaluate(() => {
+          const label = document.getElementById('predict-label');
+          const box = label?.closest('.predict');
+          if (!label || !box) return 0;
+          const range = document.createRange();
+          range.selectNodeContents(label);
+          return range.getBoundingClientRect().right - box.getBoundingClientRect().right;
+        });
+        expect(overflow).toBeLessThanOrEqual(1);
+      });
+    }
+
     // 한 단원에 여러 활동: 두 번째 활동(분리 방법 고르기)과 활동 탭도 가로 스크롤이 없다.
     test('g5-mixture 두 번째 활동(활동 탭 포함)에 가로 스크롤이 없다', async ({ page }) => {
       await gotoUnit(page, 'g5-mixture', { experiment: 'separation-methods' });
