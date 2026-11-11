@@ -724,8 +724,8 @@ for (const scheme of ['light', 'dark'] as const) {
     await page.emulateMedia({ colorScheme: scheme });
     // 단원 목록의 "활동 2개" 표시
     await page.goto('/');
-    // 활동이 둘인 단원은 힘과 우리 생활, 소리의 성질, 자석의 이용, 용해와 용액, 열과 우리 생활, 산과 염기, 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활 열 곳이다.
-    await expect(page.getByText('활동 2개')).toHaveCount(10);
+    // 활동이 둘인 단원은 힘과 우리 생활, 소리의 성질, 자석의 이용, 용해와 용액, 열과 우리 생활, 산과 염기, 물체의 운동, 물질의 연소, 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활 열두 곳이다.
+    await expect(page.getByText('활동 2개')).toHaveCount(12);
     await expect(page.getByText('활동 2개').first()).toBeVisible();
     await expectNoSeriousViolations(page);
     // 첫 활동 화면의 활동 탭
@@ -1677,6 +1677,77 @@ for (const scheme of ['light', 'dark'] as const) {
     await selectIV(page, '지시약');
     await setValue(page, '지시약', '페놀프탈레인 용액');
     await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+  });
+}
+
+// ---- 변인 실험 두 번째 활동: 시간에 따른 위치 변화, 연소 전과 후 비교하기 ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  const label = scheme === 'dark' ? '어두운 화면' : '밝은 화면';
+
+  test(`g6-motion 활동 2(시간에 따른 위치 변화) ${label}: 처음, 실행 뒤(자전거), 걷는 사람, 10초, 흐림`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g6-motion', { experiment: 'position-time' });
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '보는 물체');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('log-row')).toHaveCount(6);
+    await expectNoSeriousViolations(page);
+    await setValue(page, '보는 물체', '걷는 사람');
+    await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '관찰 시간');
+    await setValue(page, '관찰 시간', '10초');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('log-row')).toHaveCount(11);
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '날씨');
+    await setValue(page, '날씨', '흐림');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+  });
+
+  test(`g6-combustion 활동 2(연소 전과 후 비교하기) ${label}: 처음, 점검표, 실행 뒤(종이), 1분, 석회수 3분, 연한 파랑`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g6-combustion', { experiment: 'combustion-products' });
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '초를 태운 시간');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(page.getByRole('dialog', { name: '안전 점검표' })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await confirmSafetyDialog(page);
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('record-row')).toHaveCount(1);
+    await expectNoSeriousViolations(page);
+    await setValue(page, '초를 태운 시간', '1분');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    await setValue(page, '초를 태운 시간', '3분');
+    await setValue(page, '검사 방법', '석회수');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('lime-milk')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '집기병 색');
+    await setValue(page, '집기병 색', '연한 파랑');
+    await predict(page, '변하지 않는다');
     await page.getByRole('button', { name: '▶ 실험 실행' }).click();
     await expect(runButton(page)).toHaveText('▶ 실험 실행');
     await expectNoSeriousViolations(page);

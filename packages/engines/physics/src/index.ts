@@ -9,3 +9,4 @@ export * from './leverLift';
 export * from './soundVibration';
 export * from './magnetPoles';
 export * from './heatContact';
+export * from './positionTime';

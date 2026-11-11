@@ -275,9 +275,9 @@ describe('레지스트리 activities', () => {
       expect([u.activity, u.experiment, u.module], u.id).toEqual([first.activity, first.experiment, first.module]);
     }
   });
-  it('활동이 둘 이상인 단원은 g5-solution, g6-acid-base, g5-heat, g4-land, g3-force, g3-sound, g4-magnet, g5-mixture, g3-earth-sea, g5-weather뿐이다', () => {
+  it('활동이 둘 이상인 단원은 g5-solution, g6-acid-base, g6-combustion, g5-heat, g4-land, g3-force, g3-sound, g4-magnet, g6-motion, g5-mixture, g3-earth-sea, g5-weather뿐이다', () => {
     const multi = UNITS.filter((u) => u.ok && u.activities.length > 1).map((u) => u.id);
-    expect(multi).toEqual(['g5-solution', 'g6-acid-base', 'g5-heat', 'g4-land', 'g3-force', 'g3-sound', 'g4-magnet', 'g5-mixture', 'g3-earth-sea', 'g5-weather']);
+    expect(multi).toEqual(['g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat', 'g4-land', 'g3-force', 'g3-sound', 'g4-magnet', 'g6-motion', 'g5-mixture', 'g3-earth-sea', 'g5-weather']);
     // 변인 실험을 두 번째 활동으로 더한 세 단원(교육과정 4과01-04, 4과07-01, 4과09-02). 첫 활동은 그대로다.
     for (const [id, first, second, kind, standards] of [
       ['g3-force', 'lever-balance', 'lever-lift', 'lever-lift', ['4과01-02', '4과01-04']],
@@ -299,6 +299,18 @@ describe('레지스트리 activities', () => {
       expect(u.ok && u.activities.map((a) => [a.activity, a.experiment.id]), id).toEqual([[firstKind, first], ['variable', second]]);
       expect(u.ok && u.activities[1]!.module.kind, id).toBe(second);
       expect(u.ok && u.activity, id).toBe(firstKind);
+      expect(u.ok && u.experiment.id, id).toBe(first);
+      expect(u.ok && u.manifest.standards, id).toEqual(standards);
+    }
+    // 변인 실험을 두 번째 활동으로 더한 두 단원(교육과정 6과10-01, 6과14-03). 첫 활동은 그대로다.
+    for (const [id, first, second, standards] of [
+      ['g6-motion', 'ramp-cart', 'position-time', ['6과10-01', '6과10-02']],
+      ['g6-combustion', 'candle-jar', 'combustion-products', ['6과14-02', '6과14-03']],
+    ] as const) {
+      const u = UNITS.find((x) => x.id === id)!;
+      expect(u.ok && u.activities.map((a) => [a.activity, a.experiment.id]), id).toEqual([['variable', first], ['variable', second]]);
+      expect(u.ok && u.activities[1]!.module.kind, id).toBe(second);
+      expect(u.ok && u.activity, id).toBe('variable');
       expect(u.ok && u.experiment.id, id).toBe(first);
       expect(u.ok && u.manifest.standards, id).toEqual(standards);
     }
@@ -333,7 +345,7 @@ describe('활동 탭 화면', () => {
     expect(renderToStaticMarkup(createElement('div', null, createElement(ActivityTabsSlot)))).toBe('<div></div>');
     expect(renderToStaticMarkup(createElement(ActivityTabsContext.Provider, { value: null }, createElement('div', null, createElement(ActivityTabsSlot))))).toBe('<div></div>');
     // 활동이 하나인 단원은 탭을 만들 필요가 없다.
-    for (const u of UNITS) if (u.ok && u.id !== 'g5-mixture' && u.id !== 'g4-land' && u.id !== 'g3-earth-sea' && u.id !== 'g5-weather' && u.id !== 'g3-force' && u.id !== 'g3-sound' && u.id !== 'g4-magnet' && u.id !== 'g5-solution' && u.id !== 'g5-heat' && u.id !== 'g6-acid-base') expect(u.activities, u.id).toHaveLength(1);
+    for (const u of UNITS) if (u.ok && u.id !== 'g5-mixture' && u.id !== 'g4-land' && u.id !== 'g3-earth-sea' && u.id !== 'g5-weather' && u.id !== 'g3-force' && u.id !== 'g3-sound' && u.id !== 'g4-magnet' && u.id !== 'g5-solution' && u.id !== 'g5-heat' && u.id !== 'g6-acid-base' && u.id !== 'g6-motion' && u.id !== 'g6-combustion') expect(u.activities, u.id).toHaveLength(1);
   });
   it('탭은 tablist와 tab, aria-selected, "활동 n · 제목" 이름을 가진다', () => {
     const html = renderToStaticMarkup(

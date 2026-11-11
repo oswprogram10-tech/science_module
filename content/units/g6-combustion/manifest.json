@@ -2,7 +2,7 @@
   "id": "g6-combustion",
   "title": "물질의 연소",
   "grade": 6,
-  "standards": ["6과14-02"],
+  "standards": ["6과14-02", "6과14-03"],
   "engine": "matter",
   "experiments": [
     {
@@ -90,6 +90,93 @@
           { "when": "fair-test", "iv": "jarMl", "text": "집기병의 크기만 바꾸었을 때 걸린 시간이 달라졌어요. 집기병 안에 무엇이 더 많거나 적었을까요?" },
           { "when": "fair-test", "iv": "candleColor", "text": "초의 색깔만 바꾸었을 때 걸린 시간이 달라졌나요? 이 결과로 무엇을 알 수 있을까요?" },
           { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 그래프와 센서 값의 어느 부분을 보면 그 까닭을 찾을 수 있을까요?" }
+        ]
+      }
+    },
+    {
+      "id": "combustion-products",
+      "module": "combustion-products",
+      "title": "연소 전과 후 비교하기",
+      "question": "초가 타고 난 뒤에는 어떤 물질이 생길까?",
+      "predictionPrompt": "예측: 검사 결과의 변화 단계는?",
+      "variables": [
+        {
+          "key": "burnMin",
+          "label": "초를 태운 시간",
+          "type": "choice",
+          "unit": "분",
+          "options": [
+            { "value": 0, "label": "태우지 않음" },
+            { "value": 1, "label": "1분" },
+            { "value": 3, "label": "3분" }
+          ],
+          "default": 0
+        },
+        {
+          "key": "test",
+          "label": "검사 방법",
+          "type": "choice",
+          "options": [
+            { "value": "paper", "label": "푸른색 염화 코발트 종이" },
+            { "value": "limewater", "label": "석회수" }
+          ],
+          "default": "paper"
+        },
+        {
+          "key": "jar",
+          "label": "집기병 색",
+          "type": "choice",
+          "options": [
+            { "value": "clear", "label": "투명" },
+            { "value": "blue", "label": "연한 파랑" }
+          ],
+          "default": "clear"
+        }
+      ],
+      "dependent": [
+        { "key": "result", "label": "검사 결과", "unit": "" },
+        { "key": "cloud", "label": "석회수 뿌연 정도", "unit": "눈금" },
+        { "key": "shorterMm", "label": "초가 짧아진 길이", "unit": "mm" },
+        { "key": "stage", "label": "변화 단계", "unit": "단계" }
+      ],
+      "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
+      "safety": ["fire", "hot"],
+      "safetyChecklist": [
+        "긴 머리는 묶고, 소매가 불에 닿지 않게 했어요.",
+        "책상 위에 타기 쉬운 물건을 치웠어요.",
+        "불을 붙이거나 끌 때는 선생님과 함께해요."
+      ],
+      "safetyMessages": { "NO_GOGGLES": "불을 다루기 전에 보안경을 먼저 착용해 주세요!" },
+      "safetyNotices": [],
+      "limits": ["산화", "탄화수소", "화학 반응식", "수증기 응결"],
+      "tutor": {
+        "forbiddenAnswers": [
+          "물이 생겨",
+          "물이 생긴",
+          "물이 생겼",
+          "물이 생깁",
+          "이산화 탄소가 생겨",
+          "이산화 탄소가 생긴",
+          "이산화 탄소가 생겼",
+          "이산화 탄소가 생깁",
+          "물과 이산화 탄소",
+          "집기병 색은 관계없",
+          "집기병 색은 상관없",
+          "집기병 색은 영향이 없",
+          "집기병 색과 관계없",
+          "집기병 색이 달라도"
+        ],
+        "probes": [
+          { "when": "before-run", "text": "{iv}을(를) 바꾸면 검사 결과가 어떻게 달라질지 예측해 볼까요? 왜 그렇게 생각했나요?" },
+          { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?" },
+          { "when": "confounded", "text": "{changed}이(가) 함께 바뀌었어요. 검사 결과가 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
+          { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },
+          { "when": "repeat", "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
+          { "when": "fair-test", "text": "{iv}만 바꾸었을 때 검사 결과는 어떻게 달라졌나요? 결과표와 그래프를 함께 견주어 볼까요?" },
+          { "when": "fair-test", "iv": "burnMin", "text": "초를 태운 시간만 바꾸었어요. 태우지 않았을 때와 태운 뒤의 검사 결과는 어떻게 달랐나요? 태운 시간이 길어지면 결과는 어떻게 되었나요?" },
+          { "when": "fair-test", "iv": "test", "text": "검사 방법만 바꾸었어요. 같은 시간 동안 태운 집기병에서 두 검사의 결과는 각각 어떻게 나타났나요? 검사마다 무엇을 알아보는 방법인지 이야기해 볼까요?" },
+          { "when": "fair-test", "iv": "jar", "text": "집기병 색만 바꾸었을 때 검사 결과는 달라졌나요? 이 결과로 무엇을 알 수 있을까요?" },
+          { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 눈으로 보기의 검사 도구와 결과표의 검사 결과를 함께 살펴보며 어느 부분이 예상과 달랐는지 찾아볼까요?" }
         ]
       }
     }
