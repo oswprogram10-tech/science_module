@@ -20,6 +20,7 @@ import motionJson from '../../../content/units/g6-motion/manifest.json';
 import strataJson from '../../../content/units/g5-strata/manifest.json';
 import waterStateJson from '../../../content/units/g4-water-state/manifest.json';
 import mixtureJson from '../../../content/units/g5-mixture/manifest.json';
+import earthSeaJson from '../../../content/units/g3-earth-sea/manifest.json';
 import weatherJson from '../../../content/units/g5-weather/manifest.json';
 import healthJson from '../../../content/units/g3-health/manifest.json';
 import climateJson from '../../../content/units/g4-climate/manifest.json';
@@ -458,6 +459,30 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['slope', 'vessel']);
   });
 
+  it('지구와 바다(바닷물과 강물 비교하기) 매니페스트의 변인, 측정, 안전, 한계 용어, 탐침을 읽는다', () => {
+    const m = parseManifest(earthSeaJson);
+    expect([m.id, m.title, m.grade, m.engine, m.standards]).toEqual(['g3-earth-sea', '지구와 바다', 3, 'earth', ['4과06-02', '4과06-03']]);
+    expect(m.experiments.map((x) => x.id)).toEqual(['sea-water', 'tide']);
+    const e = m.experiments[0] as VariableExperiment;
+    expect([e.id, e.module]).toEqual(['sea-water', 'sea-water']);
+    expect(e.safety).toEqual(['heat', 'taste']);
+    expect(e.safetyChecklist).toEqual(['보안경을 썼어요.', '가열하는 증발 접시는 맨손으로 만지지 않아요.', '알코올램프 주변에 종이를 두지 않았어요.']);
+    expect(Object.keys(e.safetyMessages ?? {}).sort()).toEqual(['FOOD', 'NO_GLOVES', 'NO_GOGGLES', 'SPILL']);
+    expect(e.variables.map((v) => v.key)).toEqual(['water', 'volumeMl', 'dish']);
+    expect(e.variables[0]!.options.map((o) => o.value)).toEqual(['river', 'sea']);
+    expect(e.variables[1]!.options.map((o) => o.value)).toEqual([50, 100]);
+    expect(e.variables[2]!.options.map((o) => o.value)).toEqual(['round', 'square']);
+    expect(e.variables.map((v) => v.default)).toEqual(['river', 50, 'round']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['residue', 'g'], ['dryMin', '분']]);
+    expect(e.params).toEqual({ totalMin: 20 });
+    expect(e.limits).toEqual(['염분', '염화 나트륨', '용질', '용매', '농도', '밀도', '퍼밀']);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['water', 'volumeMl', 'dish']);
+    expect(['before-run', 'first-trial', 'confounded', 'iv-unchanged', 'repeat', 'fair-test', 'prediction-mismatch'].every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    for (const f of ['바닷물에는 소금이 녹아 있', '바닷물에는 소금이 들어 있', '바닷물에 소금이 녹아', '바닷물을 증발시키면 소금이 남', '바닷물은 하얀 가루가 남', '강물에는 소금이 거의 없', '강물은 아무것도 남지 않', '물이 많을수록 가루가 많이', '물을 많이 부을수록', '접시 모양은 관계없', '접시 모양은 상관없', '접시 모양은 영향이 없']) {
+      expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    }
+  });
+
   it('날씨와 우리 생활 매니페스트의 변인, 측정, 안전, 한계 용어, 탐침을 읽는다', () => {
     const m = parseManifest(weatherJson);
     expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g5-weather', 5, 'earth', ['6과06-03']]);
@@ -632,12 +657,29 @@ describe('관찰 활동 (sky-observation)', () => {
     expect(observationAnswerSchema.options).toEqual([
       'sun-path-direction', 'antipode-day-night', 'star-path-direction', 'constellation-changes', 'winter-constellation',
       'jupiter-earth-size', 'neptune-distance', 'pointer-star-target', 'polaris-motion',
-      'moon-evening-change', 'full-moon-day',
+      'moon-evening-change', 'full-moon-day', 'tide-highs-per-day', 'low-tide-exposed',
     ]);
     expect(() => parseManifest(edit((x) => { x.tasks[0].view = 'moon-phase'; }))).toThrow(ManifestError);
     expect(() => parseManifest(edit((x) => { x.tasks[0].answer = 'moon-phase'; }))).toThrow(ManifestError);
     expect(() => parseManifest(edit((x) => { x.tasks[2].view = 'north-sky'; x.tasks[2].answer = 'polaris-motion'; }))).not.toThrow();
     expect(() => parseManifest(edit((x) => { x.tasks[0].view = 'moon'; x.tasks[0].answer = 'moon-evening-change'; }))).not.toThrow();
+    expect(() => parseManifest(edit((x) => { x.tasks[0].view = 'tide'; x.tasks[0].answer = 'tide-highs-per-day'; }))).not.toThrow();
+    expect(() => parseManifest(edit((x) => { x.tasks[0].answer = 'low-tide'; }))).toThrow(ManifestError);
+  });
+
+  it('지구와 바다 활동 2(밀물과 썰물 관찰하기)는 관찰 활동이고, 과제 둘이 tide 보기와 새 규칙 둘을 쓴다', () => {
+    const m = parseManifest(earthSeaJson);
+    const o = m.experiments[1] as ObservationExperiment;
+    expect([o.id, o.module, o.title]).toEqual(['tide', 'sky-observation', '밀물과 썰물 관찰하기']);
+    expect(o.question).toBe('바닷가의 바닷물 높이는 하루 동안 어떻게 달라질까?');
+    expect(o.tasks.map((t) => [t.id, t.view, t.answer])).toEqual([
+      ['tide-count', 'tide', 'tide-highs-per-day'],
+      ['tide-flat', 'tide', 'low-tide-exposed'],
+    ]);
+    expect(o.tasks.map((t) => t.options.map((x) => x.value))).toEqual([['1', '2', '4'], ['mudflat', 'nothing', 'desert']]);
+    for (const t of o.tasks) expect(t.probes.map((p) => p.when).sort()).toEqual(['before-observe', 'observing', 'prediction-mismatch', 'record-match', 'record-mismatch']);
+    expect(o.limits).toEqual(['조석', '만조', '간조', '조차', '기조력', '인력', '반일주조']);
+    expect(o.tutor.probes).toEqual([]);
   });
 });
 

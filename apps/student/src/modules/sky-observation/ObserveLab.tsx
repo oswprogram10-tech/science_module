@@ -12,9 +12,11 @@ import { MoonGroundView, MoonSpaceView } from './MoonView';
 import { NorthSkyView } from './NorthSkyView';
 import { SolarSystemView } from './SolarSystemView';
 import { RevolutionSpaceView, RotationSpaceView } from './SpaceView';
+import { TideGraphView, TideShoreView } from './TideView';
 import { feedbackText } from './feedback';
 import { dayFor, formatHour, groundScene, rotationOf, sunTrail } from './model';
 import { MOON_DAY_MAX, MOON_DAY_MIN, isMoonView, moonDayLabel, moonScene } from './moonModel';
+import { isTideView, tideScene } from './tideModel';
 import { NORTH_HOUR_MAX, NORTH_HOUR_MIN, compareOf, isNightView, nightLabel, northScene, solarScene } from './nightModel';
 import {
   canObserve,
@@ -221,6 +223,7 @@ export function ObserveLab({
   const solar = task.view === 'solar-system' ? solarScene(task.answer, !revealed, compareOf(ts.controls)) : null;
   const north = task.view === 'north-sky' ? northScene(exp, ts, state.trail, ts.guide) : null;
   const moon = isMoonView(task) ? moonScene(exp, ts.day) : null;
+  const tide = isTideView(task) ? tideScene(ts.hour, state.trail) : null;
   const nightCaption = solar
     ? compareOf(ts.controls) === 'size'
       ? '크기 비교 · 지구 지름을 10 px로 그렸어요'
@@ -235,7 +238,9 @@ export function ObserveLab({
         ? '시각을 바꾸거나 길잡이 선·별 자취를 켜서 관찰하면 기록할 수 있어요.'
         : task.view === 'moon'
           ? '음력 날짜를 바꾸어 달을 관찰하면 기록할 수 있어요.'
-          : '시각이나 달, 조건을 한 번 바꾸어 관찰하면 기록할 수 있어요.';
+          : task.view === 'tide'
+            ? '시각을 바꾸어 바닷물 높이를 관찰하면 기록할 수 있어요.'
+            : '시각이나 달, 조건을 한 번 바꾸어 관찰하면 기록할 수 있어요.';
 
   return (
     <div className="app">
@@ -275,7 +280,25 @@ export function ObserveLab({
 
         <div className="center">
           <div className="observe-views">
-            {moon ? (
+            {tide ? (
+              <>
+                <figure className="view observe-view">
+                  <figcaption>바닷가 보기</figcaption>
+                  <TideShoreView scene={tide} />
+                  <p className="view-note" data-testid="tide-caption">{tide.caption}</p>
+                  {revealed && (
+                    <p className="view-note" data-testid="tide-state-name">
+                      <strong>{tide.stateNote}</strong>
+                    </p>
+                  )}
+                </figure>
+                <figure className="view observe-view space">
+                  <figcaption>하루 그래프</figcaption>
+                  <TideGraphView scene={tide} />
+                  <p className="view-note" data-testid="tide-graph-caption">{tide.graphCaption}</p>
+                </figure>
+              </>
+            ) : moon ? (
               <>
                 <figure className="view observe-view">
                   <figcaption>땅에서 보기</figcaption>
@@ -399,6 +422,33 @@ export function ObserveLab({
                     </button>
                   </div>
                 </fieldset>
+              </>
+            ) : task.view === 'tide' ? (
+              <>
+                <div className="slider-row">
+                  <span id="slider-label" className="slider-name">시각</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={24}
+                    step={0.5}
+                    value={ts.hour}
+                    disabled={!enabled}
+                    aria-labelledby="slider-label"
+                    aria-valuetext={formatHour(ts.hour)}
+                    onChange={(e) => {
+                      setPlaying(false);
+                      onHour(Number(e.target.value));
+                    }}
+                  />
+                  <span className="slider-value" aria-hidden="true">{formatHour(ts.hour)}</span>
+                  {!reduced && (
+                    <button type="button" className="secondary play" disabled={!enabled} onClick={() => setPlaying((p) => !p)}>
+                      {playing ? '⏸ 멈추기' : '▶ 재생'}
+                    </button>
+                  )}
+                </div>
+                <p className="hint">서해안 갯벌의 하루를 단순하게 그린 모습이에요.</p>
               </>
             ) : task.view === 'moon' ? (
               <>

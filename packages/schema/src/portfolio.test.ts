@@ -31,7 +31,7 @@ describe('진로 매니페스트', () => {
 
   it('영역 5개, 탐구 능력 5개, 직업 카드 15장(영역마다 3장)', () => {
     expect(exp.areas.map((a) => a.key)).toEqual(['matter', 'life', 'earth', 'energy', 'society']);
-    expect(exp.areas.map((a) => a.units.length)).toEqual([7, 7, 6, 7, 3]);
+    expect(exp.areas.map((a) => a.units.length)).toEqual([7, 7, 7, 7, 3]);
     expect(exp.skills.map((s) => s.key)).toEqual(['fair-test', 'predict', 'classify', 'observe', 'model']);
     expect(exp.jobs).toHaveLength(15);
     for (const a of exp.areas) expect(exp.jobs.filter((j) => j.area === a.key)).toHaveLength(3);
@@ -41,10 +41,10 @@ describe('진로 매니페스트', () => {
     ]);
   });
 
-  it('영역 배정은 30개 단원이고 겹치지 않는다(실제 단원 존재 여부는 앱 테스트가 확인)', () => {
+  it('영역 배정은 31개 단원이고 겹치지 않는다(실제 단원 존재 여부는 앱 테스트가 확인)', () => {
     const ids = exp.areas.flatMap((a) => a.units);
     expect(new Set(ids).size).toBe(ids.length);
-    expect(ids).toHaveLength(30);
+    expect(ids).toHaveLength(31);
     expect(exp.jobs.flatMap((j) => j.units).every((u) => ids.includes(u))).toBe(true);
   });
 

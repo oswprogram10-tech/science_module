@@ -1,6 +1,7 @@
 import {
   CONSTELLATIONS,
   CONSTELLATION_KEYS,
+  TIDE_HIGH_AT_H,
   EQUINOX_DAY,
   STAR_TASK_DAY,
   STAR_TASK_START_HOUR,
@@ -31,8 +32,9 @@ const paramDay = (exp: ObservationExperiment): number => {
   return typeof v === 'number' ? v : EQUINOX_DAY;
 };
 
-/** 과제의 처음 시각. 별 과제와 계절 과제는 밤 9시, 나머지는 정오. */
+/** 과제의 처음 시각. 별 과제와 계절 과제는 밤 9시, 바닷가 보기는 바닷물이 가장 높은 오전 2시, 나머지는 정오. */
 export function defaultHour(task: ObservationTask): number {
+  if (task.view === 'tide') return TIDE_HIGH_AT_H;
   if (task.view === 'revolution' || task.view === 'north-sky') return NIGHT_HOUR;
   return task.answer === 'star-path-direction' ? STAR_TASK_START_HOUR : 12;
 }

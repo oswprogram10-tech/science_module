@@ -1,23 +1,24 @@
 import { createHash } from 'node:crypto';
 import { test, expect, gotoUnit, activityTab, activityTabs, MIXTURE_SORT_TITLE } from './helpers';
 
-test('단원 목록은 3·4·5·6학년으로 묶인 카드 31개를 보여 준다', async ({ page }) => {
+test('단원 목록은 3·4·5·6학년으로 묶인 카드 32개를 보여 준다', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1, name: '과학 실험 단원 목록' })).toBeVisible();
   for (const g of ['3학년', '4학년', '5학년', '6학년']) {
     await expect(page.getByRole('heading', { level: 2, name: g })).toBeVisible();
   }
   const cards = page.getByRole('button', { name: /탐구 질문:/ });
-  await expect(cards).toHaveCount(31);
+  await expect(cards).toHaveCount(32);
   const grade3 = page.getByRole('region', { name: '3학년' }).getByRole('button');
-  await expect(grade3).toHaveCount(7);
+  await expect(grade3).toHaveCount(8);
   await expect(grade3.nth(0)).toContainText('생물의 한살이');
   await expect(grade3.nth(1)).toContainText('동물의 생활');
   await expect(grade3.nth(2)).toContainText('식물의 생활');
   await expect(grade3.nth(3)).toContainText('힘과 우리 생활');
   await expect(grade3.nth(4)).toContainText('소리의 성질');
   await expect(grade3.nth(5)).toContainText('물체와 물질');
-  await expect(grade3.nth(6)).toContainText('감염병과 건강한 생활');
+  await expect(grade3.nth(6)).toContainText('지구와 바다');
+  await expect(grade3.nth(7)).toContainText('감염병과 건강한 생활');
   const grade4 = page.getByRole('region', { name: '4학년' }).getByRole('button');
   await expect(grade4).toHaveCount(8);
   await expect(grade4.nth(0)).toContainText('여러 가지 기체');
@@ -75,6 +76,7 @@ for (const [grade, title, id] of [
   ['3학년', '물체와 물질', 'g3-material'],
   ['4학년', '물의 상태 변화', 'g4-water-state'],
   ['5학년', '혼합물의 분리', 'g5-mixture'],
+  ['3학년', '지구와 바다', 'g3-earth-sea'],
   ['4학년', '밤하늘 관찰', 'g4-night-sky'],
   ['5학년', '지층과 화석', 'g5-strata'],
   ['5학년', '날씨와 우리 생활', 'g5-weather'],
@@ -100,11 +102,16 @@ test('알 수 없는 단원 id는 단원 목록(#/)으로 돌아간다', async (
   await expect(page.getByRole('heading', { level: 1, name: '과학 실험 단원 목록' })).toBeVisible();
 });
 
-test('없어진 단원 #/unit/g3-earth-sea는 단원 목록(#/)으로 돌아가고, 흐르는 물은 #/unit/g4-land/stream-table로 연다', async ({ page }) => {
+test('예전 주소 #/unit/g3-earth-sea는 이제 새 「지구와 바다」 단원(바닷물과 강물 비교하기)을 열고, 흐르는 물은 #/unit/g4-land/stream-table로 연다', async ({ page }) => {
   await page.goto('/#/unit/g3-earth-sea');
-  await expect(page).toHaveURL(/#\/$/);
-  await expect(page.getByRole('heading', { level: 1, name: '과학 실험 단원 목록' })).toBeVisible();
-  await expect(page.getByText('지구와 바다')).toHaveCount(0);
+  await expect(page).toHaveURL(/#\/unit\/g3-earth-sea$/);
+  await expect(page.getByRole('heading', { level: 1, name: '지구와 바다' })).toBeVisible();
+  await expect(page.getByText('탐구 질문: 바닷물과 강물을 증발시키면 남는 것이 어떻게 다를까?')).toBeVisible();
+  await expect(page.getByRole('group', { name: '물의 종류' })).toBeVisible();
+  // 활동이 둘(바닷물과 강물 비교하기, 밀물과 썰물 관찰하기)이라 활동 탭이 있고 첫 활동이 열린다
+  await expect(activityTabs(page)).toHaveCount(1);
+  await expect(page.getByRole('tab')).toHaveCount(2);
+  await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
   await page.goto('/#/unit/g4-land/stream-table');
   await expect(page.getByRole('heading', { level: 1, name: '땅의 변화' })).toBeVisible();
   await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'true');
@@ -113,11 +120,12 @@ test('없어진 단원 #/unit/g3-earth-sea는 단원 목록(#/)으로 돌아가�
 
 // ---- 한 단원에 여러 활동 ----
 
-test('단원 목록 카드: 활동이 둘인 땅의 변화와 혼합물의 분리만 "활동 2개"를 보이고 카드는 단원당 하나다', async ({ page }) => {
+test('단원 목록 카드: 활동이 둘인 땅의 변화, 혼합물의 분리, 지구와 바다만 "활동 2개"를 보이고 카드는 단원당 하나다', async ({ page }) => {
   await page.goto('/');
   const cards = page.getByRole('button', { name: /탐구 질문:/ });
-  await expect(cards).toHaveCount(31);
-  await expect(page.getByText(/^활동 \d+개$/)).toHaveCount(2);
+  await expect(cards).toHaveCount(32);
+  await expect(page.getByText(/^활동 \d+개$/)).toHaveCount(3);
+  await expect(page.getByRole('region', { name: '3학년' }).getByRole('button', { name: /지구와 바다/ })).toContainText('활동 2개');
   await expect(page.getByRole('region', { name: '4학년' }).getByRole('button', { name: /땅의 변화/ })).toContainText('활동 2개');
   const mixture = page.getByRole('region', { name: '5학년' }).getByRole('button', { name: /혼합물의 분리/ });
   await expect(mixture).toHaveCount(1);

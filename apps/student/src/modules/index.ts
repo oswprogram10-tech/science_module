@@ -20,6 +20,7 @@ import { rampCartModule } from './ramp-cart';
 import { freezeMeltModule } from './freeze-melt';
 import { saltSandModule } from './salt-sand';
 import { streamTableModule } from './stream-table';
+import { seaWaterModule } from './sea-water';
 import { landSeaBreezeModule } from './land-sea-breeze';
 import { infectionSpreadModule } from './infection-spread';
 import { greenhouseBottleModule } from './greenhouse-bottle';
@@ -46,6 +47,7 @@ export const MODULES: Record<ModuleKind, AnyModule> = {
   'freeze-melt': freezeMeltModule,
   'salt-sand': saltSandModule,
   'stream-table': streamTableModule,
+  'sea-water': seaWaterModule,
   'land-sea-breeze': landSeaBreezeModule,
   'infection-spread': infectionSpreadModule,
   'greenhouse-bottle': greenhouseBottleModule,

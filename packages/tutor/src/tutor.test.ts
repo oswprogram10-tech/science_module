@@ -2472,3 +2472,95 @@ describe('g5-energy 매니페스트 probe', () => {
     }
   });
 });
+
+// ---------- 지구와 바다(바닷물과 강물 비교하기) 매니페스트 ----------
+import earthSeaJson from '../../../content/units/g3-earth-sea/manifest.json';
+
+describe('g3-earth-sea 매니페스트 probe', () => {
+  const e = parseManifest(earthSeaJson).experiments[0]! as VariableExperiment;
+  const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+  const eKeys = e.variables.map((v) => v.key);
+  const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+  const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: 'water', ...x });
+  const fair = (iv: string): Partial<ProbeContext> => ({
+    ivKey: iv,
+    lastAnalysis: { kind: 'fair-test', changed: [iv] },
+    prediction: 'same',
+    observed: 'same',
+  });
+
+  it('iv별 fair-test 질문을 고른다', () => {
+    expect(selectProbe(eCtx(fair('water')), e.tutor.probes, eGuard)).toContain('물의 종류만 바꾸었어요. 물이 다 마른 뒤 접시에는 무엇이 보이나요?');
+    expect(selectProbe(eCtx(fair('volumeMl')), e.tutor.probes, eGuard)).toContain('물의 양만 바꾸었어요. 물이 다 마른 시간은 어떻게 달라졌나요?');
+    expect(selectProbe(eCtx(fair('dish')), e.tutor.probes, eGuard)).toContain('접시 모양만 바꾸었을 때 결과가 달라졌나요?');
+  });
+
+  it('예측과 결과가 다르면 접시의 물이 0이 되는 때와 남은 것을 그림에서 찾아보라고 한다', () => {
+    const text = selectProbe(eCtx({ ...fair('water'), prediction: 'increase', observed: 'same' }), e.tutor.probes, eGuard);
+    expect(text).toContain('접시에 남은 물이 0이 되는 때');
+  });
+
+  it('모든 probe는 질문형이고, 모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+    let n = 0;
+    for (const probe of e.tutor.probes) {
+      expect(probe.text.trim().endsWith('?'), probe.text).toBe(true);
+      for (const iv of eKeys) {
+        for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+          const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+          expect(text).not.toMatch(/[{}]/);
+          expect(text).not.toMatch(/(을\(를\)|이\(가\)|와\(과\)|은\(는\))/);
+          n++;
+        }
+      }
+    }
+    expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+  });
+
+  it('질문 문장은 금지 구절·limits 용어와 겹치지 않는다', () => {
+    for (const probe of e.tutor.probes) {
+      for (const f of e.tutor.forbiddenAnswers) expect(probe.text, probe.text).not.toContain(f);
+      for (const l of e.limits) expect(probe.text, probe.text).not.toContain(l);
+    }
+  });
+
+  it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+    const situations: Partial<ProbeContext>[] = [
+      {},
+      { lastAnalysis: { kind: 'first-trial', changed: [] } },
+      { lastAnalysis: { kind: 'confounded', changed: ['water', 'volumeMl'] } },
+      { lastAnalysis: { kind: 'iv-unchanged', changed: ['dish'] } },
+      { lastAnalysis: { kind: 'repeat', changed: [] } },
+      ...eKeys.flatMap((k) => [fair(k), { ...fair(k), prediction: 'increase' as const, observed: 'same' as const }]),
+    ];
+    for (const s of situations) {
+      const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+      expect(text).not.toBe(FALLBACK_PROBE);
+      expect(guardOutput(text, eGuard).ok, text).toBe(true);
+    }
+  });
+
+  it('금지 구절은 사양의 목록과 활용형까지 막는다', () => {
+    for (const answer of [
+      '바닷물에는 소금이 녹아 있어요',
+      '바닷물에는 소금이 들어 있어요',
+      '바닷물에 소금이 녹아 있답니다',
+      '바닷물을 증발시키면 소금이 남아요',
+      '바닷물은 하얀 가루가 남아요',
+      '강물에는 소금이 거의 없어요',
+      '강물은 아무것도 남지 않아요',
+      '강물은 아무것도 남지 않았어요',
+      '물이 많을수록 가루가 많이 남아요',
+      '물을 많이 부을수록 가루가 늘어요',
+      '접시 모양은 관계없어요',
+      '접시 모양은 상관없어요',
+      '접시 모양은 영향이 없어요',
+      '접시 모양은 결과에 영향을 주지 않아요',
+      '접시 모양과 관계없이 같아요',
+      '접시 모양이 달라도 같아요',
+    ]) {
+      expect(guardOutput(answer, eGuard).ok, answer).toBe(false);
+    }
+    for (const l of e.limits) expect(guardOutput(`${l}이에요`, eGuard).ok, l).toBe(false);
+  });
+});

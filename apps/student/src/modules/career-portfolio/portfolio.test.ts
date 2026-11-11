@@ -76,7 +76,7 @@ describe('기록 요약', () => {
     expect(Object.values(none.skills).every((n) => n === 0)).toBe(true);
     expect(summarizeRecords([], exp).hasRecords).toBe(false);
   });
-  it('옛 기기 기록의 없어진 단원(g3-earth-sea)은 영역 목록에 나오지 않고 오류도 내지 않는다', () => {
+  it('옛 기기에 남은 흐르는 물 기록(g3-earth-sea)은 단원 id가 같아 새 「지구와 바다」 기록으로 받아들이고 오류도 내지 않는다', () => {
     const old: LogEntry[] = [
       { unitId: 'g3-earth-sea', kind: 'variable', day, summary: { trials: 2, fair: 1, fairKeys: ['slope'], predicted: 1, matched: 0 } },
       entries[2]!,
@@ -84,8 +84,9 @@ describe('기록 요약', () => {
     let s2: ReturnType<typeof summarizeRecords> | undefined;
     expect(() => { s2 = summarizeRecords(old, exp); }).not.toThrow();
     expect(s2!.hasRecords).toBe(true);
-    expect(s2!.areas.flatMap((a) => a.units.map((u) => u.unitId))).toEqual(['g3-animal']);
-    expect(UNITS.some((u) => u.id === 'g3-earth-sea')).toBe(false);
+    expect(s2!.areas.flatMap((a) => a.units.map((u) => u.unitId)).sort()).toEqual(['g3-animal', 'g3-earth-sea']);
+    expect(s2!.areas.find((a) => a.units.some((u) => u.unitId === 'g3-earth-sea'))!.key).toBe('earth');
+    expect(UNITS.some((u) => u.id === 'g3-earth-sea')).toBe(true);
   });
   it('영역이 같은 개수면 모두 표시한다', () => {
     const tie = summarizeRecords(entries.slice(0, 3), exp);
