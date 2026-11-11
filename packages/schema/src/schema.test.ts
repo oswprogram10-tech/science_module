@@ -539,6 +539,69 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['gapCm', 'magnets', 'between']);
   });
 
+  it('용해와 용액 활동 2(용액의 진하기 비교하기)의 변인, 측정, 안전, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(manifestJson);
+    expect([m.id, m.engine, m.standards]).toEqual(['g5-solution', 'matter', ['6과03-01', '6과03-02']]);
+    expect(m.experiments.map((x) => x.id)).toEqual(['dissolve-amount', 'concentration']);
+    const e = m.experiments[1] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['concentration', 'concentration', '용액의 진하기 비교하기', '녹인 설탕의 양이 다르면 용액의 진하기를 어떻게 비교할 수 있을까?', '예측: 방울토마토가 뜬 높이는?']);
+    expect(e.safety).toEqual(['taste']);
+    expect(e.variables.map((v) => v.key)).toEqual(['spoons', 'waterMl', 'sugar', 'cup']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([[1, 3, 5], [50, 100], ['brown', 'white'], ['low', 'high']]);
+    expect(e.variables.map((v) => v.default)).toEqual([1, 100, 'brown', 'low']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['float', '눈금'], ['mass20', 'g'], ['color', '눈금']]);
+    expect(e.gateway).toEqual({ mode: 'open', requirePrediction: true, requireSingleIV: true });
+    expect(e.limits).toEqual(['농도', '퍼센트', '밀도', '용해도', '포화', '부력']);
+    for (const f of ['설탕을 많이 넣을수록 진', '설탕이 많을수록 진', '물이 많을수록 연', '물을 많이 넣을수록 연', '진할수록 방울토마토가 높이', '진할수록 높이 떠', '흰 설탕은 색으로 비교할 수 없', '비커 모양은 관계없']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['spoons', 'waterMl', 'sugar', 'cup']);
+    // 첫 활동은 그대로다.
+    expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['solute', 'waterMl', 'waterTempC', 'stir']);
+  });
+
+  it('열과 우리 생활 활동 2(온도가 다른 두 물이 닿으면)의 변인, 측정, 안전, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(heatJson);
+    expect([m.id, m.engine, m.standards]).toEqual(['g5-heat', 'physics', ['6과07-02', '6과07-04']]);
+    expect(m.experiments.map((x) => x.id)).toEqual(['insulated-cup', 'heat-contact']);
+    const e = m.experiments[1] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['heat-contact', 'heat-contact', '온도가 다른 두 물이 닿으면', '온도가 다른 두 물체가 닿아 있으면 온도가 어떻게 변할까?', '예측: 10분 뒤 안쪽 컵 물의 온도는?']);
+    expect(e.safety).toEqual(['hot-water']);
+    // 뜨거운 물 점검표는 첫 활동(보온 컵)과 같다.
+    expect(e.safetyChecklist).toEqual((m.experiments[0] as VariableExperiment).safetyChecklist);
+    expect(e.variables.map((v) => v.key)).toEqual(['hotC', 'coldMl', 'cup', 'label']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([[50, 60, 70], [100, 300], ['metal', 'plastic'], ['yellow', 'green']]);
+    expect(e.variables.map((v) => v.default)).toEqual([60, 100, 'metal', 'yellow']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['inner10', '°C'], ['outer10', '°C'], ['sameMin', '분']]);
+    expect(e.limits).toEqual(['열평형', '비열', '열량', '칼로리', '전도']);
+    for (const f of ['열이 이동', '열이 옮겨', '열이 전달', '따뜻한 쪽에서 차가운 쪽으로', '두 온도가 같아질 때까지', '온도가 같아져', '찬물이 많을수록 더 낮아', '이름표 색은 관계없']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['hotC', 'coldMl', 'cup', 'label']);
+    expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['wrap', 'layers', 'lid', 'waterMl']);
+  });
+
+  it('산과 염기 활동 2(산성 용액과 염기성 용액 섞기)의 변인, 범주 결과, 안전, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(acidBaseJson);
+    expect([m.id, m.engine, m.standards]).toEqual(['g6-acid-base', 'matter', ['6과09-01', '6과09-02']]);
+    expect(m.experiments.map((x) => x.id)).toEqual(['indicator-classify', 'acid-base-mix']);
+    // 첫 활동은 분류 활동이다.
+    expect(isVariableExperiment(m.experiments[0]!)).toBe(false);
+    expect(isVariableExperiment(m.experiments[1]!)).toBe(true);
+    const e = m.experiments[1] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['acid-base-mix', 'acid-base-mix', '산성 용액과 염기성 용액 섞기', '산성 용액에 염기성 용액을 조금씩 넣으면 용액의 성질은 어떻게 변할까?', '예측: 색 띠에서 지시약 색의 자리는?']);
+    expect(e.safety).toEqual(['goggles', 'gloves', 'corrosive']);
+    // 보안경·장갑 점검표는 첫 활동과 같다.
+    expect(e.safetyChecklist).toEqual((m.experiments[0] as { safetyChecklist?: string[] }).safetyChecklist);
+    expect(e.variables.map((v) => v.key)).toEqual(['drops', 'direction', 'indicator', 'beaker']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([[0, 10, 20, 30, 40], ['acid', 'base'], ['cabbage', 'phenol'], [50, 100]]);
+    expect(e.variables.map((v) => v.default)).toEqual([0, 'acid', 'cabbage', 50]);
+    // 지시약 색은 범주 결과 칸이라 단위가 없다(전자석의 "못 머리 쪽의 극"과 같다).
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['color', ''], ['addedMl', 'mL'], ['slot', '칸']]);
+    expect(e.limits).toEqual(['pH', '수소 이온', '수산화 이온', '몰', '중화열', '염']);
+    for (const f of ['중화', '중성이 되', '산성이 약해', '염기성이 약해', '산성이 점점 약해', '염기성으로 변', '비커 크기는 관계없']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['drops', 'direction', 'indicator', 'beaker']);
+  });
+
   it('날씨와 우리 생활 매니페스트의 변인, 측정, 안전, 한계 용어, 탐침을 읽는다', () => {
     const m = parseManifest(weatherJson);
     expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g5-weather', 5, 'earth', ['6과06-02', '6과06-03']]);
