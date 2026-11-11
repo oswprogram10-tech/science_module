@@ -464,6 +464,31 @@ describe('리뷰 반영 v0.1: 서버', () => {
     expect(b.msgs()[0].t).toBe('created');
   });
 
+  it('호스트 모드: 수업 만들기는 localhost에서 온 연결만, 학생 참여와 보기는 어디서든', () => {
+    const hub = new Hub({ localOnlyCreate: true });
+    const lan = fake();
+    hub.open(lan.conn, '192.168.0.23', false);
+    hub.message(lan.conn, '{"t":"create"}');
+    expect(lan.last()).toEqual({ t: 'error', code: 'not_local' });
+    expect(hub.classes.size).toBe(0);
+    const here = fake();
+    hub.open(here.conn, '127.0.0.1', true);
+    hub.message(here.conn, '{"t":"create"}');
+    const created = here.msgs().find((m) => m.t === 'created');
+    expect(created).toBeTruthy();
+    // 같은 무선망의 학생은 참여할 수 있다.
+    const stu = fake();
+    hub.open(stu.conn, '192.168.0.23', false);
+    hub.message(stu.conn, JSON.stringify({ t: 'join', code: created.code, group: 1, appVersion: '1' }));
+    expect(stu.msgs().some((m) => m.t === 'joined')).toBe(true);
+    // 학교 서버 모드(기본)는 어디서든 만들 수 있다.
+    const school = new Hub();
+    const c = fake();
+    school.open(c.conn, '192.168.0.23', false);
+    school.message(c.conn, '{"t":"create"}');
+    expect(c.msgs()[0].t).toBe('created');
+  });
+
   it('create/watch를 이미 교사인 연결이 다시 보내면 멱등', () => {
     const hub = new Hub();
     const { teacher, code, token } = mkClass(hub);
@@ -557,5 +582,32 @@ describe('리뷰 반영 v0.1: 서버', () => {
     expect(await closed).toBe(1006);
     await new Promise((r) => setTimeout(r, 200));
     expect(liveClosed).toBe(false); // pong을 보내는 정상 소켓은 유지
+  });
+});
+
+describe('교사 PC 수업 서버 모드(서버)', () => {
+  it('hostMode: localhost에서 연결한 교사 화면은 수업을 만들 수 있다', async () => {
+    await srv.app.close();
+    await start({ hostMode: true });
+    const { code } = await makeClass();
+    expect(code).toMatch(/^[A-HJ-KM-NP-Z2-9]{6}$/);
+  });
+
+  it('/host-info는 localhost에서 온 요청에만 응답한다', async () => {
+    await srv.app.close();
+    await start({ hostMode: true, hostInfo: () => ({ addresses: ['192.168.0.10'], port: 8787 }) });
+    const local = await srv.app.inject({ method: 'GET', url: '/host-info', remoteAddress: '127.0.0.1' });
+    expect(local.statusCode).toBe(200);
+    expect(local.json()).toEqual({ addresses: ['192.168.0.10'], port: 8787 });
+    expect((await srv.app.inject({ method: 'GET', url: '/host-info', remoteAddress: '::1' })).statusCode).toBe(200);
+    expect((await srv.app.inject({ method: 'GET', url: '/host-info', remoteAddress: '::ffff:127.0.0.1' })).statusCode).toBe(200);
+    const lan = await srv.app.inject({ method: 'GET', url: '/host-info', remoteAddress: '192.168.0.23' });
+    expect(lan.statusCode).toBe(403);
+    expect(lan.body).not.toContain('192.168.0.10');
+  });
+
+  it('hostInfo를 주지 않으면 /host-info는 없다(학교 서버 모드)', async () => {
+    const res = await srv.app.inject({ method: 'GET', url: '/host-info', remoteAddress: '127.0.0.1' });
+    expect(res.statusCode).toBe(404);
   });
 });

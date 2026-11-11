@@ -399,3 +399,7 @@ button.unit-card:hover { border-color:var(--accent); }
 .climate-table table { width:100%; min-width:0; max-width:420px; }
 .climate-table caption { text-align:left; font-weight:700; padding:4px 0; }
 .climate-source { font-size:.85rem; margin:8px 0 0; }
+
+/* 앱(APK)의 참여 대화 상자: 선생님 PC 주소 입력칸은 수업 코드칸과 달리 대문자·자간을 쓰지 않는다. */
+.host-field input { font-size:1.1rem; letter-spacing:normal; text-transform:none; }
+.host-field-wrap small { display:block; font-weight:400; margin-bottom:6px; }

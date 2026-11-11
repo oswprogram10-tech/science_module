@@ -20,6 +20,8 @@ pnpm e2e            # 브라우저 자동 테스트 (Playwright)
 
 교사 대시보드(수업 연결, 모둠 실시간 현황, 안전 알림, 모두 멈춤)는 `pnpm classroom:dev`로 서버와 교사 앱을 함께 띄웁니다. 자세한 사용법은 `docs/classroom.md`를 보세요.
 
+교사용 윈도우 PC에서는 `SciBridgeON-수업서버.exe` 하나로 서버와 교사 화면을 함께 켤 수 있습니다(Node.js 설치 불필요). 이 프로그램은 `pnpm host:build`로 만들고(CI의 `windows-host` 작업이 Windows용을 만들어 `windows-classroom-host` 아티팩트로 올립니다), `pnpm host:smoke`로 시험합니다. 사용법은 `docs/classroom.md`의 「교사 PC에서 수업 서버 프로그램으로 하기」, 학생 앱(APK) 받는 법은 `docs/app-packaging.md`를 보세요.
+
 테스트 방법(단위 테스트, 브라우저 테스트, `?playback=` 빠른 재생, 디버깅)은 `docs/testing.md`를 보세요.
 
 ## 단원 목록과 이동

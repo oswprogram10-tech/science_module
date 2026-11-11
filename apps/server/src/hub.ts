@@ -64,6 +64,8 @@ interface ConnMeta {
   code?: string;
   group?: number;
   ip?: string;
+  /** 이 서버가 있는 PC 자신(루프백)에서 온 연결인가. 호스트 모드의 수업 만들기 검사에 쓴다. */
+  local: boolean;
   openedAt: number;
   /** 허브가 이미 닫은 연결(교체·수업 종료). 이후 메시지는 무시한다. */
   dead: boolean;
@@ -87,6 +89,8 @@ export interface HubOptions {
   createSecret?: string;
   /** IP당 시간당 create 한도. 기본 10. */
   createsPerHour?: number;
+  /** 켜면 수업 만들기는 서버가 있는 PC 자신(localhost)에서 온 연결만 된다(교사 PC 수업 서버). 기본 꺼짐. */
+  localOnlyCreate?: boolean;
   maxSockets?: number;
   maxSocketsPerIp?: number;
 }
@@ -109,6 +113,7 @@ export class Hub {
   private readonly createLog = new Map<string, number[]>();
   private readonly secretHash: Buffer | null;
   private readonly createsPerHour: number;
+  private readonly localOnlyCreate: boolean;
   private readonly maxSockets: number;
   private readonly maxSocketsPerIp: number;
   private readonly now: () => number;
@@ -121,6 +126,7 @@ export class Hub {
     this.maxClasses = opts.maxClasses ?? MAX_CLASSES;
     this.secretHash = opts.createSecret ? sha(opts.createSecret) : null;
     this.createsPerHour = opts.createsPerHour ?? CREATES_PER_HOUR;
+    this.localOnlyCreate = opts.localOnlyCreate ?? false;
     this.maxSockets = opts.maxSockets ?? MAX_SOCKETS;
     this.maxSocketsPerIp = opts.maxSocketsPerIp ?? MAX_SOCKETS_PER_IP;
   }
@@ -131,7 +137,7 @@ export class Hub {
   }
 
   /** 새 연결을 등록한다. 상한을 넘으면 1013으로 닫고 false를 돌려준다(등록하지 않는다). */
-  open(conn: Conn, ip?: string): boolean {
+  open(conn: Conn, ip?: string, local = false): boolean {
     if (this.meta.size >= this.maxSockets || (ip !== undefined && (this.ipCounts.get(ip) ?? 0) >= this.maxSocketsPerIp)) {
       this.log('socket_cap');
       try {
@@ -146,6 +152,7 @@ export class Hub {
     this.meta.set(conn, {
       role: 'none',
       ...(ip !== undefined ? { ip } : {}),
+      local,
       openedAt: t,
       dead: false,
       windowStart: t,
@@ -299,6 +306,7 @@ export class Hub {
           return;
         }
         if (m.role !== 'none') return this.error(conn, 'bad_message');
+        if (this.localOnlyCreate && !m.local) return this.error(conn, 'not_local');
         if (!this.allowCreate(m)) return this.error(conn, 'rate_limited');
         if (this.secretHash && !(typeof msg.secret === 'string' && timingSafeEqual(sha(msg.secret), this.secretHash))) {
           return this.error(conn, 'bad_secret');

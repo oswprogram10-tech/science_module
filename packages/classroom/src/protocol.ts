@@ -25,7 +25,7 @@ export type Phase = z.infer<typeof phaseSchema>;
 export const tierSchema = z.enum(['A', 'B', 'C']);
 export type DeviceTier = z.infer<typeof tierSchema>;
 
-export const ERROR_CODES = ['bad_message', 'no_class', 'bad_token', 'group_taken', 'class_full', 'rate_limited', 'bad_secret'] as const;
+export const ERROR_CODES = ['bad_message', 'no_class', 'bad_token', 'group_taken', 'class_full', 'rate_limited', 'bad_secret', 'not_local'] as const;
 export const errorCodeSchema = z.enum(ERROR_CODES);
 export type ErrorCode = z.infer<typeof errorCodeSchema>;
 

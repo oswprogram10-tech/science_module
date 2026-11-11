@@ -18,7 +18,9 @@
     "server:dev": "pnpm --filter @sci/server dev",
     "classroom:dev": "pnpm --parallel --filter @sci/server --filter teacher dev",
     "cap:sync": "pnpm --filter student cap:sync",
-    "android:debug": "pnpm --filter student android:debug"
+    "android:debug": "pnpm --filter student android:debug",
+    "host:build": "pnpm --filter teacher build && pnpm --filter @sci/classroom-host package",
+    "host:smoke": "pnpm --filter @sci/classroom-host smoke"
   },
   "devDependencies": {
     "tsx": "^4.23.15",
