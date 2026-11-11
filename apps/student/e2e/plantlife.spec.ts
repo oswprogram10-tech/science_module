@@ -2,6 +2,8 @@ import {
   test,
   expect,
   gotoUnit,
+  defineSortSuite,
+  PLANT_HABITAT_CFG,
   scrollWidth,
   LEAF_CARDS,
   LEAF_SIDE,
@@ -330,3 +332,8 @@ test.describe('넓은 화면', () => {
     expect(a!.x).toBeLessThan(b!.x);
   });
 });
+
+// ---- 두 번째 활동: 사는 곳과 식물의 생김새(카드 분류 groups, 활동 탭) ----
+
+defineSortSuite(PLANT_HABITAT_CFG);
+

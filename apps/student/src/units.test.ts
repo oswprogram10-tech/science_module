@@ -275,9 +275,9 @@ describe('레지스트리 activities', () => {
       expect([u.activity, u.experiment, u.module], u.id).toEqual([first.activity, first.experiment, first.module]);
     }
   });
-  it('활동이 둘 이상인 단원은 g4-land, g5-mixture, g3-earth-sea, g5-weather뿐이다', () => {
+  it('활동이 둘 이상인 단원은 g4-land, g4-ecosystem, g3-animal, g3-plantlife, g5-mixture, g3-earth-sea, g5-strata, g5-weather뿐이다', () => {
     const multi = UNITS.filter((u) => u.ok && u.activities.length > 1).map((u) => u.id);
-    expect(multi).toEqual(['g4-land', 'g5-mixture', 'g3-earth-sea', 'g5-weather']);
+    expect(multi).toEqual(['g4-land', 'g4-ecosystem', 'g3-animal', 'g3-plantlife', 'g5-mixture', 'g3-earth-sea', 'g5-strata', 'g5-weather']);
     const land = UNITS.find((u) => u.id === 'g4-land')!;
     expect(land.ok && land.activities.map((a) => [a.activity, a.experiment.id, a.module.kind])).toEqual([['variable', 'magma-cooling', 'magma-cooling'], ['variable', 'stream-table', 'stream-table']]);
     expect(land.ok && land.manifest.standards).toEqual(['4과11-01', '4과11-03']);
@@ -291,6 +291,18 @@ describe('레지스트리 activities', () => {
     const w = UNITS.find((u) => u.id === 'g5-weather')!;
     expect(w.ok && w.activities.map((a) => [a.activity, a.experiment.id, a.module.kind])).toEqual([['variable', 'land-sea-breeze', 'land-sea-breeze'], ['card-sort', 'dew-fog-cloud', 'card-sort']]);
     expect(w.ok && w.manifest.standards).toEqual(['6과06-02', '6과06-03']);
+    // 카드 분류 두 번째 활동 넷(1차 묶음): 첫 활동의 종류는 변인 실험(생물과 환경)·카드 분류 무리(동물)·트리(식물)·순서(지층)로 서로 다르다.
+    const second = (id: string) => {
+      const u = UNITS.find((x) => x.id === id)!;
+      return u.ok ? [u.activities.map((a) => [a.activity, a.experiment.id]), u.manifest.standards] : null;
+    };
+    expect(second('g3-animal')).toEqual([[['card-sort', 'animal-sort'], ['card-sort', 'animal-habitat']], ['4과02-01', '4과02-02']]);
+    expect(second('g3-plantlife')).toEqual([[['card-sort', 'leaf-tree'], ['card-sort', 'plant-habitat']], ['4과03-01', '4과03-02']]);
+    expect(second('g4-ecosystem')).toEqual([[['variable', 'food-web'], ['card-sort', 'living-nonliving']], ['4과14-01', '4과14-02']]);
+    expect(second('g5-strata')).toEqual([[['card-sort', 'strata-order'], ['card-sort', 'rock-grain']], ['6과01-01', '6과01-02', '6과01-03']]);
+    // 최상위 값은 첫 활동이다(생물과 환경은 변인 실험 그대로).
+    const eco = UNITS.find((x) => x.id === 'g4-ecosystem')!;
+    expect(eco.ok && [eco.activity, eco.module.kind]).toEqual(['variable', 'food-web']);
   });
   it('두 번째 활동이 깨져도 그 단원만 오류 항목이 된다(모든 experiment를 검사)', () => {
     const broken = clone(mixtureJson);
@@ -302,6 +314,9 @@ describe('레지스트리 activities', () => {
   });
 });
 
+/** 카드 분류 두 번째 활동을 더한 단원 넷(1차 묶음). */
+const CARD_SORT_BATCH_A = ['g3-animal', 'g3-plantlife', 'g4-ecosystem', 'g5-strata'];
+
 describe('활동 탭 화면', () => {
   const m = UNITS.find((u) => u.id === 'g5-mixture')!;
   if (!m.ok) throw new Error('g5-mixture');
@@ -309,7 +324,7 @@ describe('활동 탭 화면', () => {
     expect(renderToStaticMarkup(createElement('div', null, createElement(ActivityTabsSlot)))).toBe('<div></div>');
     expect(renderToStaticMarkup(createElement(ActivityTabsContext.Provider, { value: null }, createElement('div', null, createElement(ActivityTabsSlot))))).toBe('<div></div>');
     // 활동이 하나인 단원은 탭을 만들 필요가 없다.
-    for (const u of UNITS) if (u.ok && u.id !== 'g5-mixture' && u.id !== 'g4-land' && u.id !== 'g3-earth-sea' && u.id !== 'g5-weather') expect(u.activities, u.id).toHaveLength(1);
+    for (const u of UNITS) if (u.ok && u.id !== 'g5-mixture' && u.id !== 'g4-land' && u.id !== 'g3-earth-sea' && u.id !== 'g5-weather' && !CARD_SORT_BATCH_A.includes(u.id)) expect(u.activities, u.id).toHaveLength(1);
   });
   it('탭은 tablist와 tab, aria-selected, "활동 n · 제목" 이름을 가진다', () => {
     const html = renderToStaticMarkup(

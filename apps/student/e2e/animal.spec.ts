@@ -2,6 +2,8 @@ import {
   test,
   expect,
   gotoUnit,
+  defineSortSuite,
+  ANIMAL_HABITAT_CFG,
   scrollWidth,
   ANIMAL_CARDS,
   sortAll,
@@ -222,3 +224,8 @@ test.describe('휴대폰 폭', () => {
     await noScroll();
   });
 });
+
+// ---- 두 번째 활동: 사는 곳과 동물의 생김새(카드 분류 groups, 활동 탭) ----
+
+defineSortSuite(ANIMAL_HABITAT_CFG);
+

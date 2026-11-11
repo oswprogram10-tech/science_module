@@ -2,7 +2,7 @@
   "id": "g4-ecosystem",
   "title": "생물과 환경",
   "grade": 4,
-  "standards": ["4과14-02"],
+  "standards": ["4과14-01", "4과14-02"],
   "engine": "life",
   "experiments": [
     {
@@ -48,6 +48,327 @@
           { "when": "fair-test", "iv": "foxes0", "text": "여우의 수만 바꾸었어요. 그래프에서 토끼가 가장 많았던 때와 그 뒤 풀의 양은 어떻게 달랐나요? 먹이 그물 그림에서 무엇이 빠졌을까요?" },
           { "when": "fair-test", "iv": "furColor", "text": "털 색만 바꾸었을 때 결과가 달라졌나요? 이 결과로 무엇을 알 수 있을까요?" },
           { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 그래프에서 토끼 수가 바뀐 때와 풀의 양이 바뀐 때를 비교해 볼까요?" }
+        ]
+      }
+    },
+    {
+      "id": "living-nonliving",
+      "module": "card-sort",
+      "layout": "groups",
+      "title": "생태계를 이루는 것 나누기",
+      "question": "생태계를 이루는 것들을 어떻게 나눌 수 있을까?",
+      "features": [
+        {
+          "key": "grow",
+          "label": "자람"
+        },
+        {
+          "key": "food",
+          "label": "양분"
+        },
+        {
+          "key": "move",
+          "label": "움직임"
+        }
+      ],
+      "criteria": [
+        {
+          "key": "grow",
+          "label": "시간이 지나면 자라거나 수가 늘어나나요?",
+          "feature": "grow",
+          "objective": true,
+          "groups": [
+            {
+              "value": "yes",
+              "label": "그렇다"
+            },
+            {
+              "value": "no",
+              "label": "그렇지 않다"
+            }
+          ]
+        },
+        {
+          "key": "food",
+          "label": "살아가려면 양분이 필요한가요?",
+          "feature": "food",
+          "objective": true,
+          "groups": [
+            {
+              "value": "yes",
+              "label": "필요하다"
+            },
+            {
+              "value": "no",
+              "label": "필요하지 않다"
+            }
+          ]
+        },
+        {
+          "key": "move",
+          "label": "스스로 자리를 옮겨 다니나요?",
+          "feature": "move",
+          "objective": true,
+          "groups": [
+            {
+              "value": "yes",
+              "label": "옮겨 다닌다"
+            },
+            {
+              "value": "no",
+              "label": "옮겨 다니지 않는다"
+            }
+          ]
+        }
+      ],
+      "cards": [
+        {
+          "key": "sunlight",
+          "label": "햇빛",
+          "icon": "eco-sunlight",
+          "features": {
+            "grow": "no",
+            "food": "no",
+            "move": "no"
+          },
+          "observations": {
+            "grow": "며칠 뒤 다시 보아도 크기나 수가 달라지지 않아요.",
+            "food": "먹거나 빨아들이는 것이 없어요.",
+            "move": "창으로 들어온 빛이 바닥에 비치지만, 스스로 갈 곳을 정해 움직이지는 않아요."
+          }
+        },
+        {
+          "key": "water",
+          "label": "물",
+          "icon": "eco-water",
+          "features": {
+            "grow": "no",
+            "food": "no",
+            "move": "no"
+          },
+          "observations": {
+            "grow": "컵에 담아 며칠 두어도 스스로 늘어나지 않아요.",
+            "food": "먹거나 빨아들이는 것이 없어요.",
+            "move": "낮은 곳으로 흘러가지만, 스스로 갈 곳을 정해 움직이지는 않아요."
+          }
+        },
+        {
+          "key": "air",
+          "label": "공기",
+          "icon": "eco-air",
+          "features": {
+            "grow": "no",
+            "food": "no",
+            "move": "no"
+          },
+          "observations": {
+            "grow": "며칠이 지나도 스스로 커지거나 늘어나지 않아요.",
+            "food": "먹거나 빨아들이는 것이 없어요.",
+            "move": "바람이 불면 움직이지만, 스스로 갈 곳을 정하지는 않아요."
+          }
+        },
+        {
+          "key": "soil",
+          "label": "흙",
+          "icon": "eco-soil",
+          "features": {
+            "grow": "no",
+            "food": "no",
+            "move": "no"
+          },
+          "observations": {
+            "grow": "며칠 뒤 다시 보아도 흙 알갱이의 수와 크기가 그대로예요.",
+            "food": "먹거나 빨아들이는 것이 없어요.",
+            "move": "누가 옮기지 않으면 그 자리에 그대로 있어요."
+          }
+        },
+        {
+          "key": "rock",
+          "label": "돌",
+          "icon": "eco-rock",
+          "features": {
+            "grow": "no",
+            "food": "no",
+            "move": "no"
+          },
+          "observations": {
+            "grow": "며칠 뒤 다시 보아도 크기와 모양이 그대로예요.",
+            "food": "먹거나 빨아들이는 것이 없어요.",
+            "move": "누가 옮기지 않으면 그 자리에 그대로 있어요."
+          }
+        },
+        {
+          "key": "rabbit",
+          "label": "토끼",
+          "icon": "eco-rabbit",
+          "features": {
+            "grow": "yes",
+            "food": "yes",
+            "move": "yes"
+          },
+          "observations": {
+            "grow": "몇 달 뒤 다시 보니 몸집이 더 커지고 새끼도 태어났어요.",
+            "food": "풀을 뜯어 먹고 물을 마셔요.",
+            "move": "깡충깡충 뛰어서 스스로 이곳저곳으로 옮겨 다녀요."
+          }
+        },
+        {
+          "key": "sparrow",
+          "label": "참새",
+          "icon": "eco-sparrow",
+          "features": {
+            "grow": "yes",
+            "food": "yes",
+            "move": "yes"
+          },
+          "observations": {
+            "grow": "며칠 뒤 다시 보니 둥지 속 새끼의 몸이 더 커졌어요.",
+            "food": "낟알과 작은 벌레를 쪼아 먹어요.",
+            "move": "날개를 펴고 날아서 스스로 이곳저곳으로 옮겨 다녀요."
+          }
+        },
+        {
+          "key": "earthworm",
+          "label": "지렁이",
+          "icon": "eco-earthworm",
+          "features": {
+            "grow": "yes",
+            "food": "yes",
+            "move": "yes"
+          },
+          "observations": {
+            "grow": "몇 주 뒤 다시 보니 몸이 더 길고 굵어졌어요.",
+            "food": "흙 속의 썩은 낙엽을 먹어요.",
+            "move": "몸을 늘였다 줄였다 하며 스스로 흙 속을 기어 다녀요."
+          }
+        },
+        {
+          "key": "dandelion",
+          "label": "민들레",
+          "icon": "eco-dandelion",
+          "features": {
+            "grow": "yes",
+            "food": "yes",
+            "move": "no"
+          },
+          "observations": {
+            "grow": "며칠 뒤 다시 보니 잎이 더 커지고 꽃대가 올라왔어요.",
+            "food": "뿌리로 흙 속의 물과 양분을 빨아들여요.",
+            "move": "늘 같은 자리에 뿌리를 내리고 있어요."
+          }
+        },
+        {
+          "key": "mushroom",
+          "label": "버섯",
+          "icon": "eco-mushroom",
+          "features": {
+            "grow": "yes",
+            "food": "yes",
+            "move": "no"
+          },
+          "observations": {
+            "grow": "하룻밤 사이에 갓이 더 커지고 둘레에 작은 버섯이 새로 났어요.",
+            "food": "쓰러진 나무에 붙어 그 속의 물기와 양분을 빨아들여요.",
+            "move": "쓰러진 나무에 붙은 채 늘 같은 자리에 있어요."
+          }
+        }
+      ],
+      "limits": [
+        "생산자",
+        "소비자",
+        "분해자",
+        "광합성"
+      ],
+      "safetyChecklist": [],
+      "safetyNotices": [],
+      "tutor": {
+        "forbiddenAnswers": [
+          "생물 요소",
+          "비생물 요소",
+          "생물적 요소",
+          "비생물적 요소",
+          "생물 환경",
+          "비생물 환경",
+          "움직이지 않아도 생물",
+          "움직이지 않아도 살아 있",
+          "움직이지 않아도 살아있",
+          "움직이지 않는 것도 생물",
+          "움직이지 않는 것도 살아",
+          "움직이지 않는 식물도 생물",
+          "움직이지 않는 식물도 살아",
+          "움직이지 않는 생물",
+          "식물도 생물",
+          "식물도 살아 있",
+          "식물도 살아있",
+          "식물은 생물",
+          "식물은 살아 있",
+          "식물은 살아있",
+          "식물이 생물",
+          "민들레도 생물",
+          "민들레는 생물",
+          "버섯은 생물",
+          "버섯도 생물",
+          "버섯이 생물",
+          "버섯은 살아 있",
+          "버섯은 살아있",
+          "버섯도 살아 있",
+          "버섯도 살아있",
+          "움직이는 것이 생물",
+          "움직이는 것은 생물",
+          "움직이면 생물",
+          "자라는 것이 생물",
+          "자라는 것은 생물",
+          "자라면 생물",
+          "양분이 필요한 것이 생물",
+          "양분이 필요한 것은 생물",
+          "양분이 필요하면 생물",
+          "돌은 생물이 아니",
+          "햇빛은 생물이 아니",
+          "물은 생물이 아니",
+          "공기는 생물이 아니",
+          "흙은 생물이 아니"
+        ],
+        "probes": [
+          {
+            "when": "choose-criterion",
+            "text": "카드들을 어떤 기준으로 나누어 볼까요? 누가 나누어도 같은 결과가 나오는 기준을 골라 보세요."
+          },
+          {
+            "when": "pick-card",
+            "text": "어떤 카드부터 살펴볼까요? 카드를 하나 골라 보세요."
+          },
+          {
+            "when": "before-observe",
+            "text": "{card}을(를) 무리에 넣기 전에 '{criterion}'에 맞는 특징을 먼저 살펴볼까요?"
+          },
+          {
+            "when": "sorting",
+            "text": "{card}의 관찰 내용을 보고 어느 무리에 넣을지 정해 볼까요? 왜 그 무리라고 생각했나요?"
+          },
+          {
+            "when": "check-subjective",
+            "text": "'{criterion}'로 나누면 친구와 내 결과가 같을까요? 누가 나누어도 같게 나오는 기준인지 생각해 볼까요?"
+          },
+          {
+            "when": "check-unplaced",
+            "text": "아직 무리에 넣지 않은 카드가 있어요. 모든 카드를 넣어 볼까요?"
+          },
+          {
+            "when": "check-unobserved",
+            "text": "{card}은(는) 아직 살펴보지 않았어요. 돋보기로 특징을 먼저 관찰해 볼까요?"
+          },
+          {
+            "when": "check-inconsistent",
+            "text": "{card}에서 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?"
+          },
+          {
+            "when": "check-complete",
+            "text": "관찰한 특징과 분류가 잘 맞아요. 이번에는 다른 기준으로도 나누어 볼까요? 기준을 바꾸면 같은 무리에 있던 카드가 어떻게 달라질까요?"
+          },
+          {
+            "when": "finished",
+            "text": "햇빛이나 물이 없어지면, 자라고 양분이 필요한 무리에는 어떤 일이 생길까요?"
+          }
         ]
       }
     }

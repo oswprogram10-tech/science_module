@@ -24,13 +24,14 @@ const UNITS = readdirSync(UNITS_DIR)
     return manifest.experiments.map((e, i) => ({ id, name: i === 0 ? id : `${id}/${e.id}`, experiment: i === 0 ? undefined : e.id, module: e.module }));
   });
 
-const NO_SVG_TEXT = new Set(['g3-animal', 'g3-material', 'g3-plantlife', 'g5-strata', 'g6-acid-base', 'g6-career', 'g5-mixture/separation-methods', 'g5-weather/dew-fog-cloud']);
+const NO_SVG_TEXT = new Set(['g3-animal', 'g3-material', 'g3-plantlife', 'g5-strata', 'g6-acid-base', 'g6-career', 'g5-mixture/separation-methods', 'g5-weather/dew-fog-cloud', 'g3-animal/animal-habitat', 'g3-plantlife/plant-habitat', 'g4-ecosystem/living-nonliving', 'g5-strata/rock-grain']);
 
-test('단원 목록: 32개 단원의 모든 활동(36개)을 잰다', () => {
+test('단원 목록: 32개 단원의 모든 활동(40개)을 잰다', () => {
   expect(new Set(UNITS.map((u) => u.id)).size).toBe(32);
-  expect(UNITS.length).toBe(36);
+  expect(UNITS.length).toBe(40);
   expect(UNITS.map((u) => u.name)).toContain('g5-mixture/separation-methods');
   expect(UNITS.map((u) => u.name)).toContain('g5-weather/dew-fog-cloud');
+  for (const name of ['g3-animal/animal-habitat', 'g3-plantlife/plant-habitat', 'g4-ecosystem/living-nonliving', 'g5-strata/rock-grain']) expect(UNITS.map((u) => u.name)).toContain(name);
 });
 
 /** 지금 화면의 SVG 글자를 재서 13 px보다 작은 것, 그림 밖으로 잘린 것, (그래프에서) 서로 겹친 것을 "상태 | 그림 | 글자 | 문제"로 돌려준다. */

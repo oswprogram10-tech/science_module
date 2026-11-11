@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { test, expect, gotoUnit, setValue, selectIV, predict, runButton, resultRows } from './helpers';
+import { test, expect, gotoUnit, defineSortSuite, LIVING_NONLIVING_CFG, setValue, selectIV, predict, runButton, resultRows } from './helpers';
 
 const tutorBox = (page: Page) => page.getByRole('heading', { name: '생각해 볼까요?' }).locator('..');
 const macro = (page: Page) => page.getByRole('figure', { name: '눈으로 보기' });
@@ -215,3 +215,8 @@ test.describe('1280x800 화면', () => {
     await check();
   });
 });
+
+// ---- 두 번째 활동: 생태계를 이루는 것 나누기(카드 분류 groups, 활동 탭) ----
+
+defineSortSuite(LIVING_NONLIVING_CFG);
+

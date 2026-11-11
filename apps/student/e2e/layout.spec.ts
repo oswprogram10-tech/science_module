@@ -81,6 +81,27 @@ for (const vp of VIEWPORTS) {
       for (const right of tabs) expect(right).toBeLessThanOrEqual(vp.width + 1);
     });
 
+    // 카드 분류 두 번째 활동 넷(사는 곳과 동물의 생김새, 사는 곳과 식물의 생김새, 생태계를 이루는 것 나누기, 퇴적암을 알갱이 크기로 나누기)도 활동 탭 포함 가로 스크롤이 없다.
+    for (const [unit, experiment, cards] of [
+      ['g3-animal', 'animal-habitat', 8],
+      ['g3-plantlife', 'plant-habitat', 8],
+      ['g4-ecosystem', 'living-nonliving', 10],
+      ['g5-strata', 'rock-grain', 8],
+    ] as const) {
+      test(`${unit} 두 번째 활동(${experiment}, 활동 탭 포함)에 가로 스크롤이 없다`, async ({ page }) => {
+        await gotoUnit(page, unit, { experiment });
+        await expect(page.getByRole('tab', { name: /^활동 2 · / })).toBeVisible();
+        await expect(page.getByRole('link', { name: '← 단원 목록' })).toBeVisible();
+        const { sw, iw } = await scrollWidth(page);
+        expect(sw).toBeLessThanOrEqual(iw);
+        const tabs = await page.getByRole('tab').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().right));
+        for (const right of tabs) expect(right).toBeLessThanOrEqual(vp.width + 1);
+        const rights = await page.locator('.sort-pile .sort-card').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().right));
+        expect(rights).toHaveLength(cards);
+        for (const right of rights) expect(right).toBeLessThanOrEqual(vp.width + 1);
+      });
+    }
+
     // 날씨와 우리 생활의 두 번째 활동(이슬·안개·구름 비교하기)도 활동 탭과 긴 카드 이름 포함 가로 스크롤이 없다.
     test('g5-weather 두 번째 활동(활동 탭 포함)에 가로 스크롤이 없다', async ({ page }) => {
       await gotoUnit(page, 'g5-weather', { experiment: 'dew-fog-cloud' });

@@ -43,7 +43,8 @@ describe('저장소의 데이터셋 검증 (pnpm test에도 포함)', () => {
       // 혼합물의 분리는 두 번째 활동(분리 방법 고르기)의 견본 1개가 더해졌다(sft 5).
       // 지구와 바다는 두 번째 활동(밀물과 썰물 관찰하기)의 견본이 sft 2 · pairs 1 · redteam 1 더해졌다(sft 6 · pairs 3 · redteam 4).
       // 날씨와 우리 생활도 두 번째 활동(이슬·안개·구름 비교하기)의 견본이 같은 수만큼 더해졌다(sft 6 · pairs 3 · redteam 4).
-      const twoMore = unit === 'g3-earth-sea' || unit === 'g5-weather';
+      // 카드 분류 두 번째 활동 넷(동물·식물·생태계·지층)도 같은 수만큼 더해졌다(sft 6 · pairs 3 · redteam 4).
+      const twoMore = unit === 'g3-earth-sea' || unit === 'g5-weather' || ['g3-animal', 'g3-plantlife', 'g4-ecosystem', 'g5-strata'].includes(unit);
       const sftCount = rich ? 8 : unit === 'g4-night-sky' || twoMore ? 6 : unit === 'g5-mixture' ? 5 : 4;
       expect(full.sft.filter((r) => r.unitId === unit), `${unit} sft`).toHaveLength(sftCount);
       expect(full.pairs.filter((r) => r.unitId === unit), `${unit} pairs`).toHaveLength(rich ? 4 : twoMore ? 3 : 2);
@@ -70,8 +71,8 @@ describe('저장소의 데이터셋 검증 (pnpm test에도 포함)', () => {
       const list = full.scenarios.filter((s) => s.unitId === unit);
       expect(list.length, unit).toBeGreaterThanOrEqual(15);
       // 관찰 활동은 과제마다 5개이므로 과제가 5개를 넘으면(밤하늘 관찰 6개 = 30) 그만큼 늘어난다.
-      // 활동이 둘인 단원(g5-mixture, g4-land, g3-earth-sea, g5-weather)은 활동마다 25개까지라 50개까지 늘어난다.
-      expect(list.length, unit).toBeLessThanOrEqual(unit === 'g4-night-sky' ? 35 : unit === 'g5-mixture' || unit === 'g4-land' || unit === 'g3-earth-sea' || unit === 'g5-weather' ? 50 : 25);
+      // 활동이 둘인 단원(g5-mixture, g4-land, g3-earth-sea, g5-weather, g3-animal, g3-plantlife, g4-ecosystem, g5-strata)은 활동마다 25개까지라 50개까지 늘어난다.
+      expect(list.length, unit).toBeLessThanOrEqual(unit === 'g4-night-sky' ? 35 : unit === 'g5-mixture' || unit === 'g4-land' || unit === 'g3-earth-sea' || unit === 'g5-weather' || ['g3-animal', 'g3-plantlife', 'g4-ecosystem', 'g5-strata'].includes(unit) ? 50 : 25);
     }
     for (const s of full.scenarios) expect(inputFor(full, s, '').length).toBeGreaterThan(30);
   });

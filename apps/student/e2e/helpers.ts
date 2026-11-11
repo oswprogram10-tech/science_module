@@ -527,3 +527,333 @@ export async function weatherFinishCriterion(page: Page, key: WeatherCriterionKe
   await weatherSortAll(page, key);
   await sortCheckButton(page).click();
 }
+
+// ---- 카드 분류 두 번째 활동 넷(1차 묶음): 동물의 생활·식물의 생활·생물과 환경·지층과 화석 ----
+
+/** 두 번째 활동 하나의 카드 분류 화면을 다루는 도구와 설정(unit·exp는 주소 #/unit/{unit}/{exp}). */
+export interface SortKitCfg {
+  unit: string;
+  unitTitle: string;
+  exp: string;
+  expTitle: string;
+  question: string;
+  /** 첫 활동 id(활동 탭에서 돌아가는 주소). */
+  firstExp: string;
+  cards: readonly string[];
+  /** 객관 기준: key -> 질문, 돋보기 버튼 이름, 카드 -> 넣을 무리 이름(관찰 결과에 맞는 것). */
+  criteria: Record<string, { label: string; observe: string; group: Record<string, string> }>;
+  /** 주관 기준(없는 활동도 있다). */
+  subjective?: { label: string; groups: [string, string] };
+  /** 라디오(분류 기준) 수. */
+  radios: number;
+  /** 두 기준을 끝내는 순서. */
+  finish: [string, string];
+  /** 일부러 틀리게 넣어 볼 카드와 그 카드를 넣을 틀린 무리(기준은 finish[0]). 카드 더미의 마지막 카드는 고른 채로 남아 다시 누르면 선택이 풀리므로 마지막이 아닌 카드를 쓴다. */
+  wrong: { card: string; group: string; sentence: string; tutor: string };
+  /** 처음 튜터 문장, 마무리 튜터 문장(조각들), 끝난 뒤 화면 어디에도 없어야 하는 말. */
+  firstTutor: string;
+  finishedTutor: string[];
+  banned: string[];
+  /** 그림: svg class, 결과 그림 class, 한 카드의 특징별 결과 선택자. */
+  icon: { svg: string; result: string; card: string; obs: Record<string, string>; marks: Array<{ key: string; sel: string }>; other: { card: string; key: string; sel: string } };
+}
+
+export function sortKit(cfg: SortKitCfg) {
+  const goto = (page: Page, opts: { dev?: boolean } = {}) => gotoUnit(page, cfg.unit, { ...opts, experiment: cfg.exp });
+  const card = (page: Page, name: string) => sortCard(page, name);
+  const observeButton = (page: Page, key: string) =>
+    page.getByRole('region', { name: '돋보기' }).getByRole('button', { name: cfg.criteria[key]!.observe, exact: true });
+  /** 카드를 모두 살펴보고(observe) 나눈다. override는 일부러 다른 무리에 넣을 카드. */
+  async function sortEvery(page: Page, key: string, opts: { observe?: boolean; override?: Record<string, string> } = {}) {
+    for (const name of cfg.cards) {
+      await card(page, name).click();
+      if (opts.observe !== false) await observeButton(page, key).click();
+      await sortPutButton(page, opts.override?.[name] ?? cfg.criteria[key]!.group[name]!).click();
+    }
+  }
+  async function finishCriterion(page: Page, key: string) {
+    await sortChoose(page, cfg.criteria[key]!.label);
+    await sortEvery(page, key);
+    await sortCheckButton(page).click();
+  }
+  return { goto, card, observeButton, sortEvery, finishCriterion };
+}
+
+/** 두 번째 활동 시험 묶음을 등록한다(각 단원의 spec 파일에서 부른다). */
+export function defineSortSuite(cfg: SortKitCfg) {
+  const kit = sortKit(cfg);
+  const progress = (page: Page) => page.getByRole('region', { name: '진행 상황' });
+  const magnifier = (page: Page) => page.getByRole('region', { name: '돋보기' });
+  const [k1, k2] = cfg.finish;
+  const label = (key: string) => cfg.criteria[key]!.label;
+
+  test.describe(`${cfg.expTitle} (두 번째 활동)`, () => {
+    test('첫 활동 화면의 활동 탭으로 이동한다: 탭 이름, 주소, 질문, 카드', async ({ page }) => {
+      await gotoUnit(page, cfg.unit);
+      await expect(activityTabs(page)).toBeVisible();
+      await expect(page.getByRole('tab')).toHaveCount(2);
+      await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+      await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'false');
+      await expect(activityTab(page, 2)).toHaveText(`활동 2 · ${cfg.expTitle}`);
+      await activityTab(page, 2).click();
+      await expect(page).toHaveURL(new RegExp(`#/unit/${cfg.unit}/${cfg.exp}$`));
+      await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'true');
+      await expect(page.getByRole('heading', { level: 1, name: cfg.unitTitle })).toBeVisible();
+      await expect(page.getByText(`탐구 질문: ${cfg.question}`)).toBeVisible();
+      await expect(page.getByRole('radio')).toHaveCount(cfg.radios);
+      for (const name of cfg.cards) await expect(kit.card(page, name)).toBeVisible();
+      await expect(page.locator('.sort-card-sub')).toHaveCount(0);
+      await expect(sortCheckButton(page)).toBeDisabled();
+      await expect(sortTutor(page)).toContainText(cfg.firstTutor);
+      // 첫 활동으로 돌아간다.
+      await activityTab(page, 1).click();
+      await expect(page).toHaveURL(new RegExp(`#/unit/${cfg.unit}/${cfg.firstExp}$`));
+      await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+      await expect(page.getByRole('heading', { level: 1, name: cfg.unitTitle })).toBeVisible();
+    });
+
+    test('돋보기 버튼 문구는 기준마다 다르고, 카드를 고르기 전에는 버튼이 없다', async ({ page }) => {
+      await kit.goto(page);
+      await expect(magnifier(page).getByRole('button')).toHaveCount(0);
+      await kit.card(page, cfg.cards[0]!).click();
+      for (const key of Object.keys(cfg.criteria)) await expect(kit.observeButton(page, key)).toBeVisible();
+    });
+
+    test(`"${cfg.criteria[k1]!.label}"로 관찰 없이 넣으면 미관찰 문장이, 관찰 뒤 틀리게 넣으면 비교 문장이, 고치면 맞음 문장이 보인다`, async ({ page }) => {
+      await kit.goto(page);
+      await sortChoose(page, label(k1));
+      await kit.sortEvery(page, k1, { observe: false });
+      await sortCheckButton(page).click();
+      await expect(page.getByText('아직 이 기준의 특징을 살펴보지 않았어요.')).toBeVisible();
+      await expect(sortTutor(page)).toContainText('아직 살펴보지 않았어요.');
+      // 관찰하되 한 카드를 틀린 무리에 넣는다.
+      for (const name of cfg.cards) {
+        await kit.card(page, name).click();
+        await kit.observeButton(page, k1).click();
+      }
+      await kit.card(page, cfg.wrong.card).click();
+      await sortPutButton(page, cfg.wrong.group).click();
+      await sortCheckButton(page).click();
+      await expect(page.getByText(cfg.wrong.sentence)).toBeVisible();
+      await expect(sortTutor(page)).toContainText(cfg.wrong.tutor);
+      // 어느 무리가 맞는지는 말하지 않는다.
+      const right = cfg.criteria[k1]!.group[cfg.wrong.card]!;
+      for (const box of [sortFeedback(page), sortTutor(page)]) await expect(box).not.toContainText(right);
+      await expect(progress(page)).toContainText('끝낸 기준: 없음 (0/2)');
+      // 고친다.
+      await kit.card(page, cfg.wrong.card).click();
+      await sortPutButton(page, right).click();
+      await sortCheckButton(page).click();
+      await expect(page.getByText('관찰한 특징과 분류가 서로 잘 맞아요.')).toBeVisible();
+      await expect(progress(page)).toContainText(`끝낸 기준: ${label(k1)} (1/2)`);
+    });
+
+    if (cfg.subjective) {
+      const subj = cfg.subjective;
+      test(`"${subj.label}"는 판정하지 않고 사람마다 다르다고만 한다`, async ({ page }) => {
+        await kit.goto(page);
+        await sortChoose(page, subj.label);
+        for (const [i, name] of cfg.cards.entries()) {
+          await kit.card(page, name).click();
+          await sortPutButton(page, subj.groups[i % 2]!).click();
+        }
+        await sortCheckButton(page).click();
+        await expect(page.getByText('이 기준은 사람마다 다르게 나눌 수 있어요.')).toBeVisible();
+        await expect(sortTutor(page)).toContainText(`'${subj.label}'로 나누면 친구와 내 결과가 같을까요?`);
+        await expect(progress(page)).toContainText('끝낸 기준: 없음 (0/2)');
+      });
+    }
+
+    test('객관 기준 두 개를 끝내면 완료 문구와 마무리 질문이 나오고 정답·제한 용어는 화면에 없다', async ({ page }) => {
+      await kit.goto(page);
+      await kit.finishCriterion(page, k1);
+      await expect(page.getByText('두 가지 기준으로 분류했어요!')).toHaveCount(0);
+      await expect(sortTutor(page)).toContainText('다른 기준으로도 나누어 볼까요?');
+      await kit.finishCriterion(page, k2);
+      await expect(progress(page)).toContainText(`끝낸 기준: ${label(k1)}, ${label(k2)} (2/2)`);
+      await expect(page.getByText('두 가지 기준으로 분류했어요!')).toBeVisible();
+      for (const part of cfg.finishedTutor) await expect(sortTutor(page)).toContainText(part);
+      const body = page.locator('body');
+      for (const w of cfg.banned) await expect(body).not.toContainText(w);
+    });
+
+    test('관찰하기 전에는 기본 그림만 보이고, 살펴본 특징의 결과 그림만 나타난다', async ({ page }) => {
+      await kit.goto(page);
+      const { svg, result, card, marks, other } = cfg.icon;
+      await kit.card(page, card).click();
+      await expect(page.locator(`svg.${svg}`)).toHaveCount(cfg.cards.length + 1); // 카드 그림 + 돋보기 1장
+      await expect(page.locator(`svg .${result}`)).toHaveCount(0);
+      let n = 0;
+      for (const { key, sel } of marks) {
+        await kit.observeButton(page, key).click();
+        n++;
+        await expect(page.locator(`svg ${sel}`)).toHaveCount(1);
+        await expect(page.locator(`svg .${result}`)).toHaveCount(n);
+      }
+      // 다른 카드를 고르면 그 카드에서 살펴본 것만 그려진다.
+      await kit.card(page, other.card).click();
+      await expect(page.locator(`svg .${result}`)).toHaveCount(0);
+      await kit.observeButton(page, other.key).click();
+      await expect(page.locator(`svg ${other.sel}`)).toHaveCount(1);
+      await expect(page.locator(`svg .${result}`)).toHaveCount(1);
+    });
+
+    test('아직 관찰하지 않은 문장은 화면에 없고, 살펴본 특징의 문장만 나타난다', async ({ page }) => {
+      await kit.goto(page);
+      const body = page.locator('body');
+      const { card, obs } = cfg.icon;
+      await kit.card(page, card).click();
+      for (const s of Object.values(obs)) await expect(body).not.toContainText(s);
+      let seen = 0;
+      for (const [key, sentence] of Object.entries(obs)) {
+        await kit.observeButton(page, key).click();
+        seen++;
+        await expect(body).toContainText(sentence);
+        await expect(magnifier(page).locator('.obs-list li')).toHaveCount(seen);
+        for (const later of Object.values(obs).slice(seen)) await expect(body).not.toContainText(later);
+      }
+    });
+
+    for (const vp of [{ width: 390, height: 800 }, { width: 1280, height: 800 }]) {
+      test.describe(`${vp.width}px`, () => {
+        test.use({ viewport: vp });
+        test('가로 스크롤이 없다 (처음, 카드를 관찰한 뒤, 모두 넣은 뒤)', async ({ page }) => {
+          await kit.goto(page);
+          const noScroll = async () => {
+            const { sw, iw } = await scrollWidth(page);
+            expect(sw).toBeLessThanOrEqual(iw);
+          };
+          await noScroll();
+          await sortChoose(page, label(k2));
+          await kit.card(page, cfg.cards[cfg.cards.length - 1]!).click();
+          await kit.observeButton(page, k2).click();
+          await noScroll();
+          await kit.sortEvery(page, k2);
+          await sortCheckButton(page).click();
+          await noScroll();
+        });
+      });
+    }
+  });
+}
+
+// ---- 두 번째 활동 넷의 시험 설정(각 단원 spec의 시험 묶음과 a11y spec이 함께 쓴다) ----
+
+export const ANIMAL_HABITAT_CFG: SortKitCfg = {
+  unit: 'g3-animal',
+  unitTitle: '동물의 생활',
+  exp: 'animal-habitat',
+  expTitle: '사는 곳과 동물의 생김새',
+  question: '사는 곳이 다른 동물들은 생김새가 어떻게 다를까?',
+  firstExp: 'animal-sort',
+  cards: ['붕어', '상어', '두더지', '지렁이', '사막여우', '낙타', '북극곰', '북극여우'],
+  criteria: {
+    habitat: { label: '어디에서 사나요?', observe: '사는 곳 살펴보기', group: { '붕어': '물속', '상어': '물속', '두더지': '땅속', '지렁이': '땅속', '사막여우': '사막', '낙타': '사막', '북극곰': '추운 곳', '북극여우': '추운 곳' } },
+    fins: { label: '몸에 지느러미가 있나요?', observe: '몸 옆과 등 살펴보기', group: { '붕어': '있다', '상어': '있다', '두더지': '없다', '지렁이': '없다', '사막여우': '없다', '낙타': '없다', '북극곰': '없다', '북극여우': '없다' } },
+    fur: { label: '몸이 털로 덮여 있나요?', observe: '몸 겉 만져 보기', group: { '붕어': '덮여 있지 않다', '상어': '덮여 있지 않다', '두더지': '덮여 있다', '지렁이': '덮여 있지 않다', '사막여우': '덮여 있다', '낙타': '덮여 있다', '북극곰': '덮여 있다', '북극여우': '덮여 있다' } },
+  },
+  subjective: { label: '귀여운가요?', groups: ['귀엽다', '귀엽지 않다'] },
+  radios: 4,
+  finish: ['habitat', 'fins'],
+  wrong: { card: '북극곰', group: '사막', sentence: '북극곰은 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?', tutor: '북극곰에서 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?' },
+  firstTutor: '동물들을 어떤 기준으로 나누어 볼까요?',
+  finishedTutor: ['사는 곳으로 나눈 무리와 생김새로 나눈 무리를 견주어 볼까요?', '같은 곳에 사는 동물끼리 닮은 생김새가 있나요?'],
+  banned: ['적응', '진화', '자연 선택', '체온 조절', '지느러미로 헤엄', '털이 추위를 막'],
+  icon: {
+    svg: 'habitat-icon',
+    result: 'hb-result',
+    card: '상어',
+    obs: { habitat: '바닷속에서 헤엄치며 살아요.', fins: '몸 옆과 등, 꼬리에 얇고 단단한 막이 펼쳐져 있어요.', fur: '몸 겉이 오돌토돌하고 거칠며, 털이 나 있지 않아요.' },
+    marks: [{ key: 'habitat', sel: '.hb-habitat[data-habitat="water"]' }, { key: 'fins', sel: '.hb-fins[data-fins="true"]' }, { key: 'fur', sel: '.hb-fur[data-fur="false"]' }],
+    other: { card: '북극곰', key: 'fur', sel: '.hb-fur[data-fur="true"]' },
+  },
+};
+
+export const PLANT_HABITAT_CFG: SortKitCfg = {
+  unit: 'g3-plantlife',
+  unitTitle: '식물의 생활',
+  exp: 'plant-habitat',
+  expTitle: '사는 곳과 식물의 생김새',
+  question: '사는 곳이 다른 식물들은 생김새가 어떻게 다를까?',
+  firstExp: 'leaf-tree',
+  cards: ['부레옥잠', '개구리밥', '검정말', '연꽃', '선인장', '소나무', '민들레', '강아지풀'],
+  criteria: {
+    place: { label: '어디에서 자라나요?', observe: '자라는 곳 살펴보기', group: { '부레옥잠': '물에서 자란다', '개구리밥': '물에서 자란다', '검정말': '물에서 자란다', '연꽃': '물에서 자란다', '선인장': '땅에서 자란다', '소나무': '땅에서 자란다', '민들레': '땅에서 자란다', '강아지풀': '땅에서 자란다' } },
+    float: { label: '물 위에 떠 있나요?', observe: '물 위 살펴보기', group: { '부레옥잠': '떠 있다', '개구리밥': '떠 있다', '검정말': '떠 있지 않다', '연꽃': '떠 있지 않다', '선인장': '떠 있지 않다', '소나무': '떠 있지 않다', '민들레': '떠 있지 않다', '강아지풀': '떠 있지 않다' } },
+    needle: { label: '잎이 가시나 바늘처럼 가늘고 뾰족한가요?', observe: '잎 모양 살펴보기', group: { '부레옥잠': '그렇지 않다', '개구리밥': '그렇지 않다', '검정말': '그렇지 않다', '연꽃': '그렇지 않다', '선인장': '그렇다', '소나무': '그렇다', '민들레': '그렇지 않다', '강아지풀': '그렇지 않다' } },
+  },
+  subjective: { label: '예쁜가요?', groups: ['예쁘다', '예쁘지 않다'] },
+  radios: 4,
+  finish: ['float', 'needle'],
+  wrong: { card: '개구리밥', group: '떠 있지 않다', sentence: '개구리밥은 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?', tutor: '개구리밥에서 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?' },
+  firstTutor: '식물들을 어떤 기준으로 나누어 볼까요?',
+  finishedTutor: ['물 위에 떠 사는 식물은 몸의 어느 부분 덕분에 떠 있을 수 있을까요?', '관찰 기록에서 찾아볼까요?'],
+  banned: ['공기주머니', '증산 작용', '기공', '통기 조직', '환경에 적응'],
+  icon: {
+    svg: 'plant-habitat-icon',
+    result: 'ph-result',
+    card: '부레옥잠',
+    obs: { place: '연못 물 위에서 자라요.', float: '물 위에 떠 있고, 잎자루를 자르면 스펀지처럼 구멍이 많아요.', needle: '잎이 둥글고 넓적해요.' },
+    marks: [{ key: 'place', sel: '.ph-place[data-place="water"]' }, { key: 'float', sel: '.ph-float[data-floating="true"]' }, { key: 'needle', sel: '.ph-needle[data-pointed="false"]' }],
+    other: { card: '선인장', key: 'needle', sel: '.ph-needle[data-pointed="true"]' },
+  },
+};
+
+export const LIVING_NONLIVING_CFG: SortKitCfg = {
+  unit: 'g4-ecosystem',
+  unitTitle: '생물과 환경',
+  exp: 'living-nonliving',
+  expTitle: '생태계를 이루는 것 나누기',
+  question: '생태계를 이루는 것들을 어떻게 나눌 수 있을까?',
+  firstExp: 'food-web',
+  cards: ['햇빛', '물', '공기', '흙', '돌', '토끼', '참새', '지렁이', '민들레', '버섯'],
+  criteria: {
+    grow: { label: '시간이 지나면 자라거나 수가 늘어나나요?', observe: '자람 살펴보기', group: { '햇빛': '그렇지 않다', '물': '그렇지 않다', '공기': '그렇지 않다', '흙': '그렇지 않다', '돌': '그렇지 않다', '토끼': '그렇다', '참새': '그렇다', '지렁이': '그렇다', '민들레': '그렇다', '버섯': '그렇다' } },
+    food: { label: '살아가려면 양분이 필요한가요?', observe: '양분 살펴보기', group: { '햇빛': '필요하지 않다', '물': '필요하지 않다', '공기': '필요하지 않다', '흙': '필요하지 않다', '돌': '필요하지 않다', '토끼': '필요하다', '참새': '필요하다', '지렁이': '필요하다', '민들레': '필요하다', '버섯': '필요하다' } },
+    move: { label: '스스로 자리를 옮겨 다니나요?', observe: '움직임 살펴보기', group: { '햇빛': '옮겨 다니지 않는다', '물': '옮겨 다니지 않는다', '공기': '옮겨 다니지 않는다', '흙': '옮겨 다니지 않는다', '돌': '옮겨 다니지 않는다', '토끼': '옮겨 다닌다', '참새': '옮겨 다닌다', '지렁이': '옮겨 다닌다', '민들레': '옮겨 다니지 않는다', '버섯': '옮겨 다니지 않는다' } },
+  },
+  radios: 3,
+  finish: ['grow', 'move'],
+  wrong: { card: '민들레', group: '그렇지 않다', sentence: '민들레는 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?', tutor: '민들레에서 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?' },
+  firstTutor: '카드들을 어떤 기준으로 나누어 볼까요?',
+  finishedTutor: ['햇빛이나 물이 없어지면, 자라고 양분이 필요한 무리에는 어떤 일이 생길까요?'],
+  banned: ['생물 요소', '비생물 요소', '생산자', '소비자', '분해자', '광합성', '식물도 생물'],
+  icon: {
+    svg: 'eco-icon',
+    result: 'eco-result',
+    card: '버섯',
+    obs: { grow: '하룻밤 사이에 갓이 더 커지고 둘레에 작은 버섯이 새로 났어요.', food: '쓰러진 나무에 붙어 그 속의 물기와 양분을 빨아들여요.', move: '쓰러진 나무에 붙은 채 늘 같은 자리에 있어요.' },
+    marks: [{ key: 'grow', sel: '.eco-grow[data-grows="true"]' }, { key: 'food', sel: '.eco-food[data-needs="true"]' }, { key: 'move', sel: '.eco-move[data-moves="false"]' }],
+    other: { card: '돌', key: 'move', sel: '.eco-move[data-moves="false"]' },
+  },
+};
+
+export const ROCK_GRAIN_CFG: SortKitCfg = {
+  unit: 'g5-strata',
+  unitTitle: '지층과 화석',
+  exp: 'rock-grain',
+  expTitle: '퇴적암을 알갱이 크기로 나누기',
+  question: '퇴적암을 알갱이의 크기에 따라 어떻게 나눌 수 있을까?',
+  firstExp: 'strata-order',
+  cards: ['회색 암석 가', '검은 암석 나', '붉은 암석 다', '누런 암석 라', '회색 암석 마', '붉은 암석 바', '얼룩 암석 사', '회색 암석 아'],
+  criteria: {
+    grain: { label: '알갱이는 얼마나 큰가요?', observe: '알갱이 크기 살펴보기', group: { '회색 암석 가': '너무 작아 잘 보이지 않는다', '검은 암석 나': '너무 작아 잘 보이지 않는다', '붉은 암석 다': '너무 작아 잘 보이지 않는다', '누런 암석 라': '모래알만 하다', '회색 암석 마': '모래알만 하다', '붉은 암석 바': '모래알만 하다', '얼룩 암석 사': '콩알보다 크다', '회색 암석 아': '콩알보다 크다' } },
+    smooth: { label: '손으로 문지르면 매끄러운가요?', observe: '문지른 느낌 살펴보기', group: { '회색 암석 가': '매끄럽다', '검은 암석 나': '매끄럽다', '붉은 암석 다': '매끄럽다', '누런 암석 라': '까끌까끌하다', '회색 암석 마': '까끌까끌하다', '붉은 암석 바': '까끌까끌하다', '얼룩 암석 사': '까끌까끌하다', '회색 암석 아': '까끌까끌하다' } },
+    pebble: { label: '둥근 돌 조각이 박혀 있나요?', observe: '박힌 조각 살펴보기', group: { '회색 암석 가': '박혀 있지 않다', '검은 암석 나': '박혀 있지 않다', '붉은 암석 다': '박혀 있지 않다', '누런 암석 라': '박혀 있지 않다', '회색 암석 마': '박혀 있지 않다', '붉은 암석 바': '박혀 있지 않다', '얼룩 암석 사': '박혀 있다', '회색 암석 아': '박혀 있다' } },
+  },
+  subjective: { label: '색이 마음에 드나요?', groups: ['마음에 든다', '마음에 들지 않는다'] },
+  radios: 4,
+  finish: ['grain', 'smooth'],
+  wrong: { card: '회색 암석 가', group: '모래알만 하다', sentence: '회색 암석 가는 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?', tutor: '회색 암석 가에서 관찰한 내용과 넣은 무리를 다시 비교해 볼까요?' },
+  firstTutor: '암석들을 어떤 기준으로 나누어 볼까요?',
+  finishedTutor: ['알갱이가 아주 작은 암석은 무엇이 쌓여 만들어졌을까요?', '모래알만 한 알갱이로 된 암석과 견주어 볼까요?'],
+  banned: ['이암', '사암', '역암', '셰일', '쇄설성', '입도', '진흙이 쌓', '모래가 쌓'],
+  icon: {
+    svg: 'grain-icon',
+    result: 'rg-result',
+    card: '회색 암석 가',
+    obs: { grain: '돋보기로 보아도 알갱이가 잘 보이지 않아요.', smooth: '문지르면 매끄럽고 손에 고운 가루가 묻어요.', pebble: '표면이 고르고 박힌 조각이 없어요.' },
+    marks: [{ key: 'grain', sel: '.rg-grain[data-grain="fine"]' }, { key: 'smooth', sel: '.rg-smooth[data-smooth="true"]' }, { key: 'pebble', sel: '.rg-pebble[data-pebble="false"]' }],
+    other: { card: '얼룩 암석 사', key: 'pebble', sel: '.rg-pebble[data-pebble="true"]' },
+  },
+};

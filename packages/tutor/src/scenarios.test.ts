@@ -7,6 +7,8 @@ import { buildTutorInput, situationOf } from './context';
 import { CONTENT_DIR, TUTOR_DIR, TUTOR_UNITS, loadUnits, scenarioFile } from './datasetIo';
 
 const units = loadUnits();
+/** 카드 분류 두 번째 활동을 더한 단원 넷(1차 묶음). */
+const CARD_SORT_BATCH_A = ['g3-animal', 'g3-plantlife', 'g4-ecosystem', 'g5-strata'];
 /** 활동을 더하기 전 HEAD의 ml/tutor/scenarios/g5-mixture.jsonl 20줄(줄바꿈으로 이은 글자)의 SHA-256. */
 const FIRST_ACTIVITY_SHA = '2b7ef4f3ed95a95828bffbfa1152bfba63813d89cf63d67f5c85b7259dd8a85e';
 
@@ -43,7 +45,7 @@ describe('활동이 여럿인 단원의 시나리오(id 안정성)', () => {
   });
   it('활동이 하나인 단원은 활동마다 시나리오를 한 번만 만들고 모두 첫 활동 것이다', () => {
     for (const id of TUTOR_UNITS) {
-      if (id === 'g5-mixture' || id === 'g4-land' || id === 'g3-earth-sea' || id === 'g5-weather') continue;
+      if (id === 'g5-mixture' || id === 'g4-land' || id === 'g3-earth-sea' || id === 'g5-weather' || CARD_SORT_BATCH_A.includes(id)) continue;
       const only = units[id]!.manifest.experiments;
       expect(only, id).toHaveLength(1);
       expect(new Set(generateScenarios(id, units[id]!).map((s) => s.state.experimentId)), id).toEqual(new Set([only[0]!.id]));
@@ -69,6 +71,41 @@ describe('날씨와 우리 생활 시나리오(활동 2 덧붙임)', () => {
     const keys = new Set(list.slice(20).map((s) => situationOf(s.state, exp)));
     for (const k of ['choose-criterion', 'pick-card', 'before-observe', 'sorting', 'check-subjective', 'check-unobserved', 'check-inconsistent', 'check-complete', 'finished']) expect(keys.has(k), k).toBe(true);
   });
+});
+
+describe('카드 분류 두 번째 활동 넷의 시나리오(덧붙임)', () => {
+  // [단원, 첫 활동 id, 새 활동 id, 첫 활동 시나리오 수, 새 활동 시나리오 수, 활동 2를 더하기 전 jsonl 줄(줄바꿈으로 이은 글자)의 SHA-256]
+  const CASES: Array<[string, string, string, number, number, string]> = [
+    ['g3-animal', 'animal-sort', 'animal-habitat', 24, 24, 'c95bb5cc9a79cefc7714d3c52f4aeb07bdc21e4a6dc80812e0b473fd95debe55'],
+    ['g3-plantlife', 'leaf-tree', 'plant-habitat', 24, 24, 'c5dda1cbeadaad7dbcfd131d2ac7f016044218c035d10958c51cd89cf9a49f84'],
+    ['g4-ecosystem', 'food-web', 'living-nonliving', 22, 21, '16076f1fe13dc068213f00299b07fbb4f6912042f2c3f9bbbaaeb88ee2daaf21'],
+    ['g5-strata', 'strata-order', 'rock-grain', 23, 24, '0788e3172719706d11c14f1fb3af2c04ac3029767280a0af296408cd9fc2a3ce'],
+  ];
+  for (const [id, firstId, newId, nFirst, nNew, sha] of CASES) {
+    const unit = units[id]!;
+    const list = generateScenarios(id, unit);
+    it(`${id}: 첫 활동(${firstId}) 시나리오 ${nFirst}줄은 활동 2를 더하기 전과 한 글자도 같고, ${newId} 시나리오 ${nNew}개가 뒤에 덧붙는다`, () => {
+      expect(unit.manifest.experiments.map((e) => e.id)).toEqual([firstId, newId]);
+      expect(list.map((s) => s.scenarioId)).toEqual(list.map((_, i) => `${id}-s${String(i + 1).padStart(3, '0')}`));
+      expect(list).toHaveLength(nFirst + nNew);
+      expect(list.slice(0, nFirst).every((s) => s.state.experimentId === firstId)).toBe(true);
+      expect(list.slice(nFirst).every((s) => s.state.experimentId === newId)).toBe(true);
+      const first = list.slice(0, nFirst).map((s) => JSON.stringify(s)).join('\n');
+      expect(createHash('sha256').update(first).digest('hex')).toBe(sha);
+    });
+    it(`${id}: ml/tutor/scenarios/${id}.jsonl이 생성 결과와 같고 앞 ${nFirst}줄이 그대로다`, () => {
+      const text = readFileSync(scenarioFile(TUTOR_DIR, id), 'utf8');
+      expect(text).toBe(list.map((s) => JSON.stringify(s)).join('\n') + '\n');
+      expect(createHash('sha256').update(text.split('\n').slice(0, nFirst).join('\n')).digest('hex')).toBe(sha);
+    });
+    it(`${id}: 카드 분류의 상황이 시나리오에 있다`, () => {
+      const exp = unit.manifest.experiments[1]!;
+      const keys = new Set(list.slice(nFirst).map((s) => situationOf(s.state, exp)));
+      // 생태계 활동은 주관 기준이 없어 check-subjective 상황이 없다.
+      const want = ['choose-criterion', 'pick-card', 'before-observe', 'sorting', 'check-unobserved', 'check-inconsistent', 'check-complete', 'finished', ...(id === 'g4-ecosystem' ? [] : ['check-subjective'])];
+      for (const k of want) expect(keys.has(k), k).toBe(true);
+    });
+  }
 });
 
 describe('지구와 바다 시나리오(활동 2 덧붙임)', () => {

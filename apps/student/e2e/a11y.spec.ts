@@ -31,6 +31,11 @@ import {
   mixtureObserveButton,
   mixtureSortAll,
   gotoWeatherSort,
+  sortKit,
+  ANIMAL_HABITAT_CFG,
+  PLANT_HABITAT_CFG,
+  LIVING_NONLIVING_CFG,
+  ROCK_GRAIN_CFG,
   weatherCard,
   weatherFinishCriterion,
   weatherObserveButton,
@@ -724,8 +729,8 @@ for (const scheme of ['light', 'dark'] as const) {
     await page.emulateMedia({ colorScheme: scheme });
     // 단원 목록의 "활동 2개" 표시
     await page.goto('/');
-    // 활동이 둘인 단원은 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활 네 곳이다.
-    await expect(page.getByText('활동 2개')).toHaveCount(4);
+    // 활동이 둘인 단원은 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활, 동물의 생활, 식물의 생활, 생물과 환경, 지층과 화석 여덟 곳이다.
+    await expect(page.getByText('활동 2개')).toHaveCount(8);
     await expect(page.getByText('활동 2개').first()).toBeVisible();
     await expectNoSeriousViolations(page);
     // 첫 활동 화면의 활동 탭
@@ -806,6 +811,51 @@ for (const scheme of ['light', 'dark'] as const) {
     await expect(page.getByText('두 가지 기준으로 분류했어요!')).toBeVisible();
     await expectNoSeriousViolations(page);
   });
+}
+
+// ---- 카드 분류 두 번째 활동 넷(활동 탭): 동물의 생활·식물의 생활·생물과 환경·지층과 화석 ----
+
+for (const cfg of [ANIMAL_HABITAT_CFG, PLANT_HABITAT_CFG, LIVING_NONLIVING_CFG, ROCK_GRAIN_CFG]) {
+  for (const scheme of ['light', 'dark'] as const) {
+    test(`${cfg.unit} 활동 탭 ${scheme === 'dark' ? '어두운 화면' : '밝은 화면'}: 첫 활동의 탭, ${cfg.expTitle} 처음, 결과 그림, 다시 비교하기, 두 기준을 끝낸 뒤`, async ({ page }) => {
+      test.setTimeout(90_000);
+      await page.emulateMedia({ colorScheme: scheme });
+      const kit = sortKit(cfg);
+      const [k1, k2] = cfg.finish;
+      // 첫 활동 화면의 활동 탭
+      await gotoUnit(page, cfg.unit);
+      await expect(page.getByRole('tablist', { name: '활동 고르기' })).toBeVisible();
+      await expectNoSeriousViolations(page);
+
+      await kit.goto(page);
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      await expect(page.getByRole('tab', { name: /^활동 2 · / })).toHaveAttribute('aria-selected', 'true');
+      await expectNoSeriousViolations(page);
+
+      await sortChoose(page, cfg.criteria[k1]!.label);
+      await kit.card(page, cfg.icon.card).click();
+      for (const m of cfg.icon.marks) await kit.observeButton(page, m.key).click();
+      await expect(page.locator(`svg .${cfg.icon.result}`)).not.toHaveCount(0);
+      await expectNoSeriousViolations(page);
+      await kit.card(page, cfg.icon.other.card).click();
+      await kit.observeButton(page, cfg.icon.other.key).click();
+      await expect(page.locator(`svg ${cfg.icon.other.sel}`)).toHaveCount(1);
+      await expectNoSeriousViolations(page);
+
+      await kit.sortEvery(page, k1, { override: { [cfg.wrong.card]: cfg.wrong.group } });
+      await sortCheckButton(page).click();
+      await expect(page.getByText(cfg.wrong.sentence)).toBeVisible();
+      await expectNoSeriousViolations(page);
+
+      await kit.card(page, cfg.wrong.card).click();
+      await sortPutButton(page, cfg.criteria[k1]!.group[cfg.wrong.card]!).click();
+      await sortCheckButton(page).click();
+      await expect(page.getByText('관찰한 특징과 분류가 서로 잘 맞아요.')).toBeVisible();
+      await kit.finishCriterion(page, k2);
+      await expect(page.getByText('두 가지 기준으로 분류했어요!')).toBeVisible();
+      await expectNoSeriousViolations(page);
+    });
+  }
 }
 
 // ---- g5-strata ----

@@ -2,6 +2,8 @@ import {
   test,
   expect,
   gotoUnit,
+  defineSortSuite,
+  ROCK_GRAIN_CFG,
   scrollWidth,
   sortFeedback,
   sortTutor,
@@ -289,3 +291,8 @@ test.describe('휴대폰 폭', () => {
     await expect(page.getByText('나중에 쌓임', { exact: true })).toBeVisible();
   });
 });
+
+// ---- 두 번째 활동: 퇴적암을 알갱이 크기로 나누기(카드 분류 groups, 활동 탭) ----
+
+defineSortSuite(ROCK_GRAIN_CFG);
+

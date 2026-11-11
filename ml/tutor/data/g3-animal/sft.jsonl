@@ -2,3 +2,5 @@
 {"id":"g3-animal-sft-0002","unitId":"g3-animal","scenarioId":"g3-animal-s009","utterance":"게는 어디에 넣죠?","source":"example","reviewed":false,"author":"EX","response":"게 카드에서 다리를 관찰한 내용은 어떤가요? 그 모습을 보고 어느 무리에 넣을지 말해 볼까요?"}
 {"id":"g3-animal-sft-0003","unitId":"g3-animal","scenarioId":"g3-animal-s013","utterance":"다 넣었어요! 끝난 거죠?","source":"example","reviewed":false,"author":"EX","response":"카드를 모두 넣었네요. 돋보기로 아직 살펴보지 않은 동물이 있는지 확인해 볼까요?"}
 {"id":"g3-animal-sft-0004","unitId":"g3-animal","scenarioId":"g3-animal-s017","utterance":"관찰은 다 했는데 확인에서 안 된대요.","source":"example","reviewed":false,"author":"EX","response":"관찰한 내용과 다른 무리에 들어간 카드가 있다고 해요. 다리 관찰 결과와 넣은 무리를 카드마다 하나씩 견주어 볼까요?"}
+{"id":"g3-animal-sft-0005","unitId":"g3-animal","scenarioId":"g3-animal-s027","utterance":"사는 곳으로 나누려는데 뭐부터 해요?","source":"example","reviewed":false,"author":"EX","response":"사는 곳으로 나누어 보려는군요. 어떤 동물 카드부터 골라서 사는 곳을 살펴볼까요?"}
+{"id":"g3-animal-sft-0006","unitId":"g3-animal","scenarioId":"g3-animal-s044","utterance":"지느러미 기준도 확인이 됐어요. 이제 뭐 해요?","source":"example","reviewed":false,"author":"EX","response":"관찰한 모습과 분류가 잘 맞는다고 나왔네요. 이번에는 다른 기준으로도 나누어 볼까요?"}
