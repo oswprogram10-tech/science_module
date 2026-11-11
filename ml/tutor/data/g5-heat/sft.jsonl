@@ -2,3 +2,5 @@
 {"id":"g5-heat-sft-0002","unitId":"g5-heat","scenarioId":"g5-heat-s007","utterance":"두 겹으로 하고 뚜껑도 덮었어요.","source":"example","reviewed":false,"author":"EX","response":"감싸는 겹 수와 뚜껑이 함께 바뀌었어요. 물이 식은 정도가 달라졌다면 어느 쪽 때문인지 어떻게 알 수 있을까요?"}
 {"id":"g5-heat-sft-0003","unitId":"g5-heat","scenarioId":"g5-heat-s016","utterance":"뚜껑을 덮었더니 김이 덜 나요.","source":"example","reviewed":false,"author":"EX","response":"김이 덜 나는 모습을 보았군요. 열화상 화면에서 컵 바깥의 색과 그래프의 기울기를 두 시행에서 비교해 볼까요?"}
 {"id":"g5-heat-sft-0004","unitId":"g5-heat","scenarioId":"g5-heat-s018","utterance":"에어캡으로 하면 더 빨리 식을 줄 알았는데 달라요.","source":"example","reviewed":false,"author":"EX","response":"기대와 다른 결과였네요. 그래프와 열화상 화면에서 종이와 에어캡 시행의 어느 부분이 서로 다른지 찾아볼까요?"}
+{"id":"g5-heat-sft-0005","unitId":"g5-heat","scenarioId":"g5-heat-s024","utterance":"","source":"example","reviewed":false,"author":"EX","response":"안쪽 컵 물의 처음 온도를 바꾸어 보려고 하는군요. 처음 온도가 달라지면 10분 뒤 안쪽 물의 온도가 어떻게 될지 예측해 볼까요?"}
+{"id":"g5-heat-sft-0006","unitId":"g5-heat","scenarioId":"g5-heat-s040","utterance":"50 °C로 낮췄는데 늘어날 줄 알았어요.","source":"example","reviewed":false,"author":"EX","response":"예측과 달랐군요. 그래프의 두 선에서 10분 뒤 안쪽 물의 온도를 읽고 앞 시행과 견주어 볼까요?"}

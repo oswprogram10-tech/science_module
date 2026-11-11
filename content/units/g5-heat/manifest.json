@@ -2,7 +2,7 @@
   "id": "g5-heat",
   "title": "열과 우리 생활",
   "grade": 5,
-  "standards": ["6과07-04"],
+  "standards": ["6과07-02", "6과07-04"],
   "engine": "physics",
   "experiments": [
     {
@@ -99,6 +99,120 @@
           { "when": "fair-test", "iv": "lid", "text": "뚜껑만 바꾸었을 때 김이 나는 모습과 식은 정도를 함께 비교해 볼까요? 열은 어디로 빠져나갔을까요?" },
           { "when": "fair-test", "iv": "layers", "text": "겹 수만 바꾸었을 때 결과가 달라졌나요? 어떤 재료로 감쌌는지와 함께 생각해 볼까요?" },
           { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 그래프와 열화상 화면의 어느 부분을 보면 그 까닭을 찾을 수 있을까요?" }
+        ]
+      }
+    },
+    {
+      "id": "heat-contact",
+      "module": "heat-contact",
+      "title": "온도가 다른 두 물이 닿으면",
+      "question": "온도가 다른 두 물체가 닿아 있으면 온도가 어떻게 변할까?",
+      "predictionPrompt": "예측: 10분 뒤 안쪽 컵 물의 온도는?",
+      "variables": [
+        {
+          "key": "hotC",
+          "label": "안쪽 컵 물의 처음 온도",
+          "type": "choice",
+          "unit": "°C",
+          "options": [
+            { "value": 50, "label": "50 °C" },
+            { "value": 60, "label": "60 °C" },
+            { "value": 70, "label": "70 °C" }
+          ],
+          "default": 60
+        },
+        {
+          "key": "coldMl",
+          "label": "바깥 비커 찬물의 양",
+          "type": "choice",
+          "unit": "mL",
+          "options": [
+            { "value": 100, "label": "100 mL" },
+            { "value": 300, "label": "300 mL" }
+          ],
+          "default": 100
+        },
+        {
+          "key": "cup",
+          "label": "안쪽 컵 재료",
+          "type": "choice",
+          "options": [
+            { "value": "metal", "label": "얇은 금속 컵" },
+            { "value": "plastic", "label": "플라스틱 컵" }
+          ],
+          "default": "metal"
+        },
+        {
+          "key": "label",
+          "label": "컵에 붙인 이름표 색",
+          "type": "choice",
+          "options": [
+            { "value": "yellow", "label": "노랑" },
+            { "value": "green", "label": "초록" }
+          ],
+          "default": "yellow"
+        }
+      ],
+      "dependent": [
+        { "key": "inner10", "label": "10분 뒤 안쪽 물 온도", "unit": "°C" },
+        { "key": "outer10", "label": "10분 뒤 바깥 물 온도", "unit": "°C" },
+        { "key": "sameMin", "label": "두 온도 차가 1 °C 안이 된 때", "unit": "분" }
+      ],
+      "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
+      "safety": ["hot-water"],
+      "safetyChecklist": [
+        "뜨거운 물은 선생님이 따라 주세요.",
+        "컵을 옮길 때는 받침을 잡고 천천히 옮겨요.",
+        "뜨거운 물이 담긴 컵 주변에서 장난치지 않아요."
+      ],
+      "safetyMessages": {
+        "NO_GOGGLES": "뜨거운 물을 다룰 때는 보안경을 착용해 주세요!",
+        "NO_GLOVES": "뜨거운 컵은 장갑을 끼고 받침을 잡아 옮겨 주세요!",
+        "SPILL": "물이 쏟아졌어요. 손대지 말고 선생님께 바로 알려 주세요!",
+        "FOOD": "실험대 위에서는 음식을 먹지 않아요!"
+      },
+      "safetyNotices": [],
+      "limits": ["열평형", "비열", "열량", "칼로리", "전도"],
+      "tutor": {
+        "forbiddenAnswers": [
+          "열이 이동",
+          "열이 옮겨",
+          "열이 전달",
+          "열이 전해",
+          "열이 흘러",
+          "열이 빠져나",
+          "따뜻한 쪽에서 차가운 쪽으로",
+          "따뜻한 물에서 찬물로",
+          "뜨거운 쪽에서 차가운 쪽으로",
+          "뜨거운 물에서 찬물로",
+          "두 온도가 같아질 때까지",
+          "두 온도가 같아",
+          "온도가 같아져",
+          "온도가 같아질",
+          "온도가 같아지",
+          "온도가 같아집",
+          "찬물이 많을수록 더 낮아",
+          "찬물이 많으면 더 낮아",
+          "찬물이 많을수록 온도가 더 낮",
+          "찬물이 많을수록 덜 올라",
+          "이름표 색은 관계없",
+          "이름표 색은 상관없",
+          "이름표 색은 영향이 없",
+          "이름표 색과 관계없",
+          "이름표 색이 달라도"
+        ],
+        "probes": [
+          { "when": "before-run", "text": "{iv}을(를) 바꾸면 10분 뒤 안쪽 컵 물의 온도가 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?" },
+          { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?" },
+          { "when": "confounded", "text": "{changed}이(가) 함께 바뀌었어요. 안쪽 물의 온도가 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
+          { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },
+          { "when": "repeat", "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
+          { "when": "fair-test", "text": "{iv}만 바꾸었을 때 안쪽 물과 바깥 물의 온도는 각각 어떻게 달라졌나요? 그래프의 두 선을 함께 살펴볼까요?" },
+          { "when": "fair-test", "iv": "hotC", "text": "안쪽 컵 물의 처음 온도만 바꾸었어요. 10분 뒤 안쪽 물과 바깥 물의 온도는 각각 어떻게 달랐나요? 그래프의 두 선은 어떻게 움직였나요?" },
+          { "when": "fair-test", "iv": "coldMl", "text": "바깥 찬물의 양만 바꾸었어요. 10분 뒤 두 물의 온도와 두 온도 차가 1 °C 안이 된 때는 각각 어떻게 달랐나요?" },
+          { "when": "fair-test", "iv": "cup", "text": "안쪽 컵 재료만 바꾸었어요. 10분 뒤 온도와 두 온도 차가 1 °C 안이 된 때를 견주어 보면 무엇이 달라졌나요? 열화상 화면의 색도 비교해 볼까요?" },
+          { "when": "fair-test", "iv": "label", "text": "이름표 색만 바꾸었을 때 결과가 달라졌나요? 이 결과로 무엇을 알 수 있을까요?" },
+          { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 그래프의 두 선과 열화상 화면의 색 변화를 살펴보고, 어느 부분이 예상과 달랐는지 찾아볼까요?" }
         ]
       }
     }

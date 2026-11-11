@@ -80,13 +80,13 @@ test.describe('수업 연결', () => {
     await s3.getByRole('button', { name: /^철 가루와 모래 관찰 \d\/3$/ }).click();
     await s3.getByRole('button', { name: '자석 대 보기', exact: true }).click();
     await expect(card(teacher, 3)).toContainText('시행 1회');
-    // 활동이 하나인 단원은 활동 이름을 붙이지 않는다.
+    // 활동이 하나인 단원은 활동 이름을 붙이지 않는다(용해와 용액은 두 번째 활동이 생겨 여러 가지 기체로 확인한다).
     await s3.evaluate(() => {
-      window.location.hash = '#/unit/g5-solution';
+      window.location.hash = '#/unit/g4-gases';
     });
-    await expect(card(teacher, 3)).toContainText('용해와 용액');
-    await expect(card(teacher, 3)).not.toContainText(' · 용해');
-    await expect(card(teacher, 3).locator('.unit')).toHaveText('용해와 용액');
+    await expect(card(teacher, 3)).toContainText('여러 가지 기체');
+    await expect(card(teacher, 3)).not.toContainText(' · 여러');
+    await expect(card(teacher, 3).locator('.unit')).toHaveText('여러 가지 기체');
   });
 
   test('5모둠의 모의 안전 경고가 교사 화면에 붉게 보이고, 확인하면 사라진다', async ({ page: teacher, context }) => {

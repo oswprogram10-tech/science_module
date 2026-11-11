@@ -8,3 +8,4 @@ export * from './motion';
 export * from './leverLift';
 export * from './soundVibration';
 export * from './magnetPoles';
+export * from './heatContact';

@@ -120,16 +120,20 @@ test('예전 주소 #/unit/g3-earth-sea는 이제 새 「지구와 바다」 단
 
 // ---- 한 단원에 여러 활동 ----
 
-test('단원 목록 카드: 활동이 둘인 힘과 우리 생활, 소리의 성질, 자석의 이용, 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활, 동물의 생활, 식물의 생활, 생물과 환경, 지층과 화석만 "활동 2개"를 보이고 카드는 단원당 하나다', async ({ page }) => {
+test('단원 목록 카드: 활동이 둘인 힘과 우리 생활, 소리의 성질, 자석의 이용, 용해와 용액, 열과 우리 생활, 산과 염기, 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활, 동물의 생활, 식물의 생활, 생물과 환경, 지층과 화석만 "활동 2개"를 보이고 카드는 단원당 하나다', async ({ page }) => {
   await page.goto('/');
   const cards = page.getByRole('button', { name: /탐구 질문:/ });
   await expect(cards).toHaveCount(32);
-  await expect(page.getByText(/^활동 \d+개$/)).toHaveCount(11);
+  await expect(page.getByText(/^활동 \d+개$/)).toHaveCount(14);
   // 변인 실험을 두 번째 활동으로 더한 세 단원: 카드의 탐구 질문은 첫 활동의 것이다.
   for (const [grade, title, question] of [
     ['3학년', /힘과 우리 생활/, '막대의 수평을 잡으려면'],
     ['3학년', /소리의 성질/, '줄을 튕기는 세기'],
     ['4학년', /자석의 이용/, '자석과 클립 사이의 거리'],
+    // 용액의 진하기·두 물이 닿으면·산성과 염기성 섞기를 두 번째 활동으로 더한 세 단원(첫 활동의 탐구 질문이 카드에 나온다)
+    ['5학년', /용해와 용액/, '어떤 조건에서 용질이 더 많이 녹을까?'],
+    ['5학년', /열과 우리 생활/, '컵을 무엇으로, 어떻게 감싸면 물이 덜 식을까?'],
+    ['6학년', /산과 염기/, '지시약을 이용하면 여러 가지 용액을 어떻게 분류할 수 있을까?'],
   ] as const) {
     const card = page.getByRole('region', { name: grade }).getByRole('button', { name: title });
     await expect(card).toHaveCount(1);
@@ -187,6 +191,30 @@ test('#/unit/{id}/{experimentId}로 변인 실험 두 번째 활동(지레와 �
     await expect(page.getByRole('tab')).toHaveCount(2);
     await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('group', { name: firstGroup })).toBeVisible();
+    await page.goto(`/#/unit/${id}/${first}`);
+    await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+    await activityTab(page, 2).click();
+    await expect(page).toHaveURL(new RegExp(`#/unit/${id}/[a-z-]+$`));
+    await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('group', { name: group })).toBeVisible();
+    await page.reload();
+    await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('group', { name: group })).toBeVisible();
+  }
+});
+
+test('#/unit/{id}/{experimentId}로 변인 실험 두 번째 활동(용액의 진하기, 온도가 다른 두 물이 닿으면, 산성 용액과 염기성 용액 섞기)을 연다', async ({ page }) => {
+  for (const [id, title, group, first, firstText] of [
+    ['g5-solution', '용해와 용액', '넣은 설탕', 'dissolve-amount', '탐구 질문: 어떤 조건에서 용질이 더 많이 녹을까?'],
+    ['g5-heat', '열과 우리 생활', '안쪽 컵 물의 처음 온도', 'insulated-cup', '탐구 질문: 따뜻한 물이 담긴 컵을 무엇으로, 어떻게 감싸면 물이 덜 식을까?'],
+    // 산과 염기의 첫 활동은 분류 활동이다.
+    ['g6-acid-base', '산과 염기', '넣은 방울 수', 'indicator-classify', '탐구 질문: 지시약을 이용하면 여러 가지 용액을 어떻게 분류할 수 있을까?'],
+  ] as const) {
+    await page.goto(`/#/unit/${id}`);
+    await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
+    await expect(page.getByRole('tab')).toHaveCount(2);
+    await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByText(firstText)).toBeVisible();
     await page.goto(`/#/unit/${id}/${first}`);
     await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
     await activityTab(page, 2).click();
@@ -275,7 +303,7 @@ test('키보드로 탭을 옮긴다: 화살표, Home, End', async ({ page }) => 
 });
 
 test('활동이 하나인 단원은 탭을 그리지 않고 머리 바로 아래가 본문이다(구조 그대로)', async ({ page }) => {
-  for (const id of ['g4-gases', 'g5-solution', 'g6-acid-base', 'g3-material', 'g4-night-sky', 'g6-career']) {
+  for (const id of ['g4-gases', 'g3-material', 'g4-night-sky', 'g6-career']) {
     await gotoUnit(page, id);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await expect(page.getByRole('tablist'), id).toHaveCount(0);
@@ -299,8 +327,7 @@ test('활동이 둘인 단원은 머리 바로 아래에 탭이 있다', async (
  */
 const BASELINE_DOM: Record<string, string> = {
   'g4-gases': '88a2f9af0f667dc4e24ed3a4e713a33551ad13e9906629f9ab60a4c7f43c7bbb',
-  'g5-solution': '5a419295a21b415e3bd24ed2b086ac4d851b453cbf4953b1bb9f42c93e4586ae',
-  'g6-acid-base': '82cf6aa6cc7d15ec3e3db7f9eee55708f52ba91d06bb59d6bf3f7aa2d914f073',
+  // 용해와 용액(5a419295…)과 산과 염기(82cf6aa6…)는 두 번째 활동을 더해 활동 탭이 생겼으므로 이 목록에서 뺐다(옛 값은 TABBED_DOM 설명에). 두 번째 활동을 되돌리면 두 값이 그대로 다시 나옴을 확인했다.
   'g3-material': 'ccfbecacc9872a8c06aa62ccb273a21781f1841ae715a1fec7b80ca7528e94aa',
   // 진로 단원 안 "기록장 켜기" 버튼(1단계)과 안내 한 문장을 더한 뒤의 값. 그 둘을 되돌리면 앞의 값(8483518f…)과 같음을 확인했다.
   'g6-career': '42ee7d70874a9f08c896311d310ecb85e56fd2ed61ec90f1868ad02606bed06f',
@@ -310,14 +337,17 @@ const BASELINE_DOM: Record<string, string> = {
  * 카드 분류 두 번째 활동을 더하기 전에는 활동이 하나여서 위 BASELINE_DOM에 있던 세 단원. 두 번째 활동을 더하자 활동 탭이 생겨 첫 활동 화면(DOM)이
  * 바뀌었다. 옛 값은 동물의 생활 ba076977…, 지층과 화석 37617a9f…, 식물의 생활 9d2d2010…이었고, 세 단원 매니페스트에서 두 번째 활동(과 standards)만
  * 되돌렸을 때 이 옛 값이 그대로 나오는 것을 확인했다(탭 자리 말고 달라진 것이 없다).
+ * 변인 실험 두 번째 활동을 더한 용해와 용액·산과 염기도 같다(옛 값은 용해와 용액 5a419295…, 산과 염기 82cf6aa6…).
  */
 const TABBED_DOM: Record<string, string> = {
   'g3-animal': '90e53c3aa7bda823a380c9f0a8f31192bfaa143092158edfe2ce65836bf48217',
   'g5-strata': '1e3d8f571fcc15ee89a343380d19b6d1548a400ab1457cdc79cc0966a5ed01f7',
   'g3-plantlife': '1c312401ae692c183cb52f7fab8de4c23b1ac16838e8e7360abed699a45eaa22',
+  'g5-solution': '5f2cf653893066b9ab2e67d06596dd7fe89ff2c61b8dbc4503528facfb8736f9',
+  'g6-acid-base': '2a3bb398acb82e74d9cfc37a2562b5135c0c5400f8220449e591be7a8971042d',
 };
 
-test('활동이 하나인 대표 단원 5개의 화면(DOM)이 활동 탭을 더하기 전과 같고, 활동이 둘이 된 세 단원은 탭이 더해진 화면과 같다', async ({ page }) => {
+test('활동이 하나인 대표 단원 3개의 화면(DOM)이 활동 탭을 더하기 전과 같고, 활동이 둘이 된 다섯 단원은 탭이 더해진 화면과 같다', async ({ page }) => {
   for (const [id, sha] of Object.entries({ ...BASELINE_DOM, ...TABBED_DOM })) {
     await gotoUnit(page, id);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();

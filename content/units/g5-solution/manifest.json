@@ -2,7 +2,7 @@
   "id": "g5-solution",
   "title": "용해와 용액",
   "grade": 5,
-  "standards": ["6과03-01"],
+  "standards": ["6과03-01", "6과03-02"],
   "engine": "matter",
   "experiments": [
     {
@@ -88,6 +88,115 @@
           { "when": "fair-test", "text": "{iv}만 바꾸었을 때 녹은 양과 걸린 시간은 각각 어떻게 달라졌나요? 표에서 두 줄을 비교해 볼까요?" },
           { "when": "fair-test", "iv": "stir", "text": "젓는 빠르기를 바꾸었을 때 달라진 것은 녹은 양인가요, 걸린 시간인가요? 그래프의 기울기도 살펴볼까요?" },
           { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 결과표의 어느 숫자를 보면 그 까닭을 찾을 수 있을까요?" }
+        ]
+      }
+    },
+    {
+      "id": "concentration",
+      "module": "concentration",
+      "title": "용액의 진하기 비교하기",
+      "question": "녹인 설탕의 양이 다르면 용액의 진하기를 어떻게 비교할 수 있을까?",
+      "predictionPrompt": "예측: 방울토마토가 뜬 높이는?",
+      "variables": [
+        {
+          "key": "spoons",
+          "label": "넣은 설탕",
+          "type": "choice",
+          "unit": "숟가락",
+          "options": [
+            { "value": 1, "label": "1숟가락" },
+            { "value": 3, "label": "3숟가락" },
+            { "value": 5, "label": "5숟가락" }
+          ],
+          "default": 1
+        },
+        {
+          "key": "waterMl",
+          "label": "물의 양",
+          "type": "choice",
+          "unit": "mL",
+          "options": [
+            { "value": 50, "label": "50 mL" },
+            { "value": 100, "label": "100 mL" }
+          ],
+          "default": 100
+        },
+        {
+          "key": "sugar",
+          "label": "설탕 종류",
+          "type": "choice",
+          "options": [
+            { "value": "brown", "label": "황설탕" },
+            { "value": "white", "label": "흰 설탕" }
+          ],
+          "default": "brown"
+        },
+        {
+          "key": "cup",
+          "label": "비커 모양",
+          "type": "choice",
+          "options": [
+            { "value": "low", "label": "낮은 비커" },
+            { "value": "high", "label": "높은 비커" }
+          ],
+          "default": "low"
+        }
+      ],
+      "dependent": [
+        { "key": "float", "label": "방울토마토가 뜬 높이", "unit": "눈금" },
+        { "key": "mass20", "label": "20 mL의 무게", "unit": "g" },
+        { "key": "color", "label": "색의 진하기", "unit": "눈금" }
+      ],
+      "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
+      "safety": ["taste"],
+      "safetyMessages": {
+        "FOOD": "실험한 용액은 맛보지 않아요. 실험 중에는 음식을 먹지 않아요!"
+      },
+      "safetyNotices": [],
+      "limits": ["농도", "퍼센트", "밀도", "용해도", "포화", "부력"],
+      "tutor": {
+        "forbiddenAnswers": [
+          "설탕을 많이 넣을수록 진",
+          "설탕을 많이 넣으면 진",
+          "설탕을 더 넣을수록 진",
+          "설탕을 더 넣으면 진",
+          "설탕이 많을수록 진",
+          "설탕이 많으면 진",
+          "설탕이 많이 녹을수록 진",
+          "물이 많을수록 연",
+          "물이 많으면 연",
+          "물을 많이 넣을수록 연",
+          "물을 많이 넣으면 연",
+          "물이 적을수록 진",
+          "물이 적으면 진",
+          "진할수록 방울토마토가 높이",
+          "진할수록 높이 떠",
+          "진할수록 더 높이",
+          "진하면 방울토마토가 높이",
+          "진하면 높이 떠",
+          "진한 용액일수록 높이",
+          "흰 설탕은 색으로 비교할 수 없",
+          "흰 설탕은 색으로 비교하기 어려",
+          "흰 설탕은 색으로 비교하기 어렵",
+          "흰 설탕으로는 색을 비교할 수 없",
+          "비커 모양은 관계없",
+          "비커 모양은 상관없",
+          "비커 모양은 영향이 없",
+          "비커 모양과 관계없",
+          "비커 모양이 달라도"
+        ],
+        "probes": [
+          { "when": "before-run", "text": "{iv}을(를) 바꾸면 방울토마토가 뜬 높이가 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?" },
+          { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?" },
+          { "when": "confounded", "text": "{changed}이(가) 함께 바뀌었어요. 방울토마토가 뜬 높이가 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
+          { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },
+          { "when": "repeat", "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
+          { "when": "fair-test", "text": "{iv}만 바꾸었을 때 방울토마토가 뜬 높이와 20 mL의 무게는 각각 어떻게 달라졌나요? 시행별 막대 그래프에서 막대를 견주어 볼까요?" },
+          { "when": "fair-test", "iv": "spoons", "text": "넣은 설탕만 바꾸었어요. 방울토마토가 뜬 높이와 용액의 색은 각각 어떻게 달라졌나요? 20 mL의 무게도 함께 견주어 볼까요?" },
+          { "when": "fair-test", "iv": "waterMl", "text": "물의 양만 바꾸었어요. 넣은 설탕은 같은데 20 mL의 무게와 방울토마토가 뜬 높이는 각각 어떻게 달라졌나요?" },
+          { "when": "fair-test", "iv": "sugar", "text": "설탕 종류만 바꾸었어요. 용액의 색은 어떻게 달라졌나요? 방울토마토가 뜬 높이는 어땠나요? 색으로 비교할 수 있는 경우와 없는 경우를 나누어 볼까요?" },
+          { "when": "fair-test", "iv": "cup", "text": "비커 모양만 바꾸었을 때 방울토마토가 뜬 높이는 달라졌나요? 이 결과로 무엇을 알 수 있을까요?" },
+          { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 시행별 막대 그래프에서 막대의 높이를 견주고, 눈으로 보기 그림에서 방울토마토가 어디에 있는지 살펴볼까요?" }
         ]
       }
     }
