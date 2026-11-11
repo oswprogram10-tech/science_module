@@ -42,7 +42,7 @@ describe('레지스트리', () => {
   });
 
   it('매니페스트의 문구와 변인이 사양과 같다', () => {
-    expect([experiment.title, experiment.question, experiment.predictionPrompt]).toEqual(['소리 나는 물체의 떨림', '소리가 나는 물체에는 어떤 공통점이 있을까?', '예측: 물체 위 좁쌀은 어떻게 될까?']);
+    expect([experiment.title, experiment.question, experiment.predictionPrompt]).toEqual(['소리 나는 물체의 떨림', '소리가 나는 물체에는 어떤 공통점이 있을까?', '예측: 좁쌀이 튄 높이는?']);
     expect(experiment.variables.map((v) => [v.key, v.label, v.default])).toEqual([['sound', '소리 내기', 'off'], ['loud', '소리의 세기', 'weak'], ['object', '물체', 'drum'], ['seed', '좁쌀 색', 'yellow']]);
     expect(experiment.variables.map((v) => v.options.map((o) => [o.value, o.label]))).toEqual([
       [['off', '소리를 내지 않음'], ['on', '소리를 냄']],

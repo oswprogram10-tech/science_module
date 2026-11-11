@@ -80,7 +80,7 @@
       "module": "sound-vibration",
       "title": "소리 나는 물체의 떨림",
       "question": "소리가 나는 물체에는 어떤 공통점이 있을까?",
-      "predictionPrompt": "예측: 물체 위 좁쌀은 어떻게 될까?",
+      "predictionPrompt": "예측: 좁쌀이 튄 높이는?",
       "variables": [
         {
           "key": "sound",
@@ -163,7 +163,7 @@
           "좁쌀 색이 달라도"
         ],
         "probes": [
-          { "when": "before-run", "text": "{iv}을(를) 바꾸면 물체 위의 좁쌀이 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?" },
+          { "when": "before-run", "text": "{iv}을(를) 바꾸면 좁쌀이 튄 높이가 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?" },
           { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?" },
           { "when": "confounded", "text": "{changed}이(가) 함께 바뀌었어요. 좁쌀이 달리 움직인 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
           { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },

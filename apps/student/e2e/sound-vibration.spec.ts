@@ -42,7 +42,7 @@ test('두 번째 활동 탭으로 열리고, 첫 활동(줄을 튕겨 소리 알
   await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('tab')).toHaveCount(2);
   await expect(page.getByText('탐구 질문: 소리가 나는 물체에는 어떤 공통점이 있을까?')).toBeVisible();
-  await expect(page.getByText('예측: 물체 위 좁쌀은 어떻게 될까?')).toBeVisible();
+  await expect(page.getByText('예측: 좁쌀이 튄 높이는?')).toBeVisible();
   await activityTab(page, 1).click();
   await expect(page).toHaveURL(/#\/unit\/g3-sound\/string-sound$/);
   await expect(page.getByRole('group', { name: '튕기는 세기' })).toBeVisible();

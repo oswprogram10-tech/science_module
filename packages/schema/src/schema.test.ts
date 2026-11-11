@@ -508,7 +508,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     const m = parseManifest(soundJson);
     expect(m.experiments.map((x) => x.id)).toEqual(['string-sound', 'sound-vibration']);
     const e = m.experiments[1] as VariableExperiment;
-    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['sound-vibration', 'sound-vibration', '소리 나는 물체의 떨림', '소리가 나는 물체에는 어떤 공통점이 있을까?', '예측: 물체 위 좁쌀은 어떻게 될까?']);
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['sound-vibration', 'sound-vibration', '소리 나는 물체의 떨림', '소리가 나는 물체에는 어떤 공통점이 있을까?', '예측: 좁쌀이 튄 높이는?']);
     expect(e.safety).toEqual([]);
     expect(e.variables.map((v) => v.key)).toEqual(['sound', 'loud', 'object', 'seed']);
     expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([['off', 'on'], ['weak', 'strong'], ['drum', 'fork', 'speaker'], ['yellow', 'white']]);
