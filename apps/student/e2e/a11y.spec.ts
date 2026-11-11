@@ -1803,3 +1803,115 @@ for (const scheme of ['light', 'dark'] as const) {
     await expectNoSeriousViolations(page);
   });
 }
+
+// ---- 변인 실험 추가 활동: 밀고 당기면 생기는 변화, 용수철저울로 무게 비교하기, 공기를 넣은 페트병의 무게 ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  const label = scheme === 'dark' ? '어두운 화면' : '밝은 화면';
+
+  test(`g3-force 활동 3(밀고 당기기) ${label}: 처음(활동 탭 넷), 실행 뒤(수레 밀기), 세게, 당기기(줄), 찰흙, 파란색`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g3-force', { experiment: 'push-pull' });
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('tab')).toHaveCount(4);
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '힘의 세기');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByText('2.0초 · 출발점에서 30 cm').first()).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await setValue(page, '힘의 세기', '세게');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '하는 일');
+    await setValue(page, '하는 일', '당기기');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('string')).toHaveCount(1);
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '물체');
+    await setValue(page, '물체', '찰흙 덩어리');
+    await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '물체 색깔');
+    await setValue(page, '물체 색깔', '파란색');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+  });
+
+  test(`g3-force 활동 4(용수철저울) ${label}: 처음, 실행 뒤(추 0개), 추 5개, 필통, 풀과 가위, 초록색`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g3-force', { experiment: 'spring-scale' });
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '건 추의 개수');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    await setValue(page, '건 추의 개수', '5개');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('weight-disc')).toHaveCount(5);
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '함께 건 물체');
+    await setValue(page, '함께 건 물체', '필통');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    for (const object of ['풀', '가위']) {
+      await setValue(page, '함께 건 물체', object);
+      await predict(page, '줄어든다');
+      await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+      await expect(runButton(page)).toHaveText('▶ 실험 실행');
+      await expectNoSeriousViolations(page);
+    }
+    await selectIV(page, '용수철 색깔');
+    await setValue(page, '용수철 색깔', '초록색');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+  });
+
+  test(`g4-gases 활동 2(공기를 넣은 페트병의 무게) ${label}: 처음, 실행 뒤(0번), 40번, 마개 열기(쉿 표시), 파란색`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g4-gases', { experiment: 'gas-weight' });
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '공기 주입 마개를 누른 횟수');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    await setValue(page, '공기 주입 마개를 누른 횟수', '40번');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('scale-digits')).toHaveText('46.3 g');
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '마개');
+    await setValue(page, '마개', '열어서 공기를 뺌');
+    await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('vent-marks')).toHaveCount(1);
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '페트병 띠지 색깔');
+    await setValue(page, '페트병 띠지 색깔', '파란색');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+  });
+}

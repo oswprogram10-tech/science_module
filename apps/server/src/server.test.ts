@@ -126,6 +126,22 @@ describe('교사와 학생', () => {
     await teacher.snapshot((x) => x.groups[0]?.online === false);
   });
 
+  it('활동이 넷인 단원(g3-force)은 모둠마다 다른 활동을 해도 교사 snapshot이 모둠별 experimentId를 그대로 싣고, 활동 넷의 튜터 덧씌우기를 모두 전달한다', async () => {
+    const { teacher, code } = await makeClass();
+    const ids = ['lever-balance', 'lever-lift', 'push-pull', 'spring-scale'];
+    const students = await Promise.all(ids.map((_, i) => student(code, i + 1)));
+    for (const [i, s] of students.entries()) {
+      await s.until((m) => m.t === 'joined');
+      s.send({ t: 'status', unitId: 'g3-force', experimentId: ids[i], activity: 'variable', phase: 'reviewing', trials: i + 1, lastKind: 'first-trial', mismatch: false, safetyLocked: false });
+    }
+    const snap = await teacher.snapshot((x) => x.groups.length === 4 && x.groups.every((g) => g.trials > 0));
+    expect(snap.groups.map((g) => [g.group, g.unitId, g.experimentId])).toEqual(ids.map((id, i) => [i + 1, 'g3-force', id]));
+    const probe = (text: string) => ({ changed: { '|before-run|': { text } }, added: [] });
+    const edits = { v: 1, units: { 'g3-force': Object.fromEntries(ids.map((id) => [id, probe('무엇을 바꾸면 달라질지 먼저 적어 볼까요?')])) } };
+    teacher.send({ t: 'tutor', edits });
+    for (const s of students) expect(await s.until((m) => m.t === 'tutor')).toEqual({ t: 'tutor', edits });
+  });
+
   it('watch로 같은 수업을 다시 볼 수 있다', async () => {
     const { code, token } = await makeClass();
     const t2 = await Client.connect();

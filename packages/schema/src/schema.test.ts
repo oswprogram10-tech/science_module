@@ -327,7 +327,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('힘과 우리 생활 매니페스트의 변인, 안전 종류, 금지 구절, 탐침을 읽는다', () => {
     const m = parseManifest(forceJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-force', 3, 'physics', ['4과01-02', '4과01-04']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-force', 3, 'physics', ['4과01-01', '4과01-02', '4과01-03', '4과01-04']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('lever-balance');
     expect(e.safety).toEqual([]);
@@ -487,7 +487,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('힘과 우리 생활 활동 2(지레와 빗면으로 들어 올리기)의 변인, 측정, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
     const m = parseManifest(forceJson);
-    expect(m.experiments.map((x) => x.id)).toEqual(['lever-balance', 'lever-lift']);
+    expect(m.experiments.map((x) => x.id)).toEqual(['lever-balance', 'lever-lift', 'push-pull', 'spring-scale']);
     const e = m.experiments[1] as VariableExperiment;
     expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['lever-lift', 'lever-lift', '지레와 빗면으로 들어 올리기', '도구를 쓰면 물체를 들어 올리는 힘이 어떻게 달라질까?', '예측: 용수철저울의 눈금은?']);
     expect(e.safety).toEqual([]);
@@ -502,6 +502,59 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['tool', 'armCm', 'color']);
     // 첫 활동은 그대로다.
     expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['count', 'distance', 'shape']);
+  });
+
+  it('힘과 우리 생활 활동 3(밀고 당기면 생기는 변화)의 변인, 범주 결과, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(forceJson);
+    const e = m.experiments[2] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['push-pull', 'push-pull', '밀고 당기면 생기는 변화', '물체를 밀거나 당기면 물체에 어떤 변화가 생길까?', '예측: 물체가 움직인 거리는?']);
+    expect(e.safety).toEqual([]);
+    expect(e.variables.map((v) => v.key)).toEqual(['object', 'action', 'strength', 'color']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([['cart', 'ball', 'clay'], ['push', 'pull'], ['weak', 'strong'], ['red', 'blue']]);
+    expect(e.variables.map((v) => v.default)).toEqual(['cart', 'push', 'weak', 'red']);
+    // 움직인 방향과 모양은 범주 결과 칸이라 단위가 없다(전자석의 "못 머리 쪽의 극"과 같다).
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['distance', 'cm'], ['direction', ''], ['shape', '']]);
+    expect(e.gateway).toEqual({ mode: 'open', requirePrediction: true, requireSingleIV: true });
+    expect(e.limits).toEqual(['뉴턴', '가속도', '관성', '마찰력']);
+    for (const f of ['세게 밀수록 멀리', '세게 할수록 멀리', '힘이 클수록 멀리', '힘이 셀수록 멀리', '세게 하면 더 멀리', '밀면 멀어지고', '당기면 가까워', '당기면 손 쪽으로', '찰흙은 모양이 변', '힘을 주면 모양이 변', '힘은 모양과 움직임', '색깔은 관계없', '색깔은 상관없', '색깔과 관계없']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['strength', 'action', 'object', 'color']);
+  });
+
+  it('힘과 우리 생활 활동 4(용수철저울로 무게 비교하기)의 변인, 측정, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(forceJson);
+    const e = m.experiments[3] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['spring-scale', 'spring-scale', '용수철저울로 무게 비교하기', '무게가 비슷한 물체들의 무게를 어떻게 정확히 비교할 수 있을까?', '예측: 용수철이 늘어난 길이는?']);
+    expect(e.safety).toEqual([]);
+    expect(e.variables.map((v) => v.key)).toEqual(['weights', 'object', 'springColor']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([[0, 1, 2, 3, 4, 5], ['none', 'case', 'scissors', 'glue', 'pencils'], ['yellow', 'green']]);
+    expect(e.variables.map((v) => v.default)).toEqual([0, 'none', 'yellow']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['stretch', 'cm'], ['reading', 'g']]);
+    expect(e.limits).toEqual(['뉴턴', '탄성', '훅의 법칙', '질량']);
+    for (const f of ['추가 늘면 늘어난 길이', '추를 하나 더 걸 때마다 2', '추 한 개에 2', '50 g마다 2', '50g마다 2', '무거울수록 많이 늘어', '무거울수록 길게 늘어', '무게가 클수록 많이 늘어', '가위가 풀보다 무거', '풀이 가위보다 가벼', '필통이 가장 무거', '용수철 색은 관계없', '용수철 색깔은 관계없', '색깔은 상관없']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['weights', 'object', 'springColor']);
+    // 필통·가위·풀·색연필 묶음의 무게는 선택지 글자에 쓰지 않는다(눈으로 비슷한 물체를 저울로 재 보는 활동이다).
+    expect(e.variables[1]!.options.map((o) => o.label)).toEqual(['없음', '필통', '가위', '풀', '색연필 묶음']);
+  });
+
+  it('여러 가지 기체 활동 2(공기를 넣은 페트병의 무게)의 변인, 범주 결과, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(gasesJson);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g4-gases', 4, 'matter', ['4과15-01', '4과15-02']]);
+    expect(m.experiments.map((x) => x.id)).toEqual(['syringe-volume', 'gas-weight']);
+    const e = m.experiments[1] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['gas-weight', 'gas-weight', '공기를 넣은 페트병의 무게', '공기를 더 넣으면 무게가 어떻게 달라질까?', '예측: 페트병의 무게는?']);
+    expect(e.safety).toEqual([]);
+    expect(e.variables.map((v) => v.key)).toEqual(['pumps', 'cap', 'label']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([[0, 20, 40, 60], ['closed', 'open'], ['red', 'blue']]);
+    expect(e.variables.map((v) => v.default)).toEqual([0, 'closed', 'red']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['weight', 'g'], ['firm', '']]);
+    expect(e.limits).toEqual(['기압', '밀도', '분자', '압력']);
+    for (const f of ['공기도 무게가', '공기는 무게가 있', '기체도 무게가', '기체는 무게가 있', '공기를 넣을수록 무거', '많이 누를수록 무거', '누를수록 무거', '누를수록 무게가', '공기를 빼면 가벼', '마개를 열면 가벼', '마개를 열면 무게가 줄', '띠지 색깔은 관계없', '띠지 색은 관계없', '색깔은 상관없']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['pumps', 'cap', 'label']);
+    // 첫 활동은 그대로다.
+    expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['push', 'bathTempC', 'gasType', 'startMl']);
   });
 
   it('소리의 성질 활동 2(소리 나는 물체의 떨림)의 변인, 측정, 한계 용어, 금지 구절, 탐침을 읽는다', () => {

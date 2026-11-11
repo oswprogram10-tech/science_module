@@ -33,6 +33,9 @@ import { heatContactModule } from './heat-contact';
 import { acidBaseMixModule } from './acid-base-mix';
 import { positionTimeModule } from './position-time';
 import { combustionProductsModule } from './combustion-products';
+import { pushPullModule } from './push-pull';
+import { springScaleModule } from './spring-scale';
+import { gasWeightModule } from './gas-weight';
 
 export const MODULES: Record<ModuleKind, AnyModule> = {
   dissolution: dissolutionModule,
@@ -68,4 +71,7 @@ export const MODULES: Record<ModuleKind, AnyModule> = {
   'acid-base-mix': acidBaseMixModule,
   'position-time': positionTimeModule,
   'combustion-products': combustionProductsModule,
+  'push-pull': pushPullModule,
+  'spring-scale': springScaleModule,
+  'gas-weight': gasWeightModule,
 };
