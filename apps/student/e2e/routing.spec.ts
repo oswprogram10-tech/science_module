@@ -120,11 +120,22 @@ test('예전 주소 #/unit/g3-earth-sea는 이제 새 「지구와 바다」 단
 
 // ---- 한 단원에 여러 활동 ----
 
-test('단원 목록 카드: 활동이 둘인 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활, 동물의 생활, 식물의 생활, 생물과 환경, 지층과 화석만 "활동 2개"를 보이고 카드는 단원당 하나다', async ({ page }) => {
+test('단원 목록 카드: 활동이 둘인 힘과 우리 생활, 소리의 성질, 자석의 이용, 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활, 동물의 생활, 식물의 생활, 생물과 환경, 지층과 화석만 "활동 2개"를 보이고 카드는 단원당 하나다', async ({ page }) => {
   await page.goto('/');
   const cards = page.getByRole('button', { name: /탐구 질문:/ });
   await expect(cards).toHaveCount(32);
-  await expect(page.getByText(/^활동 \d+개$/)).toHaveCount(8);
+  await expect(page.getByText(/^활동 \d+개$/)).toHaveCount(11);
+  // 변인 실험을 두 번째 활동으로 더한 세 단원: 카드의 탐구 질문은 첫 활동의 것이다.
+  for (const [grade, title, question] of [
+    ['3학년', /힘과 우리 생활/, '막대의 수평을 잡으려면'],
+    ['3학년', /소리의 성질/, '줄을 튕기는 세기'],
+    ['4학년', /자석의 이용/, '자석과 클립 사이의 거리'],
+  ] as const) {
+    const card = page.getByRole('region', { name: grade }).getByRole('button', { name: title });
+    await expect(card).toHaveCount(1);
+    await expect(card).toContainText('활동 2개');
+    await expect(card).toContainText(question);
+  }
   await expect(page.getByRole('region', { name: '3학년' }).getByRole('button', { name: /지구와 바다/ })).toContainText('활동 2개');
   await expect(page.getByRole('region', { name: '4학년' }).getByRole('button', { name: /땅의 변화/ })).toContainText('활동 2개');
   const weather = page.getByRole('region', { name: '5학년' }).getByRole('button', { name: /날씨와 우리 생활/ });
@@ -163,6 +174,29 @@ test('#/unit/{id}는 첫 활동, #/unit/{id}/{experimentId}는 그 활동을 연
   await expect(page.getByText('탐구 질문: 혼합물을 이루는 물질의 성질이 다르면')).toBeVisible();
   await page.goto('/#/unit/g5-mixture/salt-sand');
   await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+});
+
+test('#/unit/{id}/{experimentId}로 변인 실험 두 번째 활동(지레와 빗면, 소리 나는 물체의 떨림, 자석과 자석 사이)을 연다', async ({ page }) => {
+  for (const [id, title, group, first, firstGroup] of [
+    ['g3-force', '힘과 우리 생활', '쓰는 도구', 'lever-balance', '오른쪽 추의 수'],
+    ['g3-sound', '소리의 성질', '소리 내기', 'string-sound', '튕기는 세기'],
+    ['g4-magnet', '자석의 이용', '마주 보는 극', 'magnet-distance', '자석과 클립 사이의 거리'],
+  ] as const) {
+    await page.goto(`/#/unit/${id}`);
+    await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
+    await expect(page.getByRole('tab')).toHaveCount(2);
+    await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('group', { name: firstGroup })).toBeVisible();
+    await page.goto(`/#/unit/${id}/${first}`);
+    await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+    await activityTab(page, 2).click();
+    await expect(page).toHaveURL(new RegExp(`#/unit/${id}/[a-z-]+$`));
+    await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('group', { name: group })).toBeVisible();
+    await page.reload();
+    await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('group', { name: group })).toBeVisible();
+  }
 });
 
 test('모르는 experimentId는 첫 활동으로 돌린다', async ({ page }) => {

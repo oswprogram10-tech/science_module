@@ -5,3 +5,6 @@ export * from './lever';
 export * from './sound';
 export * from './magnet';
 export * from './motion';
+export * from './leverLift';
+export * from './soundVibration';
+export * from './magnetPoles';
