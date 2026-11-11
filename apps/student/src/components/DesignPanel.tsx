@@ -41,6 +41,8 @@ const ALWAYS_NOTICE: Record<string, string> = {
   // 증발 접시와 알코올램프는 뜨겁고, 실험에 쓰는 바닷물은 맛보지 않는다. 다른 단원이 `heat`·`taste`를 쓸 때를 생각해 모듈 이름을 붙인 키로 둔다.
   'sea-water:heat': '⚠ 증발 접시와 알코올램프는 아주 뜨거워요. 선생님과 함께 다뤄요.',
   'sea-water:taste': '⚠ 실험에 쓰는 바닷물은 맛보지 않아요.',
+  // 설탕물 용액은 맛보지 않는다. 다른 단원이 `taste`를 쓸 때를 생각해 모듈 이름을 붙인 키로 둔다.
+  'concentration:taste': '⚠ 실험한 용액은 맛보지 않아요.',
 };
 
 const PREDICTION_ICON: Record<Prediction, string> = { increase: '▲', decrease: '▼', same: '＝' };

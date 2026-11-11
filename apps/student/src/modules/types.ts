@@ -11,6 +11,8 @@ export interface ViewProps<S extends { t: number }> {
   snapshot: S | null;
   values: Values;
   playhead: number;
+  /** 지금까지 한 모든 시행(오래된 것부터). 시행끼리 견주는 그림(시행별 막대, 색 띠 기록)만 쓴다. 없으면 빈 칸으로 그린다. */
+  trials?: readonly Trial<S, unknown>[];
 }
 
 /** 표시할 모의 센서와 원천값. App이 kind에 맞는 Mock 드라이버를 만들어 읽는다. */

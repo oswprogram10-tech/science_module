@@ -232,6 +232,7 @@ function Lab({
     snapshot,
     values: shownValues,
     playhead: state.playhead,
+    trials: state.trials,
   };
 
   const gate = canRun({ ivKey: state.ivKey, prediction: state.prediction }, experiment.gateway);

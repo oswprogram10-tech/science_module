@@ -69,8 +69,8 @@ for (const vp of VIEWPORTS) {
       for (const right of tabs) expect(right).toBeLessThanOrEqual(vp.width + 1);
     });
 
-    // 변인 실험을 두 번째 활동으로 더한 세 단원(지레와 빗면, 소리 나는 물체의 떨림, 자석과 자석 사이): 활동 탭 포함 가로 스크롤이 없고 그림 셋이 폭 안에 들어온다.
-    for (const [id, experiment] of [['g3-force', 'lever-lift'], ['g3-sound', 'sound-vibration'], ['g4-magnet', 'magnet-poles']] as const) {
+    // 변인 실험을 두 번째 활동으로 더한 여섯 단원(지레와 빗면, 소리 나는 물체의 떨림, 자석과 자석 사이, 용액의 진하기, 온도가 다른 두 물이 닿으면, 산성 용액과 염기성 용액 섞기): 활동 탭 포함 가로 스크롤이 없고 그림 셋이 폭 안에 들어온다.
+    for (const [id, experiment] of [['g3-force', 'lever-lift'], ['g3-sound', 'sound-vibration'], ['g4-magnet', 'magnet-poles'], ['g5-solution', 'concentration'], ['g5-heat', 'heat-contact'], ['g6-acid-base', 'acid-base-mix']] as const) {
       test(`${id} 두 번째 활동(${experiment}, 활동 탭 포함)에 가로 스크롤이 없다`, async ({ page }) => {
         await gotoUnit(page, id, { experiment });
         await expect(page.getByRole('tab', { name: /^활동 2 · / })).toBeVisible();

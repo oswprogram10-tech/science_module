@@ -729,8 +729,8 @@ for (const scheme of ['light', 'dark'] as const) {
     await page.emulateMedia({ colorScheme: scheme });
     // 단원 목록의 "활동 2개" 표시
     await page.goto('/');
-    // 활동이 둘인 단원은 힘과 우리 생활, 소리의 성질, 자석의 이용, 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활, 동물의 생활, 식물의 생활, 생물과 환경, 지층과 화석 열한 곳이다.
-    await expect(page.getByText('활동 2개')).toHaveCount(11);
+    // 활동이 둘인 단원은 힘과 우리 생활, 소리의 성질, 자석의 이용, 용해와 용액, 열과 우리 생활, 산과 염기, 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활, 동물의 생활, 식물의 생활, 생물과 환경, 지층과 화석 열네 곳이다.
+    await expect(page.getByText('활동 2개')).toHaveCount(14);
     await expect(page.getByText('활동 2개').first()).toBeVisible();
     await expectNoSeriousViolations(page);
     // 첫 활동 화면의 활동 탭
@@ -1631,6 +1631,104 @@ for (const scheme of ['light', 'dark'] as const) {
     await page.getByRole('button', { name: '▶ 실험 실행' }).click();
     await expect(runButton(page)).toHaveText('▶ 실험 실행');
     await expect(page.getByText('2.0초 · 두 자석 사이 7.0 cm').first()).toBeVisible();
+    await expectNoSeriousViolations(page);
+  });
+}
+
+// ---- 변인 실험 두 번째 활동: 용액의 진하기 비교하기, 온도가 다른 두 물이 닿으면, 산성 용액과 염기성 용액 섞기 ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  const label = scheme === 'dark' ? '어두운 화면' : '밝은 화면';
+
+  test(`g5-solution 활동 2(용액의 진하기) ${label}: 처음, 실행 뒤(1숟가락), 5숟가락, 흰 설탕, 높은 비커`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g5-solution', { experiment: 'concentration' });
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '넣은 설탕');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('conc-bar')).toHaveCount(1);
+    await expectNoSeriousViolations(page);
+    await setValue(page, '넣은 설탕', '5숟가락');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('conc-bar')).toHaveCount(2);
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '설탕 종류');
+    await setValue(page, '설탕 종류', '흰 설탕');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '비커 모양');
+    await setValue(page, '비커 모양', '높은 비커');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('conc-bar')).toHaveCount(4);
+    await expectNoSeriousViolations(page);
+  });
+
+  test(`g5-heat 활동 2(온도가 다른 두 물이 닿으면) ${label}: 처음, 점검표, 실행 뒤(열화상), 70 °C, 플라스틱 컵`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g5-heat', { experiment: 'heat-contact' });
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '안쪽 컵 물의 처음 온도');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(page.getByRole('dialog', { name: '안전 점검표' })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await confirmSafetyDialog(page);
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('thermal-inner-text')).toHaveText('안쪽 컵 물 40.0 °C');
+    await expectNoSeriousViolations(page);
+    await setValue(page, '안쪽 컵 물의 처음 온도', '70 °C');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '안쪽 컵 재료');
+    await setValue(page, '안쪽 컵 재료', '플라스틱 컵');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+  });
+
+  test(`g6-acid-base 활동 2(산성 용액과 염기성 용액 섞기) ${label}: 처음, 점검표, 실행 뒤(붉은색), 보라색, 노란색, 페놀프탈레인`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g6-acid-base', { experiment: 'acid-base-mix' });
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '넣은 방울 수');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(page.getByRole('dialog', { name: '안전 점검표' })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await confirmSafetyDialog(page);
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('strip-row')).toHaveCount(1);
+    await expectNoSeriousViolations(page);
+    await setValue(page, '넣은 방울 수', '20방울');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    await setValue(page, '넣은 방울 수', '30방울');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('strip-row')).toHaveCount(3);
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '지시약');
+    await setValue(page, '지시약', '페놀프탈레인 용액');
+    await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
     await expectNoSeriousViolations(page);
   });
 }
