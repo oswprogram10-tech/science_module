@@ -4,3 +4,7 @@
 {"id":"g3-force-sft-0004","unitId":"g3-force","scenarioId":"g3-force-s018","utterance":"멀리 놓으면 올라갈 줄 알았는데 달라요.","source":"example","reviewed":false,"author":"EX","response":"예상과 다르게 나왔네요. '돌리려는 정도 보기' 그림에서 왼쪽과 오른쪽 막대를 나란히 놓고 살펴볼까요?"}
 {"id":"g3-force-sft-0005","unitId":"g3-force","scenarioId":"g3-force-s022","utterance":"","source":"example","reviewed":false,"author":"EX","response":"쓰는 도구를 바꾸어 보려고 하는군요. 같은 상자를 같은 높이로 들어 올릴 때 저울 눈금이 어떻게 될지 예측해 볼까요?"}
 {"id":"g3-force-sft-0006","unitId":"g3-force","scenarioId":"g3-force-s037","utterance":"도구를 안 썼더니 눈금이 생각이랑 달라요.","source":"example","reviewed":false,"author":"EX","response":"예측과 결과가 달랐군요. '힘과 거리 보기' 그림에서 저울 눈금 막대와 당긴 거리 막대를 각각 견주어 볼까요?"}
+{"id":"g3-force-sft-0007","unitId":"g3-force","scenarioId":"g3-force-s042","utterance":"","source":"example","reviewed":false,"author":"EX","response":"물체를 바꾸어 보려고 하는군요. 물체마다 밀었을 때 움직인 거리가 어떻게 될지 예측해 볼까요?"}
+{"id":"g3-force-sft-0008","unitId":"g3-force","scenarioId":"g3-force-s059","utterance":"당기기로 바꿨는데 거리가 똑같아요.","source":"example","reviewed":false,"author":"EX","response":"예측과 결과가 달랐군요. 찰흙과 수레는 힘을 받았을 때 각각 무엇이 변했나요?"}
+{"id":"g3-force-sft-0009","unitId":"g3-force","scenarioId":"g3-force-s066","utterance":"","source":"example","reviewed":false,"author":"EX","response":"함께 건 물체를 바꾸어 보려고 하는군요. 용수철이 늘어난 길이가 어떻게 될지 예측해 볼까요?"}
+{"id":"g3-force-sft-0010","unitId":"g3-force","scenarioId":"g3-force-s080","utterance":"물건을 뺐더니 생각이랑 달라요.","source":"example","reviewed":false,"author":"EX","response":"예측과 결과가 달랐군요. 저울 눈금이 같으면 두 물체의 무게에 대해 무엇을 말할 수 있을까요?"}

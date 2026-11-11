@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import type { VariableExperiment } from '@sci/schema';
 import { UNITS } from '../../../apps/student/src/units';
 import { generateScenarios, situationCounts } from '../scripts/scenarios';
 import { buildTutorInput, situationOf } from './context';
@@ -47,7 +48,7 @@ describe('활동이 여럿인 단원의 시나리오(id 안정성)', () => {
   });
   it('활동이 하나인 단원은 활동마다 시나리오를 한 번만 만들고 모두 첫 활동 것이다', () => {
     for (const id of TUTOR_UNITS) {
-      if (id === 'g5-mixture' || id === 'g4-land' || id === 'g3-earth-sea' || id === 'g5-weather' || id === 'g3-force' || id === 'g3-sound' || id === 'g4-magnet' || id === 'g5-solution' || id === 'g5-heat' || id === 'g6-acid-base' || id === 'g6-motion' || id === 'g6-combustion' || CARD_SORT_BATCH_A.includes(id) || CARD_SORT_BATCH_C.includes(id)) continue;
+      if (id === 'g4-gases' || id === 'g5-mixture' || id === 'g4-land' || id === 'g3-earth-sea' || id === 'g5-weather' || id === 'g3-force' || id === 'g3-sound' || id === 'g4-magnet' || id === 'g5-solution' || id === 'g5-heat' || id === 'g6-acid-base' || id === 'g6-motion' || id === 'g6-combustion' || CARD_SORT_BATCH_A.includes(id) || CARD_SORT_BATCH_C.includes(id)) continue;
       const only = units[id]!.manifest.experiments;
       expect(only, id).toHaveLength(1);
       expect(new Set(generateScenarios(id, units[id]!).map((s) => s.state.experimentId)), id).toEqual(new Set([only[0]!.id]));
@@ -170,10 +171,9 @@ describe('지구와 바다 시나리오(활동 2 덧붙임)', () => {
   });
 });
 
-describe('변인 실험 두 번째 활동을 더한 단원의 시나리오(힘과 우리 생활·소리의 성질·자석의 이용)', () => {
+describe('변인 실험 두 번째 활동을 더한 단원의 시나리오(소리의 성질·자석의 이용)', () => {
   // 각 해시는 두 번째 활동을 더하기 전 ml/tutor/scenarios/<단원>.jsonl 20줄(줄바꿈으로 이은 글자)의 SHA-256이다.
   const CASES = [
-    { id: 'g3-force', first: 'lever-balance', second: 'lever-lift', total: 40, sha: '081c85aa9aac658b17576638f46c1631805d7514e83f68b217d4f96c0ab06bca' },
     { id: 'g3-sound', first: 'string-sound', second: 'sound-vibration', total: 42, sha: 'a045442aac8240a59b6114b69c1a6701a17954c41e318fd617137dc3c89d8233' },
     { id: 'g4-magnet', first: 'magnet-distance', second: 'magnet-poles', total: 42, sha: '16046672bdd1bb69014aa39dfdb31eb25e195a9c53516472ee9e560feecf96cd' },
   ];
@@ -199,6 +199,57 @@ describe('변인 실험 두 번째 활동을 더한 단원의 시나리오(힘�
       for (const k of ['before-run', 'first-trial', 'confounded', 'iv-unchanged', 'repeat', 'fair-test', 'prediction-mismatch']) expect(keys.has(k), k).toBe(true);
     });
   }
+});
+
+describe('변인 실험을 더한 단원의 시나리오(힘과 우리 생활 활동 3·4, 여러 가지 기체 활동 2)', () => {
+  // 각 해시는 이 활동들을 더하기 전 ml/tutor/scenarios/<단원>.jsonl 앞 n줄(줄바꿈으로 이은 글자)의 SHA-256이다.
+  const CASES = [
+    { id: 'g3-force', before: ['lever-balance', 'lever-lift'], n: 40, sha: '5bd9ee71ccc4b7b33f2396db523c5d4c4d3a474c27ea24f2dab705e89f6e0c3e', added: [['push-pull', 22], ['spring-scale', 20]] as const },
+    { id: 'g4-gases', before: ['syringe-volume'], n: 22, sha: 'ba745a76006293d5979066e281c1d104833c2a78540cb354b6bc41654ded99a0', added: [['gas-weight', 20]] as const },
+  ];
+  for (const c of CASES) {
+    const u = units[c.id]!;
+    const list = generateScenarios(c.id, u);
+    const total = c.n + c.added.reduce((a, [, k]) => a + k, 0);
+    it(`${c.id}: 앞 ${c.n}줄은 새 활동을 더하기 전과 한 글자도 같고, ${c.added.map(([e]) => e).join('·')} 시나리오가 순서대로 뒤에 덧붙는다`, () => {
+      expect(u.manifest.experiments.map((e) => e.id)).toEqual([...c.before, ...c.added.map(([e]) => e)]);
+      expect(list.map((s) => s.scenarioId)).toEqual(list.map((_, i) => `${c.id}-s${String(i + 1).padStart(3, '0')}`));
+      expect(list).toHaveLength(total);
+      const head = list.slice(0, c.n);
+      expect(head.every((s) => c.before.includes(s.state.experimentId))).toBe(true);
+      expect(createHash('sha256').update(head.map((s) => JSON.stringify(s)).join('\n')).digest('hex')).toBe(c.sha);
+      let at = c.n;
+      for (const [id, k] of c.added) {
+        expect(list.slice(at, at + k).every((s) => s.state.experimentId === id), id).toBe(true);
+        at += k;
+      }
+      // 저장소 파일의 앞 줄도 같다(덧붙이기만 했다).
+      const file = readFileSync(scenarioFile(TUTOR_DIR, c.id), 'utf8').trimEnd().split('\n');
+      expect(createHash('sha256').update(file.slice(0, c.n).join('\n')).digest('hex')).toBe(c.sha);
+      expect(file).toHaveLength(total);
+    });
+    it(`${c.id}: 새 활동마다 모든 상황(실행 전·첫 시행·함께 바뀜·바꿀 조건 그대로·반복·공정한 비교·예측 불일치)이 시나리오에 있다`, () => {
+      let at = c.n;
+      for (const [id, k] of c.added) {
+        const exp = u.manifest.experiments.find((e) => e.id === id)!;
+        const keys = new Set(list.slice(at, at + k).map((s) => situationOf(s.state, exp)));
+        for (const key of ['before-run', 'first-trial', 'confounded', 'iv-unchanged', 'repeat', 'fair-test', 'prediction-mismatch']) expect(keys.has(key), `${id} ${key}`).toBe(true);
+        at += k;
+      }
+    });
+  }
+  it('힘과 우리 생활은 앞 20줄(막대의 수평 잡기)과 21~40줄(지레와 빗면)이 각각 그대로이고, 새 활동의 조작변인마다 공정한 비교가 있다', () => {
+    const u = units['g3-force']!;
+    const list = generateScenarios('g3-force', u);
+    expect(createHash('sha256').update(list.slice(0, 20).map((s) => JSON.stringify(s)).join('\n')).digest('hex')).toBe('081c85aa9aac658b17576638f46c1631805d7514e83f68b217d4f96c0ab06bca');
+    expect(list.slice(0, 20).every((s) => s.state.experimentId === 'lever-balance')).toBe(true);
+    expect(list.slice(20, 40).every((s) => s.state.experimentId === 'lever-lift')).toBe(true);
+    for (const id of ['push-pull', 'spring-scale']) {
+      const exp = u.manifest.experiments.find((e) => e.id === id)!;
+      const ivs = new Set(list.filter((s) => s.state.experimentId === id && s.state.kind === 'variable' && situationOf(s.state, exp) === 'fair-test').map((s) => (s.state.kind === 'variable' ? s.state.trials.at(-1)?.ivKey : null)));
+      for (const v of (exp as VariableExperiment).variables) expect(ivs.has(v.key), `${id} ${v.key}`).toBe(true);
+    }
+  });
 });
 
 describe('변인 실험 두 번째 활동을 더한 단원의 시나리오(용해와 용액·열과 우리 생활·산과 염기)', () => {

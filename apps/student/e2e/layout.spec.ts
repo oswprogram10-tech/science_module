@@ -70,10 +70,13 @@ for (const vp of VIEWPORTS) {
     });
 
     // 변인 실험을 두 번째 활동으로 더한 여덟 단원(지레와 빗면, 소리 나는 물체의 떨림, 자석과 자석 사이, 용액의 진하기, 온도가 다른 두 물이 닿으면, 산성 용액과 염기성 용액 섞기, 시간에 따른 위치 변화, 연소 전과 후 비교하기): 활동 탭 포함 가로 스크롤이 없고 그림 셋이 폭 안에 들어온다.
-    for (const [id, experiment] of [['g3-force', 'lever-lift'], ['g3-sound', 'sound-vibration'], ['g4-magnet', 'magnet-poles'], ['g5-solution', 'concentration'], ['g5-heat', 'heat-contact'], ['g6-acid-base', 'acid-base-mix'], ['g6-motion', 'position-time'], ['g6-combustion', 'combustion-products']] as const) {
-      test(`${id} 두 번째 활동(${experiment}, 활동 탭 포함)에 가로 스크롤이 없다`, async ({ page }) => {
+    for (const [id, experiment] of [['g3-force', 'lever-lift'], ['g3-sound', 'sound-vibration'], ['g4-magnet', 'magnet-poles'], ['g5-solution', 'concentration'], ['g5-heat', 'heat-contact'], ['g6-acid-base', 'acid-base-mix'], ['g6-motion', 'position-time'], ['g6-combustion', 'combustion-products'], ['g3-force', 'push-pull'], ['g3-force', 'spring-scale'], ['g4-gases', 'gas-weight']] as const) {
+      // 힘과 우리 생활의 활동 3·4(밀고 당기면 생기는 변화, 용수철저울로 무게 비교하기)와 여러 가지 기체 활동 2(공기를 넣은 페트병의 무게)도 같다: 활동 탭 넷도 폭 안에 들어온다.
+      const n = (['g3-force', 'push-pull'] as readonly string[]).includes(experiment) ? 3 : experiment === 'spring-scale' ? 4 : 2;
+      test(`${id} ${n}번째 활동(${experiment}, 활동 탭 포함)에 가로 스크롤이 없다`, async ({ page }) => {
         await gotoUnit(page, id, { experiment });
-        await expect(page.getByRole('tab', { name: /^활동 2 · / })).toBeVisible();
+        await expect(page.getByRole('tab', { name: new RegExp(`^활동 ${n} · `) })).toBeVisible();
+        await expect(page.getByRole('tab')).toHaveCount(id === 'g3-force' ? 4 : id === 'g6-combustion' ? 3 : 2);
         await expect(page.getByRole('link', { name: '← 단원 목록' })).toBeVisible();
         const { sw, iw } = await scrollWidth(page);
         expect(sw).toBeLessThanOrEqual(iw);

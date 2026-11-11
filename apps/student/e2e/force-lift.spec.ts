@@ -38,7 +38,7 @@ async function resultCells(row: Locator) {
 test('두 번째 활동 탭으로 열리고, 첫 활동(막대의 수평 잡기)으로 돌아갈 수 있다', async ({ page }) => {
   await open(page);
   await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByRole('tab')).toHaveCount(2);
+  await expect(page.getByRole('tab')).toHaveCount(4);
   await expect(page.getByText('탐구 질문: 도구를 쓰면 물체를 들어 올리는 힘이 어떻게 달라질까?')).toBeVisible();
   await expect(page.getByText('예측: 용수철저울의 눈금은?')).toBeVisible();
   await activityTab(page, 1).click();

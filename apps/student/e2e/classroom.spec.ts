@@ -80,13 +80,38 @@ test.describe('수업 연결', () => {
     await s3.getByRole('button', { name: /^철 가루와 모래 관찰 \d\/3$/ }).click();
     await s3.getByRole('button', { name: '자석 대 보기', exact: true }).click();
     await expect(card(teacher, 3)).toContainText('시행 1회');
-    // 활동이 하나인 단원은 활동 이름을 붙이지 않는다(용해와 용액은 두 번째 활동이 생겨 여러 가지 기체로 확인한다).
+    // 활동이 하나인 단원은 활동 이름을 붙이지 않는다(용해와 용액·여러 가지 기체는 두 번째 활동이 생겨 빛의 성질로 확인한다).
     await s3.evaluate(() => {
-      window.location.hash = '#/unit/g4-gases';
+      window.location.hash = '#/unit/g5-light';
     });
-    await expect(card(teacher, 3)).toContainText('여러 가지 기체');
-    await expect(card(teacher, 3)).not.toContainText(' · 여러');
-    await expect(card(teacher, 3).locator('.unit')).toHaveText('여러 가지 기체');
+    await expect(card(teacher, 3)).toContainText('빛의 성질');
+    await expect(card(teacher, 3)).not.toContainText(' · 빛');
+    await expect(card(teacher, 3).locator('.unit')).toHaveText('빛의 성질');
+  });
+
+  test('활동이 넷인 힘과 우리 생활: 활동 탭을 옮길 때마다 교사 카드의 활동 이름이 바뀌고, 활동이 둘인 여러 가지 기체도 활동 이름이 붙는다', async ({ page: teacher, context }) => {
+    const code = await createClass(teacher);
+    const s4 = await context.newPage();
+    await joinClass(s4, code, 4);
+    await s4.evaluate(() => {
+      window.location.hash = '#/unit/g3-force';
+    });
+    await expect(s4.getByRole('tab')).toHaveCount(4);
+    await expect(card(teacher, 4).locator('.unit')).toHaveText('힘과 우리 생활 · 막대의 수평 잡기');
+    for (const [n, name] of [[2, '지레와 빗면으로 들어 올리기'], [3, '밀고 당기면 생기는 변화'], [4, '용수철저울로 무게 비교하기'], [1, '막대의 수평 잡기']] as const) {
+      await s4.getByRole('tab', { name: new RegExp(`^활동 ${n} · `) }).click();
+      await expect(card(teacher, 4).locator('.unit')).toHaveText(`힘과 우리 생활 · ${name}`);
+    }
+    // 새 활동에서 한 번 실행하면 시행 수가 교사 카드에 반영된다.
+    await s4.getByRole('tab', { name: /^활동 3 · / }).click();
+    await s4.getByRole('radio', { name: /^힘의 세기(을|를) 바꿀 조건으로 고르기$/ }).check();
+    await s4.getByRole('group', { name: /^예측:/ }).getByRole('button', { name: '변하지 않는다' }).click();
+    await s4.getByRole('button', { name: /^▶ 실험 실행$/ }).click();
+    await expect(card(teacher, 4)).toContainText('시행 1회');
+    await s4.evaluate(() => {
+      window.location.hash = '#/unit/g4-gases/gas-weight';
+    });
+    await expect(card(teacher, 4).locator('.unit')).toHaveText('여러 가지 기체 · 공기를 넣은 페트병의 무게');
   });
 
   test('5모둠의 모의 안전 경고가 교사 화면에 붉게 보이고, 확인하면 사라진다', async ({ page: teacher, context }) => {
