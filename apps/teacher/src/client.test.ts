@@ -90,3 +90,71 @@ describe('교사 클라이언트', () => {
     }
   });
 });
+
+describe('교사 클라이언트: 튜터 질문 덧씌우기', () => {
+  const edits = { v: 1 as const, units: { 'g6-motion': { 'ramp-cart': { changed: { '|repeat|': { off: true as const } }, added: [] } } } };
+  const other = { v: 1 as const, units: {} };
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('수업을 만들면(created) 저장된 덧씌우기를 서버에 보낸다', () => {
+    const { c, ws } = open();
+    c.setTutorEdits(edits);
+    c.create();
+    expect(ws.sent).toEqual([{ t: 'create' }]);
+    ws.recv({ t: 'created', code: 'ABC234', token: TOKEN });
+    expect(ws.sent).toEqual([{ t: 'create' }, { t: 'tutor', edits }]);
+    ws.recv({ t: 'snapshot', code: 'ABC234', paused: false, groups: [] });
+    expect(ws.sent).toHaveLength(2); // 한 번만
+  });
+
+  it('다시 연결(watch)되면 첫 snapshot을 받은 뒤에 보낸다', () => {
+    const { c, ws } = open({ code: 'ABC234', token: TOKEN });
+    c.setTutorEdits(edits);
+    expect(ws.sent).toEqual([{ t: 'watch', code: 'ABC234', token: TOKEN }]);
+    ws.recv({ t: 'snapshot', code: 'ABC234', paused: false, groups: [] });
+    expect(ws.sent[1]).toEqual({ t: 'tutor', edits });
+  });
+
+  it('수업에 들어가기 전에는 보내지 않고, 들어간 뒤 저장할 때마다 500 ms 묶어서 마지막 것만 보낸다', () => {
+    const { c, ws } = open();
+    c.setTutorEdits(edits);
+    vi.advanceTimersByTime(2000);
+    expect(ws.sent).toEqual([]);
+    c.create();
+    ws.recv({ t: 'created', code: 'ABC234', token: TOKEN });
+    ws.sent.length = 0;
+    c.setTutorEdits(other);
+    c.setTutorEdits(edits);
+    c.setTutorEdits(other);
+    vi.advanceTimersByTime(499);
+    expect(ws.sent).toEqual([]);
+    vi.advanceTimersByTime(1);
+    expect(ws.sent).toEqual([{ t: 'tutor', edits: other }]);
+  });
+
+  it('덧씌우기를 알려 준 적이 없으면 아무것도 보내지 않는다(기존 동작)', () => {
+    const { c, ws } = open();
+    c.create();
+    ws.recv({ t: 'created', code: 'ABC234', token: TOKEN });
+    ws.recv({ t: 'snapshot', code: 'ABC234', paused: false, groups: [] });
+    vi.advanceTimersByTime(2000);
+    expect(ws.sent).toEqual([{ t: 'create' }]);
+  });
+
+  it('연결이 끊겼다 다시 이어지면(watch) 최신 덧씌우기를 다시 보낸다', () => {
+    const { c, ws } = open();
+    c.setTutorEdits(edits);
+    c.create();
+    ws.recv({ t: 'created', code: 'ABC234', token: TOKEN });
+    ws.onclose?.();
+    c.setTutorEdits(other); // 끊긴 동안 저장
+    vi.advanceTimersByTime(600);
+    vi.advanceTimersByTime(10_000);
+    const ws2 = FakeWS.all[1]!;
+    ws2.onopen?.();
+    expect(ws2.sent).toEqual([{ t: 'watch', code: 'ABC234', token: TOKEN }]);
+    ws2.recv({ t: 'snapshot', code: 'ABC234', paused: false, groups: [] });
+    expect(ws2.sent[1]).toEqual({ t: 'tutor', edits: other });
+  });
+});

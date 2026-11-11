@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { ActivityTabsSlot } from '../../components/ActivityTabs';
 import { isDaylight } from '@sci/engine-earth';
 import type { ObservationExperiment } from '@sci/schema';
-import { renderAndGuard } from '@sci/tutor';
+import { TUTOR_SILENT, renderAndGuard } from '@sci/tutor';
+import { useTutorProbes } from '../../tutorProbes';
 import { MemoryRecorder, buildStatement, toExtensions } from '@sci/xapi';
 import { readPlaybackSeconds } from '../../playback';
 import { useClassroomStatus, usePaused } from '../../classroom/bus';
@@ -210,7 +211,8 @@ export function ObserveLab({
     safetyLocked: false,
   });
 
-  const tutorText = renderAndGuard(situation, {}, task.probes, {
+  const probes = useTutorProbes(unitId, exp.id, task.probes, task.id);
+  const tutorText = renderAndGuard(situation, {}, probes, {
     forbiddenAnswers: exp.tutor.forbiddenAnswers,
     limits: exp.limits,
   });
@@ -568,10 +570,12 @@ export function ObserveLab({
               <h2>피드백</h2>
               <p>{feedback}</p>
             </div>
-            <div className="box tutor" aria-live="polite">
-              <h2>생각해 볼까요?</h2>
-              <p>{tutorText}</p>
-            </div>
+            {tutorText !== TUTOR_SILENT && (
+              <div className="box tutor" aria-live="polite">
+                <h2>생각해 볼까요?</h2>
+                <p>{tutorText}</p>
+              </div>
+            )}
           </div>
         </div>
       </main>

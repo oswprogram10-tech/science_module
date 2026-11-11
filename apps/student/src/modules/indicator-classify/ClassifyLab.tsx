@@ -3,7 +3,8 @@ import { ActivityTabsSlot } from '../../components/ActivityTabs';
 import { indicatorColor, type GroupKey } from '@sci/engine-matter';
 import { josa } from '@sci/gateway';
 import type { ClassificationExperiment } from '@sci/schema';
-import { renderAndGuard } from '@sci/tutor';
+import { TUTOR_SILENT, renderAndGuard } from '@sci/tutor';
+import { useTutorProbes } from '../../tutorProbes';
 import { MockSafetyDetector, type SafetyEvent } from '@sci/vision';
 import { MemoryRecorder, buildStatement, toExtensions } from '@sci/xapi';
 import {
@@ -152,10 +153,11 @@ export function ClassifyLab({
 
   // 튜터
   const situation = tutorSituation(state, exp);
+  const probes = useTutorProbes(unitId, exp.id, exp.tutor.probes);
   const tutorText =
     !state.selected && !state.checked
       ? TUTOR_NO_SELECTION
-      : renderAndGuard(situation.when, { solution: situation.solution }, exp.tutor.probes, {
+      : renderAndGuard(situation.when, { solution: situation.solution }, probes, {
           forbiddenAnswers: exp.tutor.forbiddenAnswers,
           limits: exp.limits,
         });
@@ -346,10 +348,12 @@ export function ClassifyLab({
               <h2>피드백</h2>
               <p>{feedback}</p>
             </div>
-            <div className="box tutor" aria-live="polite">
-              <h2>생각해 볼까요?</h2>
-              <p>{tutorText}</p>
-            </div>
+            {tutorText !== TUTOR_SILENT && (
+              <div className="box tutor" aria-live="polite">
+                <h2>생각해 볼까요?</h2>
+                <p>{tutorText}</p>
+              </div>
+            )}
           </div>
         </div>
       </main>

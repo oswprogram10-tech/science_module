@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useSyncExternalStore } from 'react';
+import type { TutorEdits } from '@sci/classroom';
 
 /**
  * 실험 화면과 수업 연결 사이의 아주 작은 통로.
@@ -30,8 +31,11 @@ export const IDLE: StatusReport = { phase: 'idle', trials: 0, safetyLocked: fals
 
 let status: StatusReport = IDLE;
 let paused = false;
+/** 선생님이 보낸 튜터 질문 덧씌우기. 메모리에만 둔다(sessionStorage·localStorage에는 쓰지 않는다). */
+let tutorEdits: TutorEdits | null = null;
 const eventListeners = new Set<(e: BusEvent) => void>();
 const pauseListeners = new Set<() => void>();
+const tutorListeners = new Set<() => void>();
 
 export const bus = {
   getStatus: () => status,
@@ -48,6 +52,17 @@ export const bus = {
     if (paused === on) return;
     paused = on;
     pauseListeners.forEach((l) => l());
+  },
+  getTutorEdits: (): TutorEdits | null => tutorEdits,
+  subscribeTutorEdits(l: () => void) {
+    tutorListeners.add(l);
+    return () => void tutorListeners.delete(l);
+  },
+  /** 서버가 보낸 덧씌우기를 둔다. 수업에서 나오거나 수업이 끝나면 null로 지운다. */
+  setTutorEdits(next: TutorEdits | null) {
+    if (tutorEdits === next) return;
+    tutorEdits = next;
+    tutorListeners.forEach((l) => l());
   },
 };
 
@@ -80,3 +95,6 @@ export function useClassroomStatus(report: StatusReport): void {
 
 /** 선생님이 "모두 멈춤"을 눌렀는가. */
 export const usePaused = (): boolean => useSyncExternalStore(bus.subscribePause, bus.getPaused);
+
+/** 선생님이 수업에 보낸 튜터 질문 덧씌우기(없으면 null: 매니페스트의 기본 질문을 그대로 쓴다). */
+export const useTutorEdits = (): TutorEdits | null => useSyncExternalStore(bus.subscribeTutorEdits, bus.getTutorEdits, bus.getTutorEdits);

@@ -2,7 +2,8 @@ import { useMemo, useState, useSyncExternalStore } from 'react';
 import { ActivityTabsSlot } from '../../components/ActivityTabs';
 import { REQUIRED_CRITERIA, criterionOf } from '@sci/cardsort';
 import type { CardSortExperiment } from '@sci/schema';
-import { renderAndGuard } from '@sci/tutor';
+import { TUTOR_SILENT, renderAndGuard } from '@sci/tutor';
+import { useTutorProbes } from '../../tutorProbes';
 import {
   allPlaced,
   check,
@@ -101,10 +102,11 @@ function GroupsSortLab({
 
   // 튜터
   const situation = tutorSituation(state, exp);
+  const probes = useTutorProbes(unitId, exp.id, exp.tutor.probes);
   const tutorText = renderAndGuard(
     situation.when,
     { card: situation.card, criterion: situation.criterion },
-    exp.tutor.probes,
+    probes,
     { forbiddenAnswers: exp.tutor.forbiddenAnswers, limits: exp.limits },
   );
   const feedback = cardSortFeedback(exp, state.checked);
@@ -230,10 +232,12 @@ function GroupsSortLab({
               <h2>피드백</h2>
               <p>{feedback}</p>
             </div>
-            <div className="box tutor" aria-live="polite">
-              <h2>생각해 볼까요?</h2>
-              <p>{tutorText}</p>
-            </div>
+            {tutorText !== TUTOR_SILENT && (
+              <div className="box tutor" aria-live="polite">
+                <h2>생각해 볼까요?</h2>
+                <p>{tutorText}</p>
+              </div>
+            )}
           </div>
         </div>
       </main>

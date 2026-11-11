@@ -158,6 +158,9 @@ importers:
       '@sci/classroom':
         specifier: workspace:*
         version: link:../../packages/classroom
+      '@sci/tutor':
+        specifier: workspace:*
+        version: link:../../packages/tutor
       qrcode-generator:
         specifier: 2.0.4
         version: 2.0.4

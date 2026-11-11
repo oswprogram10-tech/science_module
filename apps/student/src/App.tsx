@@ -7,7 +7,8 @@ import {
   type Prediction,
 } from '@sci/gateway';
 import { createRuntime, sampleAt, type Trial } from '@sci/runtime';
-import { selectProbe } from '@sci/tutor';
+import { TUTOR_SILENT, selectProbe } from '@sci/tutor';
+import { useTutorProbes } from './tutorProbes';
 import { MemoryRecorder, buildStatement, toExtensions } from '@sci/xapi';
 import type { VariableExperiment } from '@sci/schema';
 import { MockSafetyDetector, type SafetyEvent, type SafetyEventType } from '@sci/vision';
@@ -313,6 +314,7 @@ function Lab({
       mod.metric.sameThreshold(experiment),
     );
   }
+  const probes = useTutorProbes(unitId, experiment.id, experiment.tutor.probes);
   const probe = selectProbe(
     {
       lastAnalysis: last?.analysis,
@@ -321,7 +323,7 @@ function Lab({
       prediction: last?.prediction ?? null,
       observed,
     },
-    experiment.tutor.probes,
+    probes,
     { forbiddenAnswers: experiment.tutor.forbiddenAnswers, limits: experiment.limits },
   );
 
@@ -389,10 +391,12 @@ function Lab({
               <h2>피드백</h2>
               <p>{runError ?? feedback ?? '비교할 내용이 생기면 여기에 알려 줄게요.'}</p>
             </div>
-            <div className="box tutor" aria-live="polite">
-              <h2>생각해 볼까요?</h2>
-              <p>{probe}</p>
-            </div>
+            {probe !== TUTOR_SILENT && (
+              <div className="box tutor" aria-live="polite">
+                <h2>생각해 볼까요?</h2>
+                <p>{probe}</p>
+              </div>
+            )}
           </div>
           <ResultsTable experiment={experiment} module={mod} trials={state.trials} playingId={state.playing ? state.active : null} />
           {mod.ResultsExtra && <mod.ResultsExtra experiment={experiment} values={shownValues} />}

@@ -8,10 +8,15 @@ import {
   type GroupView,
   type SafetyType,
 } from '@sci/classroom';
+import { countTutorEdits, type TutorEdits } from '@sci/classroom';
 import { TeacherClient, type TeacherState } from './client';
+import { ConfirmDialog } from './ConfirmDialog';
 import { HostAddress } from './HostAddress';
 import { serverUrl } from './serverUrl';
 import { beep, enableSound } from './sound';
+import { TutorEditor } from './TutorEditor';
+import { TUTOR_CATALOG } from './tutorManifests';
+import { tutorEditsStore } from './tutorEditsStore';
 import { activityTitle, unitTitle } from './units';
 
 interface Creds {
@@ -35,8 +40,15 @@ export function App() {
   const [soundOn, setSoundOn] = useState(false);
   useEffect(() => {
     const c = new TeacherClient(serverUrl(), readCreds(window.location.hash));
+    // 교사 PC에 저장된 튜터 질문 덧씌우기를 수업 연결에 알린다(수업을 만들거나 다시 연결될 때와 저장할 때마다 서버에 보낸다).
+    const store = tutorEditsStore();
+    c.setTutorEdits(store.get());
+    const off = store.subscribe(() => c.setTutorEdits(store.get()));
     setClient(c);
-    return () => c.dispose();
+    return () => {
+      off();
+      c.dispose();
+    };
   }, []);
   if (!client) return null;
   return <Screen client={client} soundOn={soundOn} onSound={() => setSoundOn(enableSound())} />;
@@ -44,6 +56,9 @@ export function App() {
 
 function Screen({ client, soundOn, onSound }: { client: TeacherClient; soundOn: boolean; onSound: () => void }) {
   const state = useSyncExternalStore(client.subscribe, client.getState);
+  const store = tutorEditsStore();
+  const tutorEdits = useSyncExternalStore(store.subscribe, store.get);
+  const [editing, setEditing] = useState(false);
   const created = state.created;
   // 주소 해시: 수업을 만들면 코드와 토큰을 넣고, 처음 화면이면 지운다.
   useEffect(() => {
@@ -54,17 +69,34 @@ function Screen({ client, soundOn, onSound }: { client: TeacherClient; soundOn: 
   if (state.error && state.error !== 'class_full' && state.error !== 'rate_limited' && state.error !== 'bad_secret' && state.error !== 'not_local') {
     return <GoneScreen onBack={() => { writeHash(null); client.leave(); }} />;
   }
-  if (!inClass) return <StartScreen state={state} soundOn={soundOn} onSound={onSound} onCreate={(secret) => client.create(secret)} />;
+  const alertCount = (state.snapshot?.groups ?? []).reduce((n, g) => n + unacked(g).length, 0);
+  const editor = editing ? (
+    <TutorEditor catalog={TUTOR_CATALOG} saved={tutorEdits} onSave={(e) => store.set(e)} onClose={() => setEditing(false)} alertCount={alertCount} />
+  ) : null;
+  if (!inClass) {
+    return (
+      <>
+        <StartScreen state={state} soundOn={soundOn} onSound={onSound} onCreate={(secret) => client.create(secret)} tutorEdits={tutorEdits} onEdit={() => setEditing(true)} inert={editing} />
+        {editor}
+      </>
+    );
+  }
   return (
-    <ClassScreen
-      client={client}
-      state={state}
-      soundOn={soundOn}
-      onEnd={() => {
-        client.end();
-        writeHash(null);
-      }}
-    />
+    <>
+      <ClassScreen
+        client={client}
+        state={state}
+        soundOn={soundOn}
+        tutorEdits={tutorEdits}
+        onEdit={() => setEditing(true)}
+        inert={editing}
+        onEnd={() => {
+          client.end();
+          writeHash(null);
+        }}
+      />
+      {editor}
+    </>
   );
 }
 
@@ -83,16 +115,26 @@ const keyFromUrl = (search: string = window.location.search): string => {
   }
 };
 
-function StartScreen({ state, soundOn, onSound, onCreate }: { state: TeacherState; soundOn: boolean; onSound: () => void; onCreate: (secret: string) => void }) {
+interface EditorHooks {
+  tutorEdits: TutorEdits;
+  onEdit: () => void;
+  /** 튜터 질문 편집 화면이 열려 있는 동안 아래 화면을 잠근다. */
+  inert: boolean;
+}
+
+function StartScreen({ state, soundOn, onSound, onCreate, onEdit, inert }: { state: TeacherState; soundOn: boolean; onSound: () => void; onCreate: (secret: string) => void } & EditorHooks) {
   const full = state.error === 'class_full';
   const badSecret = state.error === 'bad_secret';
   const [secret, setSecret] = useState(keyFromUrl);
   // 서버가 비밀번호를 요구했거나(bad_secret) 주소에 ?key=가 있으면 입력칸을 보여 준다.
   const showSecret = badSecret || secret !== '';
   return (
-    <div className="app">
+    <div className="app" inert={inert}>
       <header className="top">
         <h1>교사 대시보드</h1>
+        <button type="button" onClick={onEdit}>
+          튜터 질문 고치기
+        </button>
       </header>
       <HostAddress />
       <main className="panel start">
@@ -162,7 +204,7 @@ export function sortEntries(entries: Entry[], byNumber: boolean): Entry[] {
   return [...entries].sort((a, b) => rank(a) - rank(b) || a.group - b.group);
 }
 
-function ClassScreen({ client, state, soundOn, onEnd }: { client: TeacherClient; state: TeacherState; soundOn: boolean; onEnd: () => void }) {
+function ClassScreen({ client, state, soundOn, onEnd, tutorEdits, onEdit, inert }: { client: TeacherClient; state: TeacherState; soundOn: boolean; onEnd: () => void } & EditorHooks) {
   const snap = state.snapshot;
   const code = snap?.code ?? state.created?.code ?? readCreds(window.location.hash)?.code ?? '';
   const [byNumber, setByNumber] = useState(false);
@@ -185,8 +227,11 @@ function ClassScreen({ client, state, soundOn, onEnd }: { client: TeacherClient;
     prevAlerts.current = alertCount;
   }, [alertCount, soundOn]);
 
+  const tutorCount = countTutorEdits(tutorEdits);
+  const tutorTotal = tutorCount.changed + tutorCount.off + tutorCount.added;
+
   return (
-    <div className="app">
+    <div className="app" inert={inert}>
       {alertCount > 0 && (
         <div className="alert-banner" role="alert">
           ⚠ 확인하지 않은 안전 경고 {alertCount}건
@@ -209,6 +254,9 @@ function ClassScreen({ client, state, soundOn, onEnd }: { client: TeacherClient;
           <button type="button" aria-pressed={byNumber} onClick={() => setByNumber(!byNumber)}>
             모둠 번호 순
           </button>
+          <button type="button" onClick={onEdit}>
+            튜터 질문 고치기
+          </button>
           <button type="button" className="danger" onClick={() => setConfirmEnd(true)}>
             수업 끝내기
           </button>
@@ -216,6 +264,11 @@ function ClassScreen({ client, state, soundOn, onEnd }: { client: TeacherClient;
       </header>
       <HostAddress />
       {paused && <p className="paused-note">지금 모든 학생 화면이 멈춰 있어요.</p>}
+      {tutorTotal > 0 && state.conn === 'open' && (
+        <p className="tutor-note" data-testid="tutor-note">
+          튜터 질문: 고친 질문 {tutorTotal}개를 학생 기기에 보냈어요
+        </p>
+      )}
 
       <main>
         <h2 className="sr-only">모둠 현황</h2>
@@ -281,53 +334,5 @@ function GroupCard({ entry, now, onAck }: { entry: Entry; now: number; onAck: (t
         </div>
       ))}
     </li>
-  );
-}
-
-const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
-
-function ConfirmDialog({ title, body, confirmLabel, onConfirm, onCancel }: { title: string; body: string; confirmLabel: string; onConfirm: () => void; onCancel: () => void }) {
-  const titleId = useId();
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const opener = document.activeElement as HTMLElement | null;
-    ref.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
-    return () => opener?.focus?.();
-  }, []);
-  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Escape') {
-      e.stopPropagation();
-      onCancel();
-      return;
-    }
-    if (e.key !== 'Tab') return;
-    const nodes = ref.current ? [...ref.current.querySelectorAll<HTMLElement>(FOCUSABLE)] : [];
-    if (nodes.length === 0) return;
-    const first = nodes[0]!;
-    const last = nodes[nodes.length - 1]!;
-    const active = document.activeElement;
-    if (e.shiftKey && (active === first || !ref.current?.contains(active))) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && (active === last || !ref.current?.contains(active))) {
-      e.preventDefault();
-      first.focus();
-    }
-  };
-  return (
-    <div className="modal-backdrop">
-      <div ref={ref} className="modal" role="dialog" aria-modal="true" aria-labelledby={titleId} onKeyDown={onKeyDown}>
-        <h2 id={titleId}>{title}</h2>
-        <p>{body}</p>
-        <div className="modal-actions">
-          <button type="button" onClick={onCancel}>
-            취소
-          </button>
-          <button type="button" className="danger solid" onClick={onConfirm}>
-            {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
   );
 }

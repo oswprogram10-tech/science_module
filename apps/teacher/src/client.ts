@@ -1,4 +1,4 @@
-import { parseServerMessage, type ErrorCode, type SafetyType, type Snapshot } from '@sci/classroom';
+import { parseServerMessage, type ErrorCode, type SafetyType, type Snapshot, type TutorEdits } from '@sci/classroom';
 
 export type ConnState = 'connecting' | 'open' | 'closed';
 
@@ -13,6 +13,9 @@ export interface TeacherState {
   creating: boolean;
 }
 
+/** 튜터 질문 덧씌우기를 서버에 보내기 전에 묶는 시간(ms). */
+export const TUTOR_SEND_DEBOUNCE_MS = 500;
+
 const EMPTY: TeacherState = { conn: 'connecting', snapshot: null, created: null, error: null, creating: false };
 
 /** 교사 화면의 서버 연결. 끊기면 자동으로 다시 이어서 watch한다. */
@@ -26,6 +29,11 @@ export class TeacherClient {
   private retry = 0;
   private timer: ReturnType<typeof setTimeout> | null = null;
   private disposed = false;
+  /** 교사가 저장한 튜터 질문 덧씌우기(setTutorEdits로 받은 마지막 것). 한 번도 받지 않았으면 null. */
+  private tutor: TutorEdits | null = null;
+  /** 이번 연결에서 수업(created/snapshot)에 들어와 서버가 tutor를 받을 수 있는가. */
+  private tutorReady = false;
+  private tutorTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private readonly url: string,
@@ -62,6 +70,7 @@ export class TeacherClient {
     this.ws = ws;
     ws.onopen = () => {
       this.retry = 0;
+      this.tutorReady = false;
       this.set({ conn: 'open' });
       if (this.creds) this.send({ t: 'watch', ...this.creds });
       else if (this.wantCreate) this.send(this.createMsg());
@@ -74,8 +83,10 @@ export class TeacherClient {
         this.wantCreate = false;
         this.creds = { code: m.code, token: m.token };
         this.set({ created: { code: m.code, token: m.token }, creating: false });
+        this.tutorIn();
       } else if (m.t === 'snapshot') {
         this.set({ snapshot: m });
+        this.tutorIn();
       } else if (m.t === 'error') {
         if (m.code === 'bad_message' && (this.state.created || this.state.snapshot)) {
           // 이미 수업을 보고 있는 중에 온 bad_message(중복 create 등)는 치명적이지 않다.
@@ -91,7 +102,10 @@ export class TeacherClient {
       }
     };
     ws.onclose = () => {
-      if (this.ws === ws) this.ws = null;
+      if (this.ws === ws) {
+        this.ws = null;
+        this.tutorReady = false;
+      }
       if (this.disposed) return;
       this.set({ conn: 'closed' });
       this.scheduleRetry();
@@ -126,6 +140,28 @@ export class TeacherClient {
     this.set({ error: null, creating: true });
     this.send(this.createMsg());
   }
+  /**
+   * 저장된 튜터 질문 덧씌우기를 알려 둔다. 수업에 들어가 있으면(500 ms 묶어서) 서버에 보내고,
+   * 수업을 만들거나 다시 연결(watch)될 때도 이 값을 보낸다. 서버는 학생 기기에 전달한다.
+   */
+  setTutorEdits(edits: TutorEdits) {
+    this.tutor = edits;
+    if (!this.tutorReady) return;
+    if (this.tutorTimer) clearTimeout(this.tutorTimer);
+    this.tutorTimer = setTimeout(() => {
+      this.tutorTimer = null;
+      this.sendTutor();
+    }, TUTOR_SEND_DEBOUNCE_MS);
+  }
+  /** 수업에 들어갔다(created, 또는 watch 뒤 첫 snapshot). 이때 서버에 현재 덧씌우기를 보낸다. */
+  private tutorIn() {
+    if (this.tutorReady) return;
+    this.tutorReady = true;
+    this.sendTutor();
+  }
+  private sendTutor() {
+    if (this.tutor) this.send({ t: 'tutor', edits: this.tutor });
+  }
   pause(on: boolean) {
     this.send({ t: 'pause', on });
   }
@@ -139,12 +175,16 @@ export class TeacherClient {
   /** 이 수업 보기를 그만둔다(처음 화면으로). */
   leave() {
     this.creds = null;
+    this.tutorReady = false;
+    if (this.tutorTimer) clearTimeout(this.tutorTimer);
+    this.tutorTimer = null;
     this.wantCreate = false;
     this.set({ snapshot: null, created: null, error: null, creating: false });
   }
   dispose() {
     this.disposed = true;
     if (this.timer) clearTimeout(this.timer);
+    if (this.tutorTimer) clearTimeout(this.tutorTimer);
     this.ws?.close();
   }
 }

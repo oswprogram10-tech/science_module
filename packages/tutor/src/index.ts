@@ -8,11 +8,19 @@ import {
 
 export const FALLBACK_PROBE = '지금까지의 결과표를 다시 살펴볼까요? 무엇이 달라졌나요?';
 
+/** 선생님이 끈 상황: 튜터가 아무 말도 하지 않는다. 화면은 이 값(빈 문자열)이면 튜터 말풍선을 그리지 않는다. */
+export const TUTOR_SILENT = '';
+
+/** 바꾼 뒤에도 남은 `{이름}` 자리표시(선생님이 모르는 자리표시를 쓴 경우). */
+const LEFTOVER_PLACEHOLDER = /\{[^{}]*\}/;
+
 export interface ProbeTemplate {
   when: string;
   /** 이 조작변인일 때만 쓰는 질문. */
   iv?: string;
   text: string;
+  /** 선생님이 끈 질문. renderAndGuard와 selectProbe가 이 질문을 고르면 TUTOR_SILENT를 돌려준다. */
+  off?: boolean;
 }
 
 export interface ProbeContext {
@@ -79,9 +87,11 @@ export function renderAndGuard(
 ): string {
   const probe = probes.find((p) => p.when === when);
   if (!probe) return FALLBACK_PROBE;
+  if (probe.off) return TUTOR_SILENT;
   let text = probe.text;
   for (const [k, v] of Object.entries(vars)) text = text.replaceAll(`{${k}}`, v);
   text = fixJosa(text);
+  if (LEFTOVER_PLACEHOLDER.test(text)) return FALLBACK_PROBE;
   return guardOutput(text, guard).ok ? text : FALLBACK_PROBE;
 }
 
@@ -112,14 +122,19 @@ export function selectProbe(
     (context.ivKey ? sameWhen.find((p) => p.iv === context.ivKey) : undefined) ??
     sameWhen.find((p) => p.iv === undefined);
   if (!probe) return FALLBACK_PROBE;
+  if (probe.off) return TUTOR_SILENT;
   const ivLabel = context.ivKey ? (context.labels[context.ivKey] ?? context.ivKey) : '조건';
   const changed = (context.lastAnalysis?.changed ?? []).map((k) => context.labels[k] ?? k);
   const text = renderProbe(probe.text, { iv: ivLabel, changed });
+  if (LEFTOVER_PLACEHOLDER.test(text)) return FALLBACK_PROBE;
   if (!guardOutput(text, guard).ok) return FALLBACK_PROBE;
   return text;
 }
 
 export * from './check';
+export * from './edits';
+export * from './editCheck';
+export * from './situationLabels';
 export * from './context';
 export * from './observeModel';
 export * from './situation';

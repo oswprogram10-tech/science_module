@@ -137,6 +137,8 @@ export class StudentClassroom {
       }
     }
     bus.setPaused(false);
+    // 선생님이 보낸 튜터 질문 덧씌우기는 수업이 이어지는 동안만 둔다(재연결 때는 join 뒤에 서버가 다시 보낸다).
+    bus.setTutorEdits(null);
   }
 
   private connect() {
@@ -167,6 +169,8 @@ export class StudentClassroom {
         // 쌓인 안전 알림은 줄여서(compactQueue) 간격을 두고 보낸다. 한꺼번에 보내면 서버 속도 제한에 걸린다.
         this.queue = compactQueue(this.queue, MAX_QUEUE);
         this.scheduleFlush();
+      } else if (m.t === 'tutor') {
+        if (this.state.link === 'online') bus.setTutorEdits(m.edits);
       } else if (m.t === 'pause') {
         if (this.state.link === 'online') bus.setPaused(m.on);
       } else if (m.t === 'ended') {
