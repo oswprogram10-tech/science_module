@@ -45,7 +45,7 @@ describe('활동이 여럿인 단원의 시나리오(id 안정성)', () => {
   });
   it('활동이 하나인 단원은 활동마다 시나리오를 한 번만 만들고 모두 첫 활동 것이다', () => {
     for (const id of TUTOR_UNITS) {
-      if (id === 'g5-mixture' || id === 'g4-land' || id === 'g3-earth-sea' || id === 'g5-weather' || id === 'g3-force' || id === 'g3-sound' || id === 'g4-magnet' || id === 'g5-solution' || id === 'g5-heat' || id === 'g6-acid-base' || id === 'g6-motion' || id === 'g6-combustion' || CARD_SORT_BATCH_A.includes(id)) continue;
+      if (id === 'g5-mixture' || id === 'g4-land' || id === 'g3-earth-sea' || id === 'g5-weather' || id === 'g3-force' || id === 'g3-sound' || id === 'g5-light' || id === 'g4-magnet' || id === 'g5-solution' || id === 'g5-heat' || id === 'g6-acid-base' || id === 'g6-motion' || id === 'g6-combustion' || CARD_SORT_BATCH_A.includes(id)) continue;
       const only = units[id]!.manifest.experiments;
       expect(only, id).toHaveLength(1);
       expect(new Set(generateScenarios(id, units[id]!).map((s) => s.state.experimentId)), id).toEqual(new Set([only[0]!.id]));
@@ -135,7 +135,6 @@ describe('변인 실험 두 번째 활동을 더한 단원의 시나리오(힘�
   // 각 해시는 두 번째 활동을 더하기 전 ml/tutor/scenarios/<단원>.jsonl 20줄(줄바꿈으로 이은 글자)의 SHA-256이다.
   const CASES = [
     { id: 'g3-force', first: 'lever-balance', second: 'lever-lift', total: 40, sha: '081c85aa9aac658b17576638f46c1631805d7514e83f68b217d4f96c0ab06bca' },
-    { id: 'g3-sound', first: 'string-sound', second: 'sound-vibration', total: 42, sha: 'a045442aac8240a59b6114b69c1a6701a17954c41e318fd617137dc3c89d8233' },
     { id: 'g4-magnet', first: 'magnet-distance', second: 'magnet-poles', total: 42, sha: '16046672bdd1bb69014aa39dfdb31eb25e195a9c53516472ee9e560feecf96cd' },
   ];
   for (const c of CASES) {
@@ -222,6 +221,54 @@ describe('변인 실험 두 번째 활동을 더한 단원의 시나리오(물�
       for (const k of ['before-run', 'first-trial', 'confounded', 'iv-unchanged', 'repeat', 'fair-test', 'prediction-mismatch']) expect(keys.has(k), k).toBe(true);
     });
   }
+});
+
+describe('변인 실험 활동을 더한 단원의 시나리오(빛의 성질 활동 2, 소리의 성질 활동 3)', () => {
+  // 각 해시는 활동을 더하기 전 ml/tutor/scenarios/<단원>.jsonl 앞 n줄(줄바꿈으로 이은 글자)의 SHA-256이다.
+  const hash = (lines: string[]) => createHash('sha256').update(lines.join('\n')).digest('hex');
+  const SITUATIONS = ['before-run', 'first-trial', 'confounded', 'iv-unchanged', 'repeat', 'fair-test', 'prediction-mismatch'];
+
+  it('g5-light: 첫 활동(convex-lens) 시나리오 s001~s020은 활동 2를 더하기 전과 한 글자도 같고, light-needed 시나리오가 뒤에 덧붙는다', () => {
+    const u = units['g5-light']!;
+    const list = generateScenarios('g5-light', u);
+    expect(u.manifest.experiments.map((e) => e.id)).toEqual(['convex-lens', 'light-needed']);
+    expect(list.map((s) => s.scenarioId)).toEqual(list.map((_, i) => `g5-light-s${String(i + 1).padStart(3, '0')}`));
+    expect(list).toHaveLength(40);
+    expect(list.slice(0, 20).every((s) => s.state.experimentId === 'convex-lens')).toBe(true);
+    expect(list.slice(20).every((s) => s.state.experimentId === 'light-needed')).toBe(true);
+    const sha = 'd970b944b05314c79cfdd1e2f12b99e4c7b054ef84dd97307241f925c9010a39';
+    expect(hash(list.slice(0, 20).map((s) => JSON.stringify(s)))).toBe(sha);
+    const file = readFileSync(scenarioFile(TUTOR_DIR, 'g5-light'), 'utf8').trimEnd().split('\n');
+    expect(hash(file.slice(0, 20))).toBe(sha);
+    expect(file).toHaveLength(40);
+    const exp = u.manifest.experiments[1]!;
+    const keys = new Set(list.slice(20).map((s) => situationOf(s.state, exp)));
+    for (const k of SITUATIONS) expect(keys.has(k), k).toBe(true);
+  });
+
+  it('g3-sound: 활동이 셋이다. s001~s020(string-sound)과 s021~s042(sound-vibration)는 활동 3을 더하기 전과 한 글자도 같고, sound-transmit 시나리오가 뒤에 덧붙는다', () => {
+    const u = units['g3-sound']!;
+    const list = generateScenarios('g3-sound', u);
+    expect(u.manifest.experiments.map((e) => e.id)).toEqual(['string-sound', 'sound-vibration', 'sound-transmit']);
+    expect(list.map((s) => s.scenarioId)).toEqual(list.map((_, i) => `g3-sound-s${String(i + 1).padStart(3, '0')}`));
+    expect(list).toHaveLength(62);
+    expect(list.slice(0, 20).every((s) => s.state.experimentId === 'string-sound')).toBe(true);
+    expect(list.slice(20, 42).every((s) => s.state.experimentId === 'sound-vibration')).toBe(true);
+    expect(list.slice(42).every((s) => s.state.experimentId === 'sound-transmit')).toBe(true);
+    const sha20 = 'a045442aac8240a59b6114b69c1a6701a17954c41e318fd617137dc3c89d8233';
+    const sha42 = 'ffad8dadd5a69a91ab86797f1301f4cca6ea0f1cabf5dccde24eb26a7c5a5f54';
+    expect(hash(list.slice(0, 20).map((s) => JSON.stringify(s)))).toBe(sha20);
+    expect(hash(list.slice(0, 42).map((s) => JSON.stringify(s)))).toBe(sha42);
+    const file = readFileSync(scenarioFile(TUTOR_DIR, 'g3-sound'), 'utf8').trimEnd().split('\n');
+    expect(hash(file.slice(0, 20))).toBe(sha20);
+    expect(hash(file.slice(0, 42))).toBe(sha42);
+    expect(file).toHaveLength(62);
+    for (const [i, from, to] of [[1, 20, 42], [2, 42, 62]] as const) {
+      const exp = u.manifest.experiments[i]!;
+      const keys = new Set(list.slice(from, to).map((s) => situationOf(s.state, exp)));
+      for (const k of SITUATIONS) expect(keys.has(k), `${exp.id} ${k}`).toBe(true);
+    }
+  });
 });
 
 describe('시나리오 생성기', () => {

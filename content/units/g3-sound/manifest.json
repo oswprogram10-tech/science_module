@@ -2,7 +2,7 @@
   "id": "g3-sound",
   "title": "소리의 성질",
   "grade": 3,
-  "standards": ["4과07-01", "4과07-02"],
+  "standards": ["4과07-01", "4과07-02", "4과07-03"],
   "engine": "physics",
   "experiments": [
     {
@@ -174,6 +174,115 @@
           { "when": "fair-test", "iv": "object", "text": "물체만 바꾸었어요. 물체마다 좁쌀이 튄 높이가 같았나요? 소리의 크기도 함께 견주어 볼까요?" },
           { "when": "fair-test", "iv": "seed", "text": "좁쌀 색만 바꾸었을 때 결과가 달라졌나요? 이 결과로 무엇을 알 수 있을까요?" },
           { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 그래프에서 좁쌀 높이가 가장 높은 때를 찾고, 그때 눈으로 보기 그림에서 좁쌀이 어디에 있는지 살펴볼까요?" }
+        ]
+      }
+    },
+    {
+      "id": "sound-transmit",
+      "module": "sound-transmit",
+      "title": "소리가 전달되는 물질과 소음 줄이기",
+      "question": "소리는 무엇을 통해 전달되고, 어떻게 하면 소리를 줄일 수 있을까?",
+      "predictionPrompt": "예측: 소음계 눈금은?",
+      "variables": [
+        {
+          "key": "medium",
+          "label": "소리를 전하는 것",
+          "type": "choice",
+          "options": [
+            { "value": "air", "label": "공기" },
+            { "value": "water", "label": "물" },
+            { "value": "wood", "label": "책상 나무" },
+            { "value": "string", "label": "실 전화기의 실" }
+          ],
+          "default": "air"
+        },
+        {
+          "key": "block",
+          "label": "소리 나는 물체를 감싼 것",
+          "type": "choice",
+          "options": [
+            { "value": "none", "label": "없음" },
+            { "value": "box", "label": "종이 상자" },
+            { "value": "sponge", "label": "스펀지" },
+            { "value": "cotton", "label": "솜" }
+          ],
+          "default": "none"
+        },
+        {
+          "key": "clockColor",
+          "label": "알람 시계 색깔",
+          "type": "choice",
+          "options": [
+            { "value": "red", "label": "빨간색" },
+            { "value": "blue", "label": "파란색" }
+          ],
+          "default": "red"
+        }
+      ],
+      "dependent": [
+        { "key": "level", "label": "소음계 눈금", "unit": "눈금" },
+        { "key": "heard", "label": "귀에 들리나요", "unit": "" }
+      ],
+      "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
+      "safety": [],
+      "safetyNotices": [],
+      "limits": ["데시벨", "진동수", "파동", "매질"],
+      "tutor": {
+        "forbiddenAnswers": [
+          "소리는 고체",
+          "고체에서 더 잘",
+          "고체에서는 소리가 더 잘",
+          "고체에서 소리가 더 잘",
+          "고체를 통해",
+          "나무에서 더 잘",
+          "나무에서는 더 잘",
+          "나무를 통해 더 잘",
+          "물에서도 소리가 전달",
+          "물에서도 소리가 전해",
+          "물을 통해서도 전달",
+          "물을 통해서도 전해",
+          "소리는 물질을 통해",
+          "물질을 통해 전달",
+          "물질을 통해서 전달",
+          "물질을 통해 전해",
+          "공기를 통해 전달",
+          "공기를 통해서 전달",
+          "공기를 통해 전해",
+          "솜이 소리를 가장",
+          "솜이 가장 잘 막",
+          "솜이 가장 소리를",
+          "솜이 제일 잘 막",
+          "솜이 소리를 제일",
+          "부드러운 재료가 소리를",
+          "부드러운 재료일수록",
+          "부드러운 재료는 소리를",
+          "구멍이 많은 재료",
+          "푹신한 재료가",
+          "푹신한 재료는",
+          "푹신한 재료일수록",
+          "시계 색깔은 관계없",
+          "시계 색깔은 상관없",
+          "시계 색깔은 영향이 없",
+          "시계 색은 관계없",
+          "시계 색은 상관없",
+          "시계 색은 영향이 없",
+          "시계 색깔과 관계없",
+          "시계 색깔이 달라도",
+          "시계 색이 달라도",
+          "색깔은 관계없",
+          "색깔은 상관없"
+        ],
+        "probes": [
+          { "when": "before-run", "text": "{iv}을(를) 바꾸면 소음계 눈금이(가) 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?" },
+          { "when": "first-trial", "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?" },
+          { "when": "confounded", "text": "{changed}이(가) 함께 바뀌었어요. 소음계 눈금이(가) 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?" },
+          { "when": "iv-unchanged", "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?" },
+          { "when": "repeat", "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?" },
+          { "when": "fair-test", "text": "{iv}만 바꾸었을 때 소음계 눈금과 귀에 들리는지는 각각 어떻게 달라졌나요? 결과표에서 두 줄을 비교해 볼까요?" },
+          { "when": "fair-test", "iv": "medium", "text": "소리를 전하는 것만 바꾸었어요. 무엇을 통해 들었을 때 소음계 눈금이 어떻게 달랐나요?" },
+          { "when": "fair-test", "iv": "block", "text": "감싼 것을 바꾸었을 때 눈금은 어떻게 달라졌나요? 재료의 어떤 점이 차이를 만들었을까요?" },
+          { "when": "fair-test", "iv": "clockColor", "text": "시계 색깔만 바꾸었을 때 결과가 달라졌나요? 이 결과로 무엇을 알 수 있을까요?" },
+          { "when": "prediction-mismatch", "text": "우리 교실의 소음을 줄이려면 무엇을 해 볼 수 있을까요? 결과표에서 눈금이 가장 낮았던 때를 찾아볼까요?" }
         ]
       }
     }

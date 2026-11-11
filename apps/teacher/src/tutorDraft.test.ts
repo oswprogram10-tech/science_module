@@ -103,6 +103,43 @@ describe('카드 분류 두 번째 활동 넷(1차 묶음)이 교사 앱 튜터 
   });
 });
 
+describe('변인 실험 활동 추가(빛의 성질 활동 2, 소리의 성질 활동 3)가 교사 앱 튜터 질문 편집에 자동으로 나타난다', () => {
+  it('g3-sound: 활동 셋(string-sound, sound-vibration, sound-transmit)이 모두 카탈로그에 있고 활동마다 자기 금지 구절·변인·질문이 있다', () => {
+    const u = unit('g3-sound');
+    expect(u.experiments.map((e) => [e.id, e.kind])).toEqual([['string-sound', 'variable'], ['sound-vibration', 'variable'], ['sound-transmit', 'variable']]);
+    const third = u.experiments[2]!;
+    expect(third.ivs.map((v) => v.key)).toEqual(['medium', 'block', 'clockColor']);
+    expect(third.ivs.map((v) => v.label)).toEqual(['소리를 전하는 것', '소리 나는 물체를 감싼 것', '알람 시계 색깔']);
+    expect(third.placeholders.sort()).toEqual(['changed', 'iv']);
+    expect(third.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['medium', 'block', 'clockColor']);
+    expect(third.limits).toEqual(['데시벨', '진동수', '파동', '매질']);
+    expect(third.forbiddenAnswers).toContain('솜이 가장 잘 막');
+    for (const other of u.experiments.slice(0, 2)) {
+      expect(third.forbiddenAnswers).not.toEqual(other.forbiddenAnswers);
+      expect(other.forbiddenAnswers).not.toContain('솜이 가장 잘 막');
+    }
+    // 질문 키는 세 활동 모두 덧씌우기 스키마의 형식에 맞고 활동 안에서 겹치지 않는다.
+    for (const e of u.experiments) {
+      const keys = e.probes.map((p) => p.key);
+      expect(new Set(keys).size, e.id).toBe(keys.length);
+      for (const k of keys) expect(PROBE_KEY_PATTERN.test(k), k).toBe(true);
+    }
+    // 활동 3의 질문 고치기는 활동 3의 금지 구절에 걸리고, 활동 2에서는 같은 문장이 그대로 쓰인다.
+    expect(lineCheck(third, '|prediction-mismatch|', { text: '솜이 가장 잘 막는다고 말해 볼까요?' })?.ok).toBe(false);
+    expect(lineCheck(u.experiments[1]!, '|prediction-mismatch|', { text: '솜이 가장 잘 막는다고 말해 볼까요?' })?.ok).toBe(true);
+    expect(lineCheck(third, '|prediction-mismatch|', { text: '교실의 소음을 줄이려면 무엇을 해 볼까요?' })).toEqual({ ok: true, messages: [] });
+  });
+  it('g5-light: 활동 둘(convex-lens, light-needed)이 카탈로그에 있고 활동 2의 질문 고치기는 활동 2의 금지 구절에 걸린다', () => {
+    const u = unit('g5-light');
+    expect(u.experiments.map((e) => [e.id, e.kind])).toEqual([['convex-lens', 'variable'], ['light-needed', 'variable']]);
+    const second = u.experiments[1]!;
+    expect(second.ivs.map((v) => v.key)).toEqual(['flashlight', 'object', 'boxColor']);
+    expect(second.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['flashlight', 'object', 'boxColor']);
+    expect(lineCheck(second, '|prediction-mismatch|', { text: '반사된 빛이 눈으로 들어오는지 살펴볼까요?' })?.ok).toBe(false);
+    expect(lineCheck(u.experiments[0]!, '|prediction-mismatch|', { text: '반사된 빛이 눈으로 들어오는지 살펴볼까요?' })?.ok).toBe(true);
+  });
+});
+
 describe('초안 <-> 덧씌우기', () => {
   it('저장하면 자리표시가 {…}로 돌아가고, 다시 읽으면 〔…〕로 보인다', () => {
     const draft: Draft = { 'g6-motion': { 'ramp-cart': { changed: { [HEIGHT_KEY]: { text: '〔바꾼 조건〕을(를) 바꾸면 무엇이 달라질지 먼저 적어 볼까요?' }, '|repeat|': { off: true } }, added: [] } } };

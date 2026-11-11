@@ -40,7 +40,7 @@ const grainYs = async (page: Page) => (await macro(page).getByTestId('grain').ev
 test('두 번째 활동 탭으로 열리고, 첫 활동(줄을 튕겨 소리 알아보기)으로 돌아갈 수 있다', async ({ page }) => {
   await open(page);
   await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByRole('tab')).toHaveCount(2);
+  await expect(page.getByRole('tab')).toHaveCount(3);
   await expect(page.getByText('탐구 질문: 소리가 나는 물체에는 어떤 공통점이 있을까?')).toBeVisible();
   await expect(page.getByText('예측: 좁쌀이 튄 높이는?')).toBeVisible();
   await activityTab(page, 1).click();

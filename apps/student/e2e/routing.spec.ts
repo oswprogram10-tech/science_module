@@ -120,19 +120,20 @@ test('예전 주소 #/unit/g3-earth-sea는 이제 새 「지구와 바다」 단
 
 // ---- 한 단원에 여러 활동 ----
 
-test('단원 목록 카드: 활동이 둘인 힘과 우리 생활, 소리의 성질, 자석의 이용, 용해와 용액, 열과 우리 생활, 산과 염기, 물체의 운동, 물질의 연소, 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활, 동물의 생활, 식물의 생활, 생물과 환경, 지층과 화석만 "활동 2개"를 보이고 카드는 단원당 하나다', async ({ page }) => {
+test('단원 목록 카드: 활동이 여럿인 힘과 우리 생활, 소리의 성질(활동 3개), 자석의 이용, 용해와 용액, 열과 우리 생활, 빛의 성질, 산과 염기, 물체의 운동, 물질의 연소, 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활, 동물의 생활, 식물의 생활, 생물과 환경, 지층과 화석만 "활동 2개"를 보이고 카드는 단원당 하나다', async ({ page }) => {
   await page.goto('/');
   const cards = page.getByRole('button', { name: /탐구 질문:/ });
   await expect(cards).toHaveCount(32);
-  await expect(page.getByText(/^활동 \d+개$/)).toHaveCount(16);
+  await expect(page.getByText(/^활동 \d+개$/)).toHaveCount(17);
   // 변인 실험을 두 번째 활동으로 더한 세 단원: 카드의 탐구 질문은 첫 활동의 것이다.
   for (const [grade, title, question] of [
     ['3학년', /힘과 우리 생활/, '막대의 수평을 잡으려면'],
-    ['3학년', /소리의 성질/, '줄을 튕기는 세기'],
     ['4학년', /자석의 이용/, '자석과 클립 사이의 거리'],
     // 용액의 진하기·두 물이 닿으면·산성과 염기성 섞기를 두 번째 활동으로 더한 세 단원(첫 활동의 탐구 질문이 카드에 나온다)
     ['5학년', /용해와 용액/, '어떤 조건에서 용질이 더 많이 녹을까?'],
     ['5학년', /열과 우리 생활/, '컵을 무엇으로, 어떻게 감싸면 물이 덜 식을까?'],
+    // 물체를 보려면 빛이 필요할까를 두 번째 활동으로 더한 빛의 성질(카드에는 첫 활동의 탐구 질문이 나온다)
+    ['5학년', /빛의 성질/, '볼록 렌즈로 햇빛을 모을 때'],
     ['6학년', /산과 염기/, '지시약을 이용하면 여러 가지 용액을 어떻게 분류할 수 있을까?'],
     // 시간에 따른 위치 변화·연소 전과 후 비교하기를 두 번째 활동으로 더한 두 단원(첫 활동의 탐구 질문이 카드에 나온다)
     ['6학년', /물체의 운동/, '수레를 놓는 높이를 바꾸면'],
@@ -143,6 +144,11 @@ test('단원 목록 카드: 활동이 둘인 힘과 우리 생활, 소리의 성
     await expect(card).toContainText('활동 2개');
     await expect(card).toContainText(question);
   }
+  // 소리의 성질은 활동이 셋(줄 소리, 소리 나는 물체의 떨림, 소리가 전달되는 물질과 소음 줄이기)이라 카드에 "활동 3개"가 나오고, 탐구 질문은 첫 활동의 것이다.
+  const sound = page.getByRole('region', { name: '3학년' }).getByRole('button', { name: /소리의 성질/ });
+  await expect(sound).toHaveCount(1);
+  await expect(sound).toContainText('활동 3개');
+  await expect(sound).toContainText('줄을 튕기는 세기');
   await expect(page.getByRole('region', { name: '3학년' }).getByRole('button', { name: /지구와 바다/ })).toContainText('활동 2개');
   await expect(page.getByRole('region', { name: '4학년' }).getByRole('button', { name: /땅의 변화/ })).toContainText('활동 2개');
   const weather = page.getByRole('region', { name: '5학년' }).getByRole('button', { name: /날씨와 우리 생활/ });
@@ -191,7 +197,7 @@ test('#/unit/{id}/{experimentId}로 변인 실험 두 번째 활동(지레와 �
   ] as const) {
     await page.goto(`/#/unit/${id}`);
     await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
-    await expect(page.getByRole('tab')).toHaveCount(2);
+    await expect(page.getByRole('tab')).toHaveCount(id === 'g3-sound' ? 3 : 2);
     await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('group', { name: firstGroup })).toBeVisible();
     await page.goto(`/#/unit/${id}/${first}`);

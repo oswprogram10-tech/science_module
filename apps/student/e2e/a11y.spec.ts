@@ -1803,3 +1803,77 @@ for (const scheme of ['light', 'dark'] as const) {
     await expectNoSeriousViolations(page);
   });
 }
+
+// ---- 변인 실험 활동 추가: 물체를 보려면 빛이 필요할까(빛의 성질 활동 2), 소리가 전달되는 물질과 소음 줄이기(소리의 성질 활동 3) ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  const label = scheme === 'dark' ? '어두운 화면' : '밝은 화면';
+
+  test(`g5-light 활동 2(물체를 보려면 빛이 필요할까) ${label}: 처음, 실행 뒤(보이지 않음), 손전등 켬(보임), 켜진 전구, 흰 상자`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g5-light', { experiment: 'light-needed' });
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '상자 안 손전등');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('light-bar')).toHaveCount(1);
+    await expectNoSeriousViolations(page);
+    await setValue(page, '상자 안 손전등', '켬');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('peek-window')).toHaveAttribute('data-state', 'object');
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '상자 안 물체');
+    await setValue(page, '상자 안 물체', '켜진 작은 전구');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '상자 겉 색깔');
+    await setValue(page, '상자 겉 색깔', '흰색');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('light-bar')).toHaveCount(4);
+    await expectNoSeriousViolations(page);
+  });
+
+  test(`g3-sound 활동 3(소리가 전달되는 물질과 소음 줄이기) ${label}: 처음, 실행 뒤(공기), 책상 나무, 솜으로 감쌈, 파란 시계`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g3-sound', { experiment: 'sound-transmit' });
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '소리를 전하는 것');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('sound-bar')).toHaveCount(1);
+    await expectNoSeriousViolations(page);
+    await setValue(page, '소리를 전하는 것', '실 전화기의 실');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    await setValue(page, '소리를 전하는 것', '책상 나무');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '소리 나는 물체를 감싼 것');
+    await setValue(page, '소리 나는 물체를 감싼 것', '솜');
+    await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '알람 시계 색깔');
+    await setValue(page, '알람 시계 색깔', '파란색');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('sound-bar')).toHaveCount(5);
+    await expectNoSeriousViolations(page);
+  });
+}
