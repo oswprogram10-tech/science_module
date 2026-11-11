@@ -189,7 +189,7 @@ describe('markers: 시행에서 계산하는 함수 형태', () => {
 });
 
 describe('x축 라벨·눈금(xLabel, xTicks, xTickFormat)', () => {
-  const existing = variableUnits.filter((u) => u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration' && u.module.kind !== 'food-web' && u.module.kind !== 'mold-growth' && u.module.kind !== 'exercise-body' && u.module.kind !== 'lever-balance' && u.module.kind !== 'string-sound' && u.module.kind !== 'magnet-distance' && u.module.kind !== 'ramp-cart' && u.module.kind !== 'freeze-melt' && u.module.kind !== 'salt-sand' && u.module.kind !== 'stream-table' && u.module.kind !== 'sea-water' && u.module.kind !== 'land-sea-breeze' && u.module.kind !== 'infection-spread' && u.module.kind !== 'greenhouse-bottle' && u.module.kind !== 'solar-panel' && u.module.kind !== 'lever-lift' && u.module.kind !== 'sound-vibration' && u.module.kind !== 'magnet-poles' && u.module.kind !== 'concentration' && u.module.kind !== 'heat-contact' && u.module.kind !== 'acid-base-mix');
+  const existing = variableUnits.filter((u) => u.module.kind !== 'sun-angle' && u.module.kind !== 'germination' && u.module.kind !== 'transpiration' && u.module.kind !== 'food-web' && u.module.kind !== 'mold-growth' && u.module.kind !== 'exercise-body' && u.module.kind !== 'lever-balance' && u.module.kind !== 'string-sound' && u.module.kind !== 'magnet-distance' && u.module.kind !== 'ramp-cart' && u.module.kind !== 'freeze-melt' && u.module.kind !== 'salt-sand' && u.module.kind !== 'stream-table' && u.module.kind !== 'sea-water' && u.module.kind !== 'land-sea-breeze' && u.module.kind !== 'infection-spread' && u.module.kind !== 'greenhouse-bottle' && u.module.kind !== 'solar-panel' && u.module.kind !== 'lever-lift' && u.module.kind !== 'sound-vibration' && u.module.kind !== 'magnet-poles' && u.module.kind !== 'concentration' && u.module.kind !== 'heat-contact' && u.module.kind !== 'acid-base-mix' && u.module.kind !== 'position-time' && u.module.kind !== 'combustion-products');
   const seasons = () => variableUnits.find((u) => u.id === 'g6-seasons')!;
   const base = { season: 'summer', tiltDeg: 23.44, stickCm: 10 };
 
@@ -246,9 +246,9 @@ describe('여러 선(graph.series)과 y축 눈금(graph.yTicks)', () => {
   const SERIES_UNITS = ['g5-heat/heat-contact', 'g4-land/stream-table', 'g4-ecosystem', 'g5-body', 'g5-weather', 'g3-health'];
   const others = variableUnits.filter((u) => !SERIES_UNITS.includes(u.id));
   // yTicks로 축을 고정한 단원. 이 단원들은 'series: undefined는 그림을 바꾸지 않는다' 비교에서 yTicks를 남긴다.
-  const FIXED_Y = ['g4-ecosystem', 'g4-microbe', 'g5-body', 'g3-force', 'g3-sound', 'g4-magnet', 'g6-motion', 'g4-water-state', 'g5-mixture', 'g3-earth-sea', 'g4-land/stream-table', 'g5-weather', 'g3-health', 'g4-climate', 'g5-energy', 'g3-force/lever-lift', 'g3-sound/sound-vibration', 'g4-magnet/magnet-poles', 'g5-solution/concentration', 'g5-heat/heat-contact', 'g6-acid-base/acid-base-mix'];
+  const FIXED_Y = ['g4-ecosystem', 'g4-microbe', 'g5-body', 'g3-force', 'g3-sound', 'g4-magnet', 'g6-motion', 'g4-water-state', 'g5-mixture', 'g3-earth-sea', 'g4-land/stream-table', 'g5-weather', 'g3-health', 'g4-climate', 'g5-energy', 'g3-force/lever-lift', 'g3-sound/sound-vibration', 'g4-magnet/magnet-poles', 'g5-solution/concentration', 'g5-heat/heat-contact', 'g6-acid-base/acid-base-mix', 'g6-motion/position-time', 'g6-combustion/combustion-products'];
 
-  it('series를 쓰는 모듈은 먹이 관계·우리 몸·흐르는 물(땅의 변화)·날씨와 우리 생활·감염병과 건강한 생활·온도가 다른 두 물이 닿으면(안쪽·바깥 두 선)뿐이고, yTicks는 먹이 관계·곰팡이·우리 몸·막대 수평 잡기·줄 소리·자석·수레·물의 상태 변화·혼합물의 분리·바닷물과 강물 비교·흐르는 물·날씨와 우리 생활·감염병과 건강한 생활·기후변화와 우리 생활·자원과 에너지·지레와 빗면·소리 나는 물체의 떨림·자석과 자석 사이·용액의 진하기 비교·온도가 다른 두 물이 닿으면·산성 용액과 염기성 용액 섞기만 쓴다', () => {
+  it('series를 쓰는 모듈은 먹이 관계·우리 몸·흐르는 물(땅의 변화)·날씨와 우리 생활·감염병과 건강한 생활·온도가 다른 두 물이 닿으면(안쪽·바깥 두 선)뿐이고, yTicks는 먹이 관계·곰팡이·우리 몸·막대 수평 잡기·줄 소리·자석·수레·물의 상태 변화·혼합물의 분리·바닷물과 강물 비교·흐르는 물·날씨와 우리 생활·감염병과 건강한 생활·기후변화와 우리 생활·자원과 에너지·지레와 빗면·소리 나는 물체의 떨림·자석과 자석 사이·용액의 진하기 비교·온도가 다른 두 물이 닿으면·산성 용액과 염기성 용액 섞기·시간에 따른 위치 변화·연소 전과 후 비교하기만 쓴다', () => {
     expect(variableUnits.filter((u) => u.module.graph.series !== undefined).map((u) => u.id)).toEqual(SERIES_UNITS);
     expect(variableUnits.filter((u) => u.module.graph.yTicks !== undefined).map((u) => u.id).sort()).toEqual([...FIXED_Y].sort());
   });
@@ -326,8 +326,10 @@ describe('여러 선(graph.series)과 y축 눈금(graph.yTicks)', () => {
       const html = render(unit, unit.module, trialOf(unit, combos(unit)[0]!));
       expect(html).not.toContain('graph-series');
       expect(html).not.toContain('graph-legend');
-      expect(html.match(/<polyline/g)).toHaveLength(1);
-      expect(html).toContain('stroke="#1f6fb5"');
+      // 연소 전과 후 비교하기의 첫 조건은 종이 검사라 그릴 값(석회수 뿌연 정도)이 없어 선이 없다(안내 글자만 쓴다).
+      const noLine = unit.module.kind === 'combustion-products';
+      expect(html.match(/<polyline/g)?.length ?? 0).toBe(noLine ? 0 : 1);
+      if (!noLine) expect(html).toContain('stroke="#1f6fb5"');
     }
   });
 

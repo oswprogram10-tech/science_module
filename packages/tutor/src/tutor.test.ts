@@ -2742,3 +2742,85 @@ describe('변인 실험 활동 2 매니페스트 probe (concentration, heat-cont
     });
   }
 });
+
+// ---------- 변인 실험 두 번째 활동: 시간에 따른 위치 변화, 연소 전과 후 비교하기 ----------
+describe('변인 실험 활동 2 매니페스트 probe (position-time, combustion-products)', () => {
+  const CASES = [
+    {
+      name: 'g6-motion 활동 2(position-time)',
+      json: motionJson,
+      iv: { object: '보는 물체만 바꾸었어요.', watchS: '관찰 시간만 바꾸었어요.', weather: '날씨만 바꾸었을 때' },
+      mismatch: '1초마다 겹쳐 그린 그림',
+      rules: ['위치가 변하면 운동해요', '위치가 바뀌면 운동이에요', '위치가 변하지 않으면 운동하지 않아요', '위치가 바뀌지 않으면 운동하지 않아요', '나무는 운동하지 않아요', '달팽이도 운동해요', '날씨는 관계없어요', '날씨는 상관없어요', '날씨는 영향이 없어요', '날씨와 관계없이 같아요', '날씨가 달라도 같아요'],
+    },
+    {
+      name: 'g6-combustion 활동 2(combustion-products)',
+      json: combustionJson,
+      iv: { burnMin: '초를 태운 시간만 바꾸었어요.', test: '검사 방법만 바꾸었어요.', jar: '집기병 색만 바꾸었을 때' },
+      mismatch: '눈으로 보기의 검사 도구',
+      rules: ['물이 생겨요', '물이 생긴 거예요', '이산화 탄소가 생겨요', '이산화 탄소가 생깁니다', '물과 이산화 탄소가 나와요', '집기병 색은 관계없어요', '집기병 색은 상관없어요', '집기병 색은 영향이 없어요', '집기병 색과 관계없이 같아요', '집기병 색이 달라도 같아요'],
+    },
+  ];
+  for (const c of CASES) {
+    describe(c.name, () => {
+      const e = parseManifest(c.json).experiments[1]! as VariableExperiment;
+      const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+      const eKeys = e.variables.map((v) => v.key);
+      const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+      const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: eKeys[0]!, ...x });
+      const fair = (iv: string): Partial<ProbeContext> => ({ ivKey: iv, lastAnalysis: { kind: 'fair-test', changed: [iv] }, prediction: 'same', observed: 'same' });
+
+      it('iv별 fair-test 질문을 고른다', () => {
+        for (const [iv, start] of Object.entries(c.iv)) expect(selectProbe(eCtx(fair(iv)), e.tutor.probes, eGuard), iv).toContain(start);
+      });
+
+      it('예측과 결과가 다르면 그림·그래프에서 확인하라고 한다', () => {
+        const text = selectProbe(eCtx({ ...fair(eKeys[0]!), prediction: 'increase', observed: 'same' }), e.tutor.probes, eGuard);
+        expect(text).toContain(c.mismatch);
+      });
+
+      it('모든 probe는 질문형이고, 모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+        let n = 0;
+        for (const probe of e.tutor.probes) {
+          expect(probe.text.trim().endsWith('?'), probe.text).toBe(true);
+          for (const iv of eKeys) {
+            for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+              const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+              expect(guardOutput(text, eGuard).ok, text).toBe(true);
+              expect(text).not.toMatch(/[{}]/);
+              expect(text).not.toMatch(/(을\(를\)|이\(가\)|와\(과\)|은\(는\))/);
+              n++;
+            }
+          }
+        }
+        expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+      });
+
+      it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+        const situations: Partial<ProbeContext>[] = [
+          {},
+          { lastAnalysis: { kind: 'first-trial', changed: [] } },
+          { lastAnalysis: { kind: 'confounded', changed: eKeys.slice(0, 2) } },
+          { lastAnalysis: { kind: 'iv-unchanged', changed: [eKeys[eKeys.length - 1]!] } },
+          { lastAnalysis: { kind: 'repeat', changed: [] } },
+          ...eKeys.flatMap((k) => [fair(k), { ...fair(k), prediction: 'increase' as const, observed: 'same' as const }]),
+        ];
+        for (const s of situations) {
+          const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+          expect(text).not.toBe(FALLBACK_PROBE);
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+        }
+      });
+
+      it('금지 구절과 한계 용어를 담은 문장은 실제로 막는다', () => {
+        for (const f of e.tutor.forbiddenAnswers) expect(guardOutput(`${f}요`, eGuard).ok, f).toBe(false);
+        for (const l of e.limits) expect(guardOutput(`${l}이에요`, eGuard).ok, l).toBe(false);
+        for (const rule of c.rules) expect(guardOutput(rule, eGuard).ok, rule).toBe(false);
+        for (const probe of e.tutor.probes) {
+          for (const f of e.tutor.forbiddenAnswers) expect(probe.text, probe.text).not.toContain(f);
+          for (const l of e.limits) expect(probe.text, probe.text).not.toContain(l);
+        }
+      });
+    });
+  }
+});

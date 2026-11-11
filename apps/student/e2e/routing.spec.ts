@@ -120,11 +120,11 @@ test('예전 주소 #/unit/g3-earth-sea는 이제 새 「지구와 바다」 단
 
 // ---- 한 단원에 여러 활동 ----
 
-test('단원 목록 카드: 활동이 둘인 힘과 우리 생활, 소리의 성질, 자석의 이용, 용해와 용액, 열과 우리 생활, 산과 염기, 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활, 동물의 생활, 식물의 생활, 생물과 환경, 지층과 화석만 "활동 2개"를 보이고 카드는 단원당 하나다', async ({ page }) => {
+test('단원 목록 카드: 활동이 둘인 힘과 우리 생활, 소리의 성질, 자석의 이용, 용해와 용액, 열과 우리 생활, 산과 염기, 물체의 운동, 물질의 연소, 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활, 동물의 생활, 식물의 생활, 생물과 환경, 지층과 화석만 "활동 2개"를 보이고 카드는 단원당 하나다', async ({ page }) => {
   await page.goto('/');
   const cards = page.getByRole('button', { name: /탐구 질문:/ });
   await expect(cards).toHaveCount(32);
-  await expect(page.getByText(/^활동 \d+개$/)).toHaveCount(14);
+  await expect(page.getByText(/^활동 \d+개$/)).toHaveCount(16);
   // 변인 실험을 두 번째 활동으로 더한 세 단원: 카드의 탐구 질문은 첫 활동의 것이다.
   for (const [grade, title, question] of [
     ['3학년', /힘과 우리 생활/, '막대의 수평을 잡으려면'],
@@ -134,6 +134,9 @@ test('단원 목록 카드: 활동이 둘인 힘과 우리 생활, 소리의 성
     ['5학년', /용해와 용액/, '어떤 조건에서 용질이 더 많이 녹을까?'],
     ['5학년', /열과 우리 생활/, '컵을 무엇으로, 어떻게 감싸면 물이 덜 식을까?'],
     ['6학년', /산과 염기/, '지시약을 이용하면 여러 가지 용액을 어떻게 분류할 수 있을까?'],
+    // 시간에 따른 위치 변화·연소 전과 후 비교하기를 두 번째 활동으로 더한 두 단원(첫 활동의 탐구 질문이 카드에 나온다)
+    ['6학년', /물체의 운동/, '수레를 놓는 높이를 바꾸면'],
+    ['6학년', /물질의 연소/, '촛불을 집기병으로 덮으면'],
   ] as const) {
     const card = page.getByRole('region', { name: grade }).getByRole('button', { name: title });
     await expect(card).toHaveCount(1);
@@ -209,6 +212,28 @@ test('#/unit/{id}/{experimentId}로 변인 실험 두 번째 활동(용액의 �
     ['g5-heat', '열과 우리 생활', '안쪽 컵 물의 처음 온도', 'insulated-cup', '탐구 질문: 따뜻한 물이 담긴 컵을 무엇으로, 어떻게 감싸면 물이 덜 식을까?'],
     // 산과 염기의 첫 활동은 분류 활동이다.
     ['g6-acid-base', '산과 염기', '넣은 방울 수', 'indicator-classify', '탐구 질문: 지시약을 이용하면 여러 가지 용액을 어떻게 분류할 수 있을까?'],
+  ] as const) {
+    await page.goto(`/#/unit/${id}`);
+    await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
+    await expect(page.getByRole('tab')).toHaveCount(2);
+    await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByText(firstText)).toBeVisible();
+    await page.goto(`/#/unit/${id}/${first}`);
+    await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+    await activityTab(page, 2).click();
+    await expect(page).toHaveURL(new RegExp(`#/unit/${id}/[a-z-]+$`));
+    await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('group', { name: group })).toBeVisible();
+    await page.reload();
+    await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('group', { name: group })).toBeVisible();
+  }
+});
+
+test('#/unit/{id}/{experimentId}로 변인 실험 두 번째 활동(시간에 따른 위치 변화, 연소 전과 후 비교하기)을 연다', async ({ page }) => {
+  for (const [id, title, group, first, firstText] of [
+    ['g6-motion', '물체의 운동', '보는 물체', 'ramp-cart', '탐구 질문: 수레를 놓는 높이를 바꾸면 수레의 빠르기는 어떻게 달라질까?'],
+    ['g6-combustion', '물질의 연소', '초를 태운 시간', 'candle-jar', '탐구 질문: 촛불을 집기병으로 덮으면 불이 꺼질 때까지 걸리는 시간은 어떤 조건에 따라 달라질까?'],
   ] as const) {
     await page.goto(`/#/unit/${id}`);
     await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
