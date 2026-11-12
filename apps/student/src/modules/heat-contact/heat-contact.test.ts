@@ -31,9 +31,9 @@ const shownText = (html: string) => [...html.replace(/<[^>]+>/g, '\n').split('\n
 const TIMES = [0, 1, 5, 10, 20];
 
 describe('레지스트리', () => {
-  it('g5-heat 활동 2는 heat-contact 모듈로 로드되고 첫 활동(insulated-cup)은 그대로다', () => {
-    expect([unit.manifest.title, unit.manifest.grade, unit.manifest.engine, unit.manifest.standards]).toEqual(['열과 우리 생활', 5, 'physics', ['6과07-02', '6과07-04']]);
-    expect(unit.activities.map((a) => [a.activity, a.experiment.id, a.module.kind])).toEqual([['variable', 'insulated-cup', 'insulated-cup'], ['variable', 'heat-contact', 'heat-contact']]);
+  it('g5-heat 활동 2는 heat-contact 모듈로 로드되고 첫 활동(insulated-cup)은 그대로다(활동 3, 4가 그 뒤에 더해졌다)', () => {
+    expect([unit.manifest.title, unit.manifest.grade, unit.manifest.engine, unit.manifest.standards]).toEqual(['열과 우리 생활', 5, 'physics', ['6과07-01', '6과07-02', '6과07-03', '6과07-04']]);
+    expect(unit.activities.map((a) => [a.activity, a.experiment.id, a.module.kind])).toEqual([['variable', 'insulated-cup', 'insulated-cup'], ['variable', 'heat-contact', 'heat-contact'], ['variable', 'thermometer', 'thermometer'], ['variable', 'heat-transfer', 'heat-transfer']]);
     expect(unit.module.kind).toBe('insulated-cup');
     expect(activity.module).toBe(heatContactModule);
     expect(MODULES['heat-contact'].kind).toBe('heat-contact');

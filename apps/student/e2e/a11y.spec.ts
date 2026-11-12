@@ -734,9 +734,9 @@ for (const scheme of ['light', 'dark'] as const) {
     // 단원 목록의 "활동 2개" 표시
     await page.goto('/');
     // 활동이 둘인 단원은 힘과 우리 생활, 소리의 성질, 자석의 이용, 용해와 용액, 열과 우리 생활, 산과 염기, 물체의 운동, 물질의 연소, 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활, 동물의 생활, 식물의 생활, 생물과 환경, 지층과 화석 열여섯 곳이다.
-    // 카드 분류 활동을 더한 물체와 물질·물의 상태 변화가 둘이 되고, 소리의 성질·땅의 변화·물질의 연소는 셋이 되어 "활동 2개"는 17곳, "활동 3개"는 5곳(전기의 이용·지구와 바다 포함), 힘과 우리 생활은 "활동 4개" 1곳이다.
-    await expect(page.getByText('활동 2개')).toHaveCount(17);
-    await expect(page.getByText('활동 3개')).toHaveCount(5);
+    // 카드 분류 활동을 더한 물체와 물질·물의 상태 변화가 둘이 되고, 소리의 성질·땅의 변화·물질의 연소는 셋이 되어 "활동 2개"는 17곳, "활동 3개"는 6곳(전기의 이용·지구와 바다·날씨와 우리 생활 포함), 힘과 우리 생활·열과 우리 생활은 "활동 4개" 2곳이다.
+    await expect(page.getByText('활동 2개')).toHaveCount(15);
+    await expect(page.getByText('활동 3개')).toHaveCount(6);
     await expect(page.getByText('활동 2개').first()).toBeVisible();
     await expectNoSeriousViolations(page);
     // 첫 활동 화면의 활동 탭
@@ -2141,6 +2141,121 @@ for (const scheme of ['light', 'dark'] as const) {
     await predict(page, '변하지 않는다');
     await page.getByRole('button', { name: '▶ 실험 실행' }).click();
     await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+  });
+}
+
+// ---- 변인 실험 활동 추가: 건습구 습도계로 습도 구하기(날씨 활동 3), 온도계로 온도 재기(열 활동 3), 열이 이동하는 모습 관찰하기(열 활동 4) ----
+
+for (const scheme of ['light', 'dark'] as const) {
+  const label = scheme === 'dark' ? '어두운 화면' : '밝은 화면';
+
+  test(`g5-weather 활동 3(건습구 습도계) ${label}: 처음(활동 탭 셋), 실행 뒤(습도표 강조 칸), 온도 차 3 °C, 건구 10 °C, 회색 벽`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g5-weather', { experiment: 'humidity' });
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('tab')).toHaveCount(3);
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '건구와 습구의 온도 차');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('humidity-bar')).toHaveCount(1);
+    await expectNoSeriousViolations(page);
+    await setValue(page, '건구와 습구의 온도 차', '3 °C');
+    await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.locator('[data-testid="table-cell"][data-hit="true"]')).toHaveCount(1);
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '건구 온도');
+    await setValue(page, '건구 온도', '10 °C');
+    await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '습도계를 둔 곳 벽 색');
+    await setValue(page, '습도계를 둔 곳 벽 색', '회색 벽');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('humidity-bar')).toHaveCount(4);
+    await expectNoSeriousViolations(page);
+  });
+
+  test(`g5-heat 활동 3(온도계로 온도 재기) ${label}: 처음(활동 탭 넷), 실행 뒤(손 느낌 얼굴), 찬물에 넣은 손, 눈높이 위에서, 적외선 온도계, 철봉`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g5-heat', { experiment: 'thermometer' });
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('tab')).toHaveCount(4);
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '먼저 손을 넣었던 물');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('feel-face')).toHaveCount(1);
+    await expectNoSeriousViolations(page);
+    await setValue(page, '먼저 손을 넣었던 물', '찬물(10 °C)');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '눈금을 읽은 눈높이');
+    await setValue(page, '눈금을 읽은 눈높이', '위에서');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '온도계');
+    await setValue(page, '온도계', '적외선 온도계');
+    await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('ir-display')).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '재는 것');
+    await setValue(page, '재는 것', '같은 방의 철봉');
+    await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('thermo-bar')).toHaveCount(5);
+    await expectNoSeriousViolations(page);
+  });
+
+  test(`g5-heat 활동 4(열이 이동하는 모습) ${label}: 처음, 실행 뒤(색이 바뀐 딱지), 가운데, 철판, 비커 속 물(색소 띠), 파란색`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g5-heat', { experiment: 'heat-transfer' });
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('tab')).toHaveCount(4);
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '데우는 곳');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    await setValue(page, '데우는 곳', '가운데');
+    await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '데우는 것');
+    await setValue(page, '데우는 것', '철판');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    await setValue(page, '데우는 것', '비커 속 물');
+    await predict(page, '줄어든다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('dye-band').first()).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await page.getByRole('radio', { name: /^열 붙임딱지 색/ }).check();
+    await setValue(page, '열 붙임딱지 색(물은 색소 색)', '파란색');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('transfer-bar')).toHaveCount(5);
     await expectNoSeriousViolations(page);
   });
 }

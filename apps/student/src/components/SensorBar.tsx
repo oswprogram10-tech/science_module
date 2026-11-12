@@ -1,12 +1,12 @@
 import { useMemo, useRef } from 'react';
-import { MockGasDriver, MockDistanceDriver, MockHumidityDriver, MockLightDriver, MockPowerDriver, MockPressureDriver, MockPulseDriver, MockScaleDriver, MockSoundDriver, MockSpeedDriver, MockTemperatureDriver, MockTiltDriver, type SensorDriver, type SensorKind, type SensorReading } from '@sci/sensors';
+import { MockGasDriver, MockDistanceDriver, MockHumidityDriver, MockLightDriver, MockPowerDriver, MockPressureDriver, MockPulseDriver, MockScaleDriver, MockSoundDriver, MockSpeedDriver, MockTemperatureDriver, MockTiltDriver, MockTimeDriver, type SensorDriver, type SensorKind, type SensorReading } from '@sci/sensors';
 import type { SensorSpec } from '../modules/types';
 import { devMode } from './safety/devMode';
 import { RealTemperatureControls, useRealTemperature } from './RealTemperature';
 
-const SEEDS: Record<SensorKind, number> = { temperature: 20250101, scale: 20250102, pressure: 20250103, oxygen: 20250104, carbonDioxide: 20250105, light: 20250106, humidity: 20250107, pulse: 20250108, tilt: 20250109, sound: 20250110, distance: 20250111, speed: 20250112, power: 20250113 };
-const DECIMALS: Record<SensorKind, number> = { temperature: 1, scale: 2, pressure: 1, oxygen: 1, carbonDioxide: 1, light: 1, humidity: 1, pulse: 0, tilt: 1, sound: 1, distance: 1, speed: 2, power: 0 };
-const ARIA: Record<SensorKind, string> = { temperature: '온도', scale: '무게', pressure: '압력', oxygen: '산소', carbonDioxide: '이산화 탄소', light: '빛 세기', humidity: '습도', pulse: '맥박', tilt: '기울기', sound: '소리', distance: '거리', speed: '속력', power: '전력' };
+const SEEDS: Record<SensorKind, number> = { temperature: 20250101, scale: 20250102, pressure: 20250103, oxygen: 20250104, carbonDioxide: 20250105, light: 20250106, humidity: 20250107, pulse: 20250108, tilt: 20250109, sound: 20250110, distance: 20250111, speed: 20250112, power: 20250113, time: 20250114 };
+const DECIMALS: Record<SensorKind, number> = { temperature: 1, scale: 2, pressure: 1, oxygen: 1, carbonDioxide: 1, light: 1, humidity: 1, pulse: 0, tilt: 1, sound: 1, distance: 1, speed: 2, power: 0, time: 0 };
+const ARIA: Record<SensorKind, string> = { temperature: '온도', scale: '무게', pressure: '압력', oxygen: '산소', carbonDioxide: '이산화 탄소', light: '빛 세기', humidity: '습도', pulse: '맥박', tilt: '기울기', sound: '소리', distance: '거리', speed: '속력', power: '전력', time: '시간' };
 
 function makeDriver(kind: SensorKind, source: () => number): SensorDriver {
   switch (kind) {
@@ -32,6 +32,8 @@ function makeDriver(kind: SensorKind, source: () => number): SensorDriver {
       return new MockSpeedDriver(source, SEEDS.speed);
     case 'power':
       return new MockPowerDriver(source, SEEDS.power);
+    case 'time':
+      return new MockTimeDriver(source, SEEDS.time);
     case 'oxygen':
     case 'carbonDioxide':
       return new MockGasDriver(kind, source, SEEDS[kind]);

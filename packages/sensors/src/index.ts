@@ -6,7 +6,7 @@ export interface SensorReading {
   stale?: boolean;
 }
 
-export type SensorKind = 'temperature' | 'scale' | 'pressure' | 'oxygen' | 'carbonDioxide' | 'light' | 'humidity' | 'pulse' | 'tilt' | 'sound' | 'distance' | 'speed' | 'power';
+export type SensorKind = 'temperature' | 'scale' | 'pressure' | 'oxygen' | 'carbonDioxide' | 'light' | 'humidity' | 'pulse' | 'tilt' | 'sound' | 'distance' | 'speed' | 'power' | 'time';
 
 export interface SensorDriver {
   id: string;
@@ -223,6 +223,16 @@ export class MockPowerDriver extends MockDriver {
   unit = 'mW';
   protected measure() {
     return Math.max(0, Math.round(this.source() + (this.rng() * 2 - 1) * POWER_NOISE_MW));
+  }
+}
+
+/** 가상 초시계: 값 = source()(초)를 반올림한 정수, 0 이상. 잡음이 없어 source가 정수면 값은 source와 같다. */
+export class MockTimeDriver extends MockDriver {
+  id = 'mock-time';
+  kind = 'time' as const;
+  unit = '초';
+  protected measure() {
+    return Math.max(0, Math.round(this.source()));
   }
 }
 

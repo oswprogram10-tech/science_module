@@ -26,13 +26,13 @@ const UNITS = readdirSync(UNITS_DIR)
 
 const NO_SVG_TEXT = new Set(['g3-animal', 'g3-material', 'g3-plantlife', 'g5-strata', 'g6-acid-base', 'g6-career', 'g5-mixture/separation-methods', 'g5-weather/dew-fog-cloud', 'g3-animal/animal-habitat', 'g3-plantlife/plant-habitat', 'g4-ecosystem/living-nonliving', 'g5-strata/rock-grain', 'g3-material/matter-shape-volume', 'g4-water-state/water-around', 'g4-land/volcano-ejecta', 'g6-combustion/property-change']);
 
-test('단원 목록: 32개 단원의 모든 활동(62개)을 잰다', () => {
+test('단원 목록: 32개 단원의 모든 활동(65개)을 잰다', () => {
   expect(new Set(UNITS.map((u) => u.id)).size).toBe(32);
-  expect(UNITS.length).toBe(62);
+  expect(UNITS.length).toBe(65);
   expect(UNITS.map((u) => u.name)).toContain('g5-mixture/separation-methods');
   expect(UNITS.map((u) => u.name)).toContain('g5-weather/dew-fog-cloud');
   for (const name of ['g3-animal/animal-habitat', 'g3-plantlife/plant-habitat', 'g4-ecosystem/living-nonliving', 'g5-strata/rock-grain', 'g3-material/matter-shape-volume', 'g4-water-state/water-around', 'g4-land/volcano-ejecta', 'g6-combustion/property-change']) expect(UNITS.map((u) => u.name)).toContain(name);
-  for (const n of ['g3-force/lever-lift', 'g3-sound/sound-vibration', 'g4-magnet/magnet-poles', 'g5-solution/concentration', 'g5-heat/heat-contact', 'g6-acid-base/acid-base-mix', 'g6-motion/position-time', 'g6-combustion/combustion-products', 'g3-force/push-pull', 'g3-force/spring-scale', 'g4-gases/gas-weight', 'g5-light/light-needed', 'g3-sound/sound-transmit', 'g6-electricity/bulb-light', 'g6-electricity/battery-series', 'g6-plant/microscope-cells']) expect(UNITS.map((u) => u.name), n).toContain(n);
+  for (const n of ['g3-force/lever-lift', 'g3-sound/sound-vibration', 'g4-magnet/magnet-poles', 'g5-solution/concentration', 'g5-heat/heat-contact', 'g6-acid-base/acid-base-mix', 'g6-motion/position-time', 'g6-combustion/combustion-products', 'g3-force/push-pull', 'g3-force/spring-scale', 'g4-gases/gas-weight', 'g5-light/light-needed', 'g3-sound/sound-transmit', 'g6-electricity/bulb-light', 'g6-electricity/battery-series', 'g6-plant/microscope-cells', 'g3-lifecycle/butterfly-life', 'g3-earth-sea/land-sea-dots', 'g5-weather/humidity', 'g5-heat/thermometer', 'g5-heat/heat-transfer']) expect(UNITS.map((u) => u.name), n).toContain(n);
 });
 
 /** 지금 화면의 SVG 글자를 재서 13 px보다 작은 것, 그림 밖으로 잘린 것, (그래프에서) 서로 겹친 것을 "상태 | 그림 | 글자 | 문제"로 돌려준다. */

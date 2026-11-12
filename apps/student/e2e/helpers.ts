@@ -58,8 +58,8 @@ export async function runTrial(page: Page) {
 /** 결과표 본문 행들 */
 export const resultRows = (page: Page) => page.locator('#results-table tbody tr');
 
-/** 센서 값 (aria-label: 온도/무게/압력/산소/이산화 탄소) */
-export const sensor = (page: Page, name: '온도' | '무게' | '압력' | '산소' | '이산화 탄소' | '빛 세기' | '습도' | '맥박' | '기울기' | '소리' | '거리' | '속력' | '전력') => page.getByRole('status', { name, exact: true });
+/** 센서 값 (aria-label: 온도/무게/압력/산소/이산화 탄소/시간 등) */
+export const sensor = (page: Page, name: '온도' | '무게' | '압력' | '산소' | '이산화 탄소' | '빛 세기' | '습도' | '맥박' | '기울기' | '소리' | '거리' | '속력' | '전력' | '시간') => page.getByRole('status', { name, exact: true });
 
 /**
  * 모의 센서 값은 씨앗 고정 잡음을 더하는데, 재생 중 값을 몇 번 읽었는지(화면 갱신 수)에 따라 잡음 차례가 달라진다.

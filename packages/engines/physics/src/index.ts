@@ -15,3 +15,5 @@ export * from './springScale';
 export * from './lightNeeded';
 export * from './soundTransmit';
 export * from './bulbLight';
+export * from './thermometer';
+export * from './heatTransfer';

@@ -757,8 +757,8 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('열과 우리 생활 활동 2(온도가 다른 두 물이 닿으면)의 변인, 측정, 안전, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
     const m = parseManifest(heatJson);
-    expect([m.id, m.engine, m.standards]).toEqual(['g5-heat', 'physics', ['6과07-02', '6과07-04']]);
-    expect(m.experiments.map((x) => x.id)).toEqual(['insulated-cup', 'heat-contact']);
+    expect([m.id, m.engine, m.standards]).toEqual(['g5-heat', 'physics', ['6과07-01', '6과07-02', '6과07-03', '6과07-04']]);
+    expect(m.experiments.map((x) => x.id)).toEqual(['insulated-cup', 'heat-contact', 'thermometer', 'heat-transfer']);
     const e = m.experiments[1] as VariableExperiment;
     expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['heat-contact', 'heat-contact', '온도가 다른 두 물이 닿으면', '온도가 다른 두 물체가 닿아 있으면 온도가 어떻게 변할까?', '예측: 10분 뒤 안쪽 컵 물의 온도는?']);
     expect(e.safety).toEqual(['hot-water']);
@@ -843,7 +843,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('날씨와 우리 생활 매니페스트의 변인, 측정, 안전, 한계 용어, 탐침을 읽는다', () => {
     const m = parseManifest(weatherJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g5-weather', 5, 'earth', ['6과06-02', '6과06-03']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g5-weather', 5, 'earth', ['6과06-01', '6과06-02', '6과06-03']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('land-sea-breeze');
     expect(e.safety).toEqual(['heat', 'fire']);
@@ -929,6 +929,78 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     const badMsg = clone(combustionJson);
     badMsg.experiments[0].safetyMessages = { NO_GOGGLES: 3 };
     expect(() => parseManifest(badMsg)).toThrow(ManifestError);
+  });
+
+  it('날씨와 우리 생활 활동 3(건습구 습도계로 습도 구하기)의 변인, 범주 아닌 결과, 안전 없음, 한계 용어, 금지 구절, 탐침, 일주일 날씨 기록 자료를 읽는다', () => {
+    const m = parseManifest(weatherJson);
+    expect(m.experiments.map((x) => x.id)).toEqual(['land-sea-breeze', 'dew-fog-cloud', 'humidity']);
+    const e = m.experiments[2] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['humidity', 'humidity', '건습구 습도계로 습도 구하기', '날씨를 나타내려면 무엇을 재어야 할까?', '예측: 습도는?']);
+    expect(e.safety).toEqual([]);
+    expect(e.variables.map((v) => v.key)).toEqual(['dry', 'diff', 'place']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([[10, 15, 20, 25, 30], [0, 1, 2, 3, 4, 5, 6], ['white', 'gray']]);
+    expect(e.variables.map((v) => v.default)).toEqual([20, 0, 'white']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['rh', '%'], ['wet', '°C']]);
+    expect(e.gateway).toEqual({ mode: 'open', requirePrediction: true, requireSingleIV: true });
+    expect(e.limits).toEqual(['이슬점', '포화 수증기압', '상대 습도', '절대 습도']);
+    for (const f of ['온도 차가 클수록 습도가 낮', '온도 차가 크면 습도가 낮', '차이가 클수록 건조', '온도 차가 0이면 100', '차이가 없으면 100', '습도가 높으면 빨래가 잘 안', '습도가 낮으면 빨래가 잘', '벽 색은 관계없', '벽 색깔은 관계없', '색깔은 상관없']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['dry', 'diff', 'place']);
+    expect(e.tutor.probes.every((p) => p.text.trim().endsWith('?'))).toBe(true);
+    // 일주일 기록 예시 자료는 매니페스트 params.weekLog에 데이터로 있다(스키마는 params를 그대로 통과시킨다).
+    const log = e.params!.weekLog as { title: string; columns: string[]; rows: string[][] };
+    expect(log.title).toBe('일주일 날씨 기록(예시 자료)');
+    expect(log.columns).toEqual(['날', '기온(°C)', '습도(%)', '바람', '구름 양(10칸 중)', '강수량(mm)']);
+    expect(log.rows).toHaveLength(7);
+    for (const r of log.rows) expect(r).toHaveLength(log.columns.length);
+    // 앞의 두 활동은 그대로다.
+    expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['phase', 'lampCm', 'bowl']);
+  });
+
+  it('params의 임의 자료(일주일 기록)는 파싱을 거쳐도 지워지지 않고, 다른 활동의 params와 섞이지 않는다', () => {
+    const m = parseManifest(weatherJson);
+    const params = (m.experiments[2] as VariableExperiment).params as Record<string, unknown>;
+    expect(Object.keys(params)).toEqual(['weekLog']);
+    expect((m.experiments[0] as VariableExperiment).params).toEqual({ totalMin: 10 });
+    const edited = clone(weatherJson);
+    edited.experiments[2].params.weekLog.rows[0][1] = '99';
+    expect(((parseManifest(edited).experiments[2] as VariableExperiment).params!.weekLog as { rows: string[][] }).rows[0]![1]).toBe('99');
+  });
+
+  it('열과 우리 생활 활동 3(온도계로 온도 재기)의 변인, 범주 결과, 안전 없음, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(heatJson);
+    const e = m.experiments[2] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['thermometer', 'thermometer', '온도계로 온도 재기', '손으로 느끼는 따뜻함과 온도계로 잰 온도는 같을까?', '예측: 온도계 눈금은?']);
+    expect(e.safety).toEqual([]);
+    expect(e.variables.map((v) => v.key)).toEqual(['hand', 'target', 'tool', 'eye']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([['none', 'cold', 'warm'], ['water', 'rod', 'wood'], ['alcohol', 'ir'], ['above', 'level', 'below']]);
+    expect(e.variables.map((v) => v.default)).toEqual(['none', 'water', 'alcohol', 'level']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['reading', '°C'], ['feel', '']]);
+    expect(e.limits).toEqual(['열전도율', '열평형', '적외선 복사', '섭씨와 화씨']);
+    for (const f of ['손 느낌은 정확하지', '손으로는 정확히', '느낌은 믿을 수 없', '느낌은 사람마다', '철봉과 나무 판의 온도는 같', '온도가 같은데 차갑게', '같은 온도인데', '눈높이를 맞춰야', '액체 끝과 같은 높이에서 읽어야']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['hand', 'target', 'tool', 'eye']);
+    expect(e.tutor.probes.every((p) => p.text.trim().endsWith('?'))).toBe(true);
+  });
+
+  it('열과 우리 생활 활동 4(열이 이동하는 모습 관찰하기)의 변인, 범주 결과, 안전 없음, 한계 용어(전도·대류 포함), 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(heatJson);
+    expect(m.experiments.map((x) => x.id)).toEqual(['insulated-cup', 'heat-contact', 'thermometer', 'heat-transfer']);
+    const e = m.experiments[3] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['heat-transfer', 'heat-transfer', '열이 이동하는 모습 관찰하기', '열은 고체와 액체에서 각각 어떻게 이동할까?', '예측: 가장 먼 곳까지 열이 전해진 시간은?']);
+    expect(e.safety).toEqual([]);
+    expect(e.variables.map((v) => v.key)).toEqual(['material', 'heatAt', 'stickerColor']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([['copper', 'iron', 'water'], ['edge', 'center'], ['pink', 'blue']]);
+    expect(e.variables.map((v) => v.default)).toEqual(['copper', 'edge', 'pink']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['time', '초'], ['path', '']]);
+    expect(e.limits).toEqual(['전도', '대류', '복사', '열전도율', '비열']);
+    for (const f of ['전도', '대류', '구리가 철보다 빨리', '구리가 더 빨리', '철이 더 느리', '가까운 곳부터 차례로', '데운 곳에서 멀어지며', '따뜻한 물은 위로', '따뜻해진 물이 올라', '붙임딱지 색은 관계없', '색소 색은 관계없', '색깔은 상관없']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['material', 'heatAt', 'stickerColor']);
+    expect(e.tutor.probes.every((p) => p.text.trim().endsWith('?'))).toBe(true);
+    // 앞의 두 활동은 그대로다.
+    expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['wrap', 'layers', 'lid', 'waterMl']);
+    expect((m.experiments[1] as VariableExperiment).variables.map((v) => v.key)).toEqual(['hotC', 'coldMl', 'cup', 'label']);
   });
 });
 

@@ -44,10 +44,10 @@ const OBS: Record<string, [string, string, string]> = {
 const ANSWER_NAMES = ['이슬', '안개', '구름'];
 
 describe('날씨와 우리 생활 두 번째 활동 매니페스트 (사양 §0, §1)', () => {
-  it('첫 활동(해륙풍)은 그대로이고 두 번째 활동이 뒤에 붙는다', () => {
-    expect(manifest.experiments.map((e) => e.id)).toEqual(['land-sea-breeze', 'dew-fog-cloud']);
+  it('첫 활동(해륙풍)은 그대로이고 두 번째 활동이 뒤에 붙는다(세 번째 활동 건습구 습도계가 그 뒤에 더해졌다)', () => {
+    expect(manifest.experiments.map((e) => e.id)).toEqual(['land-sea-breeze', 'dew-fog-cloud', 'humidity']);
     expect(manifest.experiments[0]!.module).toBe('land-sea-breeze');
-    expect([manifest.id, manifest.title, manifest.grade, manifest.engine, manifest.standards]).toEqual(['g5-weather', '날씨와 우리 생활', 5, 'earth', ['6과06-02', '6과06-03']]);
+    expect([manifest.id, manifest.title, manifest.grade, manifest.engine, manifest.standards]).toEqual(['g5-weather', '날씨와 우리 생활', 5, 'earth', ['6과06-01', '6과06-02', '6과06-03']]);
   });
   it('활동 정보', () => {
     expect([exp.id, exp.module, exp.layout]).toEqual(['dew-fog-cloud', 'card-sort', 'groups']);
@@ -96,7 +96,7 @@ describe('날씨와 우리 생활 두 번째 활동 매니페스트 (사양 §0,
   it('validateCardSortExperiment를 통과하고 레지스트리에서 두 번째 활동으로 등록된다', () => {
     expect(validateCardSortExperiment(exp)).toEqual([]);
     const u = UNITS.find((x) => x.id === 'g5-weather')!;
-    expect(u.ok && u.activities.map((a) => a.activity)).toEqual(['variable', 'card-sort']);
+    expect(u.ok && u.activities.map((a) => a.activity)).toEqual(['variable', 'card-sort', 'variable']);
     // 최상위 값은 첫 활동이다.
     expect(u.ok && u.activity).toBe('variable');
     if (u.ok) {
