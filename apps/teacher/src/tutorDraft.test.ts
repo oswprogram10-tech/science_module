@@ -178,6 +178,40 @@ describe('변인 실험 활동 추가(빛의 성질 활동 2, 소리의 성질 �
   });
 });
 
+describe('변인 실험 활동 추가(생물의 한살이 활동 2, 지구와 바다 활동 3)가 교사 앱 튜터 질문 편집에 자동으로 나타난다', () => {
+  it('g3-lifecycle: 활동 둘(germination, butterfly-life)이 카탈로그에 있고 활동 2의 질문 고치기는 활동 2의 금지 구절에 걸린다', () => {
+    const u = unit('g3-lifecycle');
+    expect(u.experiments.map((e) => [e.id, e.kind])).toEqual([['germination', 'variable'], ['butterfly-life', 'variable']]);
+    const second = u.experiments[1]!;
+    expect(second.ivs.map((v) => v.key)).toEqual(['day', 'time']);
+    expect(second.ivs.map((v) => v.label)).toEqual(['관찰한 날', '관찰한 때']);
+    expect(second.placeholders.sort()).toEqual(['changed', 'iv']);
+    expect(second.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['day', 'time']);
+    expect(second.limits).toEqual(['탈피 호르몬', '변태', '유충', '성충']);
+    expect(second.forbiddenAnswers).toContain('번데기가 되');
+    expect(second.forbiddenAnswers).not.toEqual(u.experiments[0]!.forbiddenAnswers);
+    for (const e of u.experiments) {
+      const keys = e.probes.map((p) => p.key);
+      expect(new Set(keys).size, e.id).toBe(keys.length);
+      for (const k of keys) expect(PROBE_KEY_PATTERN.test(k), k).toBe(true);
+    }
+    expect(lineCheck(second, '|prediction-mismatch|', { text: '번데기가 되는 때를 말해 볼까요?' })?.ok).toBe(false);
+    expect(lineCheck(u.experiments[0]!, '|prediction-mismatch|', { text: '번데기가 되는 때를 말해 볼까요?' })?.ok).toBe(true);
+    expect(lineCheck(second, '|prediction-mismatch|', { text: '먹이를 먹지 않은 때가 있었는지 결과표를 살펴볼까요?' })).toEqual({ ok: true, messages: [] });
+  });
+  it('g3-earth-sea: 활동 셋(sea-water, tide, land-sea-dots)이 카탈로그에 있고 활동 3의 질문 고치기는 활동 3의 금지 구절에 걸린다', () => {
+    const u = unit('g3-earth-sea');
+    expect(u.experiments.map((e) => [e.id, e.kind])).toEqual([['sea-water', 'variable'], ['tide', 'observation'], ['land-sea-dots', 'variable']]);
+    const third = u.experiments[2]!;
+    expect(third.ivs.map((v) => v.key)).toEqual(['dots', 'round', 'globeColor']);
+    expect(third.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['dots', 'round', 'globeColor']);
+    expect(third.limits).toEqual(['확률', '표본', '대수의 법칙', '오차 범위']);
+    expect(lineCheck(third, '|prediction-mismatch|', { text: '바다가 더 넓다고 말해 볼까요?' })?.ok).toBe(false);
+    expect(lineCheck(u.experiments[0]!, '|prediction-mismatch|', { text: '바다가 더 넓다고 말해 볼까요?' })?.ok).toBe(true);
+    expect(lineCheck(third, '|prediction-mismatch|', { text: '지구를 둘러싼 것은 무엇일까요?' })).toEqual({ ok: true, messages: [] });
+  });
+});
+
 describe('초안 <-> 덧씌우기', () => {
   it('저장하면 자리표시가 {…}로 돌아가고, 다시 읽으면 〔…〕로 보인다', () => {
     const draft: Draft = { 'g6-motion': { 'ramp-cart': { changed: { [HEIGHT_KEY]: { text: '〔바꾼 조건〕을(를) 바꾸면 무엇이 달라질지 먼저 적어 볼까요?' }, '|repeat|': { off: true } }, added: [] } } };

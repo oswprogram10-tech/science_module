@@ -3079,3 +3079,96 @@ describe('변인 실험 활동 추가 매니페스트 probe (light-needed, sound
     });
   }
 });
+
+// ---------- 변인 실험 활동 추가: 배추흰나비의 한살이 관찰 기록(생물의 한살이 활동 2), 육지와 바다의 넓이 비교하기(지구와 바다 활동 3) ----------
+describe('변인 실험 활동 추가 매니페스트 probe (butterfly-life, land-sea-dots)', () => {
+  const CASES = [
+    {
+      name: 'g3-lifecycle 활동 2(butterfly-life)',
+      json: lifecycleJson,
+      index: 1,
+      iv: { day: '관찰한 날만 바꾸었어요.', time: '관찰한 때만 바꾸었을 때' },
+      before: '몸 길이',
+      quantity: '몸 길이',
+      mismatch: '먹이를 먹지 않은 때가 있었나요?',
+      rules: ['알, 애벌레, 번데기, 어른벌레 순서예요', '알-애벌레-번데기-어른벌레로 자라요', '알→애벌레가 돼요', '번데기가 되어요', '번데기가 돼요', '번데기 때는 먹지 않아요', '번데기에서 어른벌레가 나와요', '완전 탈바꿈을 해요', '애벌레는 먹고 자라요', '애벌레만 먹어요', '번데기는 먹지 않아요', '관찰한 때는 관계없어요', '아침이든 저녁이든 같아요', '아침과 저녁은 관계없어요'],
+    },
+    {
+      name: 'g3-earth-sea 활동 3(land-sea-dots)',
+      json: earthSeaJson,
+      index: 2,
+      iv: { dots: '점을 10개 찍었을 때와 500개', round: '점 찍기 차례만 바꾸었어요.', globeColor: '받침 색만 바꾸었을 때' },
+      before: '바다에 떨어진 점의 비율',
+      quantity: '비율',
+      mismatch: '우주에서 본 지구 둘레',
+      rules: ['바다가 더 넓어요', '바다가 육지보다 넓어요', '육지보다 바다가 넓어요', '바다가 70 %예요', '바다가 약 70 %예요', '바다가 71 %예요', '70 %가 바다예요', '70%가 바다예요', '점이 많을수록 정확해요', '점을 많이 찍을수록 믿을 수 있어요', '많이 찍으면 정확해요', '대기가 감싸고 있어요', '공기가 지구를 감싸요', '받침 색은 관계없어요', '받침 색깔은 관계없어요', '색깔은 상관없어요'],
+    },
+  ];
+  for (const c of CASES) {
+    describe(c.name, () => {
+      const e = parseManifest(c.json).experiments[c.index]! as VariableExperiment;
+      const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+      const eKeys = e.variables.map((v) => v.key);
+      const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+      const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: eKeys[0]!, ...x });
+      const fair = (iv: string): Partial<ProbeContext> => ({ ivKey: iv, lastAnalysis: { kind: 'fair-test', changed: [iv] }, prediction: 'same', observed: 'same' });
+
+      it('실행 전 probe가 예측 버튼에 맞는 양을 묻는다', () => {
+        expect(selectProbe(eCtx({}), e.tutor.probes, eGuard)).toContain(c.before);
+        expect(e.predictionPrompt).toContain(c.quantity);
+      });
+
+      it('iv별 fair-test 질문을 고른다', () => {
+        for (const [iv, start] of Object.entries(c.iv)) expect(selectProbe(eCtx(fair(iv)), e.tutor.probes, eGuard), iv).toContain(start);
+      });
+
+      it('예측과 결과가 다르면 결과표에서 확인하라고 한다', () => {
+        const text = selectProbe(eCtx({ ...fair(eKeys[0]!), prediction: 'increase', observed: 'same' }), e.tutor.probes, eGuard);
+        expect(text).toContain(c.mismatch);
+      });
+
+      it('모든 probe는 질문형이고, 모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+        let n = 0;
+        for (const probe of e.tutor.probes) {
+          expect(probe.text.trim().endsWith('?'), probe.text).toBe(true);
+          for (const iv of eKeys) {
+            for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+              const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+              expect(guardOutput(text, eGuard).ok, text).toBe(true);
+              expect(text).not.toMatch(/[{}]/);
+              expect(text).not.toMatch(/(을\(를\)|이\(가\)|와\(과\)|은\(는\))/);
+              n++;
+            }
+          }
+        }
+        expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+      });
+
+      it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+        const situations: Partial<ProbeContext>[] = [
+          {},
+          { lastAnalysis: { kind: 'first-trial', changed: [] } },
+          { lastAnalysis: { kind: 'confounded', changed: eKeys.slice(0, 2) } },
+          { lastAnalysis: { kind: 'iv-unchanged', changed: [eKeys[eKeys.length - 1]!] } },
+          { lastAnalysis: { kind: 'repeat', changed: [] } },
+          ...eKeys.flatMap((k) => [fair(k), { ...fair(k), prediction: 'increase' as const, observed: 'same' as const }]),
+        ];
+        for (const s of situations) {
+          const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+          expect(text).not.toBe(FALLBACK_PROBE);
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+        }
+      });
+
+      it('금지 구절과 한계 용어를 담은 문장은 실제로 막는다', () => {
+        for (const f of e.tutor.forbiddenAnswers) expect(guardOutput(`${f}요`, eGuard).ok, f).toBe(false);
+        for (const l of e.limits) expect(guardOutput(`${l}이에요`, eGuard).ok, l).toBe(false);
+        for (const rule of c.rules) expect(guardOutput(rule, eGuard).ok, rule).toBe(false);
+        for (const probe of e.tutor.probes) {
+          for (const f of e.tutor.forbiddenAnswers) expect(probe.text, probe.text).not.toContain(f);
+          for (const l of e.limits) expect(probe.text, probe.text).not.toContain(l);
+        }
+      });
+    });
+  }
+});

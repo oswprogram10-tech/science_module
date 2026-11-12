@@ -2,7 +2,7 @@
   "id": "g3-lifecycle",
   "title": "생물의 한살이",
   "grade": 3,
-  "standards": ["4과04-02"],
+  "standards": ["4과04-01", "4과04-02"],
   "engine": "life",
   "experiments": [
     {
@@ -72,6 +72,179 @@
           { "when": "fair-test", "iv": "light", "text": "빛만 바꾸었을 때 싹 튼 씨앗 수와 떡잎 색은 각각 어떻게 되었나요? 두 결과는 무엇이 다를까요?" },
           { "when": "fair-test", "iv": "tempC", "text": "온도만 바꾸었어요. 싹 튼 수가 같아도 다른 점이 있나요? 그래프에서 싹이 트기 시작한 때를 비교해 볼까요?" },
           { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 날마다 바뀌는 그래프와 그릇 그림의 어느 부분을 보면 그 까닭을 찾을 수 있을까요?" }
+        ]
+      }
+    }
+,
+    {
+      "id": "butterfly-life",
+      "module": "butterfly-life",
+      "title": "배추흰나비의 한살이 관찰 기록",
+      "question": "배추흰나비는 알에서 어른벌레가 되기까지 어떻게 변할까?",
+      "predictionPrompt": "예측: 몸 길이는?",
+      "variables": [
+        {
+          "key": "day",
+          "label": "관찰한 날",
+          "type": "choice",
+          "options": [
+            {
+              "value": 1,
+              "label": "1일째"
+            },
+            {
+              "value": 3,
+              "label": "3일째"
+            },
+            {
+              "value": 6,
+              "label": "6일째"
+            },
+            {
+              "value": 9,
+              "label": "9일째"
+            },
+            {
+              "value": 12,
+              "label": "12일째"
+            },
+            {
+              "value": 15,
+              "label": "15일째"
+            },
+            {
+              "value": 18,
+              "label": "18일째"
+            },
+            {
+              "value": 21,
+              "label": "21일째"
+            },
+            {
+              "value": 24,
+              "label": "24일째"
+            },
+            {
+              "value": 28,
+              "label": "28일째"
+            },
+            {
+              "value": 30,
+              "label": "30일째"
+            }
+          ],
+          "default": 1
+        },
+        {
+          "key": "time",
+          "label": "관찰한 때",
+          "type": "choice",
+          "options": [
+            {
+              "value": "morning",
+              "label": "아침"
+            },
+            {
+              "value": "evening",
+              "label": "저녁"
+            }
+          ],
+          "default": "morning"
+        }
+      ],
+      "dependent": [
+        {
+          "key": "length",
+          "label": "몸 길이",
+          "unit": "mm"
+        },
+        {
+          "key": "eat",
+          "label": "먹이를 먹나요",
+          "unit": ""
+        },
+        {
+          "key": "move",
+          "label": "움직이나요",
+          "unit": ""
+        },
+        {
+          "key": "wings",
+          "label": "날개",
+          "unit": ""
+        }
+      ],
+      "gateway": {
+        "mode": "open",
+        "requirePrediction": true,
+        "requireSingleIV": true
+      },
+      "safety": [],
+      "safetyNotices": [],
+      "limits": [
+        "탈피 호르몬",
+        "변태",
+        "유충",
+        "성충"
+      ],
+      "tutor": {
+        "forbiddenAnswers": [
+          "알-애벌레-번데기-어른벌레",
+          "알, 애벌레, 번데기, 어른벌레",
+          "알→애벌레",
+          "번데기가 되",
+      "번데기가 돼",
+      "번데기가 됩",
+      "번데기가 된",
+          "번데기 때는",
+          "번데기에서 어른벌레",
+          "완전 탈바꿈",
+          "애벌레는 먹고",
+          "애벌레만 먹",
+          "번데기는 먹지 않",
+          "관찰한 때는 관계없",
+          "아침이든 저녁이든",
+          "아침과 저녁은 관계없"
+        ],
+        "probes": [
+          {
+            "when": "before-run",
+            "text": "{iv}을(를) 바꾸면 몸 길이이(가) 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?"
+          },
+          {
+            "when": "first-trial",
+            "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?"
+          },
+          {
+            "when": "confounded",
+            "text": "{changed}이(가) 함께 바뀌었어요. 몸 길이이(가) 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?"
+          },
+          {
+            "when": "iv-unchanged",
+            "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?"
+          },
+          {
+            "when": "repeat",
+            "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?"
+          },
+          {
+            "when": "fair-test",
+            "text": "{iv}만 바꾸었을 때 몸 길이와 모습은 각각 어떻게 달라졌나요? 결과표에서 두 줄을 비교해 볼까요?"
+          },
+          {
+            "when": "fair-test",
+            "iv": "day",
+            "text": "관찰한 날만 바꾸었어요. 몸 길이와 모습은 어떻게 달라졌나요? 가장 크게 바뀐 때는 언제인가요?"
+          },
+          {
+            "when": "fair-test",
+            "iv": "time",
+            "text": "관찰한 때만 바꾸었을 때 결과가 달라졌나요? 이 결과로 무엇을 알 수 있을까요?"
+          },
+          {
+            "when": "prediction-mismatch",
+            "text": "먹이를 먹지 않은 때가 있었나요? 결과표를 다시 살펴볼까요?"
+          }
         ]
       }
     }

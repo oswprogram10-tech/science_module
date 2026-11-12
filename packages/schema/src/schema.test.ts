@@ -247,7 +247,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('생물의 한살이 매니페스트의 변인, 안전 종류, 탐침을 읽는다', () => {
     const m = parseManifest(lifecycleJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-lifecycle', 3, 'life', ['4과04-02']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-lifecycle', 3, 'life', ['4과04-01', '4과04-02']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('germination');
     expect(e.safety).toEqual([]);
@@ -461,8 +461,8 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('지구와 바다(바닷물과 강물 비교하기) 매니페스트의 변인, 측정, 안전, 한계 용어, 탐침을 읽는다', () => {
     const m = parseManifest(earthSeaJson);
-    expect([m.id, m.title, m.grade, m.engine, m.standards]).toEqual(['g3-earth-sea', '지구와 바다', 3, 'earth', ['4과06-02', '4과06-03']]);
-    expect(m.experiments.map((x) => x.id)).toEqual(['sea-water', 'tide']);
+    expect([m.id, m.title, m.grade, m.engine, m.standards]).toEqual(['g3-earth-sea', '지구와 바다', 3, 'earth', ['4과06-01', '4과06-02', '4과06-03']]);
+    expect(m.experiments.map((x) => x.id)).toEqual(['sea-water', 'tide', 'land-sea-dots']);
     const e = m.experiments[0] as VariableExperiment;
     expect([e.id, e.module]).toEqual(['sea-water', 'sea-water']);
     expect(e.safety).toEqual(['heat', 'taste']);
@@ -615,6 +615,48 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     // 앞의 두 활동은 그대로다.
     expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['strength', 'lengthCm', 'color']);
     expect((m.experiments[1] as VariableExperiment).variables.map((v) => v.key)).toEqual(['sound', 'loud', 'object', 'seed']);
+  });
+
+  it('생물의 한살이 활동 2(배추흰나비의 한살이 관찰 기록)의 변인, 범주 결과, 안전 없음, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(lifecycleJson);
+    expect([m.id, m.engine, m.standards]).toEqual(['g3-lifecycle', 'life', ['4과04-01', '4과04-02']]);
+    expect(m.experiments.map((x) => x.id)).toEqual(['germination', 'butterfly-life']);
+    const e = m.experiments[1] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['butterfly-life', 'butterfly-life', '배추흰나비의 한살이 관찰 기록', '배추흰나비는 알에서 어른벌레가 되기까지 어떻게 변할까?', '예측: 몸 길이는?']);
+    expect(e.safety).toEqual([]);
+    expect(e.variables.map((v) => v.key)).toEqual(['day', 'time']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([[1, 3, 6, 9, 12, 15, 18, 21, 24, 28, 30], ['morning', 'evening']]);
+    expect(e.variables.map((v) => v.default)).toEqual([1, 'morning']);
+    // 먹이·움직임·날개는 범주 결과 칸이라 단위가 없다.
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['length', 'mm'], ['eat', ''], ['move', ''], ['wings', '']]);
+    expect(e.gateway).toEqual({ mode: 'open', requirePrediction: true, requireSingleIV: true });
+    expect(e.limits).toEqual(['탈피 호르몬', '변태', '유충', '성충']);
+    for (const f of ['알-애벌레-번데기-어른벌레', '알, 애벌레, 번데기, 어른벌레', '알→애벌레', '번데기가 되', '번데기가 돼', '번데기가 됩', '번데기가 된', '번데기 때는', '번데기에서 어른벌레', '완전 탈바꿈', '애벌레는 먹고', '애벌레만 먹', '번데기는 먹지 않', '관찰한 때는 관계없', '아침이든 저녁이든', '아침과 저녁은 관계없']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['day', 'time']);
+    expect(e.tutor.probes.every((p) => p.text.trim().endsWith('?'))).toBe(true);
+    // 첫 활동은 그대로다.
+    expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['water', 'tempC', 'light']);
+  });
+
+  it('지구와 바다 활동 3(육지와 바다의 넓이 비교하기)의 변인, 측정, 안전 없음, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(earthSeaJson);
+    expect(m.experiments.map((x) => x.id)).toEqual(['sea-water', 'tide', 'land-sea-dots']);
+    const e = m.experiments[2] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['land-sea-dots', 'land-sea-dots', '육지와 바다의 넓이 비교하기', '지구의 겉은 육지와 바다 가운데 어느 쪽이 더 넓을까?', '예측: 바다에 떨어진 점의 비율은?']);
+    expect(e.safety).toEqual([]);
+    expect(e.variables.map((v) => v.key)).toEqual(['dots', 'round', 'globeColor']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([[10, 50, 100, 500], [1, 2, 3], ['red', 'blue']]);
+    expect(e.variables.map((v) => v.default)).toEqual([10, 1, 'red']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['seaPct', '%'], ['sea', '개'], ['land', '개']]);
+    expect(e.gateway).toEqual({ mode: 'open', requirePrediction: true, requireSingleIV: true });
+    expect(e.limits).toEqual(['확률', '표본', '대수의 법칙', '오차 범위']);
+    for (const f of ['바다가 더 넓', '바다가 육지보다 넓', '육지보다 바다가', '바다가 70', '바다가 약 70', '바다가 71', '70 %가 바다', '70%가 바다', '점이 많을수록 정확', '점을 많이 찍을수록 믿을', '많이 찍으면 정확', '대기가 감싸', '공기가 지구를 감싸', '받침 색은 관계없', '받침 색깔은 관계없', '색깔은 상관없']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['dots', 'round', 'globeColor']);
+    expect(e.tutor.probes.every((p) => p.text.trim().endsWith('?'))).toBe(true);
+    // 앞의 두 활동은 그대로다.
+    expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['water', 'volumeMl', 'dish']);
   });
 
   it('자석의 이용 활동 2(자석과 자석 사이)의 변인, 범주 결과, 한계 용어, 금지 구절, 탐침을 읽는다', () => {

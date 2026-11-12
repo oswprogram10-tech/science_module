@@ -281,9 +281,9 @@ describe('레지스트리 activities', () => {
       expect([u.activity, u.experiment, u.module], u.id).toEqual([first.activity, first.experiment, first.module]);
     }
   });
-  it('활동이 둘 이상인 단원은 g4-gases, g5-solution, g6-acid-base, g6-combustion, g5-heat, g5-light, g4-land, g4-ecosystem, g3-animal, g3-plantlife, g3-force, g3-sound, g4-magnet, g6-motion, g5-mixture, g3-material, g4-water-state, g3-earth-sea, g5-strata, g5-weather뿐이다', () => {
+  it('활동이 둘 이상인 단원은 g4-gases, g5-solution, g6-acid-base, g6-combustion, g5-heat, g5-light, g4-land, g3-lifecycle, g4-ecosystem, g3-animal, g3-plantlife, g3-force, g3-sound, g4-magnet, g6-motion, g5-mixture, g3-material, g4-water-state, g3-earth-sea, g5-strata, g5-weather뿐이다', () => {
     const multi = UNITS.filter((u) => u.ok && u.activities.length > 1).map((u) => u.id);
-    expect(multi).toEqual(['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat', 'g5-light', 'g4-land', 'g4-ecosystem', 'g3-animal', 'g3-plantlife', 'g3-force', 'g3-sound', 'g4-magnet', 'g6-motion', 'g3-material', 'g4-water-state', 'g5-mixture', 'g3-earth-sea', 'g5-strata', 'g5-weather']);
+    expect(multi).toEqual(['g4-gases', 'g5-solution', 'g6-acid-base', 'g6-combustion', 'g5-heat', 'g5-light', 'g4-land', 'g3-lifecycle', 'g4-ecosystem', 'g3-animal', 'g3-plantlife', 'g3-force', 'g3-sound', 'g4-magnet', 'g6-motion', 'g3-material', 'g4-water-state', 'g5-mixture', 'g3-earth-sea', 'g5-strata', 'g5-weather']);
     // 변인 실험을 두 번째 활동으로 더한 단원(교육과정 4과09-02 등). 첫 활동은 그대로다. 힘과 우리 생활·소리의 성질·여러 가지 기체는 활동이 셋 이상이라 아래에서 따로 본다.
     for (const [id, first, second, kind, standards] of [
       ['g4-magnet', 'magnet-distance', 'magnet-poles', 'magnet-poles', ['4과09-01', '4과09-02']],
@@ -346,8 +346,13 @@ describe('레지스트리 activities', () => {
     expect(land.ok && land.manifest.standards).toEqual(['4과11-01', '4과11-02', '4과11-03']);
     // 옛 흐르는 물 단원 id를 다시 쓴다: 「지구와 바다」는 바닷물과 강물 비교하기(변인)와 밀물과 썰물 관찰하기(관찰) 두 활동 단원이다.
     const sea = UNITS.find((x) => x.id === 'g3-earth-sea')!;
-    expect(sea.ok && sea.activities.map((a) => [a.activity, a.experiment.id, a.module.kind])).toEqual([['variable', 'sea-water', 'sea-water'], ['observe', 'tide', 'sky-observation']]);
-    expect(sea.ok && [sea.manifest.title, sea.manifest.grade, sea.manifest.engine, sea.manifest.standards]).toEqual(['지구와 바다', 3, 'earth', ['4과06-02', '4과06-03']]);
+    expect(sea.ok && sea.activities.map((a) => [a.activity, a.experiment.id, a.module.kind])).toEqual([['variable', 'sea-water', 'sea-water'], ['observe', 'tide', 'sky-observation'], ['variable', 'land-sea-dots', 'land-sea-dots']]);
+    expect(sea.ok && [sea.manifest.title, sea.manifest.grade, sea.manifest.engine, sea.manifest.standards]).toEqual(['지구와 바다', 3, 'earth', ['4과06-01', '4과06-02', '4과06-03']]);
+    // 생물의 한살이는 씨가 싹 트는 조건(4과04-02)에 배추흰나비의 한살이 관찰 기록(4과04-01)이 두 번째 활동으로 더해졌다. 첫 활동은 그대로다.
+    const life = UNITS.find((x) => x.id === 'g3-lifecycle')!;
+    expect(life.ok && life.activities.map((a) => [a.activity, a.experiment.id, a.module.kind])).toEqual([['variable', 'germination', 'germination'], ['variable', 'butterfly-life', 'butterfly-life']]);
+    expect(life.ok && life.module.kind).toBe('germination');
+    expect(life.ok && life.manifest.standards).toEqual(['4과04-01', '4과04-02']);
     const m = UNITS.find((u) => u.id === 'g5-mixture')!;
     expect(m.ok && m.activities.map((a) => [a.activity, a.experiment.id])).toEqual([['variable', 'salt-sand'], ['card-sort', 'separation-methods']]);
     expect(m.ok && m.module.kind).toBe('salt-sand');
@@ -403,7 +408,7 @@ describe('활동 탭 화면', () => {
     expect(renderToStaticMarkup(createElement('div', null, createElement(ActivityTabsSlot)))).toBe('<div></div>');
     expect(renderToStaticMarkup(createElement(ActivityTabsContext.Provider, { value: null }, createElement('div', null, createElement(ActivityTabsSlot))))).toBe('<div></div>');
     // 활동이 하나인 단원은 탭을 만들 필요가 없다.
-    for (const u of UNITS) if (u.ok && u.id !== 'g5-mixture' && u.id !== 'g4-land' && u.id !== 'g3-earth-sea' && u.id !== 'g5-weather' && u.id !== 'g4-gases' && u.id !== 'g3-force' && u.id !== 'g3-sound' && u.id !== 'g4-magnet' && u.id !== 'g5-solution' && u.id !== 'g5-heat' && u.id !== 'g5-light' && u.id !== 'g6-acid-base' && u.id !== 'g6-motion' && u.id !== 'g6-combustion' && !CARD_SORT_BATCH_A.includes(u.id) && !CARD_SORT_BATCH_C.includes(u.id)) expect(u.activities, u.id).toHaveLength(1);
+    for (const u of UNITS) if (u.ok && u.id !== 'g5-mixture' && u.id !== 'g4-land' && u.id !== 'g3-earth-sea' && u.id !== 'g5-weather' && u.id !== 'g4-gases' && u.id !== 'g3-force' && u.id !== 'g3-sound' && u.id !== 'g4-magnet' && u.id !== 'g5-solution' && u.id !== 'g5-heat' && u.id !== 'g5-light' && u.id !== 'g3-lifecycle' && u.id !== 'g6-acid-base' && u.id !== 'g6-motion' && u.id !== 'g6-combustion' && !CARD_SORT_BATCH_A.includes(u.id) && !CARD_SORT_BATCH_C.includes(u.id)) expect(u.activities, u.id).toHaveLength(1);
   });
   it('활동이 셋인 단원(땅의 변화·물질의 연소)도 탭 셋을 그리고 마지막 활동 탭이 선택된다', () => {
     for (const [id, last, title] of [['g4-land', 'volcano-ejecta', '화산에서 나오는 것 나누기'], ['g6-combustion', 'property-change', '변하기 전과 후의 성질 비교하기']] as const) {

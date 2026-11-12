@@ -38,6 +38,8 @@ import { springScaleModule } from './spring-scale';
 import { gasWeightModule } from './gas-weight';
 import { lightNeededModule } from './light-needed';
 import { soundTransmitModule } from './sound-transmit';
+import { butterflyLifeModule } from './butterfly-life';
+import { landSeaDotsModule } from './land-sea-dots';
 
 export const MODULES: Record<ModuleKind, AnyModule> = {
   dissolution: dissolutionModule,
@@ -78,4 +80,6 @@ export const MODULES: Record<ModuleKind, AnyModule> = {
   'gas-weight': gasWeightModule,
   'light-needed': lightNeededModule,
   'sound-transmit': soundTransmitModule,
+  'butterfly-life': butterflyLifeModule,
+  'land-sea-dots': landSeaDotsModule,
 };

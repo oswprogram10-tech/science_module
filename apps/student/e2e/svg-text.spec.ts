@@ -26,9 +26,9 @@ const UNITS = readdirSync(UNITS_DIR)
 
 const NO_SVG_TEXT = new Set(['g3-animal', 'g3-material', 'g3-plantlife', 'g5-strata', 'g6-acid-base', 'g6-career', 'g5-mixture/separation-methods', 'g5-weather/dew-fog-cloud', 'g3-animal/animal-habitat', 'g3-plantlife/plant-habitat', 'g4-ecosystem/living-nonliving', 'g5-strata/rock-grain', 'g3-material/matter-shape-volume', 'g4-water-state/water-around', 'g4-land/volcano-ejecta', 'g6-combustion/property-change']);
 
-test('단원 목록: 32개 단원의 모든 활동(57개)을 잰다', () => {
+test('단원 목록: 32개 단원의 모든 활동(59개)을 잰다', () => {
   expect(new Set(UNITS.map((u) => u.id)).size).toBe(32);
-  expect(UNITS.length).toBe(57);
+  expect(UNITS.length).toBe(59);
   expect(UNITS.map((u) => u.name)).toContain('g5-mixture/separation-methods');
   expect(UNITS.map((u) => u.name)).toContain('g5-weather/dew-fog-cloud');
   for (const name of ['g3-animal/animal-habitat', 'g3-plantlife/plant-habitat', 'g4-ecosystem/living-nonliving', 'g5-strata/rock-grain', 'g3-material/matter-shape-volume', 'g4-water-state/water-around', 'g4-land/volcano-ejecta', 'g6-combustion/property-change']) expect(UNITS.map((u) => u.name)).toContain(name);

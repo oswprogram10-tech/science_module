@@ -2,7 +2,7 @@
   "id": "g3-earth-sea",
   "title": "지구와 바다",
   "grade": 3,
-  "standards": ["4과06-02", "4과06-03"],
+  "standards": ["4과06-01", "4과06-02", "4과06-03"],
   "engine": "earth",
   "experiments": [
     {
@@ -185,6 +185,171 @@
           "썰물은 바닷물이 빠져나간"
         ],
         "probes": []
+      }
+    }
+,
+    {
+      "id": "land-sea-dots",
+      "module": "land-sea-dots",
+      "title": "육지와 바다의 넓이 비교하기",
+      "question": "지구의 겉은 육지와 바다 가운데 어느 쪽이 더 넓을까?",
+      "predictionPrompt": "예측: 바다에 떨어진 점의 비율은?",
+      "variables": [
+        {
+          "key": "dots",
+          "label": "찍은 점의 수",
+          "type": "choice",
+          "options": [
+            {
+              "value": 10,
+              "label": "10개"
+            },
+            {
+              "value": 50,
+              "label": "50개"
+            },
+            {
+              "value": 100,
+              "label": "100개"
+            },
+            {
+              "value": 500,
+              "label": "500개"
+            }
+          ],
+          "default": 10
+        },
+        {
+          "key": "round",
+          "label": "점 찍기 차례",
+          "type": "choice",
+          "options": [
+            {
+              "value": 1,
+              "label": "첫째"
+            },
+            {
+              "value": 2,
+              "label": "둘째"
+            },
+            {
+              "value": 3,
+              "label": "셋째"
+            }
+          ],
+          "default": 1
+        },
+        {
+          "key": "globeColor",
+          "label": "지구본 받침 색",
+          "type": "choice",
+          "options": [
+            {
+              "value": "red",
+              "label": "빨간색"
+            },
+            {
+              "value": "blue",
+              "label": "파란색"
+            }
+          ],
+          "default": "red"
+        }
+      ],
+      "dependent": [
+        {
+          "key": "seaPct",
+          "label": "바다에 떨어진 점의 비율",
+          "unit": "%"
+        },
+        {
+          "key": "sea",
+          "label": "바다에 떨어진 점",
+          "unit": "개"
+        },
+        {
+          "key": "land",
+          "label": "육지에 떨어진 점",
+          "unit": "개"
+        }
+      ],
+      "gateway": {
+        "mode": "open",
+        "requirePrediction": true,
+        "requireSingleIV": true
+      },
+      "safety": [],
+      "safetyNotices": [],
+      "limits": [
+        "확률",
+        "표본",
+        "대수의 법칙",
+        "오차 범위"
+      ],
+      "tutor": {
+        "forbiddenAnswers": [
+          "바다가 더 넓",
+          "바다가 육지보다 넓",
+          "육지보다 바다가",
+          "바다가 70",
+          "바다가 약 70",
+          "바다가 71",
+          "70 %가 바다",
+          "70%가 바다",
+          "점이 많을수록 정확",
+          "점을 많이 찍을수록 믿을",
+          "많이 찍으면 정확",
+          "대기가 감싸",
+          "공기가 지구를 감싸",
+          "받침 색은 관계없",
+          "받침 색깔은 관계없",
+          "색깔은 상관없"
+        ],
+        "probes": [
+          {
+            "when": "before-run",
+            "text": "{iv}을(를) 바꾸면 바다에 떨어진 점의 비율이(가) 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?"
+          },
+          {
+            "when": "first-trial",
+            "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?"
+          },
+          {
+            "when": "confounded",
+            "text": "{changed}이(가) 함께 바뀌었어요. 바다에 떨어진 점의 비율이(가) 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?"
+          },
+          {
+            "when": "iv-unchanged",
+            "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?"
+          },
+          {
+            "when": "repeat",
+            "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?"
+          },
+          {
+            "when": "fair-test",
+            "text": "{iv}만 바꾸었을 때 바다에 떨어진 점의 비율과 점의 수는 각각 어떻게 달라졌나요? 결과표에서 두 줄을 비교해 볼까요?"
+          },
+          {
+            "when": "fair-test",
+            "iv": "dots",
+            "text": "점을 10개 찍었을 때와 500개 찍었을 때 비율은 어떻게 다른가요? 어느 쪽 결과를 더 믿을 수 있을까요?"
+          },
+          {
+            "when": "fair-test",
+            "iv": "round",
+            "text": "점 찍기 차례만 바꾸었어요. 결과가 같았나요? 점의 수에 따라 차례마다 차이가 어떻게 달랐나요?"
+          },
+          {
+            "when": "fair-test",
+            "iv": "globeColor",
+            "text": "받침 색만 바꾸었을 때 결과가 달라졌나요? 이 결과로 무엇을 알 수 있을까요?"
+          },
+          {
+            "when": "prediction-mismatch",
+            "text": "우주에서 본 지구 둘레에는 육지와 바다 말고 무엇이 지구를 감싸고 있을까요?"
+          }
+        ]
       }
     }
   ]
