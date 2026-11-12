@@ -148,6 +148,15 @@ describe('guardOutput', () => {
   it('limits도 걸러낸다', () => {
     expect(guardOutput('이온이 퍼져요', guard).ok).toBe(false);
   });
+  it('limits는 낱말 단위로 찾는다: 조사·어미가 붙으면 걸고, 글자 일부만 같은 다른 낱말은 걸지 않는다', () => {
+    const g = { forbiddenAnswers: [], limits: ['전자', '염', '산화', '증발', '운동 에너지', '시상 화석', 'DNA'] };
+    for (const t of ['전자가 움직여요', '염이 생겼나요', '산화되었나요', '물이 증발해요', '증발했어요', '운동 에너지가 커요', '운동에너지는 어때요', '시상 화석인지 볼까요', 'dna를 보세요', '전\u200b자가 보여요']) {
+      expect(guardOutput(t, g).ok, t).toBe(false);
+    }
+    for (const t of ['전자석에 붙은 클립을 세어 볼까요?', '이산화 탄소가 생겼나요?', '염산을 떨어뜨렸어요', '염기성 용액', '증기가 보여요', '운동장에서 뛰었어요', '화석을 살펴볼까요?']) {
+      expect(guardOutput(t, g).ok, t).toBe(true);
+    }
+  });
   it('걸리면 고정 문구로 바꾼다', () => {
     const bad = [{ when: 'before-run', text: '저어도 녹는 양은 같아요' }];
     expect(selectProbe(ctx({}), bad, guard)).toBe(FALLBACK_PROBE);
@@ -214,8 +223,9 @@ describe('g4-gases 매니페스트 probe', () => {
         }
       }
     }
+    // 제한 낱말은 낱말 단위로 찾는다: "몰"로 시작하는 다른 낱말(몰라요·몰랐어요·몰래)은 걸리지 않는다.
     for (const t of ['몰라요', '잘 몰랐어요', '물을 몰래 넣었어요']) {
-      expect(guardOutput(t, gGuard).ok, t).toBe(false); // 참고: 낱말 단위가 아니라 부분 문자열 비교
+      expect(guardOutput(t, gGuard).ok, t).toBe(true);
     }
   });
 });
