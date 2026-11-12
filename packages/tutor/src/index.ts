@@ -5,6 +5,11 @@ import {
   type Prediction,
   type TrialAnalysis,
 } from '@sci/gateway';
+import { echoesMask, hasForeignScript } from './privacy';
+
+/** guardOutput 걸림 이름: 한자·일본 글자 섞임, 개인정보 자리표시 되풀이. */
+export const FOREIGN_SCRIPT_HIT = '한자·일본 글자';
+export const MASK_ECHO_HIT = '개인정보 자리표시';
 
 export const FALLBACK_PROBE = '지금까지의 결과표를 다시 살펴볼까요? 무엇이 달라졌나요?';
 
@@ -89,7 +94,9 @@ export function guardOutput(text: string, config: GuardConfig): GuardResult {
     return needle.length > 0 && haystack.includes(needle);
   });
   const limits = config.limits.filter((term) => usesLimitTerm(text, term));
-  const hits = [...forbidden, ...limits];
+  // 한자·일본 글자가 섞였거나(기본 모델의 언어 섞임) 입력의 개인정보 자리표시를 되풀이하면 막는다.
+  const extra = [...(hasForeignScript(text) ? [FOREIGN_SCRIPT_HIT] : []), ...(echoesMask(text) ? [MASK_ECHO_HIT] : [])];
+  const hits = [...forbidden, ...limits, ...extra];
   return { ok: hits.length === 0, hits };
 }
 
@@ -172,6 +179,7 @@ export function selectProbe(
   return text;
 }
 
+export * from './privacy';
 export * from './check';
 export * from './edits';
 export * from './editCheck';

@@ -1,3 +1,4 @@
+import { maskPersonalInfo } from './privacy';
 import {
   OBSERVED_LABEL,
   PREDICTION_LABEL,
@@ -33,7 +34,8 @@ import { modelAnswer } from './observeModel';
 import { cardSortWhen, classifyWhen, observeWhen } from './situation';
 
 /** 입력 형식 버전. 형식을 바꾸면 올린다(학습 데이터를 다시 내보내야 한다). */
-export const PROMPT_VERSION = 'v0';
+/** v1: 학생 말의 개인정보(이름·학교·사는 곳·연락처)를 가린 뒤 넣는다(maskPersonalInfo). */
+export const PROMPT_VERSION = 'v1';
 
 /** 시행 요약에 담는 최근 시행 수. */
 export const MAX_TRIALS = 3;
@@ -415,7 +417,8 @@ export function buildTutorInput(
   else if (state.kind === 'classify') lines.push(...classifyBody(classifyExp(experiment), state));
   else if (state.kind === 'card-sort') lines.push(...cardSortBody(cardSortExp(experiment), state));
   else lines.push(...observeBody(observeExp(experiment), state));
-  const said = utterance?.trim();
+  // 개인정보는 모델 입력에 넣기 전에 가린다(계획서 §6.5). 모델이 보지 못한 이름·학교는 되풀이할 수 없다.
+  const said = utterance ? maskPersonalInfo(utterance).trim() : '';
   lines.push(`[학생] ${said ? said : '(말하지 않음)'}`);
   return lines.join('\n');
 }

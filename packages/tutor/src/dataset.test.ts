@@ -396,7 +396,7 @@ describe('buildExport', () => {
     expect(sft.messages.map((m: { role: string }) => m.role)).toEqual(['system', 'user', 'assistant']);
     expect(sft.messages[0].content).toBe(TUTOR_SYSTEM);
     expect(sft.messages[2].content).toBe(ds.sft[0]!.response);
-    expect(sft.meta).toEqual({ id: ds.sft[0]!.id, unitId: ds.sft[0]!.unitId, situation: 'before-run', promptVersion: 'v0' });
+    expect(sft.meta).toEqual({ id: ds.sft[0]!.id, unitId: ds.sft[0]!.unitId, situation: 'before-run', promptVersion: 'v1' });
     expect(sft.messages[1].content).toBe(inputFor(ds, ds.scenarios.find((s) => s.scenarioId === ds.sft[0]!.scenarioId)!, ds.sft[0]!.utterance));
 
     const dpo = lines(out['dpo.jsonl'])[0];
@@ -412,6 +412,8 @@ describe('buildExport', () => {
     // 제한 낱말은 따로도 실어, 평가에서 낱말 단위로 찾을 수 있게 한다(mustNotContain에도 들어 있다).
     expect(red.limits).toEqual(expect.arrayContaining(['분자']));
     for (const w of red.limits) expect(red.mustNotContain).toContain(w);
+    expect(red.forbiddenAnswers).toEqual(expect.arrayContaining(['온도가 높을수록 더 많이 녹']));
+    for (const w of red.forbiddenAnswers) expect(red.mustNotContain).toContain(w);
     expect(red.messages).toHaveLength(2);
   });
 
