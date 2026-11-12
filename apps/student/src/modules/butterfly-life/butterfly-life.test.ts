@@ -8,7 +8,7 @@ import { GraphView } from '../../components/GraphView';
 import { UNITS } from '../../units';
 import { MODULES } from '../index';
 import { butterflyLifeModule } from './index';
-import { GUIDE_TEXT, SHAPE_TEXT, lifeNote, rulerCm } from './initial';
+import { SHAPE_TEXT, lifeNote, rulerCm } from './initial';
 import { ButterflyMacroView, CAGE, RULER, mmX } from './ButterflyMacroView';
 import { ButterflyRecordView, recordPoints } from './ButterflyRecordView';
 
@@ -69,10 +69,12 @@ describe('결과 열·센서·그래프·예측 기준', () => {
     }
   });
 
-  it('센서: 가상 자(distance) 하나, 관찰한 날에 닿은 뒤의 몸 길이를 cm로 보여 주고 실험 전·도착 전에는 0이다', () => {
+  it('센서: 가상 자(distance) 하나, 관찰한 날에 닿은 뒤의 몸 길이를 mm로 보여 주고 실험 전·도착 전에는 0이다', () => {
     const specs = butterflyLifeModule.sensors(null, base);
-    expect(specs.map((s) => [s.label, s.kind, s.unit])).toEqual([['가상 자: 몸 길이', 'distance', 'cm']]);
+    expect(specs.map((s) => [s.label, s.kind, s.unit])).toEqual([['가상 자: 몸 길이', 'distance', 'mm']]);
     expect(specs[0]!.source).toBe(0);
+    // 거리 센서는 cm로 읽으므로 source는 cm이고, display로 10배 해 mm(소수 없이)로 보여 준다.
+    expect([specs[0]!.decimals, specs[0]!.display]).toEqual([0, { scale: 10, unitLabel: 'mm' }]);
     const v = { day: 15, time: 'morning' };
     expect(butterflyLifeModule.sensors(last(v), v)[0]!.source).toBeCloseTo(2.8, 9);
     expect(rulerCm(sim(v).samples[3]!)).toBe(0);
@@ -167,12 +169,15 @@ describe('눈으로 보기', () => {
     }
   });
 
-  it('문구: 실행 뒤 한 줄 요약과 교실 안내 한 줄', () => {
+  it('문구: 실행 뒤 한 줄 요약과 교실 안내 한 줄(매니페스트 note)', () => {
     const v = { day: 28, time: 'morning' };
     expect(lifeNote(28, sim(v).result)).toBe('28일째 · 몸 길이 20 mm · 먹이: 먹음 · 움직임: 날아다님 · 날개: 있음');
     expect(macro(v)).toContain('28일째 · 몸 길이 20 mm · 먹이: 먹음 · 움직임: 날아다님 · 날개: 있음');
-    expect(macro(v, false)).toContain(GUIDE_TEXT);
-    expect(GUIDE_TEXT).toBe('교실에서 기르는 배추흰나비와 함께 보며 기록해요.');
+    // 교실 안내 한 줄은 눈으로 보기 그림이 아니라 매니페스트의 note(탐구 질문 아래)다.
+    expect(experiment.note).toBe('교실에서 기르는 배추흰나비와 함께 보며 기록해요.');
+    expect(macro(v, false)).not.toContain('교실에서 기르는');
+    expect(macro(v)).not.toContain('교실에서 기르는');
+    expect((unit.activities[0]!.experiment as { note?: string }).note).toBeUndefined();
   });
 
   it('SVG 글자는 모두 14 이상이고 안내 문구가 모든 조건에서 가드를 통과한다', () => {

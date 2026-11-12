@@ -81,6 +81,7 @@
       "module": "butterfly-life",
       "title": "배추흰나비의 한살이 관찰 기록",
       "question": "배추흰나비는 알에서 어른벌레가 되기까지 어떻게 변할까?",
+      "note": "교실에서 기르는 배추흰나비와 함께 보며 기록해요.",
       "predictionPrompt": "예측: 몸 길이는?",
       "variables": [
         {

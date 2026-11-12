@@ -1,6 +1,6 @@
 import type { BlShape, BlTime, ButterflyLifeSample } from '@sci/engine-life';
 import type { ViewProps } from '../types';
-import { GUIDE_TEXT, SHAPE_TEXT, TIME_TEXT, lifeNote, lifeResult, lifeShape, toParams } from './initial';
+import { SHAPE_TEXT, TIME_TEXT, lifeNote, lifeResult, lifeShape, toParams } from './initial';
 
 // viewBox 폭 240은 1280 px 화면에서 이 칸의 실제 폭(약 230 px)과 거의 같다. 글자 14는 화면에서도 약 13 px 이상이다.
 export const W = 240;
@@ -111,7 +111,6 @@ export function ButterflyMacroView({ trial, values }: ViewProps<ButterflyLifeSam
         </g>
       </svg>
       <p className="view-note" data-testid="life-note">{note}</p>
-      <p className="view-note" data-testid="life-guide">{GUIDE_TEXT}</p>
     </figure>
   );
 }

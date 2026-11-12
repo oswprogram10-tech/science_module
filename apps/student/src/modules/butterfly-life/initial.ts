@@ -51,5 +51,3 @@ export const lifeNote = (day: number, r: ButterflyLifeResult) => `${day}일째 �
 
 /** 가상 자(cm): 관찰한 날에 닿은 뒤에만 몸 길이를 읽는다. 처음 값은 0. */
 export const rulerCm = (snapshot: ButterflyLifeSample | null): number => (snapshot !== null && Number.isFinite(snapshot.length) ? snapshot.length / 10 : 0);
-
-export const GUIDE_TEXT = '교실에서 기르는 배추흰나비와 함께 보며 기록해요.';

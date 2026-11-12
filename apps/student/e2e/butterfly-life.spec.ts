@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { test, expect, gotoUnit, selectIV, predict, runButton, resultRows, expectSensorNear, activityTab } from './helpers';
+import { test, expect, gotoUnit, selectIV, predict, runButton, resultRows, sensor, expectSensorNear, activityTab } from './helpers';
 
 const tutorBox = (page: Page) => page.getByRole('heading', { name: '생각해 볼까요?' }).locator('..');
 const macro = (page: Page) => page.getByRole('figure', { name: '눈으로 보기' });
@@ -48,7 +48,11 @@ test('두 번째 활동 탭으로 열리고, 첫 활동(씨가 싹 트는 조건
   await expect(page.getByRole('tab')).toHaveCount(2);
   await expect(page.getByText('탐구 질문: 배추흰나비는 알에서 어른벌레가 되기까지 어떻게 변할까?')).toBeVisible();
   await expect(page.getByText('예측: 몸 길이는?')).toBeVisible();
-  await expect(macro(page).getByTestId('life-guide')).toHaveText('교실에서 기르는 배추흰나비와 함께 보며 기록해요.');
+  await expect(page.locator('.activity-note')).toHaveText('교실에서 기르는 배추흰나비와 함께 보며 기록해요.');
+  await expect(macro(page).getByText('교실에서 기르는')).toHaveCount(0);
+  await activityTab(page, 1).click();
+  await expect(page.locator('.activity-note')).toHaveCount(0);
+  await activityTab(page, 2).click();
   await activityTab(page, 1).click();
   await expect(page).toHaveURL(/#\/unit\/g3-lifecycle\/germination$/);
   await expect(page.getByRole('group', { name: '물', exact: true })).toBeVisible();
@@ -75,7 +79,8 @@ test('기준(1일째, 아침)이면 몸 길이 1·먹지 않음이고 실행 전
   expect(await shape(page)).toBe('egg');
   expect(await dots(page)).toEqual([[1, 1]]);
   await expect(page.getByText('가상 자: 몸 길이')).toBeVisible();
-  await expectSensorNear(page, '거리', 0.1, 0.1);
+  await expectSensorNear(page, '거리', 1, 1.5);
+  await expect(sensor(page, '거리')).toContainText(' mm');
   // 단계 이름을 결과표·그림·기록 그래프 어디에도 쓰지 않는다.
   expect(await resultRows(page).first().innerText()).not.toMatch(STAGE_NAMES);
   expect(await page.locator('.views').innerText()).not.toMatch(STAGE_NAMES);

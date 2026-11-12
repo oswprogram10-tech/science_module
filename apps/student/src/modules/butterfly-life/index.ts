@@ -36,8 +36,8 @@ export const butterflyLifeModule: ExperimentModule<ButterflyLifeSample, Butterfl
     { label: '움직이나요', value: moveText },
     { label: '날개', value: wingsText },
   ],
-  // 가상 자: 관찰한 날에 닿은 뒤의 몸 길이. 거리 센서는 cm로 읽으므로 mm ÷ 10을 보여 준다(28 mm = 2.8 cm). 실험 전에는 0.
-  sensors: (snapshot) => [{ id: 'body-ruler', label: '가상 자: 몸 길이', unit: 'cm', kind: 'distance', source: rulerCm(snapshot), decimals: 1 }],
+  // 가상 자: 관찰한 날에 닿은 뒤의 몸 길이. 거리 센서는 cm로 읽으므로 source는 mm ÷ 10(cm)이고, display로 10배 해 mm로 보여 준다(28 mm = 2.8 cm → "28 mm"). 실험 전에는 0.
+  sensors: (snapshot) => [{ id: 'body-ruler', label: '가상 자: 몸 길이', unit: 'mm', kind: 'distance', source: rulerCm(snapshot), decimals: 0, display: { scale: 10, unitLabel: 'mm' } }],
   MacroView: ButterflyMacroView,
   MicroView: ButterflyRecordView,
 };
