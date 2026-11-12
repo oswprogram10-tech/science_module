@@ -48,7 +48,7 @@ describe('활동이 여럿인 단원의 시나리오(id 안정성)', () => {
   });
   it('활동이 하나인 단원은 활동마다 시나리오를 한 번만 만들고 모두 첫 활동 것이다', () => {
     for (const id of TUTOR_UNITS) {
-      if (id === 'g4-gases' || id === 'g5-mixture' || id === 'g4-land' || id === 'g3-earth-sea' || id === 'g5-weather' || id === 'g3-force' || id === 'g3-sound' || id === 'g5-light' || id === 'g4-magnet' || id === 'g5-solution' || id === 'g5-heat' || id === 'g6-acid-base' || id === 'g6-motion' || id === 'g6-combustion' || CARD_SORT_BATCH_A.includes(id) || CARD_SORT_BATCH_C.includes(id)) continue;
+      if (id === 'g4-gases' || id === 'g5-mixture' || id === 'g4-land' || id === 'g3-earth-sea' || id === 'g5-weather' || id === 'g3-force' || id === 'g3-sound' || id === 'g5-light' || id === 'g6-electricity' || id === 'g6-plant' || id === 'g4-magnet' || id === 'g5-solution' || id === 'g5-heat' || id === 'g6-acid-base' || id === 'g6-motion' || id === 'g6-combustion' || CARD_SORT_BATCH_A.includes(id) || CARD_SORT_BATCH_C.includes(id)) continue;
       const only = units[id]!.manifest.experiments;
       expect(only, id).toHaveLength(1);
       expect(new Set(generateScenarios(id, units[id]!).map((s) => s.state.experimentId)), id).toEqual(new Set([only[0]!.id]));
@@ -359,6 +359,59 @@ describe('변인 실험 활동을 더한 단원의 시나리오(빛의 성질 �
       const keys = new Set(list.slice(from, to).map((s) => situationOf(s.state, exp)));
       for (const k of SITUATIONS) expect(keys.has(k), `${exp.id} ${k}`).toBe(true);
     }
+  });
+});
+
+describe('3차 묶음 E1: 전기의 이용 활동 2·3, 식물의 구조와 기능 활동 2 시나리오(덧붙임)', () => {
+  const hash = (lines: string[]) => createHash('sha256').update(lines.join('\n')).digest('hex');
+  const SITUATIONS = ['before-run', 'first-trial', 'confounded', 'iv-unchanged', 'repeat', 'fair-test', 'prediction-mismatch'];
+
+  it('g6-electricity: 활동이 셋이다. s001~s022(electromagnet)와 s023~s044(bulb-light)는 뒤 활동을 더하기 전과 한 글자도 같고, battery-series 시나리오가 뒤에 덧붙는다', () => {
+    const u = units['g6-electricity']!;
+    const list = generateScenarios('g6-electricity', u);
+    expect(u.manifest.experiments.map((e) => e.id)).toEqual(['electromagnet', 'bulb-light', 'battery-series']);
+    expect(list.map((s) => s.scenarioId)).toEqual(list.map((_, i) => `g6-electricity-s${String(i + 1).padStart(3, '0')}`));
+    expect(list).toHaveLength(62);
+    expect(list.slice(0, 22).every((s) => s.state.experimentId === 'electromagnet')).toBe(true);
+    expect(list.slice(22, 44).every((s) => s.state.experimentId === 'bulb-light')).toBe(true);
+    expect(list.slice(44).every((s) => s.state.experimentId === 'battery-series')).toBe(true);
+    // 앞 22줄·44줄의 SHA-256은 이 활동들을 더하기 전(22줄)과 bulb-light만 더했을 때(44줄)의 ml/tutor/scenarios/g6-electricity.jsonl이다.
+    const sha22 = '323b9dcc7ad67b61071e2c12563a0be82c0ff71210de6e0a972c12171863d7d9';
+    const sha44 = 'b680fc965889e70ec1d28d6f267fbbdaca9eb8acf397dd1b16ac086a21cf396d';
+    expect(hash(list.slice(0, 22).map((s) => JSON.stringify(s)))).toBe(sha22);
+    expect(hash(list.slice(0, 44).map((s) => JSON.stringify(s)))).toBe(sha44);
+    const file = readFileSync(scenarioFile(TUTOR_DIR, 'g6-electricity'), 'utf8').trimEnd().split('\n');
+    expect(hash(file.slice(0, 22))).toBe(sha22);
+    expect(hash(file.slice(0, 44))).toBe(sha44);
+    expect(file).toHaveLength(62);
+    for (const [i, from, to] of [[1, 22, 44], [2, 44, 62]] as const) {
+      const exp = u.manifest.experiments[i]!;
+      const keys = new Set(list.slice(from, to).map((s) => situationOf(s.state, exp)));
+      for (const k of SITUATIONS) expect(keys.has(k), `${exp.id} ${k}`).toBe(true);
+    }
+  });
+
+  it('g6-plant: 첫 활동(transpiration) 시나리오 s001~s022는 활동 2를 더하기 전과 한 글자도 같고, microscope-cells 시나리오가 뒤에 덧붙는다(칸이 보이지 않는 시행의 칸 길이는 담지 않는다)', () => {
+    const u = units['g6-plant']!;
+    const list = generateScenarios('g6-plant', u);
+    expect(u.manifest.experiments.map((e) => e.id)).toEqual(['transpiration', 'microscope-cells']);
+    expect(list.map((s) => s.scenarioId)).toEqual(list.map((_, i) => `g6-plant-s${String(i + 1).padStart(3, '0')}`));
+    expect(list).toHaveLength(46);
+    expect(list.slice(0, 22).every((s) => s.state.experimentId === 'transpiration')).toBe(true);
+    expect(list.slice(22).every((s) => s.state.experimentId === 'microscope-cells')).toBe(true);
+    const sha = '838c2ea7972fbf02535d9b49039749e7a77022ebc88f1ad9bfefec7a23e5f788';
+    expect(hash(list.slice(0, 22).map((s) => JSON.stringify(s)))).toBe(sha);
+    const file = readFileSync(scenarioFile(TUTOR_DIR, 'g6-plant'), 'utf8').trimEnd().split('\n');
+    expect(hash(file.slice(0, 22))).toBe(sha);
+    expect(file).toHaveLength(46);
+    const exp = u.manifest.experiments[1]!;
+    const keys = new Set(list.slice(22).map((s) => situationOf(s.state, exp)));
+    for (const k of SITUATIONS) expect(keys.has(k), k).toBe(true);
+    // 초점을 맞추지 않은 시행(결과에 size가 없다)과 맞춘 시행이 모두 있고, 어느 줄에도 null·NaN이 없다.
+    const results = list.slice(22).flatMap((s) => (s.state.kind === 'variable' ? s.state.trials.map((t) => t.result) : []));
+    expect(results.some((r) => r.size === undefined && r.seen === '흐릿함')).toBe(true);
+    expect(results.some((r) => typeof r.size === 'number')).toBe(true);
+    expect(file.slice(22).join("\n")).not.toMatch(/"size":null|NaN/);
   });
 });
 

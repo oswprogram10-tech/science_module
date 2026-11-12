@@ -261,7 +261,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('식물의 구조와 기능 매니페스트의 변인, 안전 종류, 탐침을 읽는다', () => {
     const m = parseManifest(plantJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g6-plant', 6, 'life', ['6과11-02']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g6-plant', 6, 'life', ['6과11-01', '6과11-02']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('transpiration');
     expect(e.safety).toEqual([]);
@@ -594,6 +594,64 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     expect(e.tutor.probes.every((p) => p.text.trim().endsWith('?'))).toBe(true);
     // 첫 활동은 그대로다.
     expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['distanceCm', 'curve', 'diameterCm']);
+  });
+
+  it('전기의 이용 활동 2·3(전구에 불 켜기, 전지 직렬연결 비교)의 변인, 범주 결과, 바꿀 조건 게이트, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(electricityJson);
+    expect([m.id, m.engine, m.standards]).toEqual(['g6-electricity', 'physics', ['6과15-01', '6과15-02', '6과15-03']]);
+    expect(m.experiments.map((x) => x.id)).toEqual(['electromagnet', 'bulb-light', 'battery-series']);
+    const b = m.experiments[1] as VariableExperiment;
+    expect([b.id, b.module, b.title, b.question, b.predictionPrompt]).toEqual(['bulb-light', 'bulb-light', '전구에 불 켜기', '전지, 전구, 전선을 어떻게 연결하면 불이 켜질까?', '예측: 전구의 밝기 눈금은?']);
+    expect(b.safety).toEqual([]);
+    expect(b.variables.map((v) => v.key)).toEqual(['plusEnd', 'minusEnd', 'switch', 'wireColor']);
+    expect(b.variables.map((v) => v.options.map((o) => o.value))).toEqual([['tip', 'side', 'none'], ['tip', 'side', 'none'], ['open', 'closed'], ['red', 'black']]);
+    expect(b.variables.map((v) => v.default)).toEqual(['none', 'none', 'open', 'red']);
+    expect(b.dependent.map((d) => [d.key, d.unit])).toEqual([['brightness', '눈금'], ['lit', '']]);
+    // 이 활동만 바꿀 조건을 하나 고르지 않아도 실행할 수 있다(여러 연결을 자유롭게 시도하는 탐색 활동).
+    expect(b.gateway).toEqual({ mode: 'open', requirePrediction: true, requireSingleIV: false });
+    expect(b.limits).toEqual(['전류', '전압', '저항', '옴', '회로도 기호']);
+    for (const f of ['꼭지와 옆면에', '꼭지와 옆면을', '서로 다른 부분에 이어', '끊긴 곳이 없', '한 바퀴 이어', '고리처럼 이어', '전기 회로가 완성', '회로가 이어져야', '스위치를 닫아야', '스위치를 닫으면 켜', '전선 색깔은 관계없', '전선 색은 관계없', '색깔은 상관없']) expect(b.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => b.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(b.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['plusEnd', 'minusEnd', 'switch', 'wireColor']);
+    expect(b.tutor.probes.find((p) => p.when === 'confounded')!.text).toBe('{changed}을(를) 함께 바꾸었어요. 불이 켜진 까닭이 어느 연결 때문인지 하나씩 바꾸어 확인해 볼까요?');
+    expect(b.tutor.probes.every((p) => p.text.trim().endsWith('?'))).toBe(true);
+    const c = m.experiments[2] as VariableExperiment;
+    expect([c.id, c.module, c.title, c.question, c.predictionPrompt]).toEqual(['battery-series', 'battery-series', '전지 한 개와 두 개 직렬연결 비교하기', '전지를 한 개 연결할 때와 두 개 직렬로 연결할 때 전구는 어떻게 다를까?', '예측: 전구의 밝기 눈금은?']);
+    expect(c.variables.map((v) => v.key)).toEqual(['cells', 'wireColor']);
+    expect(c.variables[0]!.options.map((o) => [o.value, o.label])).toEqual([['one', '전지 1개'], ['two', '전지 2개를 한 줄로'], ['reversed', '2개 중 하나를 반대로']]);
+    expect(c.dependent.map((d) => [d.key, d.unit])).toEqual([['brightness', '눈금'], ['lit', '']]);
+    expect(c.gateway).toEqual({ mode: 'open', requirePrediction: true, requireSingleIV: true });
+    expect(c.limits).toEqual(['전류', '전압', '저항', '병렬', '옴']);
+    for (const f of ['직렬로 연결하면 밝', '두 개를 연결하면 더 밝', '전지가 많을수록 밝', '전지를 늘리면 밝', '반대로 넣으면 켜지지', '반대로 넣으면 불이 꺼', '전선 색깔은 관계없', '전선 색은 관계없', '색깔은 상관없']) expect(c.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => c.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(c.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['cells', 'wireColor']);
+    expect(c.tutor.probes.every((p) => p.text.trim().endsWith('?'))).toBe(true);
+    // 첫 활동은 그대로다.
+    expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['turns', 'battery', 'core', 'direction']);
+    expect((m.experiments[0] as VariableExperiment).gateway.requireSingleIV).toBe(true);
+  });
+
+  it('식물의 구조와 기능 활동 2(현미경으로 세포 관찰하기)의 변인, 범주 결과, 안내 한 줄, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(plantJson);
+    expect(m.experiments.map((x) => x.id)).toEqual(['transpiration', 'microscope-cells']);
+    const e = m.experiments[1] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['microscope-cells', 'microscope-cells', '현미경으로 세포 관찰하기', '양파 껍질을 현미경으로 보면 무엇이 보일까?', '예측: 화면에서 본 칸 하나의 크기는?']);
+    expect(e.note).toBe('실제 현미경으로 보기 전에 연습해 보세요.');
+    expect((m.experiments[0] as VariableExperiment).note).toBeUndefined();
+    expect(e.safety).toEqual([]);
+    expect(e.variables.map((v) => v.key)).toEqual(['power', 'focus', 'stain', 'sample', 'slideLabel']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([[40, 100, 400], ['off', 'on'], ['none', 'iodine'], ['onion', 'cheek'], ['yellow', 'green']]);
+    expect(e.variables.map((v) => v.default)).toEqual([40, 'off', 'none', 'onion', 'yellow']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['size', 'mm'], ['seen', '']]);
+    expect(e.gateway).toEqual({ mode: 'open', requirePrediction: true, requireSingleIV: true });
+    // "세포" 낱말 자체는 단원 용어라 한계 용어에 넣지 않는다.
+    expect(e.limits).toEqual(['세포막', '세포질', '엽록체', '미토콘드리아', '세포 소기관']);
+    for (const f of ['핵이 보', '점은 핵', '진한 점은 핵', '세포벽이 있', '세포벽이 없', '식물 세포는', '동물 세포는', '배율을 높이면 크게', '배율이 높을수록 크게', '배율이 클수록 크게', '염색하면 핵', '염색하면 잘 보', '이름표 색은 관계없', '이름표 색깔은 관계없', '색깔은 상관없']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['power', 'focus', 'stain', 'sample', 'slideLabel']);
+    expect(e.tutor.probes.every((p) => p.text.trim().endsWith('?'))).toBe(true);
+    // 첫 활동은 그대로다.
+    expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['leaves', 'light', 'wind', 'startMl']);
   });
 
   it('소리의 성질 활동 3(소리가 전달되는 물질과 소음 줄이기)의 변인, 범주 결과, 안전 없음, 한계 용어, 금지 구절, 탐침을 읽는다', () => {

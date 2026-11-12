@@ -38,6 +38,9 @@ import { springScaleModule } from './spring-scale';
 import { gasWeightModule } from './gas-weight';
 import { lightNeededModule } from './light-needed';
 import { soundTransmitModule } from './sound-transmit';
+import { bulbLightModule } from './bulb-light';
+import { batterySeriesModule } from './battery-series';
+import { microscopeCellsModule } from './microscope-cells';
 
 export const MODULES: Record<ModuleKind, AnyModule> = {
   dissolution: dissolutionModule,
@@ -78,4 +81,7 @@ export const MODULES: Record<ModuleKind, AnyModule> = {
   'gas-weight': gasWeightModule,
   'light-needed': lightNeededModule,
   'sound-transmit': soundTransmitModule,
+  'bulb-light': bulbLightModule,
+  'battery-series': batterySeriesModule,
+  'microscope-cells': microscopeCellsModule,
 };

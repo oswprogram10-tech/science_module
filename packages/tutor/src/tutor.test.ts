@@ -3079,3 +3079,132 @@ describe('변인 실험 활동 추가 매니페스트 probe (light-needed, sound
     });
   }
 });
+
+// ---------- 3차 묶음 E1: 전구에 불 켜기·전지 직렬연결 비교(전기의 이용 활동 2·3), 현미경으로 세포 관찰하기(식물의 구조와 기능 활동 2) ----------
+describe('변인 실험 활동 추가 매니페스트 probe (bulb-light, battery-series, microscope-cells)', () => {
+  const CASES = [
+    {
+      name: 'g6-electricity 활동 2(bulb-light)',
+      json: electricityJson,
+      index: 1,
+      iv: { plusEnd: '전선을 댄 곳을 바꾸었어요.', minusEnd: '전선을 댄 곳을 바꾸었어요.', switch: '스위치만 바꾸었어요.', wireColor: '전선 색깔만 바꾸었을 때' },
+      before: '전구의 밝기 눈금',
+      mismatch: '불이 켜진 연결에는 어떤 공통점이 있을까요?',
+      rules: ['두 전선이 꼭지와 옆면에 닿아야 해요', '꼭지와 옆면을 이어야 해요', '서로 다른 부분에 이어야 해요', '끊긴 곳이 없어야 해요', '한 바퀴 이어야 켜져요', '고리처럼 이어야 해요', '전기 회로가 완성되어야 해요', '회로가 이어져야 켜져요', '스위치를 닫아야 켜져요', '스위치를 닫으면 켜져요', '전선 색깔은 관계없어요', '전선 색은 관계없어요', '색깔은 상관없어요'],
+    },
+    {
+      name: 'g6-electricity 활동 3(battery-series)',
+      json: electricityJson,
+      index: 2,
+      iv: { cells: '전지 연결만 바꾸었어요.', wireColor: '전선 색깔만 바꾸었을 때' },
+      before: '전구의 밝기 눈금',
+      mismatch: '손전등에 전지를 여러 개 넣는 까닭은 무엇일까요?',
+      rules: ['직렬로 연결하면 밝아요', '두 개를 연결하면 더 밝아요', '전지가 많을수록 밝아요', '전지를 늘리면 밝아져요', '반대로 넣으면 켜지지 않아요', '반대로 넣으면 불이 꺼져요', '전선 색깔은 관계없어요', '전선 색은 관계없어요', '색깔은 상관없어요'],
+    },
+    {
+      name: 'g6-plant 활동 2(microscope-cells)',
+      json: plantJson,
+      index: 1,
+      iv: { power: '배율만 바꾸었어요.', focus: '초점만 바꾸었어요.', stain: '염색 전과 후를 비교해 볼까요?', sample: '관찰 재료만 바꾸었어요.', slideLabel: '이름표 색만 바꾸었을 때' },
+      before: '화면에서 본 칸 하나의 크기',
+      mismatch: '양파와 입안 칸의 같은 점과 다른 점을 찾아볼까요?',
+      rules: ['핵이 보여요', '점은 핵이에요', '진한 점은 핵이에요', '세포벽이 있어요', '세포벽이 없어요', '식물 세포는 크기가 커요', '동물 세포는 작아요', '배율을 높이면 크게 보여요', '배율이 높을수록 크게 보여요', '배율이 클수록 크게 보여요', '염색하면 핵이 보여요', '염색하면 잘 보여요', '이름표 색은 관계없어요', '이름표 색깔은 관계없어요', '색깔은 상관없어요'],
+    },
+  ];
+  for (const c of CASES) {
+    describe(c.name, () => {
+      const e = parseManifest(c.json).experiments[c.index]! as VariableExperiment;
+      const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+      const eKeys = e.variables.map((v) => v.key);
+      const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+      const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: eKeys[0]!, ...x });
+      const fair = (iv: string): Partial<ProbeContext> => ({ ivKey: iv, lastAnalysis: { kind: 'fair-test', changed: [iv] }, prediction: 'same', observed: 'same' });
+
+      it('실행 전 probe가 예측 버튼에 맞는 양(눈금)을 묻는다', () => {
+        expect(selectProbe(eCtx({}), e.tutor.probes, eGuard)).toContain(c.before);
+        expect(e.predictionPrompt).toContain(c.before);
+      });
+
+      it('iv별 fair-test 질문을 고른다', () => {
+        for (const [iv, start] of Object.entries(c.iv)) expect(selectProbe(eCtx(fair(iv)), e.tutor.probes, eGuard), iv).toContain(start);
+      });
+
+      it('예측과 결과가 다르면 결과표에서 확인하라고 한다', () => {
+        const text = selectProbe(eCtx({ ...fair(eKeys[0]!), prediction: 'increase', observed: 'same' }), e.tutor.probes, eGuard);
+        expect(text).toContain(c.mismatch);
+      });
+
+      it('모든 probe는 질문형이고, 모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+        let n = 0;
+        for (const probe of e.tutor.probes) {
+          expect(probe.text.trim().endsWith('?'), probe.text).toBe(true);
+          for (const iv of eKeys) {
+            for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+              const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+              expect(guardOutput(text, eGuard).ok, text).toBe(true);
+              expect(text).not.toMatch(/[{}]/);
+              expect(text).not.toMatch(/(을\(를\)|이\(가\)|와\(과\)|은\(는\))/);
+              n++;
+            }
+          }
+        }
+        expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+      });
+
+      it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+        const situations: Partial<ProbeContext>[] = [
+          {},
+          { lastAnalysis: { kind: 'first-trial', changed: [] } },
+          { lastAnalysis: { kind: 'confounded', changed: eKeys.slice(0, 2) } },
+          { lastAnalysis: { kind: 'iv-unchanged', changed: [eKeys[eKeys.length - 1]!] } },
+          { lastAnalysis: { kind: 'repeat', changed: [] } },
+          ...eKeys.flatMap((k) => [fair(k), { ...fair(k), prediction: 'increase' as const, observed: 'same' as const }]),
+        ];
+        for (const s of situations) {
+          const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+          expect(text).not.toBe(FALLBACK_PROBE);
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+        }
+      });
+
+      it('금지 구절과 한계 용어를 담은 문장은 실제로 막는다', () => {
+        for (const f of e.tutor.forbiddenAnswers) expect(guardOutput(`${f}요`, eGuard).ok, f).toBe(false);
+        for (const l of e.limits) expect(guardOutput(`${l}이에요`, eGuard).ok, l).toBe(false);
+        for (const rule of c.rules) expect(guardOutput(rule, eGuard).ok, rule).toBe(false);
+        for (const probe of e.tutor.probes) {
+          for (const f of e.tutor.forbiddenAnswers) expect(probe.text, probe.text).not.toContain(f);
+          for (const l of e.limits) expect(probe.text, probe.text).not.toContain(l);
+        }
+      });
+    });
+  }
+});
+
+// 바꿀 조건을 고르지 않아도 되는 활동(bulb-light, requireSingleIV: false)의 튜터
+describe('bulb-light: 바꿀 조건을 고르지 않은 채 실행한 시행의 튜터', () => {
+  const e = parseManifest(electricityJson).experiments[1]! as VariableExperiment;
+  const labels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+  const guard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+  const none = (x: Partial<ProbeContext>): ProbeContext => ({ labels, ivKey: null, ...x });
+
+  it('실행 전에는 "조건"을 바꾸면 전구의 밝기 눈금이 어떻게 될지 묻고, 바꿀 조건 안내 없이 질문이 나온다', () => {
+    const text = selectProbe(none({}), e.tutor.probes, guard);
+    expect(text).toBe('조건을 바꾸면 전구의 밝기 눈금이 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?');
+    expect(e.gateway.requireSingleIV).toBe(false);
+  });
+
+  it('바꾼 것이 하나든 여럿이든 confounded 질문(명세의 문장)이 나오고 폴백이 아니다', () => {
+    for (const changed of [['plusEnd'], ['plusEnd', 'switch']]) {
+      const text = selectProbe(none({ lastAnalysis: { kind: 'confounded', changed } }), e.tutor.probes, guard);
+      expect(text).toContain(' 함께 바꾸었어요. 불이 켜진 까닭이 어느 연결 때문인지 하나씩 바꾸어 확인해 볼까요?');
+      expect(text).not.toBe(FALLBACK_PROBE);
+    }
+    expect(selectProbe(none({ lastAnalysis: { kind: 'confounded', changed: ['switch'] } }), e.tutor.probes, guard)).toBe('스위치를 함께 바꾸었어요. 불이 켜진 까닭이 어느 연결 때문인지 하나씩 바꾸어 확인해 볼까요?');
+  });
+
+  it('첫 시행·같은 조건 반복도 폴백이 아니다', () => {
+    for (const lastAnalysis of [{ kind: 'first-trial' as const, changed: [] }, { kind: 'repeat' as const, changed: [] }]) {
+      expect(selectProbe(none({ lastAnalysis }), e.tutor.probes, guard)).not.toBe(FALLBACK_PROBE);
+    }
+  });
+});

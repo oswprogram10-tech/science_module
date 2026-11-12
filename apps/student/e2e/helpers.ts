@@ -31,7 +31,7 @@ export async function gotoUnit(page: Page, id: string, opts: { dev?: boolean; pl
 
 /** 바꿀 조건(조작변인) 라디오를 고른다. 예: selectIV(page, '물의 온도') */
 export async function selectIV(page: Page, label: string) {
-  await page.getByRole('radio', { name: new RegExp(`^${label}(을|를) 바꿀 조건으로 고르기$`) }).check();
+  await page.getByRole('radio', { name: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(을|를) 바꿀 조건으로 고르기$`) }).check();
 }
 
 /** 변인 값을 고른다. group은 변인 이름(예: '물의 온도'), option은 버튼 글자(예: '60 °C'). */

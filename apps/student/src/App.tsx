@@ -352,6 +352,7 @@ function Lab({
         <a className="back" href="#/">← 단원 목록</a>
         <h1>{title}</h1>
         <p className="question">탐구 질문: {experiment.question}</p>
+        {experiment.note && <p className="activity-note">{experiment.note}</p>}
       </header>
       <ActivityTabsSlot />
 

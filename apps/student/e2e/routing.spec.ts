@@ -124,11 +124,11 @@ test('단원 목록 카드: 활동이 넷인 힘과 우리 생활은 "활동 4�
   await page.goto('/');
   const cards = page.getByRole('button', { name: /탐구 질문:/ });
   await expect(cards).toHaveCount(32);
-  await expect(page.getByText(/^활동 \d+개$/)).toHaveCount(20);
-  // 활동이 넷인 힘과 우리 생활은 "활동 4개", 셋인 소리의 성질·땅의 변화·물질의 연소(카드 분류 세 번째 활동)는 "활동 3개", 나머지 열여섯 곳은 "활동 2개"다.
+  await expect(page.getByText(/^활동 \d+개$/)).toHaveCount(22);
+  // 활동이 넷인 힘과 우리 생활은 "활동 4개", 셋인 소리의 성질·전기의 이용·땅의 변화·물질의 연소(카드 분류 세 번째 활동)는 "활동 3개", 나머지 열일곱 곳은 "활동 2개"다.
   await expect(page.getByText('활동 4개')).toHaveCount(1);
-  await expect(page.getByText('활동 3개')).toHaveCount(3);
-  await expect(page.getByText('활동 2개')).toHaveCount(16);
+  await expect(page.getByText('활동 3개')).toHaveCount(4);
+  await expect(page.getByText('활동 2개')).toHaveCount(17);
   // 변인 실험을 두 번째 활동으로 더한 세 단원: 카드의 탐구 질문은 첫 활동의 것이다.
   for (const [grade, title, question] of [
     ['4학년', /여러 가지 기체/, '주사기 속 기체의 부피'],
@@ -139,6 +139,8 @@ test('단원 목록 카드: 활동이 넷인 힘과 우리 생활은 "활동 4�
     // 물체를 보려면 빛이 필요할까를 두 번째 활동으로 더한 빛의 성질(카드에는 첫 활동의 탐구 질문이 나온다)
     ['5학년', /빛의 성질/, '볼록 렌즈로 햇빛을 모을 때'],
     ['6학년', /산과 염기/, '지시약을 이용하면 여러 가지 용액을 어떻게 분류할 수 있을까?'],
+    // 현미경으로 세포 관찰하기를 두 번째 활동으로 더한 식물의 구조와 기능(카드에는 첫 활동의 탐구 질문이 나온다)
+    ['6학년', /식물의 구조와 기능/, '잎이 달린 줄기를 꽂아 둔 물은'],
     // 시간에 따른 위치 변화·연소 전과 후 비교하기를 두 번째 활동으로 더한 두 단원(첫 활동의 탐구 질문이 카드에 나온다)
     ['6학년', /물체의 운동/, '수레를 놓는 높이를 바꾸면'],
   ] as const) {
@@ -159,6 +161,8 @@ test('단원 목록 카드: 활동이 넷인 힘과 우리 생활은 "활동 4�
   await expect(sound).toContainText('줄을 튕기는 세기');
   await expect(page.getByRole('region', { name: '3학년' }).getByRole('button', { name: /지구와 바다/ })).toContainText('활동 2개');
   for (const [grade, name, q] of [
+    // 전기의 이용은 활동이 셋(전자석, 전구에 불 켜기, 전지 직렬연결 비교)이다. 탐구 질문은 첫 활동의 것이다.
+    ['6학년', /전기의 이용/, '전자석에 붙는 클립의 수는'],
     ['6학년', /물질의 연소/, '촛불을 집기병으로 덮으면'],
     ['4학년', /땅의 변화/, ''],
   ] as const) {
@@ -220,11 +224,12 @@ test('#/unit/{id}/{experimentId}로 변인 실험 두 번째 활동(공기를 �
   for (const [id, title, group, first, firstGroup] of [
     ['g4-gases', '여러 가지 기체', '공기 주입 마개를 누른 횟수', 'syringe-volume', '피스톤을 누르는 힘'],
     ['g3-sound', '소리의 성질', '소리 내기', 'string-sound', '튕기는 세기'],
+    ['g6-electricity', '전기의 이용', '전지 (+)극 쪽 전선을 댄 곳', 'electromagnet', '에나멜선을 감은 횟수'],
     ['g4-magnet', '자석의 이용', '마주 보는 극', 'magnet-distance', '자석과 클립 사이의 거리'],
   ] as const) {
     await page.goto(`/#/unit/${id}`);
     await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
-    await expect(page.getByRole('tab')).toHaveCount(id === 'g3-sound' ? 3 : 2);
+    await expect(page.getByRole('tab')).toHaveCount(id === 'g3-sound' || id === 'g6-electricity' ? 3 : 2);
     await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('group', { name: firstGroup })).toBeVisible();
     await page.goto(`/#/unit/${id}/${first}`);
@@ -245,6 +250,7 @@ test('#/unit/{id}/{experimentId}로 변인 실험 두 번째 활동(용액의 �
     ['g5-heat', '열과 우리 생활', '안쪽 컵 물의 처음 온도', 'insulated-cup', '탐구 질문: 따뜻한 물이 담긴 컵을 무엇으로, 어떻게 감싸면 물이 덜 식을까?'],
     // 산과 염기의 첫 활동은 분류 활동이다.
     ['g6-acid-base', '산과 염기', '넣은 방울 수', 'indicator-classify', '탐구 질문: 지시약을 이용하면 여러 가지 용액을 어떻게 분류할 수 있을까?'],
+    ['g6-plant', '식물의 구조와 기능', '배율', 'transpiration', '탐구 질문: 잎이 달린 줄기를 꽂아 둔 물은 어떤 조건에서 더 많이 줄어들까?'],
   ] as const) {
     await page.goto(`/#/unit/${id}`);
     await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
@@ -343,8 +349,8 @@ test('모르는 experimentId는 첫 활동으로 돌린다', async ({ page }) =>
   await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('group', { name: '넣는 물의 양' })).toBeVisible();
   // 활동이 하나인 단원에서는 어떤 experimentId도 그 단원의 활동을 연다.
-  await page.goto('/#/unit/g6-electricity/separation-methods');
-  await expect(page.getByRole('heading', { level: 1, name: '전기의 이용' })).toBeVisible();
+  await page.goto('/#/unit/g6-seasons/separation-methods');
+  await expect(page.getByRole('heading', { level: 1, name: '계절의 변화' })).toBeVisible();
   await expect(page.getByRole('tablist')).toHaveCount(0);
 });
 
@@ -359,8 +365,8 @@ test('고른 탭은 활동 화면을 감싼 탭 패널을 가리키고, 패널 �
   await activityTab(page, 1).click();
   await expect(page.getByRole('tabpanel')).toHaveAccessibleName('활동 1 · 소금과 모래의 혼합물 분리하기');
   // 활동이 하나인 단원에는 탭 패널이 없다.
-  await page.goto('/#/unit/g6-electricity');
-  await expect(page.getByRole('heading', { level: 1, name: '전기의 이용' })).toBeVisible();
+  await page.goto('/#/unit/g6-seasons');
+  await expect(page.getByRole('heading', { level: 1, name: '계절의 변화' })).toBeVisible();
   await expect(page.getByRole('tabpanel')).toHaveCount(0);
 });
 
@@ -442,7 +448,7 @@ test('활동이 셋인 땅의 변화: 탭 셋, 세 번째 활동 주소, 화살�
 });
 
 test('활동이 하나인 단원은 탭을 그리지 않고 머리 바로 아래가 본문이다(구조 그대로)', async ({ page }) => {
-  for (const id of ['g6-electricity', 'g4-night-sky', 'g6-career']) {
+  for (const id of ['g6-seasons', 'g4-night-sky', 'g6-career']) {
     await gotoUnit(page, id);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await expect(page.getByRole('tablist'), id).toHaveCount(0);
