@@ -20,8 +20,17 @@ import { PROMPT_VERSION, TUTOR_SYSTEM } from './context';
 
 /** 저장소의 모든 튜터 단원. */
 const full = loadDataset();
-/** 견본이 가장 풍부한 대표 단원 3개만(아래 검증기·가져오기·내보내기 시험은 이 견본 레코드를 재료로 쓴다). */
-const ds = loadDataset(TUTOR_DIR, RICH_EXAMPLE_UNITS);
+/** 처음 손으로 쓴 견본(author "EX")만 남긴다. 조사 기반 생성 견본(author "EXG", docs/specs/tutor-examples-v1.md)은 아래에서 따로 검사한다. */
+const seedOf = (d: Dataset): Dataset => ({
+  ...d,
+  sft: d.sft.filter((r) => r.author === 'EX'),
+  pairs: d.pairs.filter((r) => r.author === 'EX'),
+  redteam: d.redteam.filter((r) => r.author === 'EX'),
+});
+/** 처음 견본만 남긴 저장소 데이터셋(견본 수·분포 검사용). */
+const seed = seedOf(full);
+/** 견본이 가장 풍부한 대표 단원 3개의 처음 견본만(아래 검증기·가져오기·내보내기 시험은 이 견본 레코드를 재료로 쓴다). */
+const ds = seedOf(loadDataset(TUTOR_DIR, RICH_EXAMPLE_UNITS));
 
 describe('저장소의 데이터셋 검증 (pnpm test에도 포함)', () => {
   it('모든 jsonl이 검증을 통과한다', () => {
@@ -58,24 +67,47 @@ describe('저장소의 데이터셋 검증 (pnpm test에도 포함)', () => {
       const threeCombustion = unit === 'g6-combustion';
       // 용해와 용액·산과 염기는 대표 단원이라 두 번째 활동의 견본이 더해져 sft 10 · pairs 5 · redteam 7이다. 열과 우리 생활도 두 번째 활동(온도가 다른 두 물이 닿으면)의 견본이 더해졌다(sft 6 · pairs 3 · redteam 4). 물체의 운동·물질의 연소도 두 번째 활동(시간에 따른 위치 변화·연소 전과 후 비교하기)의 견본이 같은 수만큼 더해졌다.
       const sftCount = (threeCombustion ? 8 : rich ? (twoMore ? 10 : 8) : unit === 'g4-night-sky' || twoMore ? 6 : unit === 'g5-mixture' ? 5 : 4) + (moreActivities ? 4 : 0) + (threeAct ? 2 : 0);
-      expect(full.sft.filter((r) => r.unitId === unit), `${unit} sft`).toHaveLength(sftCount);
-      expect(full.pairs.filter((r) => r.unitId === unit), `${unit} pairs`).toHaveLength((threeCombustion ? 4 : rich ? (twoMore ? 5 : 4) : twoMore ? 3 : 2) + (moreActivities ? 2 : 0) + (threeAct ? 1 : 0));
-      expect(full.redteam.filter((r) => r.unitId === unit), `${unit} redteam`).toHaveLength((threeCombustion ? 5 : rich ? (twoMore ? 7 : 6) : twoMore ? 4 : 3) + (moreActivities ? 2 : 0) + (threeAct ? 1 : 0));
+      expect(seed.sft.filter((r) => r.unitId === unit), `${unit} sft`).toHaveLength(sftCount);
+      expect(seed.pairs.filter((r) => r.unitId === unit), `${unit} pairs`).toHaveLength((threeCombustion ? 4 : rich ? (twoMore ? 5 : 4) : twoMore ? 3 : 2) + (moreActivities ? 2 : 0) + (threeAct ? 1 : 0));
+      expect(seed.redteam.filter((r) => r.unitId === unit), `${unit} redteam`).toHaveLength((threeCombustion ? 5 : rich ? (twoMore ? 7 : 6) : twoMore ? 4 : 3) + (moreActivities ? 2 : 0) + (threeAct ? 1 : 0));
     }
-    for (const r of [...full.sft, ...full.pairs, ...full.redteam]) {
+    for (const r of [...seed.sft, ...seed.pairs, ...seed.redteam]) {
       expect([r.source, r.reviewed, r.author]).toEqual(['example', false, 'EX']);
     }
   });
   it('견본이 상황·나쁜 이유·유형을 고루 덮는다', () => {
-    expect(new Set(full.pairs.map((r) => r.rejectedReason)).size).toBe(6);
-    expect(new Set(full.redteam.map((r) => r.category)).size).toBe(6);
+    expect(new Set(seed.pairs.map((r) => r.rejectedReason)).size).toBe(6);
+    expect(new Set(seed.redteam.map((r) => r.category)).size).toBe(6);
     for (const unit of TUTOR_UNITS) {
       const rich = RICH_EXAMPLE_UNITS.includes(unit as (typeof RICH_EXAMPLE_UNITS)[number]) || unit === 'g4-land';
-      expect(new Set(full.redteam.filter((r) => r.unitId === unit).map((r) => r.category)).size, `${unit} redteam 유형`).toBe(unit === 'g4-land' ? 5 : rich ? 6 : 3); // 땅의 변화: 두 활동의 견본이 "답 달라고 하기(ask-answer)"를 한 번씩 써서 5종
-      expect(new Set(full.pairs.filter((r) => r.unitId === unit).map((r) => r.rejectedReason)).size, `${unit} 나쁜 이유`).toBe(rich ? 4 : 2);
-      const sft = full.sft.filter((r) => r.unitId === unit);
+      expect(new Set(seed.redteam.filter((r) => r.unitId === unit).map((r) => r.category)).size, `${unit} redteam 유형`).toBe(unit === 'g4-land' ? 5 : rich ? 6 : 3); // 땅의 변화: 두 활동의 견본이 "답 달라고 하기(ask-answer)"를 한 번씩 써서 5종
+      expect(new Set(seed.pairs.filter((r) => r.unitId === unit).map((r) => r.rejectedReason)).size, `${unit} 나쁜 이유`).toBe(rich ? 4 : 2);
+      const sft = seed.sft.filter((r) => r.unitId === unit);
       expect(sft.some((r) => r.utterance === ''), `${unit}: 말하지 않은 상황`).toBe(true);
       expect(new Set(sft.map((r) => r.scenarioId)).size, `${unit}: 서로 다른 시나리오`).toBe(sft.length);
+    }
+  });
+  it('조사 기반 생성 견본(EXG): 활동마다 sft 30 · pairs 15 · redteam 6 이상, 모든 시나리오와 나쁜 이유·공격 유형을 덮는다', () => {
+    const gen = { sft: full.sft.filter((r) => r.author === 'EXG'), pairs: full.pairs.filter((r) => r.author === 'EXG'), redteam: full.redteam.filter((r) => r.author === 'EXG') };
+    for (const r of [...gen.sft, ...gen.pairs, ...gen.redteam]) expect([r.source, r.reviewed]).toEqual(['example', false]);
+    for (const r of [...full.sft, ...full.pairs, ...full.redteam]) expect(['EX', 'EXG']).toContain(r.author);
+    const expOf = new Map(full.scenarios.map((s) => [s.scenarioId, s.state.experimentId]));
+    for (const unit of TUTOR_UNITS) {
+      for (const exp of full.units[unit]!.manifest.experiments) {
+        const label = `${unit}/${exp.id}`;
+        const mine = <T extends { scenarioId: string }>(rs: T[]) => rs.filter((r) => expOf.get(r.scenarioId) === exp.id && r.scenarioId.startsWith(`${unit}-`));
+        const sft = mine(gen.sft);
+        const pairs = mine(gen.pairs);
+        const red = mine(gen.redteam);
+        expect(sft.length, `${label} sft`).toBeGreaterThanOrEqual(30);
+        expect(pairs.length, `${label} pairs`).toBeGreaterThanOrEqual(15);
+        expect(red.length, `${label} redteam`).toBeGreaterThanOrEqual(6);
+        const scenarios = full.scenarios.filter((s) => s.unitId === unit && s.state.experimentId === exp.id).map((s) => s.scenarioId);
+        expect(scenarios.filter((id) => !sft.some((r) => r.scenarioId === id)), `${label}: sft에 쓰지 않은 시나리오`).toEqual([]);
+        expect(new Set(pairs.map((r) => r.rejectedReason)).size, `${label} 나쁜 이유`).toBe(6);
+        expect(new Set(red.map((r) => r.category)).size, `${label} 공격 유형`).toBe(6);
+        expect(sft.some((r) => r.utterance === ''), `${label}: 말하지 않은 상황`).toBe(true);
+      }
     }
   });
   it('시나리오: 단원마다 15~25개, 입력이 비어 있지 않다', () => {

@@ -28,6 +28,11 @@ out/                         내보내기 결과(.gitignore)
 | `pnpm tutor:export [--include-examples] [--reviewed-only]` | `out/`에 `sft.jsonl`, `dpo.jsonl`, `eval-redteam.jsonl`, `manifest.json`을 쓴다. |
 | `pnpm tutor:import <csv> --unit <unitId> --kind sft\|pairs\|redteam --author T03` | 교사 CSV를 가져온다. 실패한 행은 넣지 않고 행 번호와 이유를 출력하며, 하나라도 실패하면 종료 코드 1. |
 
+## 조사 기반 생성 견본 (EXG)
+
+예시(프로토타입) 모델을 만들기 위해 활동마다 실제 수업 절차를 조사하고(`research/<unitId>.md`, 출처 포함) 그에 맞는 견본을 더 만들었다(사양 `docs/specs/tutor-examples-v1.md`). `source: "example"`, `author: "EXG"`, `reviewed: false`이며 활동마다 sft 30 · pairs 15 · redteam 6 이상이다. 처음 견본(`author: "EX"`)의 수·분포 검사는 그대로 두고, EXG는 활동별 최소 수·시나리오·나쁜 이유·공격 유형을 따로 검사한다.
+2026-11-12 결정: 정식 출시 전 예시 모델에는 AI 견본을 학습에 써도 된다. 내보낼 때 `pnpm tutor:export --include-examples`를 쓴다. 정식 출시 전에는 이용약관·법무 확인과 교사 검수를 다시 거친다.
+
 ## 견본 제외 규칙 (T3)
 
 `source: "example"` 레코드는 AI(Claude)가 형식과 수준을 보여 주려고 쓴 **견본**이다(`reviewed: false`, `author: "EX"`).
