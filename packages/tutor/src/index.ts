@@ -46,12 +46,50 @@ export interface GuardResult {
 
 const normalize = (s: string) => s.normalize('NFC').replace(/[\s\p{P}\p{S}\p{Cf}]/gu, '');
 
+/** 낱말(어절)로 나눈다. 보이지 않는 글자(폭 없는 공백 등)는 지우고, 띄어쓰기·문장 부호·기호에서 끊으며, 영문은 소문자로 맞춘다. */
+const words = (s: string) =>
+  s.normalize('NFC').toLowerCase().replace(/\p{Cf}/gu, '').split(/[\s\p{P}\p{S}]+/u).filter(Boolean);
+
+/**
+ * 제한 낱말 바로 뒤에 붙어도 그 낱말을 쓴 것으로 보는 조사·어미의 시작.
+ * 이것으로 시작하지 않는 글자가 이어지면 다른 낱말이다(전자 → 전자석, 염 → 염산, 몰 → 몰라요).
+ */
+const PARTICLE_START =
+  /^(?:은|는|이|인|가|을|를|의|에|와|과|도|만|로|으로|까지|부터|처럼|보다|이나|나|이랑|랑|이라|라는|라고|이란|이야|야|예요|이에|이다|입|들|하|해|했|한|할|함|합|되|돼|됐|된|될|됨|됩|시키|시켜|시킨)/;
+
+/** 낱말 하나가 제한 낱말로 시작하고, 뒤에 아무것도 없거나 조사·어미만 붙었는가. */
+const wordUses = (word: string, term: string) => word.startsWith(term) && (word.length === term.length || PARTICLE_START.test(word.slice(term.length)));
+
+/**
+ * 제한 낱말(limits)을 낱말 단위로 찾는다. 글자 일부만 같은 다른 낱말(전자석·이산화 탄소·염산·몰라요)은 걸지 않는다.
+ * 여러 낱말로 된 용어(운동 에너지)는 이어진 낱말들로 찾고, 붙여 쓴 꼴(운동에너지)도 찾는다.
+ */
+export function usesLimitTerm(text: string, limit: string): boolean {
+  const parts = words(limit);
+  if (parts.length === 0) return false;
+  const ws = words(text);
+  const joined = parts.join('');
+  for (let i = 0; i < ws.length; i++) {
+    if (parts.length > 1 && wordUses(ws[i]!, joined)) return true;
+    if (i + parts.length > ws.length) continue;
+    const head = parts.slice(0, -1).every((p, k) => ws[i + k] === p);
+    if (head && wordUses(ws[i + parts.length - 1]!, parts[parts.length - 1]!)) return true;
+  }
+  return false;
+}
+
+/**
+ * 출력 가드. 정답 구절(forbiddenAnswers)은 띄어쓰기·문장 부호를 무시한 부분 일치로 찾고(구절 앞부분만 적어 두어도 걸리게),
+ * 제한 낱말(limits)은 낱말 단위로 찾는다(usesLimitTerm).
+ */
 export function guardOutput(text: string, config: GuardConfig): GuardResult {
   const haystack = normalize(text);
-  const hits = [...config.forbiddenAnswers, ...config.limits].filter((phrase) => {
+  const forbidden = config.forbiddenAnswers.filter((phrase) => {
     const needle = normalize(phrase);
     return needle.length > 0 && haystack.includes(needle);
   });
+  const limits = config.limits.filter((term) => usesLimitTerm(text, term));
+  const hits = [...forbidden, ...limits];
   return { ok: hits.length === 0, hits };
 }
 
