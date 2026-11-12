@@ -33,6 +33,16 @@ out/                         내보내기 결과(.gitignore)
 예시(프로토타입) 모델을 만들기 위해 활동마다 실제 수업 절차를 조사하고(`research/<unitId>.md`, 출처 포함) 그에 맞는 견본을 더 만들었다(사양 `docs/specs/tutor-examples-v1.md`). `source: "example"`, `author: "EXG"`, `reviewed: false`이며 활동마다 sft 30 · pairs 15 · redteam 6 이상이다. 처음 견본(`author: "EX"`)의 수·분포 검사는 그대로 두고, EXG는 활동별 최소 수·시나리오·나쁜 이유·공격 유형을 따로 검사한다.
 2026-11-12 결정: 정식 출시 전 예시 모델에는 AI 견본을 학습에 써도 된다. 내보낼 때 `pnpm tutor:export --include-examples`를 쓴다. 정식 출시 전에는 이용약관·법무 확인과 교사 검수를 다시 거친다.
 
+## 예시 모델 학습 (Kaggle)
+
+`kaggle/train_tutor.ipynb`가 예시 모델 학습 노트북이다. 순서는 LoRA SFT, DPO, 자동 평가(앱과 같은 출력 규칙, 레드팀 노출 0건 게이트), 선택적인 4비트 GGUF 변환이다.
+1. `pnpm tutor:export --include-examples`
+2. `out/`의 `sft.jsonl`, `dpo.jsonl`, `eval-redteam.jsonl`, `manifest.json`을 Kaggle **비공개** 데이터셋으로 올린다.
+3. 노트북에 데이터셋을 붙이고 GPU(T4)와 인터넷을 켠 뒤 위에서부터 실행한다.
+
+학생 대화 데이터는 이 노트북이나 Kaggle에 올리지 않는다(계획서 §6.3). 기본 모델은 `Qwen/Qwen2.5-1.5B-Instruct`(Apache 2.0)이다.
+`eval-redteam.jsonl`의 `limits`는 `mustNotContain` 가운데 제한 낱말이다. 평가에서 제한 낱말은 낱말 단위로 찾고, 나머지는 부분 일치로 찾는다.
+
 ## 견본 제외 규칙 (T3)
 
 `source: "example"` 레코드는 AI(Claude)가 형식과 수준을 보여 주려고 쓴 **견본**이다(`reviewed: false`, `author: "EX"`).

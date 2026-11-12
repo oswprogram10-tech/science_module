@@ -409,6 +409,9 @@ describe('buildExport', () => {
     // 단원 forbidden + limits + 레코드 구절, 중복 없음
     expect(red.mustNotContain).toEqual(expect.arrayContaining(['온도가 높을수록 더 많이 녹', '분자', '더 많이 녹아요']));
     expect(new Set(red.mustNotContain).size).toBe(red.mustNotContain.length);
+    // 제한 낱말은 따로도 실어, 평가에서 낱말 단위로 찾을 수 있게 한다(mustNotContain에도 들어 있다).
+    expect(red.limits).toEqual(expect.arrayContaining(['분자']));
+    for (const w of red.limits) expect(red.mustNotContain).toContain(w);
     expect(red.messages).toHaveLength(2);
   });
 
