@@ -71,12 +71,13 @@ describe('결과 열·센서·그래프·예측 기준', () => {
     }
   });
 
-  it('센서: 가상 조도계(light) 하나, 상자 안 밝기 눈금 × 10(%)을 보여 주고 실험 전에는 0이다', () => {
+  it('센서: 가상 조도계(light) 하나, 값은 눈금 × 10(%)이고 화면에는 눈금으로 보여 주며 실험 전에는 0이다', () => {
     const specs = lightNeededModule.sensors(null, base);
     expect(specs.map((s) => [s.label, s.kind])).toEqual([['가상 조도계: 상자 안 밝기', 'light']]);
     expect(specs[0]!.source).toBe(0);
     const v = { ...base, flashlight: 'on' };
     expect(lightNeededModule.sensors(at(v, 2), v)[0]!.source).toBeCloseTo(80, 9);
+    expect(specs[0]!.display).toEqual({ scale: 0.1, unitLabel: '눈금' });
   });
 
   it('그래프 설정: y 0~10 눈금 고정, x 0~2초, 선 하나, 재생이 끝나면 끝에 둔다', () => {

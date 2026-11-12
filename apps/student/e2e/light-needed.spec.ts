@@ -70,7 +70,9 @@ test('기준(손전등 끔, 인형, 검은 상자)이면 밝기 0·보이지 않
   await expect(macro(page).getByTestId('peek-object')).toHaveCount(0);
   expect(await barValues(page)).toEqual([0]);
   await expect(page.getByText('가상 조도계: 상자 안 밝기')).toBeVisible();
-  await expectSensorNear(page, '빛 세기', 0, 1);
+  await expectSensorNear(page, '빛 세기', 0, 0.5);
+  await expect(page.locator('.sensors')).toContainText('눈금');
+  await expect(page.locator('.sensors')).not.toContainText('%');
   expect(await page.locator('main').innerText()).not.toMatch(LIMITS);
 });
 
@@ -86,7 +88,7 @@ test('손전등만 켜면 8·보임(늘어났다)이고 손전등 전용 질문�
   expect(await windowState(page)).toBe('object');
   await expect(macro(page).getByTestId('peek-object')).toHaveAttribute('data-object', 'doll');
   expect(await barValues(page)).toEqual([0, 8]);
-  await expectSensorNear(page, '빛 세기', 80, 2);
+  await expectSensorNear(page, '빛 세기', 8, 0.5);
 });
 
 test('물체만 켜진 작은 전구로 바꾸면(손전등 끔) 밝기 3이어도 보이고(늘어났다) 물체 전용 질문이 나온다', async ({ page }) => {

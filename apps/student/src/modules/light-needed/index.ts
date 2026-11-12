@@ -31,8 +31,9 @@ export const lightNeededModule: ExperimentModule<LightNeededSample, LightNeededR
     { label: '상자 안 밝기(눈금)', value: (r) => String(r.brightness) },
     { label: '구멍으로 본 물체', value: visibleText },
   ],
-  // 가상 조도계: 상자 안 밝기. 조도 센서는 상대 빛 세기(%)로 읽으므로 눈금 × 10을 보여 준다(눈금 8 = 80 %).
-  sensors: (snapshot) => [{ id: 'light-meter', label: '가상 조도계: 상자 안 밝기', unit: '%', kind: 'light', source: (snapshot?.level ?? 0) * 10 }],
+  // 가상 조도계: 상자 안 밝기. 조도 센서는 상대 빛 세기(%)로 읽으므로 값은 눈금 × 10(%)으로 두고,
+  // 화면에는 결과표·그래프와 같은 단위인 눈금으로 보여 준다(80 % → 8.0 눈금). 전구에 불 켜기와 같은 방식이다.
+  sensors: (snapshot) => [{ id: 'light-meter', label: '가상 조도계: 상자 안 밝기', unit: '%', kind: 'light', source: (snapshot?.level ?? 0) * 10, display: { scale: 0.1, unitLabel: '눈금' } }],
   MacroView: LightMacroView,
   MicroView: LightBarsView,
 };
