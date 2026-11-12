@@ -65,12 +65,13 @@ describe('결과 열·센서·그래프·예측 기준', () => {
     expect(cols.map((c) => c.label)).toEqual(['소음계 눈금', '귀에 들리나요']);
     const row = (medium: string, block: string, clockColor = 'red') => cols.map((c) => c.value(sim({ medium, block, clockColor }).result));
     for (const clock of ['red', 'blue']) {
-      expect(row('air', 'none', clock)).toEqual(['5', '들림']);
-      expect(row('water', 'none', clock)).toEqual(['7', '들림']);
-      expect(row('wood', 'none', clock)).toEqual(['8', '들림']);
-      expect(row('string', 'none', clock)).toEqual(['7', '들림']);
-      expect(row('air', 'cotton', clock)).toEqual(['2', '들림']);
-      expect(row('wood', 'box', clock)).toEqual(['7', '들림']);
+      expect(row('air', 'none', clock)).toEqual(['5', '잘 들림']);
+      expect(row('water', 'none', clock)).toEqual(['7', '잘 들림']);
+      expect(row('wood', 'none', clock)).toEqual(['8', '잘 들림']);
+      expect(row('string', 'none', clock)).toEqual(['7', '잘 들림']);
+      expect(row('air', 'cotton', clock)).toEqual(['2', '거의 들리지 않음']);
+      expect(row('wood', 'box', clock)).toEqual(['7', '잘 들림']);
+      expect(row('air', 'sponge', clock)).toEqual(['3', '작게 들림']);
     }
   });
 
@@ -172,8 +173,8 @@ describe('눈으로 보기', () => {
 
   it('문구와 가드', () => {
     const v = { ...base, medium: 'wood' };
-    expect(soundNote(at(v, 2), sim(v).result)).toBe('2.0초 · 소음계 8.0눈금 · 귀에 들림');
-    expect(macro(v, at(v, 2))).toContain('2.0초 · 소음계 8.0눈금 · 귀에 들림');
+    expect(soundNote(at(v, 2), sim(v).result)).toBe('2.0초 · 소음계 8.0눈금 · 귀에 잘 들림');
+    expect(macro(v, at(v, 2))).toContain('2.0초 · 소음계 8.0눈금 · 귀에 잘 들림');
     for (const c of CONDITIONS) {
       const html = macro(c, at(c, 2));
       for (const m of html.matchAll(/fontSize="(\d+)"|font-size="(\d+)"/g)) expect(Number(m[1] ?? m[2])).toBeGreaterThanOrEqual(14);
