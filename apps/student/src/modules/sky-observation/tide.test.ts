@@ -37,9 +37,9 @@ const hours = Array.from({ length: 49 }, (_, i) => i / 2);
 const NAMES = ['밀물', '썰물'];
 
 describe('밀물과 썰물 관찰: 매니페스트', () => {
-  it('성취기준은 4과06-02·4과06-03이고, 활동 2는 관찰 활동 tide이며 과제 둘이 tide 보기다', () => {
-    expect(manifest.standards).toEqual(['4과06-02', '4과06-03']);
-    expect(manifest.experiments.map((e) => e.id)).toEqual(['sea-water', 'tide']);
+  it('성취기준은 4과06-01·4과06-02·4과06-03이고, 활동 2는 관찰 활동 tide이며 과제 둘이 tide 보기다', () => {
+    expect(manifest.standards).toEqual(['4과06-01', '4과06-02', '4과06-03']);
+    expect(manifest.experiments.map((e) => e.id)).toEqual(['sea-water', 'tide', 'land-sea-dots']);
     expect(exp.tasks.map((t) => t.id)).toEqual(['tide-count', 'tide-flat']);
     expect(exp.tasks.every((t) => isTideView(t) && !isNightView(t))).toBe(true);
     expect(modelAnswer(exp, task('tide-count'), {})).toBe('2');

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { simulateDissolution } from '@sci/engine-matter';
-import { MockGasDriver, MockDistanceDriver, MockHumidityDriver, MockLightDriver, MockPowerDriver, MockPressureDriver, MockPulseDriver, MockScaleDriver, MockSoundDriver, MockSpeedDriver, MockTemperatureDriver, MockTiltDriver, mulberry32 } from './index';
+import { MockGasDriver, MockDistanceDriver, MockHumidityDriver, MockLightDriver, MockPowerDriver, MockPressureDriver, MockPulseDriver, MockScaleDriver, MockSoundDriver, MockSpeedDriver, MockTemperatureDriver, MockTiltDriver, MockTimeDriver, mulberry32 } from './index';
 
 describe('mulberry32', () => {
   it('같은 시드면 같은 수열', () => {
@@ -261,5 +261,17 @@ describe('MockPowerDriver', () => {
     expect(a.id).toBe('mock-power');
     const zero = new MockPowerDriver(() => 0, 7);
     for (let i = 0; i < 50; i++) expect(zero.read().value).toBe(0);
+  });
+});
+
+describe('MockTimeDriver', () => {
+  it('단위 초, 정수, 0 이상이고 잡음이 없어 source가 정수면 값은 source와 같다', () => {
+    const a = new MockTimeDriver(() => 75, 7);
+    for (let i = 0; i < 20; i++) expect(a.read().value).toBe(75);
+    expect(a.read().unit).toBe('초');
+    expect(a.kind).toBe('time');
+    expect(a.id).toBe('mock-time');
+    expect(new MockTimeDriver(() => 12.6, 7).read().value).toBe(13);
+    expect(new MockTimeDriver(() => -3, 7).read().value).toBe(0);
   });
 });

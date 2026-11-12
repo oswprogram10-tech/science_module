@@ -31,7 +31,7 @@ export async function gotoUnit(page: Page, id: string, opts: { dev?: boolean; pl
 
 /** 바꿀 조건(조작변인) 라디오를 고른다. 예: selectIV(page, '물의 온도') */
 export async function selectIV(page: Page, label: string) {
-  await page.getByRole('radio', { name: new RegExp(`^${label}(을|를) 바꿀 조건으로 고르기$`) }).check();
+  await page.getByRole('radio', { name: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(을|를) 바꿀 조건으로 고르기$`) }).check();
 }
 
 /** 변인 값을 고른다. group은 변인 이름(예: '물의 온도'), option은 버튼 글자(예: '60 °C'). */
@@ -58,8 +58,8 @@ export async function runTrial(page: Page) {
 /** 결과표 본문 행들 */
 export const resultRows = (page: Page) => page.locator('#results-table tbody tr');
 
-/** 센서 값 (aria-label: 온도/무게/압력/산소/이산화 탄소) */
-export const sensor = (page: Page, name: '온도' | '무게' | '압력' | '산소' | '이산화 탄소' | '빛 세기' | '습도' | '맥박' | '기울기' | '소리' | '거리' | '속력' | '전력') => page.getByRole('status', { name, exact: true });
+/** 센서 값 (aria-label: 온도/무게/압력/산소/이산화 탄소/시간 등) */
+export const sensor = (page: Page, name: '온도' | '무게' | '압력' | '산소' | '이산화 탄소' | '빛 세기' | '습도' | '맥박' | '기울기' | '소리' | '거리' | '속력' | '전력' | '시간') => page.getByRole('status', { name, exact: true });
 
 /**
  * 모의 센서 값은 씨앗 고정 잡음을 더하는데, 재생 중 값을 몇 번 읽었는지(화면 갱신 수)에 따라 잡음 차례가 달라진다.

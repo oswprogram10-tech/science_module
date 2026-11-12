@@ -26,6 +26,8 @@ export interface SensorSpec {
   ariaLabel?: string;
   /** 표시할 소수 자릿수(기본: 센서 종류마다 정한 값). 정수 g처럼 가상 센서의 잡음이 보이지 않아야 할 때 쓴다. */
   decimals?: number;
+  /** 가상 센서가 읽는 값(source와 같은 단위)을 다른 눈금으로 보여 줄 때: 보이는 값 = 읽은 값 × scale, 단위 글자는 unitLabel. 예: 조도계 %를 눈금(÷10)으로. */
+  display?: { scale: number; unitLabel: string };
 }
 
 export interface GraphMarker {

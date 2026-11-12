@@ -247,7 +247,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('생물의 한살이 매니페스트의 변인, 안전 종류, 탐침을 읽는다', () => {
     const m = parseManifest(lifecycleJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-lifecycle', 3, 'life', ['4과04-02']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g3-lifecycle', 3, 'life', ['4과04-01', '4과04-02']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('germination');
     expect(e.safety).toEqual([]);
@@ -261,7 +261,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('식물의 구조와 기능 매니페스트의 변인, 안전 종류, 탐침을 읽는다', () => {
     const m = parseManifest(plantJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g6-plant', 6, 'life', ['6과11-02']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g6-plant', 6, 'life', ['6과11-01', '6과11-02']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('transpiration');
     expect(e.safety).toEqual([]);
@@ -461,8 +461,8 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('지구와 바다(바닷물과 강물 비교하기) 매니페스트의 변인, 측정, 안전, 한계 용어, 탐침을 읽는다', () => {
     const m = parseManifest(earthSeaJson);
-    expect([m.id, m.title, m.grade, m.engine, m.standards]).toEqual(['g3-earth-sea', '지구와 바다', 3, 'earth', ['4과06-02', '4과06-03']]);
-    expect(m.experiments.map((x) => x.id)).toEqual(['sea-water', 'tide']);
+    expect([m.id, m.title, m.grade, m.engine, m.standards]).toEqual(['g3-earth-sea', '지구와 바다', 3, 'earth', ['4과06-01', '4과06-02', '4과06-03']]);
+    expect(m.experiments.map((x) => x.id)).toEqual(['sea-water', 'tide', 'land-sea-dots']);
     const e = m.experiments[0] as VariableExperiment;
     expect([e.id, e.module]).toEqual(['sea-water', 'sea-water']);
     expect(e.safety).toEqual(['heat', 'taste']);
@@ -596,6 +596,64 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['distanceCm', 'curve', 'diameterCm']);
   });
 
+  it('전기의 이용 활동 2·3(전구에 불 켜기, 전지 직렬연결 비교)의 변인, 범주 결과, 바꿀 조건 게이트, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(electricityJson);
+    expect([m.id, m.engine, m.standards]).toEqual(['g6-electricity', 'physics', ['6과15-01', '6과15-02', '6과15-03']]);
+    expect(m.experiments.map((x) => x.id)).toEqual(['electromagnet', 'bulb-light', 'battery-series']);
+    const b = m.experiments[1] as VariableExperiment;
+    expect([b.id, b.module, b.title, b.question, b.predictionPrompt]).toEqual(['bulb-light', 'bulb-light', '전구에 불 켜기', '전지, 전구, 전선을 어떻게 연결하면 불이 켜질까?', '예측: 전구의 밝기 눈금은?']);
+    expect(b.safety).toEqual([]);
+    expect(b.variables.map((v) => v.key)).toEqual(['plusEnd', 'minusEnd', 'switch', 'wireColor']);
+    expect(b.variables.map((v) => v.options.map((o) => o.value))).toEqual([['tip', 'side', 'none'], ['tip', 'side', 'none'], ['open', 'closed'], ['red', 'black']]);
+    expect(b.variables.map((v) => v.default)).toEqual(['none', 'none', 'open', 'red']);
+    expect(b.dependent.map((d) => [d.key, d.unit])).toEqual([['brightness', '눈금'], ['lit', '']]);
+    // 이 활동만 바꿀 조건을 하나 고르지 않아도 실행할 수 있다(여러 연결을 자유롭게 시도하는 탐색 활동).
+    expect(b.gateway).toEqual({ mode: 'open', requirePrediction: true, requireSingleIV: false });
+    expect(b.limits).toEqual(['전류', '전압', '저항', '옴', '회로도 기호']);
+    for (const f of ['꼭지와 옆면에', '꼭지와 옆면을', '서로 다른 부분에 이어', '끊긴 곳이 없', '한 바퀴 이어', '고리처럼 이어', '전기 회로가 완성', '회로가 이어져야', '스위치를 닫아야', '스위치를 닫으면 켜', '전선 색깔은 관계없', '전선 색은 관계없', '색깔은 상관없']) expect(b.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => b.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(b.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['plusEnd', 'minusEnd', 'switch', 'wireColor']);
+    expect(b.tutor.probes.find((p) => p.when === 'confounded')!.text).toBe('{changed}을(를) 함께 바꾸었어요. 불이 켜진 까닭이 어느 연결 때문인지 하나씩 바꾸어 확인해 볼까요?');
+    expect(b.tutor.probes.every((p) => p.text.trim().endsWith('?'))).toBe(true);
+    const c = m.experiments[2] as VariableExperiment;
+    expect([c.id, c.module, c.title, c.question, c.predictionPrompt]).toEqual(['battery-series', 'battery-series', '전지 한 개와 두 개 직렬연결 비교하기', '전지를 한 개 연결할 때와 두 개 직렬로 연결할 때 전구는 어떻게 다를까?', '예측: 전구의 밝기 눈금은?']);
+    expect(c.variables.map((v) => v.key)).toEqual(['cells', 'wireColor']);
+    expect(c.variables[0]!.options.map((o) => [o.value, o.label])).toEqual([['one', '전지 1개'], ['two', '전지 2개를 한 줄로'], ['reversed', '2개 중 하나를 반대로']]);
+    expect(c.dependent.map((d) => [d.key, d.unit])).toEqual([['brightness', '눈금'], ['lit', '']]);
+    expect(c.gateway).toEqual({ mode: 'open', requirePrediction: true, requireSingleIV: true });
+    expect(c.limits).toEqual(['전류', '전압', '저항', '병렬', '옴']);
+    for (const f of ['직렬로 연결하면 밝', '두 개를 연결하면 더 밝', '전지가 많을수록 밝', '전지를 늘리면 밝', '반대로 넣으면 켜지지', '반대로 넣으면 불이 꺼', '전선 색깔은 관계없', '전선 색은 관계없', '색깔은 상관없']) expect(c.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => c.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(c.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['cells', 'wireColor']);
+    expect(c.tutor.probes.every((p) => p.text.trim().endsWith('?'))).toBe(true);
+    // 첫 활동은 그대로다.
+    expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['turns', 'battery', 'core', 'direction']);
+    expect((m.experiments[0] as VariableExperiment).gateway.requireSingleIV).toBe(true);
+  });
+
+  it('식물의 구조와 기능 활동 2(현미경으로 세포 관찰하기)의 변인, 범주 결과, 안내 한 줄, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(plantJson);
+    expect(m.experiments.map((x) => x.id)).toEqual(['transpiration', 'microscope-cells']);
+    const e = m.experiments[1] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['microscope-cells', 'microscope-cells', '현미경으로 세포 관찰하기', '양파 껍질을 현미경으로 보면 무엇이 보일까?', '예측: 화면에서 본 칸 하나의 크기는?']);
+    expect(e.note).toBe('실제 현미경으로 보기 전에 연습해 보세요.');
+    expect((m.experiments[0] as VariableExperiment).note).toBeUndefined();
+    expect(e.safety).toEqual([]);
+    expect(e.variables.map((v) => v.key)).toEqual(['power', 'focus', 'stain', 'sample', 'slideLabel']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([[40, 100, 400], ['off', 'on'], ['none', 'iodine'], ['onion', 'cheek'], ['yellow', 'green']]);
+    expect(e.variables.map((v) => v.default)).toEqual([40, 'off', 'none', 'onion', 'yellow']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['size', 'mm'], ['seen', '']]);
+    expect(e.gateway).toEqual({ mode: 'open', requirePrediction: true, requireSingleIV: true });
+    // "세포" 낱말 자체는 단원 용어라 한계 용어에 넣지 않는다.
+    expect(e.limits).toEqual(['세포막', '세포질', '엽록체', '미토콘드리아', '세포 소기관']);
+    for (const f of ['핵이 보', '점은 핵', '진한 점은 핵', '세포벽이 있', '세포벽이 없', '식물 세포는', '동물 세포는', '배율을 높이면 크게', '배율이 높을수록 크게', '배율이 클수록 크게', '염색하면 핵', '염색하면 잘 보', '이름표 색은 관계없', '이름표 색깔은 관계없', '색깔은 상관없']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['power', 'focus', 'stain', 'sample', 'slideLabel']);
+    expect(e.tutor.probes.every((p) => p.text.trim().endsWith('?'))).toBe(true);
+    // 첫 활동은 그대로다.
+    expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['leaves', 'light', 'wind', 'startMl']);
+  });
+
   it('소리의 성질 활동 3(소리가 전달되는 물질과 소음 줄이기)의 변인, 범주 결과, 안전 없음, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
     const m = parseManifest(soundJson);
     expect(m.experiments.map((x) => x.id)).toEqual(['string-sound', 'sound-vibration', 'sound-transmit']);
@@ -615,6 +673,48 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     // 앞의 두 활동은 그대로다.
     expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['strength', 'lengthCm', 'color']);
     expect((m.experiments[1] as VariableExperiment).variables.map((v) => v.key)).toEqual(['sound', 'loud', 'object', 'seed']);
+  });
+
+  it('생물의 한살이 활동 2(배추흰나비의 한살이 관찰 기록)의 변인, 범주 결과, 안전 없음, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(lifecycleJson);
+    expect([m.id, m.engine, m.standards]).toEqual(['g3-lifecycle', 'life', ['4과04-01', '4과04-02']]);
+    expect(m.experiments.map((x) => x.id)).toEqual(['germination', 'butterfly-life']);
+    const e = m.experiments[1] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['butterfly-life', 'butterfly-life', '배추흰나비의 한살이 관찰 기록', '배추흰나비는 알에서 어른벌레가 되기까지 어떻게 변할까?', '예측: 몸 길이는?']);
+    expect(e.safety).toEqual([]);
+    expect(e.variables.map((v) => v.key)).toEqual(['day', 'time']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([[1, 3, 6, 9, 12, 15, 18, 21, 24, 28, 30], ['morning', 'evening']]);
+    expect(e.variables.map((v) => v.default)).toEqual([1, 'morning']);
+    // 먹이·움직임·날개는 범주 결과 칸이라 단위가 없다.
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['length', 'mm'], ['eat', ''], ['move', ''], ['wings', '']]);
+    expect(e.gateway).toEqual({ mode: 'open', requirePrediction: true, requireSingleIV: true });
+    expect(e.limits).toEqual(['탈피 호르몬', '변태', '유충', '성충']);
+    for (const f of ['알-애벌레-번데기-어른벌레', '알, 애벌레, 번데기, 어른벌레', '알→애벌레', '번데기가 되', '번데기가 돼', '번데기가 됩', '번데기가 된', '번데기 때는', '번데기에서 어른벌레', '완전 탈바꿈', '애벌레는 먹고', '애벌레만 먹', '번데기는 먹지 않', '관찰한 때는 관계없', '아침이든 저녁이든', '아침과 저녁은 관계없']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['day', 'time']);
+    expect(e.tutor.probes.every((p) => p.text.trim().endsWith('?'))).toBe(true);
+    // 첫 활동은 그대로다.
+    expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['water', 'tempC', 'light']);
+  });
+
+  it('지구와 바다 활동 3(육지와 바다의 넓이 비교하기)의 변인, 측정, 안전 없음, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(earthSeaJson);
+    expect(m.experiments.map((x) => x.id)).toEqual(['sea-water', 'tide', 'land-sea-dots']);
+    const e = m.experiments[2] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['land-sea-dots', 'land-sea-dots', '육지와 바다의 넓이 비교하기', '지구의 겉은 육지와 바다 가운데 어느 쪽이 더 넓을까?', '예측: 바다에 떨어진 점의 비율은?']);
+    expect(e.safety).toEqual([]);
+    expect(e.variables.map((v) => v.key)).toEqual(['dots', 'round', 'globeColor']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([[10, 50, 100, 500], [1, 2, 3], ['red', 'blue']]);
+    expect(e.variables.map((v) => v.default)).toEqual([10, 1, 'red']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['seaPct', '%'], ['sea', '개'], ['land', '개']]);
+    expect(e.gateway).toEqual({ mode: 'open', requirePrediction: true, requireSingleIV: true });
+    expect(e.limits).toEqual(['확률', '표본', '대수의 법칙', '오차 범위']);
+    for (const f of ['바다가 더 넓', '바다가 육지보다 넓', '육지보다 바다가', '바다가 70', '바다가 약 70', '바다가 71', '70 %가 바다', '70%가 바다', '점이 많을수록 정확', '점을 많이 찍을수록 믿을', '많이 찍으면 정확', '대기가 감싸', '공기가 지구를 감싸', '받침 색은 관계없', '받침 색깔은 관계없', '색깔은 상관없']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['dots', 'round', 'globeColor']);
+    expect(e.tutor.probes.every((p) => p.text.trim().endsWith('?'))).toBe(true);
+    // 앞의 두 활동은 그대로다.
+    expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['water', 'volumeMl', 'dish']);
   });
 
   it('자석의 이용 활동 2(자석과 자석 사이)의 변인, 범주 결과, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
@@ -657,8 +757,8 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('열과 우리 생활 활동 2(온도가 다른 두 물이 닿으면)의 변인, 측정, 안전, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
     const m = parseManifest(heatJson);
-    expect([m.id, m.engine, m.standards]).toEqual(['g5-heat', 'physics', ['6과07-02', '6과07-04']]);
-    expect(m.experiments.map((x) => x.id)).toEqual(['insulated-cup', 'heat-contact']);
+    expect([m.id, m.engine, m.standards]).toEqual(['g5-heat', 'physics', ['6과07-01', '6과07-02', '6과07-03', '6과07-04']]);
+    expect(m.experiments.map((x) => x.id)).toEqual(['insulated-cup', 'heat-contact', 'thermometer', 'heat-transfer']);
     const e = m.experiments[1] as VariableExperiment;
     expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['heat-contact', 'heat-contact', '온도가 다른 두 물이 닿으면', '온도가 다른 두 물체가 닿아 있으면 온도가 어떻게 변할까?', '예측: 10분 뒤 안쪽 컵 물의 온도는?']);
     expect(e.safety).toEqual(['hot-water']);
@@ -743,7 +843,7 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
 
   it('날씨와 우리 생활 매니페스트의 변인, 측정, 안전, 한계 용어, 탐침을 읽는다', () => {
     const m = parseManifest(weatherJson);
-    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g5-weather', 5, 'earth', ['6과06-02', '6과06-03']]);
+    expect([m.id, m.grade, m.engine, m.standards]).toEqual(['g5-weather', 5, 'earth', ['6과06-01', '6과06-02', '6과06-03']]);
     const e = m.experiments[0] as VariableExperiment;
     expect(e.module).toBe('land-sea-breeze');
     expect(e.safety).toEqual(['heat', 'fire']);
@@ -829,6 +929,78 @@ describe('변인 실험 선택 필드: safetyChecklist, safetyMessages', () => {
     const badMsg = clone(combustionJson);
     badMsg.experiments[0].safetyMessages = { NO_GOGGLES: 3 };
     expect(() => parseManifest(badMsg)).toThrow(ManifestError);
+  });
+
+  it('날씨와 우리 생활 활동 3(건습구 습도계로 습도 구하기)의 변인, 범주 아닌 결과, 안전 없음, 한계 용어, 금지 구절, 탐침, 일주일 날씨 기록 자료를 읽는다', () => {
+    const m = parseManifest(weatherJson);
+    expect(m.experiments.map((x) => x.id)).toEqual(['land-sea-breeze', 'dew-fog-cloud', 'humidity']);
+    const e = m.experiments[2] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['humidity', 'humidity', '건습구 습도계로 습도 구하기', '날씨를 나타내려면 무엇을 재어야 할까?', '예측: 습도는?']);
+    expect(e.safety).toEqual([]);
+    expect(e.variables.map((v) => v.key)).toEqual(['dry', 'diff', 'place']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([[10, 15, 20, 25, 30], [0, 1, 2, 3, 4, 5, 6], ['white', 'gray']]);
+    expect(e.variables.map((v) => v.default)).toEqual([20, 0, 'white']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['rh', '%'], ['wet', '°C']]);
+    expect(e.gateway).toEqual({ mode: 'open', requirePrediction: true, requireSingleIV: true });
+    expect(e.limits).toEqual(['이슬점', '포화 수증기압', '상대 습도', '절대 습도']);
+    for (const f of ['온도 차가 클수록 습도가 낮', '온도 차가 크면 습도가 낮', '차이가 클수록 건조', '온도 차가 0이면 100', '차이가 없으면 100', '습도가 높으면 빨래가 잘 안', '습도가 낮으면 빨래가 잘', '벽 색은 관계없', '벽 색깔은 관계없', '색깔은 상관없']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['dry', 'diff', 'place']);
+    expect(e.tutor.probes.every((p) => p.text.trim().endsWith('?'))).toBe(true);
+    // 일주일 기록 예시 자료는 매니페스트 params.weekLog에 데이터로 있다(스키마는 params를 그대로 통과시킨다).
+    const log = e.params!.weekLog as { title: string; columns: string[]; rows: string[][] };
+    expect(log.title).toBe('일주일 날씨 기록(예시 자료)');
+    expect(log.columns).toEqual(['날', '기온(°C)', '습도(%)', '바람', '구름 양(10칸 중)', '강수량(mm)']);
+    expect(log.rows).toHaveLength(7);
+    for (const r of log.rows) expect(r).toHaveLength(log.columns.length);
+    // 앞의 두 활동은 그대로다.
+    expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['phase', 'lampCm', 'bowl']);
+  });
+
+  it('params의 임의 자료(일주일 기록)는 파싱을 거쳐도 지워지지 않고, 다른 활동의 params와 섞이지 않는다', () => {
+    const m = parseManifest(weatherJson);
+    const params = (m.experiments[2] as VariableExperiment).params as Record<string, unknown>;
+    expect(Object.keys(params)).toEqual(['weekLog']);
+    expect((m.experiments[0] as VariableExperiment).params).toEqual({ totalMin: 10 });
+    const edited = clone(weatherJson);
+    edited.experiments[2].params.weekLog.rows[0][1] = '99';
+    expect(((parseManifest(edited).experiments[2] as VariableExperiment).params!.weekLog as { rows: string[][] }).rows[0]![1]).toBe('99');
+  });
+
+  it('열과 우리 생활 활동 3(온도계로 온도 재기)의 변인, 범주 결과, 안전 없음, 한계 용어, 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(heatJson);
+    const e = m.experiments[2] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['thermometer', 'thermometer', '온도계로 온도 재기', '손으로 느끼는 따뜻함과 온도계로 잰 온도는 같을까?', '예측: 온도계 눈금은?']);
+    expect(e.safety).toEqual([]);
+    expect(e.variables.map((v) => v.key)).toEqual(['hand', 'target', 'tool', 'eye']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([['none', 'cold', 'warm'], ['water', 'rod', 'wood'], ['alcohol', 'ir'], ['above', 'level', 'below']]);
+    expect(e.variables.map((v) => v.default)).toEqual(['none', 'water', 'alcohol', 'level']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['reading', '°C'], ['feel', '']]);
+    expect(e.limits).toEqual(['열전도율', '열평형', '적외선 복사', '섭씨와 화씨']);
+    for (const f of ['손 느낌은 정확하지', '손으로는 정확히', '느낌은 믿을 수 없', '느낌은 사람마다', '철봉과 나무 판의 온도는 같', '온도가 같은데 차갑게', '같은 온도인데', '눈높이를 맞춰야', '액체 끝과 같은 높이에서 읽어야']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['hand', 'target', 'tool', 'eye']);
+    expect(e.tutor.probes.every((p) => p.text.trim().endsWith('?'))).toBe(true);
+  });
+
+  it('열과 우리 생활 활동 4(열이 이동하는 모습 관찰하기)의 변인, 범주 결과, 안전 없음, 한계 용어(전도·대류 포함), 금지 구절, 탐침을 읽는다', () => {
+    const m = parseManifest(heatJson);
+    expect(m.experiments.map((x) => x.id)).toEqual(['insulated-cup', 'heat-contact', 'thermometer', 'heat-transfer']);
+    const e = m.experiments[3] as VariableExperiment;
+    expect([e.id, e.module, e.title, e.question, e.predictionPrompt]).toEqual(['heat-transfer', 'heat-transfer', '열이 이동하는 모습 관찰하기', '열은 고체와 액체에서 각각 어떻게 이동할까?', '예측: 가장 먼 곳까지 열이 전해진 시간은?']);
+    expect(e.safety).toEqual([]);
+    expect(e.variables.map((v) => v.key)).toEqual(['material', 'heatAt', 'stickerColor']);
+    expect(e.variables.map((v) => v.options.map((o) => o.value))).toEqual([['copper', 'iron', 'water'], ['edge', 'center'], ['pink', 'blue']]);
+    expect(e.variables.map((v) => v.default)).toEqual(['copper', 'edge', 'pink']);
+    expect(e.dependent.map((d) => [d.key, d.unit])).toEqual([['time', '초'], ['path', '']]);
+    expect(e.limits).toEqual(['전도', '대류', '복사', '열전도율', '비열']);
+    for (const f of ['전도', '대류', '구리가 철보다 빨리', '구리가 더 빨리', '철이 더 느리', '가까운 곳부터 차례로', '데운 곳에서 멀어지며', '따뜻한 물은 위로', '따뜻해진 물이 올라', '붙임딱지 색은 관계없', '색소 색은 관계없', '색깔은 상관없']) expect(e.tutor.forbiddenAnswers, f).toContain(f);
+    expect(WHENS.every((w) => e.tutor.probes.some((p) => p.when === w))).toBe(true);
+    expect(e.tutor.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['material', 'heatAt', 'stickerColor']);
+    expect(e.tutor.probes.every((p) => p.text.trim().endsWith('?'))).toBe(true);
+    // 앞의 두 활동은 그대로다.
+    expect((m.experiments[0] as VariableExperiment).variables.map((v) => v.key)).toEqual(['wrap', 'layers', 'lid', 'waterMl']);
+    expect((m.experiments[1] as VariableExperiment).variables.map((v) => v.key)).toEqual(['hotC', 'coldMl', 'cup', 'label']);
   });
 });
 

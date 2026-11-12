@@ -8,3 +8,5 @@ export * from './northSky';
 export * from './breeze';
 export * from './moon';
 export * from './tide';
+export * from './landSeaDots';
+export * from './humidity';

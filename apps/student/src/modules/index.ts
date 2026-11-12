@@ -38,6 +38,14 @@ import { springScaleModule } from './spring-scale';
 import { gasWeightModule } from './gas-weight';
 import { lightNeededModule } from './light-needed';
 import { soundTransmitModule } from './sound-transmit';
+import { bulbLightModule } from './bulb-light';
+import { batterySeriesModule } from './battery-series';
+import { microscopeCellsModule } from './microscope-cells';
+import { butterflyLifeModule } from './butterfly-life';
+import { landSeaDotsModule } from './land-sea-dots';
+import { humidityModule } from './humidity';
+import { thermometerModule } from './thermometer';
+import { heatTransferModule } from './heat-transfer';
 
 export const MODULES: Record<ModuleKind, AnyModule> = {
   dissolution: dissolutionModule,
@@ -78,4 +86,12 @@ export const MODULES: Record<ModuleKind, AnyModule> = {
   'gas-weight': gasWeightModule,
   'light-needed': lightNeededModule,
   'sound-transmit': soundTransmitModule,
+  'bulb-light': bulbLightModule,
+  'battery-series': batterySeriesModule,
+  'microscope-cells': microscopeCellsModule,
+  'butterfly-life': butterflyLifeModule,
+  'land-sea-dots': landSeaDotsModule,
+  humidity: humidityModule,
+  thermometer: thermometerModule,
+  'heat-transfer': heatTransferModule,
 };

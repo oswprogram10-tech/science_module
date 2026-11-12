@@ -11,6 +11,8 @@ import solutionJson from '../../../content/units/g5-solution/manifest.json';
 import gasesJson from '../../../content/units/g4-gases/manifest.json';
 import acidBaseJson from '../../../content/units/g6-acid-base/manifest.json';
 import earthJson from '../../../content/units/g6-earth-motion/manifest.json';
+import electricityJson from '../../../content/units/g6-electricity/manifest.json';
+import plantJson from '../../../content/units/g6-plant/manifest.json';
 import { MODULES } from '../../../apps/student/src/modules';
 import * as cls from '../../../apps/student/src/modules/indicator-classify/classifyStore';
 import * as obs from '../../../apps/student/src/modules/sky-observation/observeStore';
@@ -315,5 +317,80 @@ describe('상태 종류와 실험 종류가 맞지 않으면 오류', () => {
     const t = fromClassifyState(classifyExp, cls.createInitialState(), 'g6-acid-base');
     expect(() => situationOf(t, dissolveExp)).toThrow();
     expect(() => buildTutorInput(observeExp, t)).toThrow();
+  });
+});
+
+// ---- 3차 묶음 E1: 바꿀 조건 없이 실행(bulb-light)과 값이 없는(NaN) 결과(microscope-cells) ----
+
+describe('bulb-light: 바꿀 조건을 고르지 않고 실행한 시행', () => {
+  const bulb = parseManifest(electricityJson).experiments[1] as VariableExperiment;
+  const mod = MODULES['bulb-light'];
+  const labels = Object.fromEntries(bulb.variables.map((v) => [v.key, v.label]));
+  const defaults = Object.fromEntries(bulb.variables.map((v) => [v.key, v.default]));
+  /** 앱처럼: 바꿀 조건(setIV)을 고르지 않고 예측만 고른 뒤 실행한다. */
+  const runFree = (changes: Record<string, string>[]) => {
+    const rt = createRuntime({ defaults });
+    for (const c of changes) {
+      for (const [k, v] of Object.entries(c)) rt.setValue(k, v);
+      rt.setPrediction('increase');
+      rt.run((v) => mod.simulate(v, bulb), (prev, cur) => analyzeTrial(prev, cur, labels));
+      rt.tick(1e9);
+    }
+    return fromVariableRuntime(bulb, rt.getSnapshot(), mod, 'g6-electricity');
+  };
+
+  it('첫 시행은 first-trial, 하나만 바꾸어도 바꿀 조건이 없으므로 confounded, 같은 조건은 repeat이다', () => {
+    expect(situationOf(runFree([{}]), bulb)).toBe('first-trial');
+    const one = runFree([{}, { switch: 'closed' }]);
+    expect(one.trials.at(-1)!.analysis).toEqual({ kind: 'confounded', changed: ['switch'] });
+    expect(one.trials.at(-1)!.ivKey).toBeNull();
+    expect(situationOf(one, bulb)).toBe('confounded');
+    expect(situationOf(runFree([{}, {}]), bulb)).toBe('repeat');
+  });
+
+  it('입력 문장에는 바꿀 조건이 "(고르지 않음)"이고 결과(밝기 눈금·전구)가 읽힌다', () => {
+    const state = runFree([{}, { plusEnd: 'tip', minusEnd: 'side', switch: 'closed' }]);
+    const input = buildTutorInput(bulb, state, '', unitOf(parseManifest(electricityJson)));
+    expect(input).toContain('[바꿀 조건] (고르지 않음)');
+    expect(input).toContain('전구의 밝기 6.0눈금 · 전구 켜짐');
+    expect(input).toContain('전구의 밝기 0.0눈금 · 전구 켜지지 않음');
+    expect(input).toContain('[상황] confounded');
+  });
+});
+
+describe('microscope-cells: 칸이 보이지 않는 시행(size = NaN)', () => {
+  const plant = parseManifest(plantJson);
+  const micro = plant.experiments[1] as VariableExperiment;
+  const mod = MODULES['microscope-cells'];
+  const labels = Object.fromEntries(micro.variables.map((v) => [v.key, v.label]));
+  const defaults = Object.fromEntries(micro.variables.map((v) => [v.key, v.default]));
+  const run = (steps: { change: Record<string, string | number>; iv: string; pred: Prediction }[]) => {
+    const rt = createRuntime({ defaults });
+    for (const s of steps) {
+      for (const [k, v] of Object.entries(s.change)) rt.setValue(k, v);
+      rt.setIV(s.iv);
+      rt.setPrediction(s.pred);
+      rt.run((v) => mod.simulate(v, micro), (prev, cur) => analyzeTrial(prev, cur, labels));
+      rt.tick(1e9);
+    }
+    return fromVariableRuntime(micro, rt.getSnapshot(), mod, 'g6-plant');
+  };
+
+  it('결과에 NaN을 담지 않아 JSON으로 저장해도 null이 되지 않고, 입력 문장에 "NaN"·"null"이 나오지 않는다', () => {
+    const state = run([{ change: {}, iv: 'focus', pred: 'increase' }, { change: { focus: 'on' }, iv: 'focus', pred: 'increase' }]);
+    expect(state.trials[0]!.result).toEqual({ seen: '흐릿함' });
+    expect(state.trials[1]!.result).toEqual({ size: 10, seen: '투명한 칸들' });
+    expect(JSON.stringify(state)).not.toMatch(/NaN|"size":null/);
+    const input = buildTutorInput(micro, state, '', unitOf(plant));
+    expect(input).not.toMatch(/NaN|null/);
+    expect(input).toContain('보인 것 흐릿함');
+    expect(input).toContain('화면에서 본 칸 하나의 길이 10.0 mm');
+  });
+
+  it('칸이 보이지 않던 시행에서 보이게 되면 "늘어났다", 반대면 "줄어들었다"(보이지 않음은 0으로 본다)', () => {
+    expect(run([{ change: {}, iv: 'focus', pred: 'increase' }, { change: { focus: 'on' }, iv: 'focus', pred: 'increase' }]).trials[1]!.observed).toBe('increase');
+    expect(run([{ change: { focus: 'on' }, iv: 'focus', pred: 'increase' }, { change: { focus: 'off' }, iv: 'focus', pred: 'increase' }]).trials[1]!.observed).toBe('decrease');
+    // 둘 다 보이지 않으면(초점 안 맞춤) 배율을 바꿔도 변하지 않았다.
+    expect(run([{ change: {}, iv: 'power', pred: 'increase' }, { change: { power: 100 }, iv: 'power', pred: 'increase' }]).trials[1]!.observed).toBe('same');
   });
 });

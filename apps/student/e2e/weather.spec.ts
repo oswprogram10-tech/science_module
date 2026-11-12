@@ -300,7 +300,7 @@ test.describe('이슬·안개·구름 비교하기 (두 번째 활동)', () => {
   test('첫 활동 화면의 활동 탭으로 이동한다: 탭 이름, 주소, 질문', async ({ page }) => {
     await gotoUnit(page, 'g5-weather');
     await expect(activityTabs(page)).toBeVisible();
-    await expect(page.getByRole('tab')).toHaveCount(2);
+    await expect(page.getByRole('tab')).toHaveCount(3);
     await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
     await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'false');
     await expect(activityTab(page, 2)).toHaveText(`활동 2 · ${WEATHER_SORT_TITLE}`);
