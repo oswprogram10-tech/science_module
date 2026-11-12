@@ -339,12 +339,15 @@ describe('bulb-light: 바꿀 조건을 고르지 않고 실행한 시행', () =>
     return fromVariableRuntime(bulb, rt.getSnapshot(), mod, 'g6-electricity');
   };
 
-  it('첫 시행은 first-trial, 하나만 바꾸어도 바꿀 조건이 없으므로 confounded, 같은 조건은 repeat이다', () => {
+  it('첫 시행은 first-trial, 하나만 바꾸면 그 조건의 fair-test, 둘 이상 바꾸면 confounded, 같은 조건은 repeat이다', () => {
     expect(situationOf(runFree([{}]), bulb)).toBe('first-trial');
     const one = runFree([{}, { switch: 'closed' }]);
-    expect(one.trials.at(-1)!.analysis).toEqual({ kind: 'confounded', changed: ['switch'] });
+    expect(one.trials.at(-1)!.analysis).toEqual({ kind: 'fair-test', changed: ['switch'] });
     expect(one.trials.at(-1)!.ivKey).toBeNull();
-    expect(situationOf(one, bulb)).toBe('confounded');
+    // fair-test이므로 예측과 관찰을 견준다: '늘어난다'고 예측했지만 기준 연결은 스위치를 닫아도 켜지지 않아 예측과 다르다.
+    expect(one.trials.at(-1)!.observed).toBe('same');
+    expect(situationOf(one, bulb)).toBe('prediction-mismatch');
+    expect(situationOf(runFree([{}, { switch: 'closed', wireColor: 'black' }]), bulb)).toBe('confounded');
     expect(situationOf(runFree([{}, {}]), bulb)).toBe('repeat');
   });
 

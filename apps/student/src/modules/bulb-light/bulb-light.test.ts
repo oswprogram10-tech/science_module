@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { guardOutput } from '@sci/tutor';
+import { guardOutput, selectProbe } from '@sci/tutor';
 import { analyzeTrial, canRun, observedOutcome } from '@sci/gateway';
 import { createRuntime } from '@sci/runtime';
 import { BL_ENDS, BL_SWITCHES, BL_WIRES, BS_CELLS, type BulbSample } from '@sci/engine-physics';
@@ -81,7 +81,7 @@ describe('실행 게이트: 전구에 불 켜기만 바꿀 조건을 고르지 �
     expect(canRun({ ivKey: null, prediction: 'same' }, batteryExp.gateway).reasons).toEqual(['바꿀 조건(조작변인)을 하나 골라 주세요.']);
   });
 
-  it('바꿀 조건 없이 이어서 실행하면 하나만 바꾼 시행도 "함께 바꿈(confounded)"으로 분류되고 값은 그대로 계산된다', () => {
+  it('바꿀 조건 없이 이어서 실행하면 하나만 바꾼 시행은 그 조건만 바꾼 비교(fair-test)로 분류되고 값은 그대로 계산된다', () => {
     const labels = Object.fromEntries(bulbExp.variables.map((v) => [v.key, v.label]));
     const rt = createRuntime({ defaults: base });
     rt.setPrediction('same');
@@ -90,9 +90,20 @@ describe('실행 게이트: 전구에 불 켜기만 바꿀 조건을 고르지 �
     rt.setValue('switch', 'closed');
     rt.setPrediction('same');
     const t = rt.run((v) => bulbLightModule.simulate(v, bulbExp), (prev, cur) => analyzeTrial(prev, cur, labels));
-    expect(t?.analysis).toEqual({ kind: 'confounded', changed: ['switch'] });
+    expect(t?.analysis).toEqual({ kind: 'fair-test', changed: ['switch'] });
     expect(t?.ivKey).toBeNull();
     expect(t?.result).toEqual({ brightness: 0, lit: '켜지지 않음' });
+  });
+
+  it('하나만 바꾼 시행은 그 조건 전용 질문이 나오고 "함께 바꾸었어요" 질문은 둘 이상 바꿨을 때만 나온다', () => {
+    const labels = Object.fromEntries(bulbExp.variables.map((v) => [v.key, v.label]));
+    const guard = { forbiddenAnswers: bulbExp.tutor.forbiddenAnswers, limits: bulbExp.limits };
+    const ask = (changed: string[], kind: 'fair-test' | 'confounded') =>
+      selectProbe({ lastAnalysis: { kind, changed }, ivKey: null, labels, prediction: null, observed: null }, bulbExp.tutor.probes, guard);
+    const one = ask(['switch'], 'fair-test');
+    expect(one).toBe('스위치만 바꾸었어요. 전구는 어떻게 달라졌나요?');
+    expect(ask(['plusEnd'], 'fair-test')).toContain('전선을 댄 곳을 바꾸었어요');
+    expect(ask(['switch', 'wireColor'], 'confounded')).toContain('함께 바꾸었어요');
   });
 });
 

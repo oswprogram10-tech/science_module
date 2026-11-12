@@ -54,6 +54,10 @@ export function analyzeTrial(
   if (changed.length === 1 && changed[0] === current.ivKey) {
     return { kind: 'fair-test', changed };
   }
+  // 바꿀 조건을 고르지 않는 활동(requireSingleIV: false)에서는 하나만 바꾼 시행을 그 조건만 바꾼 공정한 비교로 본다.
+  if (changed.length === 1 && current.ivKey === null) {
+    return { kind: 'fair-test', changed };
+  }
   if (current.ivKey !== null && !changed.includes(current.ivKey)) {
     return { kind: 'iv-unchanged', changed };
   }

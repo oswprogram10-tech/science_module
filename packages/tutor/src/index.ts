@@ -116,14 +116,17 @@ export function selectProbe(
   guard: GuardConfig,
 ): string {
   const key = pickProbeKey(context);
+  // 바꿀 조건을 고르지 않는 활동에서 하나만 바꾼 시행(fair-test)은 그 바뀐 조건을 조작변인으로 본다.
+  const a = context.lastAnalysis;
+  const ivKey = context.ivKey ?? (a?.kind === 'fair-test' && a.changed.length === 1 ? a.changed[0]! : null);
   // 같은 시점 안에서 현재 조작변인과 iv가 일치하는 probe를 먼저, 없으면 iv가 없는 probe를 고른다.
   const sameWhen = probes.filter((p) => p.when === key);
   const probe =
-    (context.ivKey ? sameWhen.find((p) => p.iv === context.ivKey) : undefined) ??
+    (ivKey ? sameWhen.find((p) => p.iv === ivKey) : undefined) ??
     sameWhen.find((p) => p.iv === undefined);
   if (!probe) return FALLBACK_PROBE;
   if (probe.off) return TUTOR_SILENT;
-  const ivLabel = context.ivKey ? (context.labels[context.ivKey] ?? context.ivKey) : '조건';
+  const ivLabel = ivKey ? (context.labels[ivKey] ?? ivKey) : '조건';
   const changed = (context.lastAnalysis?.changed ?? []).map((k) => context.labels[k] ?? k);
   const text = renderProbe(probe.text, { iv: ivLabel, changed });
   if (LEFTOVER_PLACEHOLDER.test(text)) return FALLBACK_PROBE;
