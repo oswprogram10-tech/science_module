@@ -56,22 +56,26 @@ describe('활동이 여럿인 단원의 시나리오(id 안정성)', () => {
   });
 });
 
-describe('날씨와 우리 생활 시나리오(활동 2 덧붙임)', () => {
+describe('날씨와 우리 생활 시나리오(활동 2 덧붙임, 활동 3 건습구 습도계는 그 뒤에 덧붙음)', () => {
   const weather = units['g5-weather']!;
   const list = generateScenarios('g5-weather', weather);
   it('첫 활동(해륙풍) 시나리오 s001~s020은 활동 2를 더하기 전과 한 글자도 같고, 이슬·안개·구름 시나리오 24개가 뒤에 덧붙는다', () => {
-    expect(weather.manifest.experiments.map((e) => e.id)).toEqual(['land-sea-breeze', 'dew-fog-cloud']);
+    expect(weather.manifest.experiments.map((e) => e.id)).toEqual(['land-sea-breeze', 'dew-fog-cloud', 'humidity']);
     expect(list.map((s) => s.scenarioId)).toEqual(list.map((_, i) => `g5-weather-s${String(i + 1).padStart(3, '0')}`));
-    expect(list).toHaveLength(44);
+    expect(list).toHaveLength(64);
     expect(list.slice(0, 20).every((s) => s.state.experimentId === 'land-sea-breeze')).toBe(true);
-    expect(list.slice(20).every((s) => s.state.experimentId === 'dew-fog-cloud')).toBe(true);
+    expect(list.slice(20, 44).every((s) => s.state.experimentId === 'dew-fog-cloud')).toBe(true);
+    expect(list.slice(44).every((s) => s.state.experimentId === 'humidity')).toBe(true);
     // 이 해시는 활동 2를 더하기 전 ml/tutor/scenarios/g5-weather.jsonl 20줄(줄바꿈으로 이은 글자)의 SHA-256이다.
     const first = list.slice(0, 20).map((s) => JSON.stringify(s)).join('\n');
     expect(createHash('sha256').update(first).digest('hex')).toBe('49d6c3140fd5be2819f91d386147414c4c7e46d5b5629a33cbef0cc77cb39d79');
+    // 활동 3(humidity)을 더하기 전 앞 44줄(활동 1·2)의 SHA-256도 같다.
+    const first44 = list.slice(0, 44).map((s) => JSON.stringify(s)).join('\n');
+    expect(createHash('sha256').update(first44).digest('hex')).toBe('39374720fb2621d6db3769742ae559c5861c2f84ad40f228750e612c28096f5d');
   });
   it('카드 분류의 모든 상황이 시나리오에 있다', () => {
     const exp = weather.manifest.experiments[1]!;
-    const keys = new Set(list.slice(20).map((s) => situationOf(s.state, exp)));
+    const keys = new Set(list.slice(20, 44).map((s) => situationOf(s.state, exp)));
     for (const k of ['choose-criterion', 'pick-card', 'before-observe', 'sorting', 'check-subjective', 'check-unobserved', 'check-inconsistent', 'check-complete', 'finished']) expect(keys.has(k), k).toBe(true);
   });
 });
@@ -251,11 +255,10 @@ describe('변인 실험을 더한 단원의 시나리오(힘과 우리 생활 �
   });
 });
 
-describe('변인 실험 두 번째 활동을 더한 단원의 시나리오(용해와 용액·열과 우리 생활·산과 염기)', () => {
+describe('변인 실험 두 번째 활동을 더한 단원의 시나리오(용해와 용액·산과 염기; 열과 우리 생활은 활동이 넷이라 아래에서 따로 본다)', () => {
   // 각 해시는 두 번째 활동을 더하기 전 ml/tutor/scenarios/<단원>.jsonl 22줄(줄바꿈으로 이은 글자)의 SHA-256이다.
   const CASES = [
     { id: 'g5-solution', first: 'dissolve-amount', second: 'concentration', n: 22, total: 44, sha: '4d4c759ff02678f721fc15026ef333f76bf8f7aa0cffc66dd07857a6e1c588f0' },
-    { id: 'g5-heat', first: 'insulated-cup', second: 'heat-contact', n: 22, total: 44, sha: '0c55b35d5e2fd8134a507be9b02e7c0f757c10d5cb18cca759c8e397d98f603d' },
     // 산과 염기의 첫 활동은 분류 활동(지시약으로 여러 가지 용액 분류하기)이다.
     { id: 'g6-acid-base', first: 'indicator-classify', second: 'acid-base-mix', n: 22, total: 44, sha: 'c04252bbd0f8e58af5a02c2e7441605e39244a356244e9701c5411dd5251b028' },
   ];
@@ -355,6 +358,52 @@ describe('변인 실험 활동을 더한 단원의 시나리오(빛의 성질 �
     expect(hash(file.slice(0, 42))).toBe(sha42);
     expect(file).toHaveLength(62);
     for (const [i, from, to] of [[1, 20, 42], [2, 42, 62]] as const) {
+      const exp = u.manifest.experiments[i]!;
+      const keys = new Set(list.slice(from, to).map((s) => situationOf(s.state, exp)));
+      for (const k of SITUATIONS) expect(keys.has(k), `${exp.id} ${k}`).toBe(true);
+    }
+  });
+});
+
+describe('변인 실험 활동을 더한 단원의 시나리오(날씨와 우리 생활 활동 3, 열과 우리 생활 활동 3·4)', () => {
+  // 각 해시는 활동을 더하기 전 ml/tutor/scenarios/<단원>.jsonl 앞 n줄(줄바꿈으로 이은 글자)의 SHA-256이다.
+  const hash = (lines: string[]) => createHash('sha256').update(lines.join('\n')).digest('hex');
+  const SITUATIONS = ['before-run', 'first-trial', 'confounded', 'iv-unchanged', 'repeat', 'fair-test', 'prediction-mismatch'];
+
+  it('g5-weather: s001~s044(해륙풍·이슬 안개 구름)는 활동 3을 더하기 전과 한 글자도 같고, humidity 시나리오 20개가 뒤에 덧붙는다', () => {
+    const u = units['g5-weather']!;
+    const list = generateScenarios('g5-weather', u);
+    expect(u.manifest.experiments.map((e) => e.id)).toEqual(['land-sea-breeze', 'dew-fog-cloud', 'humidity']);
+    expect(list).toHaveLength(64);
+    const sha44 = '39374720fb2621d6db3769742ae559c5861c2f84ad40f228750e612c28096f5d';
+    expect(hash(list.slice(0, 44).map((s) => JSON.stringify(s)))).toBe(sha44);
+    const file = readFileSync(scenarioFile(TUTOR_DIR, 'g5-weather'), 'utf8').trimEnd().split('\n');
+    expect(hash(file.slice(0, 44))).toBe(sha44);
+    expect(file).toHaveLength(64);
+    const exp = u.manifest.experiments[2]!;
+    const keys = new Set(list.slice(44).map((s) => situationOf(s.state, exp)));
+    for (const k of SITUATIONS) expect(keys.has(k), k).toBe(true);
+  });
+
+  it('g5-heat: 활동이 넷이다. s001~s022(insulated-cup)와 s023~s044(heat-contact)는 활동 3, 4를 더하기 전과 한 글자도 같고, thermometer와 heat-transfer 시나리오가 뒤에 덧붙는다', () => {
+    const u = units['g5-heat']!;
+    const list = generateScenarios('g5-heat', u);
+    expect(u.manifest.experiments.map((e) => e.id)).toEqual(['insulated-cup', 'heat-contact', 'thermometer', 'heat-transfer']);
+    expect(list.map((s) => s.scenarioId)).toEqual(list.map((_, i) => `g5-heat-s${String(i + 1).padStart(3, '0')}`));
+    expect(list).toHaveLength(86);
+    expect(list.slice(0, 22).every((s) => s.state.experimentId === 'insulated-cup')).toBe(true);
+    expect(list.slice(22, 44).every((s) => s.state.experimentId === 'heat-contact')).toBe(true);
+    expect(list.slice(44, 66).every((s) => s.state.experimentId === 'thermometer')).toBe(true);
+    expect(list.slice(66).every((s) => s.state.experimentId === 'heat-transfer')).toBe(true);
+    const sha22 = '0c55b35d5e2fd8134a507be9b02e7c0f757c10d5cb18cca759c8e397d98f603d';
+    const sha44 = 'f69ad0b46495742b8ab5e1c3be055c65b985b9c5703ece237063d1ff89ab6607';
+    expect(hash(list.slice(0, 22).map((s) => JSON.stringify(s)))).toBe(sha22);
+    expect(hash(list.slice(0, 44).map((s) => JSON.stringify(s)))).toBe(sha44);
+    const file = readFileSync(scenarioFile(TUTOR_DIR, 'g5-heat'), 'utf8').trimEnd().split('\n');
+    expect(hash(file.slice(0, 22))).toBe(sha22);
+    expect(hash(file.slice(0, 44))).toBe(sha44);
+    expect(file).toHaveLength(86);
+    for (const [i, from, to] of [[1, 22, 44], [2, 44, 66], [3, 66, 86]] as const) {
       const exp = u.manifest.experiments[i]!;
       const keys = new Set(list.slice(from, to).map((s) => situationOf(s.state, exp)));
       for (const k of SITUATIONS) expect(keys.has(k), `${exp.id} ${k}`).toBe(true);

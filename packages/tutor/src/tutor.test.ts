@@ -3079,3 +3079,113 @@ describe('변인 실험 활동 추가 매니페스트 probe (light-needed, sound
     });
   }
 });
+
+// ---------- 변인 실험 활동 추가(3차 묶음 E3): 건습구 습도계로 습도 구하기(날씨 활동 3), 온도계로 온도 재기(열 활동 3), 열이 이동하는 모습 관찰하기(열 활동 4) ----------
+describe('변인 실험 활동 추가 매니페스트 probe (humidity, thermometer, heat-transfer)', () => {
+  const CASES = [
+    {
+      name: 'g5-weather 활동 3(humidity)',
+      json: weatherJson,
+      index: 2,
+      iv: { dry: '건구 온도만 바꾸었어요.', diff: '온도 차만 바꾸었어요.', place: '벽 색만 바꾸었을 때' },
+      before: '습도가',
+      mismatch: '습도가 높은 날과 낮은 날, 빨래가 마르는 모습은',
+      rules: ['온도 차가 클수록 습도가 낮아요', '온도 차가 크면 습도가 낮아요', '차이가 클수록 건조해요', '온도 차가 0이면 100이에요', '차이가 없으면 100이에요', '습도가 높으면 빨래가 잘 안 말라요', '습도가 낮으면 빨래가 잘 말라요', '벽 색은 관계없어요', '벽 색깔은 관계없어요', '색깔은 상관없어요'],
+    },
+    {
+      name: 'g5-heat 활동 3(thermometer)',
+      json: heatJson,
+      index: 2,
+      iv: { hand: '먼저 넣었던 물만 바꾸었어요.', target: '재는 것만 바꾸었어요.', tool: '온도계만 바꾸었어요.', eye: '눈높이만 바꾸었어요.' },
+      before: '온도계 눈금이',
+      mismatch: '손으로 느낀 것과 온도계로 잰 값이 다른 때가',
+      rules: ['손 느낌은 정확하지 않아요', '손으로는 정확히 잴 수 없어요', '느낌은 믿을 수 없어요', '느낌은 사람마다 달라요', '철봉과 나무 판의 온도는 같아요', '온도가 같은데 차갑게 느껴져요', '같은 온도인데 달라요', '눈높이를 맞춰야 해요', '눈높이를 맞추어야 해요', '액체 끝과 같은 높이에서 읽어야 해요'],
+    },
+    {
+      name: 'g5-heat 활동 4(heat-transfer)',
+      json: heatJson,
+      index: 3,
+      iv: { material: '데우는 것만 바꾸었어요.', heatAt: '데우는 곳만 바꾸었어요.', stickerColor: '붙임딱지(색소) 색만 바꾸었을 때' },
+      before: '가장 먼 곳까지 열이 전해진 시간이',
+      mismatch: '판과 물에서 열이 이동하는 모습은',
+      rules: ['열은 전도로 이동해요', '물은 대류로 열이 이동해요', '구리가 철보다 빨리 전해요', '구리가 더 빨리 전해요', '철이 더 느려요', '가까운 곳부터 차례로 색이 바뀌어요', '데운 곳에서 멀어지며 색이 바뀌어요', '따뜻한 물은 위로 올라가요', '따뜻해진 물이 올라가요', '붙임딱지 색은 관계없어요', '색소 색은 관계없어요', '색깔은 상관없어요'],
+    },
+  ];
+  for (const c of CASES) {
+    describe(c.name, () => {
+      const e = parseManifest(c.json).experiments[c.index]! as VariableExperiment;
+      const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+      const eKeys = e.variables.map((v) => v.key);
+      const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+      const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: eKeys[0]!, ...x });
+      const fair = (iv: string): Partial<ProbeContext> => ({ ivKey: iv, lastAnalysis: { kind: 'fair-test', changed: [iv] }, prediction: 'same', observed: 'same' });
+
+      it('실행 전 probe가 예측 버튼에 맞는 양을 묻는다', () => {
+        expect(selectProbe(eCtx({}), e.tutor.probes, eGuard)).toContain(c.before);
+        expect(e.predictionPrompt.startsWith('예측: ')).toBe(true);
+      });
+
+      it('iv별 fair-test 질문을 고른다', () => {
+        for (const [iv, start] of Object.entries(c.iv)) expect(selectProbe(eCtx(fair(iv)), e.tutor.probes, eGuard), iv).toContain(start);
+      });
+
+      it('예측과 결과가 다르면 결과표에서 확인하라고 한다', () => {
+        const text = selectProbe(eCtx({ ...fair(eKeys[0]!), prediction: 'increase', observed: 'same' }), e.tutor.probes, eGuard);
+        expect(text).toContain(c.mismatch);
+      });
+
+      it('모든 probe는 질문형이고, 모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+        let n = 0;
+        for (const probe of e.tutor.probes) {
+          expect(probe.text.trim().endsWith('?'), probe.text).toBe(true);
+          for (const iv of eKeys) {
+            for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+              const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+              expect(guardOutput(text, eGuard).ok, text).toBe(true);
+              expect(text).not.toMatch(/[{}]/);
+              expect(text).not.toMatch(/(을\(를\)|이\(가\)|와\(과\)|은\(는\))/);
+              n++;
+            }
+          }
+        }
+        expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+      });
+
+      it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+        const situations: Partial<ProbeContext>[] = [
+          {},
+          { lastAnalysis: { kind: 'first-trial', changed: [] } },
+          { lastAnalysis: { kind: 'confounded', changed: eKeys.slice(0, 2) } },
+          { lastAnalysis: { kind: 'iv-unchanged', changed: [eKeys[eKeys.length - 1]!] } },
+          { lastAnalysis: { kind: 'repeat', changed: [] } },
+          ...eKeys.flatMap((k) => [fair(k), { ...fair(k), prediction: 'increase' as const, observed: 'same' as const }]),
+        ];
+        for (const s of situations) {
+          const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+          expect(text).not.toBe(FALLBACK_PROBE);
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+        }
+      });
+
+      it('금지 구절과 한계 용어를 담은 문장은 실제로 막는다', () => {
+        for (const f of e.tutor.forbiddenAnswers) expect(guardOutput(`${f}요`, eGuard).ok, f).toBe(false);
+        for (const l of e.limits) expect(guardOutput(`${l}이에요`, eGuard).ok, l).toBe(false);
+        for (const rule of c.rules) expect(guardOutput(rule, eGuard).ok, rule).toBe(false);
+        for (const probe of e.tutor.probes) {
+          for (const f of e.tutor.forbiddenAnswers) expect(probe.text, probe.text).not.toContain(f);
+          for (const l of e.limits) expect(probe.text, probe.text).not.toContain(l);
+        }
+      });
+    });
+  }
+
+  it('열이 이동하는 모습 관찰하기는 "전도"와 "대류"를 금지 구절과 한계 용어에 모두 두고, 어떤 튜터 문구와 화면 문구에도 쓰지 않는다', () => {
+    const e = parseManifest(heatJson).experiments[3]! as VariableExperiment;
+    for (const w of ['전도', '대류']) {
+      expect(e.tutor.forbiddenAnswers).toContain(w);
+      expect(e.limits).toContain(w);
+      for (const p of e.tutor.probes) expect(p.text).not.toContain(w);
+      expect(JSON.stringify([e.title, e.question, e.predictionPrompt, e.variables, e.dependent])).not.toContain(w);
+    }
+  });
+});

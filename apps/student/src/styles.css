@@ -400,6 +400,13 @@ button.unit-card:hover { border-color:var(--accent); }
 .climate-table caption { text-align:left; font-weight:700; padding:4px 0; }
 .climate-source { font-size:.85rem; margin:8px 0 0; }
 
+/* 일주일 날씨 기록(건습구 습도계 활동 결과표 아래 예시 자료): 좁은 화면에서도 가로 스크롤이 없게 칸 글자를 줄바꿈한다. */
+.week-log { margin-top:16px; }
+.week-log h3 { margin:0 0 4px; font-size:1rem; }
+.week-log-note { margin:0 0 8px; font-size:.85rem; }
+.week-log table { min-width:0; width:100%; font-size:.85rem; }
+.week-log th, .week-log td { white-space:normal; padding:4px 5px; }
+
 /* 앱(APK)의 참여 대화 상자: 선생님 PC 주소 입력칸은 수업 코드칸과 달리 대문자·자간을 쓰지 않는다. */
 .host-field input { font-size:1.1rem; letter-spacing:normal; text-transform:none; }
 .host-field-wrap small { display:block; font-weight:400; margin-bottom:6px; }

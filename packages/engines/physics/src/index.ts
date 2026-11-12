@@ -14,3 +14,5 @@ export * from './pushPull';
 export * from './springScale';
 export * from './lightNeeded';
 export * from './soundTransmit';
+export * from './thermometer';
+export * from './heatTransfer';

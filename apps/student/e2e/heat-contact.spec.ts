@@ -44,7 +44,7 @@ const outerOf = async (page: Page) => Number(await macro(page).getByTestId('heat
 test('두 번째 활동 탭으로 열리고, 첫 활동(물이 덜 식는 보온 컵 만들기)으로 돌아갈 수 있다', async ({ page }) => {
   await open(page);
   await expect(activityTab(page, 2)).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByRole('tab')).toHaveCount(2);
+  await expect(page.getByRole('tab')).toHaveCount(4);
   await expect(page.getByText('탐구 질문: 온도가 다른 두 물체가 닿아 있으면 온도가 어떻게 변할까?')).toBeVisible();
   await expect(page.getByText('예측: 10분 뒤 안쪽 컵 물의 온도는?')).toBeVisible();
   await activityTab(page, 1).click();
