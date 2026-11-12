@@ -313,8 +313,13 @@ test('#/unit/g3-force: 활동이 넷이라 탭 넷이 순서대로 열리고, �
     await expect(page.getByRole('group', { name: group, exact: true })).toBeVisible();
   }
   // 키보드: End는 마지막(4), Home은 처음(1), ← 는 처음에서 끝으로, → 는 끝에서 처음으로 돈다.
+  // 탭을 누르면 활동 화면(탭 단추 포함)이 새로 만들어진다. 새 화면이 그려진 뒤에 초점을 주어야 옛 단추에 준 초점이 사라지지 않는다.
   await activityTab(page, 1).click();
+  await expect(page).toHaveURL(/#\/unit\/g3-force\/lever-balance$/);
+  await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('group', { name: TABS[0][2], exact: true })).toBeVisible();
   await activityTab(page, 1).focus();
+  await expect(activityTab(page, 1)).toBeFocused();
   await page.keyboard.press('End');
   await expect(activityTab(page, 4)).toBeFocused();
   await expect(page).toHaveURL(/#\/unit\/g3-force\/spring-scale$/);
