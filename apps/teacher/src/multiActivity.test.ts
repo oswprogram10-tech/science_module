@@ -19,7 +19,7 @@ describe('교사 앱: 활동이 넷인 단원', () => {
     // 활동이 둘인 여러 가지 기체도 이제 활동 이름이 나온다. 활동이 하나인 단원은 나오지 않는다.
     expect(activityTitle('g4-gases', 'syringe-volume')).toBe('주사기 속 기체의 부피 변화 알아보기');
     expect(activityTitle('g4-gases', 'gas-weight')).toBe('공기를 넣은 페트병의 무게');
-    expect(activityTitle('g5-light', 'convex-lens')).toBeNull();
+    expect(activityTitle('g6-electricity', 'electromagnet')).toBeNull();
   });
 
   it('튜터 질문 고치기 카탈로그: g3-force 활동 4개가 순서대로 있고 활동마다 기본 질문과 변인이 있다', () => {

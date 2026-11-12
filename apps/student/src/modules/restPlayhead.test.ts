@@ -39,10 +39,12 @@ describe('restPlayhead: 숫자 또는 (실험, 시행) => 숫자', () => {
     // 시간에 따른 위치 변화와 연소 전과 후 비교하기도 끝(관찰 시간 끝, 3분)에 둔다.
     expect(Object.keys(nums)).not.toContain('g6-motion/position-time');
     expect(Object.keys(nums)).not.toContain('g6-combustion/combustion-products');
-    // 밀고 당기기·용수철저울·공기를 넣은 페트병의 무게도 끝(2초, 2초, 누른 횟수 60번)에 둔다.
+    // 밀고 당기기·용수철저울·공기를 넣은 페트병의 무게·물체를 보려면 빛이 필요할까·소리가 전달되는 물질과 소음 줄이기도 끝(2초, 2초, 누른 횟수 60번)에 둔다.
     expect(Object.keys(nums)).not.toContain('g3-force/push-pull');
     expect(Object.keys(nums)).not.toContain('g3-force/spring-scale');
     expect(Object.keys(nums)).not.toContain('g4-gases/gas-weight');
+    expect(Object.keys(nums)).not.toContain('g5-light/light-needed');
+    expect(Object.keys(nums)).not.toContain('g3-sound/sound-transmit');
   });
 
   it('우리 몸은 시행의 운동 시간에 따라 운동이 끝난 순간(쉬는 1분 + 운동 시간)이다', () => {

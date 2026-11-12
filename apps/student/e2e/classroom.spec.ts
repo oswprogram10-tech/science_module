@@ -80,13 +80,12 @@ test.describe('수업 연결', () => {
     await s3.getByRole('button', { name: /^철 가루와 모래 관찰 \d\/3$/ }).click();
     await s3.getByRole('button', { name: '자석 대 보기', exact: true }).click();
     await expect(card(teacher, 3)).toContainText('시행 1회');
-    // 활동이 하나인 단원은 활동 이름을 붙이지 않는다(용해와 용액·여러 가지 기체는 두 번째 활동이 생겨 빛의 성질로 확인한다).
+    // 활동이 하나인 단원은 활동 이름을 붙이지 않는다(용해와 용액·여러 가지 기체·빛의 성질은 두 번째 활동이 생겨 전기의 이용으로 확인한다).
     await s3.evaluate(() => {
-      window.location.hash = '#/unit/g5-light';
+      window.location.hash = '#/unit/g6-electricity';
     });
-    await expect(card(teacher, 3)).toContainText('빛의 성질');
-    await expect(card(teacher, 3)).not.toContainText(' · 빛');
-    await expect(card(teacher, 3).locator('.unit')).toHaveText('빛의 성질');
+    await expect(card(teacher, 3)).toContainText('전기의 이용');
+    await expect(card(teacher, 3).locator('.unit')).toHaveText('전기의 이용');
   });
 
   test('활동이 넷인 힘과 우리 생활: 활동 탭을 옮길 때마다 교사 카드의 활동 이름이 바뀌고, 활동이 둘인 여러 가지 기체도 활동 이름이 붙는다', async ({ page: teacher, context }) => {

@@ -32,8 +32,8 @@ const TIMES = [0, 0.125, 0.25, 0.5, 0.75, 1.5, 3];
 
 describe('레지스트리', () => {
   it('g3-sound 활동 2는 sound-vibration 모듈로 로드되고 첫 활동(string-sound)은 그대로다', () => {
-    expect([unit.manifest.title, unit.manifest.grade, unit.manifest.engine, unit.manifest.standards]).toEqual(['소리의 성질', 3, 'physics', ['4과07-01', '4과07-02']]);
-    expect(unit.activities.map((a) => [a.activity, a.experiment.id, a.module.kind])).toEqual([['variable', 'string-sound', 'string-sound'], ['variable', 'sound-vibration', 'sound-vibration']]);
+    expect([unit.manifest.title, unit.manifest.grade, unit.manifest.engine, unit.manifest.standards]).toEqual(['소리의 성질', 3, 'physics', ['4과07-01', '4과07-02', '4과07-03']]);
+    expect(unit.activities.map((a) => [a.activity, a.experiment.id, a.module.kind])).toEqual([['variable', 'string-sound', 'string-sound'], ['variable', 'sound-vibration', 'sound-vibration'], ['variable', 'sound-transmit', 'sound-transmit']]);
     expect(unit.module.kind).toBe('string-sound');
     expect(activity.module).toBe(soundVibrationModule);
     expect(MODULES['sound-vibration'].kind).toBe('sound-vibration');

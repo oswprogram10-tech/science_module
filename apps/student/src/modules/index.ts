@@ -36,6 +36,8 @@ import { combustionProductsModule } from './combustion-products';
 import { pushPullModule } from './push-pull';
 import { springScaleModule } from './spring-scale';
 import { gasWeightModule } from './gas-weight';
+import { lightNeededModule } from './light-needed';
+import { soundTransmitModule } from './sound-transmit';
 
 export const MODULES: Record<ModuleKind, AnyModule> = {
   dissolution: dissolutionModule,
@@ -74,4 +76,6 @@ export const MODULES: Record<ModuleKind, AnyModule> = {
   'push-pull': pushPullModule,
   'spring-scale': springScaleModule,
   'gas-weight': gasWeightModule,
+  'light-needed': lightNeededModule,
+  'sound-transmit': soundTransmitModule,
 };
