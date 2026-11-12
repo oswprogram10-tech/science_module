@@ -9,3 +9,4 @@ export * from './separation';
 export * from './concentration';
 export * from './acidBaseMix';
 export * from './combustionProducts';
+export * from './gasWeight';

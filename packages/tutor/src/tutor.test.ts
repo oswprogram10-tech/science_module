@@ -2654,6 +2654,170 @@ describe('변인 실험 활동 2 매니페스트 probe (lever-lift, sound-vibrat
   }
 });
 
+// ---------- 변인 실험 추가 활동: 밀고 당기면 생기는 변화, 용수철저울로 무게 비교하기, 공기를 넣은 페트병의 무게 ----------
+describe('변인 실험 추가 활동 매니페스트 probe (push-pull, spring-scale, gas-weight)', () => {
+  const CASES = [
+    {
+      name: 'g3-force 활동 3(push-pull)',
+      json: forceJson,
+      index: 2,
+      iv: { strength: '힘의 세기만 바꾸었어요.', action: '밀 때와 당길 때 물체가 움직인 방향을 비교해 볼까요?', object: '물체만 바꾸었어요.', color: '물체 색깔만 바꾸었을 때' },
+      mismatch: '찰흙과 수레는 힘을 받았을 때 각각 무엇이 변했나요?',
+      before: '물체가 움직인 거리',
+      rules: [
+        '세게 밀수록 멀리 가요',
+        '세게 밀수록 더 멀리 가요',
+        '세게 할수록 멀리 가요',
+        '힘이 클수록 멀리 가요',
+        '힘이 셀수록 멀리 가요',
+        '세게 하면 더 멀리 가요',
+        '세게 당기면 더 멀리 와요',
+        '밀면 멀어지고 당기면 가까워져요',
+        '밀면 멀어져요',
+        '당기면 가까워져요',
+        '당기면 손 쪽으로 와요',
+        '찰흙은 모양이 변해요',
+        '찰흙은 모양이 바뀌어요',
+        '찰흙은 눌려요',
+        '힘을 주면 모양이 변해요',
+        '힘을 주면 모양이 바뀌어요',
+        '힘을 받으면 모양이 변해요',
+        '힘은 모양과 움직임을 바꿔요',
+        '색깔은 관계없어요',
+        '색깔은 상관없습니다',
+        '색깔과 관계없이 같아요',
+        '색깔이 달라도 같아요',
+      ],
+    },
+    {
+      name: 'g3-force 활동 4(spring-scale)',
+      json: forceJson,
+      index: 3,
+      iv: { weights: '추를 하나 더 걸 때마다 늘어난 길이는 어떻게 변했나요?', object: '물체만 바꾸었어요.', springColor: '용수철 색깔만 바꾸었을 때' },
+      mismatch: '저울 눈금이 같으면 두 물체의 무게에 대해 무엇을 말할 수 있을까요?',
+      before: '용수철이 늘어난 길이',
+      rules: [
+        '추가 늘면 늘어난 길이도 늘어요',
+        '추를 하나 더 걸 때마다 2 cm씩 늘어나요',
+        '추를 하나 더 걸면 2 cm 늘어요',
+        '추 한 개에 2 cm예요',
+        '추 하나마다 2 cm씩이에요',
+        '50 g마다 2 cm 늘어요',
+        '50g마다 2cm예요',
+        '무거울수록 많이 늘어나요',
+        '무거울수록 더 길게 늘어나요',
+        '무게가 클수록 많이 늘어나요',
+        '가위가 풀보다 무거워요',
+        '가위가 풀보다 더 무거워요',
+        '풀이 가위보다 가벼워요',
+        '필통이 가장 무거워요',
+        '용수철 색은 관계없어요',
+        '용수철 색깔은 관계없어요',
+        '용수철 색깔은 상관없습니다',
+        '색깔은 영향이 없어요',
+      ],
+    },
+    {
+      name: 'g4-gases 활동 2(gas-weight)',
+      json: gasesJson,
+      index: 1,
+      iv: { pumps: '누른 횟수만 바꾸었어요.', cap: '마개를 열었을 때 병의 무게와 단단한 정도는 각각 어떻게 되었나요?', label: '띠지 색깔만 바꾸었을 때' },
+      mismatch: '저울 숫자의 소수점 아래 자리까지 견주어 볼까요?',
+      before: '페트병의 무게',
+      rules: [
+        '공기도 무게가 있어요',
+        '공기는 무게가 있어요',
+        '공기에도 무게가 있어요',
+        '기체도 무게가 있어요',
+        '기체는 무게가 있어요',
+        '기체에는 무게가 있어요',
+        '공기를 넣을수록 무거워져요',
+        '공기를 넣으면 더 무거워요',
+        '많이 누를수록 무거워져요',
+        '누를수록 무거워요',
+        '누를수록 무게가 늘어요',
+        '누르면 무게가 늘어요',
+        '공기를 빼면 가벼워져요',
+        '공기가 빠지면 가벼워요',
+        '마개를 열면 가벼워져요',
+        '마개를 열면 무게가 줄어요',
+        '띠지 색깔은 관계없어요',
+        '띠지 색은 관계없어요',
+        '띠지 색은 상관없습니다',
+        '색깔은 영향이 없어요',
+      ],
+    },
+  ];
+  for (const c of CASES) {
+    describe(c.name, () => {
+      const e = parseManifest(c.json).experiments[c.index]! as VariableExperiment;
+      const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+      const eKeys = e.variables.map((v) => v.key);
+      const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+      const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: eKeys[0]!, ...x });
+      const fair = (iv: string): Partial<ProbeContext> => ({ ivKey: iv, lastAnalysis: { kind: 'fair-test', changed: [iv] }, prediction: 'same', observed: 'same' });
+
+      it('실행 전 질문은 예측 버튼이 가리키는 양을 묻는다', () => {
+        const text = selectProbe(eCtx({}), e.tutor.probes, eGuard);
+        expect(text).toContain(c.before);
+        expect(text.trim().endsWith('?')).toBe(true);
+      });
+
+      it('iv별 fair-test 질문을 고른다', () => {
+        for (const [iv, start] of Object.entries(c.iv)) expect(selectProbe(eCtx(fair(iv)), e.tutor.probes, eGuard), iv).toContain(start);
+      });
+
+      it('예측과 결과가 다르면 사양의 확인 질문을 한다', () => {
+        const text = selectProbe(eCtx({ ...fair(eKeys[0]!), prediction: 'increase', observed: 'same' }), e.tutor.probes, eGuard);
+        expect(text).toContain(c.mismatch);
+      });
+
+      it('모든 probe는 질문형이고, 모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+        let n = 0;
+        for (const probe of e.tutor.probes) {
+          expect(probe.text.trim().endsWith('?'), probe.text).toBe(true);
+          for (const iv of eKeys) {
+            for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+              const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+              expect(guardOutput(text, eGuard).ok, text).toBe(true);
+              expect(text).not.toMatch(/[{}]/);
+              expect(text).not.toMatch(/(을\(를\)|이\(가\)|와\(과\)|은\(는\))/);
+              n++;
+            }
+          }
+        }
+        expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+      });
+
+      it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+        const situations: Partial<ProbeContext>[] = [
+          {},
+          { lastAnalysis: { kind: 'first-trial', changed: [] } },
+          { lastAnalysis: { kind: 'confounded', changed: eKeys.slice(0, 2) } },
+          { lastAnalysis: { kind: 'iv-unchanged', changed: [eKeys[eKeys.length - 1]!] } },
+          { lastAnalysis: { kind: 'repeat', changed: [] } },
+          ...eKeys.flatMap((k) => [fair(k), { ...fair(k), prediction: 'increase' as const, observed: 'same' as const }]),
+        ];
+        for (const s of situations) {
+          const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+          expect(text).not.toBe(FALLBACK_PROBE);
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+        }
+      });
+
+      it('금지 구절과 한계 용어를 담은 문장은 활용형까지 실제로 막는다', () => {
+        for (const f of e.tutor.forbiddenAnswers) expect(guardOutput(`${f}요`, eGuard).ok, f).toBe(false);
+        for (const l of e.limits) expect(guardOutput(`${l}이에요`, eGuard).ok, l).toBe(false);
+        for (const rule of c.rules) expect(guardOutput(rule, eGuard).ok, rule).toBe(false);
+        for (const probe of e.tutor.probes) {
+          for (const f of e.tutor.forbiddenAnswers) expect(probe.text, probe.text).not.toContain(f);
+          for (const l of e.limits) expect(probe.text, probe.text).not.toContain(l);
+        }
+      });
+    });
+  }
+});
+
 // ---------- 변인 실험 두 번째 활동: 용액의 진하기 비교하기, 온도가 다른 두 물이 닿으면, 산성 용액과 염기성 용액 섞기 ----------
 describe('변인 실험 활동 2 매니페스트 probe (concentration, heat-contact, acid-base-mix)', () => {
   const CASES = [
@@ -2775,6 +2939,97 @@ describe('변인 실험 활동 2 매니페스트 probe (position-time, combustio
       });
 
       it('예측과 결과가 다르면 그림·그래프에서 확인하라고 한다', () => {
+        const text = selectProbe(eCtx({ ...fair(eKeys[0]!), prediction: 'increase', observed: 'same' }), e.tutor.probes, eGuard);
+        expect(text).toContain(c.mismatch);
+      });
+
+      it('모든 probe는 질문형이고, 모든 probe × 모든 변인 조합으로 치환해도 가드를 통과한다 (오검출 없음)', () => {
+        let n = 0;
+        for (const probe of e.tutor.probes) {
+          expect(probe.text.trim().endsWith('?'), probe.text).toBe(true);
+          for (const iv of eKeys) {
+            for (const changed of [...eKeys.map((k) => [k]), eKeys]) {
+              const text = renderProbe(probe.text, { iv: eLabels[iv]!, changed: changed.map((k) => eLabels[k]!) });
+              expect(guardOutput(text, eGuard).ok, text).toBe(true);
+              expect(text).not.toMatch(/[{}]/);
+              expect(text).not.toMatch(/(을\(를\)|이\(가\)|와\(과\)|은\(는\))/);
+              n++;
+            }
+          }
+        }
+        expect(n).toBe(e.tutor.probes.length * eKeys.length * (eKeys.length + 1));
+      });
+
+      it('모든 시행 상황에서 고른 질문이 가드를 통과하고 폴백이 아니다', () => {
+        const situations: Partial<ProbeContext>[] = [
+          {},
+          { lastAnalysis: { kind: 'first-trial', changed: [] } },
+          { lastAnalysis: { kind: 'confounded', changed: eKeys.slice(0, 2) } },
+          { lastAnalysis: { kind: 'iv-unchanged', changed: [eKeys[eKeys.length - 1]!] } },
+          { lastAnalysis: { kind: 'repeat', changed: [] } },
+          ...eKeys.flatMap((k) => [fair(k), { ...fair(k), prediction: 'increase' as const, observed: 'same' as const }]),
+        ];
+        for (const s of situations) {
+          const text = selectProbe(eCtx(s), e.tutor.probes, eGuard);
+          expect(text).not.toBe(FALLBACK_PROBE);
+          expect(guardOutput(text, eGuard).ok, text).toBe(true);
+        }
+      });
+
+      it('금지 구절과 한계 용어를 담은 문장은 실제로 막는다', () => {
+        for (const f of e.tutor.forbiddenAnswers) expect(guardOutput(`${f}요`, eGuard).ok, f).toBe(false);
+        for (const l of e.limits) expect(guardOutput(`${l}이에요`, eGuard).ok, l).toBe(false);
+        for (const rule of c.rules) expect(guardOutput(rule, eGuard).ok, rule).toBe(false);
+        for (const probe of e.tutor.probes) {
+          for (const f of e.tutor.forbiddenAnswers) expect(probe.text, probe.text).not.toContain(f);
+          for (const l of e.limits) expect(probe.text, probe.text).not.toContain(l);
+        }
+      });
+    });
+  }
+});
+
+// ---------- 변인 실험 활동 추가: 물체를 보려면 빛이 필요할까(빛의 성질 활동 2), 소리가 전달되는 물질과 소음 줄이기(소리의 성질 활동 3) ----------
+describe('변인 실험 활동 추가 매니페스트 probe (light-needed, sound-transmit)', () => {
+  const CASES = [
+    {
+      name: 'g5-light 활동 2(light-needed)',
+      json: lightJson,
+      index: 1,
+      iv: { flashlight: '손전등만 바꾸었어요.', object: '물체만 바꾸었어요.', boxColor: '상자 겉 색깔만 바꾸었을 때' },
+      before: '상자 안 밝기 눈금',
+      mismatch: '우리 눈에 물체가 보일 때 빛은 어디에서 어디로 갔을까요?',
+      rules: ['빛이 있어야 보여요', '빛이 있어야만 볼 수 있어요', '빛이 없으면 보이지 않아요', '빛이 없으면 안 보여요', '빛이 물체에 닿아요', '반사된 빛이 눈으로 들어와요', '물체에서 반사해요', '물체에서 나온 빛이 눈에 들어와요', '스스로 빛을 내는 물체는 보여요', '전구는 스스로 빛을 내요', '상자 색은 관계없어요', '상자 겉 색깔은 관계없어요', '색깔은 상관없어요', '상자 겉 색깔은 상관없어요', '상자 색이 달라도 같아요'],
+    },
+    {
+      name: 'g3-sound 활동 3(sound-transmit)',
+      json: soundJson,
+      index: 2,
+      iv: { medium: '소리를 전하는 것만 바꾸었어요.', block: '감싼 것을 바꾸었을 때', clockColor: '시계 색깔만 바꾸었을 때' },
+      before: '소음계 눈금',
+      mismatch: '우리 교실의 소음을 줄이려면',
+      rules: ['소리는 고체에서 잘 전달돼요', '고체에서 더 잘 들려요', '나무에서 더 잘 들려요', '물에서도 소리가 전달돼요', '물을 통해서도 전달돼요', '소리는 물질을 통해 전달돼요', '공기를 통해 전달돼요', '솜이 소리를 가장 잘 막아요', '솜이 가장 잘 막아요', '부드러운 재료가 소리를 줄여요', '구멍이 많은 재료가 막아요', '푹신한 재료가 좋아요', '시계 색깔은 관계없어요', '시계 색은 관계없어요', '색깔은 상관없어요', '시계 색이 달라도 같아요'],
+    },
+  ];
+  for (const c of CASES) {
+    describe(c.name, () => {
+      const e = parseManifest(c.json).experiments[c.index]! as VariableExperiment;
+      const eLabels = Object.fromEntries(e.variables.map((v) => [v.key, v.label]));
+      const eKeys = e.variables.map((v) => v.key);
+      const eGuard = { forbiddenAnswers: e.tutor.forbiddenAnswers, limits: e.limits };
+      const eCtx = (x: Partial<ProbeContext>): ProbeContext => ({ labels: eLabels, ivKey: eKeys[0]!, ...x });
+      const fair = (iv: string): Partial<ProbeContext> => ({ ivKey: iv, lastAnalysis: { kind: 'fair-test', changed: [iv] }, prediction: 'same', observed: 'same' });
+
+      it('실행 전 probe가 예측 버튼에 맞는 양(눈금)을 묻는다', () => {
+        expect(selectProbe(eCtx({}), e.tutor.probes, eGuard)).toContain(c.before);
+        expect(e.predictionPrompt).toContain('눈금');
+      });
+
+      it('iv별 fair-test 질문을 고른다', () => {
+        for (const [iv, start] of Object.entries(c.iv)) expect(selectProbe(eCtx(fair(iv)), e.tutor.probes, eGuard), iv).toContain(start);
+      });
+
+      it('예측과 결과가 다르면 결과표에서 확인하라고 한다', () => {
         const text = selectProbe(eCtx({ ...fair(eKeys[0]!), prediction: 'increase', observed: 'same' }), e.tutor.probes, eGuard);
         expect(text).toContain(c.mismatch);
       });

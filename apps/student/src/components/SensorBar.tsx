@@ -38,13 +38,19 @@ function makeDriver(kind: SensorKind, source: () => number): SensorDriver {
   }
 }
 
+/** toFixed와 같지만 "-0.0"처럼 0에 가까운 음수는 "0.0"으로 쓴다(가상 센서의 작은 잡음). */
+const fixed = (value: number, decimals: number): string => {
+  const text = value.toFixed(decimals);
+  return /^-0(\.0+)?$/.test(text) ? text.slice(1) : text;
+};
+
 interface Entry { driver: SensorDriver; holder: { source: number }; key: number; reading: SensorReading }
 
 /** 단원(모듈)이 준 SensorSpec마다 Mock 드라이버를 만들어 읽는다. 표시되는 값이 바뀔 때만 다시 읽어 숫자가 매 프레임 깜빡이지 않게 한다. */
 function useSensorReadings(specs: SensorSpec[]): SensorReading[] {
   const entries = useRef(new Map<string, Entry>());
   return specs.map((spec) => {
-    const key = Math.round(spec.source * 10 ** DECIMALS[spec.kind]);
+    const key = Math.round(spec.source * 10 ** (spec.decimals ?? DECIMALS[spec.kind]));
     let e = entries.current.get(spec.id);
     if (!e) {
       const holder = { source: spec.source };
@@ -85,7 +91,7 @@ export function SensorBar({ specs }: { specs: SensorSpec[] }) {
                 ? real.value === null || Number.isNaN(real.value)
                   ? '기다리는 중'
                   : `${real.value.toFixed(DECIMALS[spec.kind])} °C`
-                : `${readings[i]!.value.toFixed(DECIMALS[spec.kind])} ${readings[i]!.unit}`}
+                : `${fixed(readings[i]!.value, spec.decimals ?? DECIMALS[spec.kind])} ${readings[i]!.unit}`}
             </output>
             {isReal && real.stale && <span className="real-stale">(끊김: 마지막 값)</span>}
           </div>

@@ -37,8 +37,8 @@ const frames = (v: V): LeverLiftSample[] => {
 
 describe('레지스트리', () => {
   it('g3-force 활동 2는 lever-lift 모듈로 로드되고 첫 활동(lever-balance)은 그대로다', () => {
-    expect([unit.manifest.title, unit.manifest.grade, unit.manifest.engine, unit.manifest.standards]).toEqual(['힘과 우리 생활', 3, 'physics', ['4과01-02', '4과01-04']]);
-    expect(unit.activities.map((a) => [a.activity, a.experiment.id, a.module.kind])).toEqual([['variable', 'lever-balance', 'lever-balance'], ['variable', 'lever-lift', 'lever-lift']]);
+    expect([unit.manifest.title, unit.manifest.grade, unit.manifest.engine, unit.manifest.standards]).toEqual(['힘과 우리 생활', 3, 'physics', ['4과01-01', '4과01-02', '4과01-03', '4과01-04']]);
+    expect(unit.activities.map((a) => [a.activity, a.experiment.id, a.module.kind])).toEqual([['variable', 'lever-balance', 'lever-balance'], ['variable', 'lever-lift', 'lever-lift'], ['variable', 'push-pull', 'push-pull'], ['variable', 'spring-scale', 'spring-scale']]);
     expect(unit.module.kind).toBe('lever-balance');
     expect(activity.module).toBe(leverLiftModule);
     expect(MODULES['lever-lift'].kind).toBe('lever-lift');

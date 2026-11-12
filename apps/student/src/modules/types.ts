@@ -24,6 +24,8 @@ export interface SensorSpec {
   source: number;
   /** 같은 종류의 센서가 둘 이상일 때 접근성 이름(기본: 종류 이름). */
   ariaLabel?: string;
+  /** 표시할 소수 자릿수(기본: 센서 종류마다 정한 값). 정수 g처럼 가상 센서의 잡음이 보이지 않아야 할 때 쓴다. */
+  decimals?: number;
 }
 
 export interface GraphMarker {

@@ -10,3 +10,7 @@ export * from './soundVibration';
 export * from './magnetPoles';
 export * from './heatContact';
 export * from './positionTime';
+export * from './pushPull';
+export * from './springScale';
+export * from './lightNeeded';
+export * from './soundTransmit';
