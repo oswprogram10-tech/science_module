@@ -62,9 +62,9 @@ describe('analyzeTrial', () => {
       analyzeTrial(prev, { values: v({ stir: 2, waterMl: 100 }), ivKey: 'waterTempC' }, labels).kind,
     ).toBe('iv-unchanged');
   });
-  it('confounded: IV가 null이면 변화가 있을 때 confounded', () => {
+  it('confounded: IV가 null이면 둘 이상 바뀌었을 때 confounded', () => {
     const prev = { values: v(), ivKey: null };
-    expect(analyzeTrial(prev, { values: v({ stir: 2 }), ivKey: null }, labels).kind).toBe('confounded');
+    expect(analyzeTrial(prev, { values: v({ stir: 2, waterMl: 100 }), ivKey: null }, labels).kind).toBe('confounded');
   });
 });
 
@@ -164,9 +164,9 @@ describe('바꿀 조건(조작변인)을 고르지 않아도 되는 활동(requi
     // 한 번에 하나만 바꾸기를 요구하는 활동은 그대로다.
     expect(canRun({ ivKey: null, prediction: 'same' }, { requirePrediction: true, requireSingleIV: true }).reasons).toEqual(['바꿀 조건(조작변인)을 하나 골라 주세요.']);
   });
-  it('analyzeTrial: 바꿀 조건이 없으면 바뀐 것이 하나여도 confounded(여럿 바꿈과 같은 질문)이고 같으면 repeat', () => {
+  it('analyzeTrial: 바꿀 조건이 없으면 하나만 바꾼 시행은 그 조건의 fair-test, 둘 이상이면 confounded, 같으면 repeat', () => {
     const prev = { values: v(), ivKey: null };
-    expect(analyzeTrial(prev, { values: v({ stir: 2 }), ivKey: null }, labels)).toEqual({ kind: 'confounded', changed: ['stir'] });
+    expect(analyzeTrial(prev, { values: v({ stir: 2 }), ivKey: null }, labels)).toEqual({ kind: 'fair-test', changed: ['stir'] });
     expect(analyzeTrial(prev, { values: v({ stir: 2, waterMl: 100 }), ivKey: null }, labels).kind).toBe('confounded');
     expect(analyzeTrial(prev, { values: v(), ivKey: null }, labels).kind).toBe('repeat');
   });

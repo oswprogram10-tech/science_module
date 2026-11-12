@@ -104,6 +104,22 @@ test('바꿀 조건 없이 연결 세 곳을 한꺼번에 바꾸면 켜짐(6)이
   expect(await page.locator('main').innerText()).not.toMatch(LIMITS);
 });
 
+test('바꿀 조건을 고르지 않아도 하나만 바꾸면 그 조건 전용 질문이 나오고 "함께 바꾸었어요"는 나오지 않는다', async ({ page }) => {
+  await open(page);
+  await setValue(page, PLUS, '전구 꼭지');
+  await setValue(page, MINUS, '전구 옆면 쇠붙이');
+  await setValue(page, SWITCH, '닫힘');
+  await run(page, '늘어난다');
+  expect(await resultCells(resultRows(page).first())).toEqual(['6', '켜짐']);
+  await setValue(page, SWITCH, '열림');
+  await run(page, '줄어든다');
+  const row2 = resultRows(page).nth(1);
+  expect(await resultCells(row2)).toEqual(['0', '켜지지 않음']);
+  await expect(row2).toContainText('결과: 줄어들었다');
+  await expect(tutorBox(page)).toContainText('스위치만 바꾸었어요. 전구는 어떻게 달라졌나요?');
+  await expect(tutorBox(page)).not.toContainText('함께 바꾸었어요');
+});
+
 test('하나씩 바꾸기: 스위치만 열면 꺼지고(줄어들었다), 전선을 댄 곳만 바꾸어도 꺼지며, 두 전선을 맞바꾸면 다시 켜진다', async ({ page }) => {
   await open(page);
   await setValue(page, PLUS, '전구 꼭지');
