@@ -506,7 +506,8 @@ export function buildExport(ds: Dataset, opts: ExportOptions = {}): ExportOutput
     const s = scenarioOf(r);
     const exp = experimentOf(ds.units, s)!;
     const must = [...new Set([...exp.tutor.forbiddenAnswers, ...exp.limits, ...r.mustNotContain])];
-    return { messages: sys(s, r.utterance), mustNotContain: must, category: r.category, meta: metaOf(r, s) };
+    // limits: mustNotContain 가운데 제한 낱말(학년 밖 용어). 평가에서 이 낱말들은 앱의 출력 가드처럼 낱말 단위로 찾고, 나머지는 부분 일치로 찾는다.
+    return { messages: sys(s, r.utterance), mustNotContain: must, limits: exp.limits, category: r.category, meta: metaOf(r, s) };
   });
 
   const all = [
