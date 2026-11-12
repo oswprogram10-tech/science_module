@@ -6,8 +6,8 @@ export const ST_BLOCKS = ['none', 'box', 'sponge', 'cotton'] as const;
 export type StBlock = (typeof ST_BLOCKS)[number];
 export const ST_CLOCKS = ['red', 'blue'] as const;
 export type StClock = (typeof ST_CLOCKS)[number];
-/** 귀에 들리나요(범주) */
-export type StHeard = 'heard' | 'unheard';
+/** 귀에 들리나요(범주): 잘 들림 · 작게 들림 · 거의 들리지 않음 */
+export type StHeard = 'loud' | 'soft' | 'faint';
 
 export interface SoundTransmitParams {
   /** 소리를 전하는 것 */
@@ -37,15 +37,17 @@ export interface SoundTransmitOutput {
   result: SoundTransmitResult;
 }
 
-export const ST_HEARD_LABEL: Record<StHeard, string> = { heard: '들림', unheard: '들리지 않음' };
+export const ST_HEARD_LABEL: Record<StHeard, string> = { loud: '잘 들림', soft: '작게 들림', faint: '거의 들리지 않음' };
 
 /** 소리를 전하는 것에 따른 기본 눈금. 수치는 근사값이며 교사 검수 대상이다. */
 export const ST_BASE_LEVEL: Record<StMedium, number> = { air: 5, water: 7, wood: 8, string: 7 };
 /** 감싼 것에 따라 빼는 눈금 */
 export const ST_CUT_LEVEL: Record<StBlock, number> = { none: 0, box: 1, sponge: 2, cotton: 3 };
 export const ST_LEVEL_MAX = 10;
-/** 눈금이 이 값 이상이면 귀에 들린다. */
-export const ST_HEARD_MIN = 1;
+/** 눈금이 이 값 이상이면 잘 들린다. */
+export const ST_LOUD_MIN = 5;
+/** 눈금이 이 값 이상(잘 들림 기준 미만)이면 작게 들리고, 더 낮으면 거의 들리지 않는다. */
+export const ST_SOFT_MIN = 3;
 export const ST_TOTAL_S = 2;
 export const ST_SAMPLE_S = 0.05;
 /** 바늘은 1.5초 동안 움직이고 2초까지 멈춰 있다. */
@@ -68,13 +70,13 @@ const checkParams = (p: SoundTransmitParams): void => {
 /** 소음계 눈금 = max(0, 기본 눈금 − 감싼 것이 줄이는 눈금) */
 export const soundTransmitLevelOf = (p: Pick<SoundTransmitParams, 'medium' | 'block'>): number => Math.max(0, ST_BASE_LEVEL[p.medium] - ST_CUT_LEVEL[p.block]);
 
-/** 눈금이 1 이상이면 들림 */
-export const heardOf = (level: number): StHeard => (level >= ST_HEARD_MIN ? 'heard' : 'unheard');
+/** 눈금 5 이상 잘 들림, 3~4 작게 들림, 2 이하 거의 들리지 않음 */
+export const heardOf = (level: number): StHeard => (level >= ST_LOUD_MIN ? 'loud' : level >= ST_SOFT_MIN ? 'soft' : 'faint');
 
 /**
  * 소리가 전달되는 물질과 소음 줄이기. 수치는 근사값이며 교사 검수 대상이다. 난수 없음.
  * 기본 눈금은 공기 5, 물 7, 책상 나무 8, 실 7. 감싼 것은 없음 0, 종이 상자 1, 스펀지 2, 솜 3을 빼고(0보다 작아지지 않는다),
- * 눈금이 1 이상이면 들린다. 알람 시계 색깔은 계산에 쓰지 않는다. 바늘은 0~1.5초 동안 움직이고 2초까지 멈춰 있다(0.05초 간격).
+ * 눈금이 5 이상이면 잘 들림, 3~4는 작게 들림, 2 이하는 거의 들리지 않음. 알람 시계 색깔은 계산에 쓰지 않는다. 바늘은 0~1.5초 동안 움직이고 2초까지 멈춰 있다(0.05초 간격).
  */
 export function simulateSoundTransmit(params: SoundTransmitParams): SoundTransmitOutput {
   checkParams(params);

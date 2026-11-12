@@ -57,7 +57,7 @@ test('활동이 셋이라 탭 셋이 보이고, 세 번째 활동으로 열리�
   await expect(activityTab(page, 3)).toHaveAttribute('aria-selected', 'true');
 });
 
-test('기준(공기, 감싸지 않음, 빨간 시계)이면 소음계 5·들림이고 실행 전에는 바늘이 0이며 소리 물결을 그리지 않는다', async ({ page }) => {
+test('기준(공기, 감싸지 않음, 빨간 시계)이면 소음계 5·잘 들림이고 실행 전에는 바늘이 0이며 소리 물결을 그리지 않는다', async ({ page }) => {
   await open(page);
   expect(await needle(page)).toBe(0);
   await expect(macro(page).getByTestId('sound-note')).toContainText('실험하면');
@@ -67,9 +67,9 @@ test('기준(공기, 감싸지 않음, 빨간 시계)이면 소음계 5·들림�
   expect(await page.locator('main').innerText()).not.toMatch(LIMITS);
 
   await baselineRun(page, MEDIUM);
-  expect(await resultCells(resultRows(page).first())).toEqual(['5', '들림']);
+  expect(await resultCells(resultRows(page).first())).toEqual(['5', '잘 들림']);
   for (const h of ['소음계 눈금', '귀에 들리나요']) await expect(page.getByRole('columnheader', { name: h })).toBeVisible();
-  await expect(macro(page).getByTestId('sound-note')).toHaveText('2.0초 · 소음계 5.0눈금 · 귀에 들림');
+  await expect(macro(page).getByTestId('sound-note')).toHaveText('2.0초 · 소음계 5.0눈금 · 귀에 잘 들림');
   expect(await needle(page)).toBe(5);
   expect(await barValues(page)).toEqual([5]);
   await expect(page.getByText('가상 소음계')).toBeVisible();
@@ -83,7 +83,7 @@ test('소리를 전하는 것만 책상 나무로 바꾸면 8(늘어났다)이�
   await setValue(page, MEDIUM, '책상 나무');
   await run(page, '늘어난다');
   const row2 = resultRows(page).nth(1);
-  expect(await resultCells(row2)).toEqual(['8', '들림']);
+  expect(await resultCells(row2)).toEqual(['8', '잘 들림']);
   await expect(row2).toContainText('결과: 늘어났다');
   await expect(tutorBox(page)).toContainText('소리를 전하는 것만 바꾸었어요. 무엇을 통해 들었을 때 소음계 눈금이 어떻게 달랐나요?');
   await expect(macro(page).getByTestId('medium-art')).toHaveAttribute('data-medium', 'wood');
@@ -91,11 +91,11 @@ test('소리를 전하는 것만 책상 나무로 바꾸면 8(늘어났다)이�
   // 물 7, 실 7
   await setValue(page, MEDIUM, '물');
   await run(page, '줄어든다');
-  expect(await resultCells(resultRows(page).nth(2))).toEqual(['7', '들림']);
+  expect(await resultCells(resultRows(page).nth(2))).toEqual(['7', '잘 들림']);
   await expect(macro(page).getByTestId('medium-art')).toHaveAttribute('data-medium', 'water');
   await setValue(page, MEDIUM, '실 전화기의 실');
   await run(page, '변하지 않는다');
-  expect(await resultCells(resultRows(page).nth(3))).toEqual(['7', '들림']);
+  expect(await resultCells(resultRows(page).nth(3))).toEqual(['7', '잘 들림']);
   await expect(macro(page).getByTestId('medium-art')).toHaveAttribute('data-medium', 'string');
   expect(await barValues(page)).toEqual([5, 8, 7, 7]);
 });
@@ -106,17 +106,17 @@ test('감싼 것만 바꾸면 종이 상자 4, 스펀지 3, 솜 2로 줄어들�
   await setValue(page, BLOCK, '종이 상자');
   await run(page, '줄어든다');
   const row2 = resultRows(page).nth(1);
-  expect(await resultCells(row2)).toEqual(['4', '들림']);
+  expect(await resultCells(row2)).toEqual(['4', '작게 들림']);
   await expect(row2).toContainText('결과: 줄어들었다');
   await expect(tutorBox(page)).toContainText('감싼 것을 바꾸었을 때 눈금은 어떻게 달라졌나요? 재료의 어떤 점이 차이를 만들었을까요?');
   await expect(macro(page).getByTestId('wrap')).toHaveAttribute('data-block', 'box');
   await setValue(page, BLOCK, '스펀지');
   await run(page, '줄어든다');
-  expect(await resultCells(resultRows(page).nth(2))).toEqual(['3', '들림']);
+  expect(await resultCells(resultRows(page).nth(2))).toEqual(['3', '작게 들림']);
   await expect(macro(page).getByTestId('wrap')).toHaveAttribute('data-block', 'sponge');
   await setValue(page, BLOCK, '솜');
   await run(page, '줄어든다');
-  expect(await resultCells(resultRows(page).nth(3))).toEqual(['2', '들림']);
+  expect(await resultCells(resultRows(page).nth(3))).toEqual(['2', '거의 들리지 않음']);
   await expect(macro(page).getByTestId('wrap')).toHaveAttribute('data-block', 'cotton');
   expect(await barValues(page)).toEqual([5, 4, 3, 2]);
   expect(await needle(page)).toBe(2);
@@ -126,11 +126,11 @@ test('대조 변인: 알람 시계 색깔만 파란색으로 바꾸면 결과가
   await open(page);
   await setValue(page, MEDIUM, '물');
   await baselineRun(page, CLOCK);
-  expect(await resultCells(resultRows(page).first())).toEqual(['7', '들림']);
+  expect(await resultCells(resultRows(page).first())).toEqual(['7', '잘 들림']);
   await setValue(page, CLOCK, '파란색');
   await run(page, '변하지 않는다');
   const row2 = resultRows(page).nth(1);
-  expect(await resultCells(row2)).toEqual(['7', '들림']);
+  expect(await resultCells(row2)).toEqual(['7', '잘 들림']);
   await expect(row2).toContainText('결과: 변하지 않았다');
   await expect(tutorBox(page)).toContainText('시계 색깔만 바꾸었을 때 결과가 달라졌나요? 이 결과로 무엇을 알 수 있을까요?');
   await expect(macro(page).getByTestId('clock')).toHaveAttribute('data-color', 'blue');

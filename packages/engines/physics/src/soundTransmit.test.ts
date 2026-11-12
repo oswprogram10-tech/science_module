@@ -3,6 +3,7 @@ import type { VariableExperiment } from '@sci/schema';
 import {
   ST_BASE_LEVEL,
   ST_BLOCKS,
+  ST_HEARD_LABEL,
   ST_CLOCKS,
   ST_CUT_LEVEL,
   ST_MEDIUMS,
@@ -34,7 +35,7 @@ describe('소리 전달과 소음 줄이기 모델: 사양 기준값 16칸 × �
         it(`${clock} 시계, ${medium}, ${block}: ${TABLE[medium][block]}눈금`, () => {
           const r = simulateSoundTransmit(p(medium, block, clock)).result;
           expect(r.level).toBe(TABLE[medium][block]);
-          expect(r.heard).toBe('heard');
+          expect(r.heard).toBe(heardOf(TABLE[medium][block]));
         });
       }
     }
@@ -49,14 +50,16 @@ describe('소리 전달과 소음 줄이기 모델: 사양 기준값 16칸 × �
     for (const m of ST_MEDIUMS) for (const b of ST_BLOCKS) expect(simulateSoundTransmit(p(m, b, 'blue'))).toEqual(simulateSoundTransmit(p(m, b, 'red')));
   });
 
-  it('경계: 눈금은 0보다 작아지지 않고, 1 이상이면 들림, 0이면 들리지 않음', () => {
+  it('경계: 눈금은 0보다 작아지지 않고, 5 이상 잘 들림·3~4 작게 들림·2 이하 거의 들리지 않음', () => {
     expect(soundTransmitLevelOf({ medium: 'air', block: 'cotton' })).toBe(2);
     // 모델이 허용하는 모든 조합의 가장 낮은 눈금은 2이다(공기, 솜).
     const all = ST_MEDIUMS.flatMap((m) => ST_BLOCKS.map((b) => soundTransmitLevelOf({ medium: m, block: b })));
     expect(Math.min(...all)).toBe(2);
     expect(Math.max(...all)).toBe(8);
-    expect(heardOf(1)).toBe('heard');
-    expect(heardOf(0)).toBe('unheard');
+    expect([8, 5, 4, 3, 2, 0].map(heardOf)).toEqual(['loud', 'loud', 'soft', 'soft', 'faint', 'faint']);
+    // 세 범주가 모두 실제로 나온다: 공기에서 감쌀수록 잘 들림 → 작게 들림 → 거의 들리지 않음.
+    expect(ST_BLOCKS.map((b) => heardOf(soundTransmitLevelOf({ medium: 'air', block: b })))).toEqual(['loud', 'soft', 'soft', 'faint']);
+    expect(ST_HEARD_LABEL).toEqual({ loud: '잘 들림', soft: '작게 들림', faint: '거의 들리지 않음' });
     // 가정: 기본 눈금이 작아지면 음수가 되지 않고 0에서 멈춘다.
     expect(Math.max(0, 2 - 3)).toBe(0);
   });
