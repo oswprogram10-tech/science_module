@@ -56,7 +56,7 @@ export const tutorConfigSchema = z.object({
 });
 
 /** 변인 실험(조작변인을 바꿔 수치를 비교하는 활동)의 모듈 종류. */
-export const moduleKindSchema = z.enum(['dissolution', 'gas-syringe', 'candle-jar', 'insulated-cup', 'convex-lens', 'electromagnet', 'magma-cooling', 'sun-angle', 'germination', 'transpiration', 'food-web', 'mold-growth', 'exercise-body', 'lever-balance', 'string-sound', 'magnet-distance', 'ramp-cart', 'freeze-melt', 'salt-sand', 'stream-table', 'sea-water', 'land-sea-breeze', 'infection-spread', 'greenhouse-bottle', 'solar-panel', 'lever-lift', 'sound-vibration', 'magnet-poles', 'concentration', 'heat-contact', 'acid-base-mix', 'position-time', 'combustion-products', 'push-pull', 'spring-scale', 'gas-weight', 'light-needed', 'sound-transmit', 'bulb-light', 'battery-series', 'microscope-cells']);
+export const moduleKindSchema = z.enum(['dissolution', 'gas-syringe', 'candle-jar', 'insulated-cup', 'convex-lens', 'electromagnet', 'magma-cooling', 'sun-angle', 'germination', 'transpiration', 'food-web', 'mold-growth', 'exercise-body', 'lever-balance', 'string-sound', 'magnet-distance', 'ramp-cart', 'freeze-melt', 'salt-sand', 'stream-table', 'sea-water', 'land-sea-breeze', 'infection-spread', 'greenhouse-bottle', 'solar-panel', 'lever-lift', 'sound-vibration', 'magnet-poles', 'concentration', 'heat-contact', 'acid-base-mix', 'position-time', 'combustion-products', 'push-pull', 'spring-scale', 'gas-weight', 'light-needed', 'sound-transmit', 'bulb-light', 'battery-series', 'microscope-cells', 'butterfly-life', 'land-sea-dots']);
 
 export const safetyNoticeSchema = z.object({
   key: z.string().min(1),

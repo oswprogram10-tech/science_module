@@ -108,9 +108,9 @@ test('예전 주소 #/unit/g3-earth-sea는 이제 새 「지구와 바다」 단
   await expect(page.getByRole('heading', { level: 1, name: '지구와 바다' })).toBeVisible();
   await expect(page.getByText('탐구 질문: 바닷물과 강물을 증발시키면 남는 것이 어떻게 다를까?')).toBeVisible();
   await expect(page.getByRole('group', { name: '물의 종류' })).toBeVisible();
-  // 활동이 둘(바닷물과 강물 비교하기, 밀물과 썰물 관찰하기)이라 활동 탭이 있고 첫 활동이 열린다
+  // 활동이 셋(바닷물과 강물 비교하기, 밀물과 썰물 관찰하기, 육지와 바다의 넓이 비교하기)이라 활동 탭이 있고 첫 활동이 열린다
   await expect(activityTabs(page)).toHaveCount(1);
-  await expect(page.getByRole('tab')).toHaveCount(2);
+  await expect(page.getByRole('tab')).toHaveCount(3);
   await expect(activityTab(page, 1)).toHaveAttribute('aria-selected', 'true');
   await page.goto('/#/unit/g4-land/stream-table');
   await expect(page.getByRole('heading', { level: 1, name: '땅의 변화' })).toBeVisible();
@@ -124,10 +124,10 @@ test('단원 목록 카드: 활동이 넷인 힘과 우리 생활은 "활동 4�
   await page.goto('/');
   const cards = page.getByRole('button', { name: /탐구 질문:/ });
   await expect(cards).toHaveCount(32);
-  await expect(page.getByText(/^활동 \d+개$/)).toHaveCount(22);
-  // 활동이 넷인 힘과 우리 생활은 "활동 4개", 셋인 소리의 성질·전기의 이용·땅의 변화·물질의 연소(카드 분류 세 번째 활동)는 "활동 3개", 나머지 열일곱 곳은 "활동 2개"다.
+  await expect(page.getByText(/^활동 \d+개$/)).toHaveCount(23);
+  // 활동이 넷인 힘과 우리 생활은 "활동 4개", 셋인 소리의 성질·전기의 이용·땅의 변화·물질의 연소(카드 분류 세 번째 활동)·지구와 바다는 "활동 3개", 나머지 열일곱 곳은 "활동 2개"다.
   await expect(page.getByText('활동 4개')).toHaveCount(1);
-  await expect(page.getByText('활동 3개')).toHaveCount(4);
+  await expect(page.getByText('활동 3개')).toHaveCount(5);
   await expect(page.getByText('활동 2개')).toHaveCount(17);
   // 변인 실험을 두 번째 활동으로 더한 세 단원: 카드의 탐구 질문은 첫 활동의 것이다.
   for (const [grade, title, question] of [
@@ -138,6 +138,8 @@ test('단원 목록 카드: 활동이 넷인 힘과 우리 생활은 "활동 4�
     ['5학년', /열과 우리 생활/, '컵을 무엇으로, 어떻게 감싸면 물이 덜 식을까?'],
     // 물체를 보려면 빛이 필요할까를 두 번째 활동으로 더한 빛의 성질(카드에는 첫 활동의 탐구 질문이 나온다)
     ['5학년', /빛의 성질/, '볼록 렌즈로 햇빛을 모을 때'],
+    // 배추흰나비의 한살이 관찰 기록을 두 번째 활동으로 더한 생물의 한살이(카드에는 첫 활동의 탐구 질문이 나온다)
+    ['3학년', /생물의 한살이/, '씨가 싹 트려면'],
     ['6학년', /산과 염기/, '지시약을 이용하면 여러 가지 용액을 어떻게 분류할 수 있을까?'],
     // 현미경으로 세포 관찰하기를 두 번째 활동으로 더한 식물의 구조와 기능(카드에는 첫 활동의 탐구 질문이 나온다)
     ['6학년', /식물의 구조와 기능/, '잎이 달린 줄기를 꽂아 둔 물은'],
@@ -159,7 +161,11 @@ test('단원 목록 카드: 활동이 넷인 힘과 우리 생활은 "활동 4�
   await expect(sound).toHaveCount(1);
   await expect(sound).toContainText('활동 3개');
   await expect(sound).toContainText('줄을 튕기는 세기');
-  await expect(page.getByRole('region', { name: '3학년' }).getByRole('button', { name: /지구와 바다/ })).toContainText('활동 2개');
+  // 지구와 바다는 활동이 셋(바닷물과 강물 비교하기, 밀물과 썰물 관찰하기, 육지와 바다의 넓이 비교하기)이라 카드에 "활동 3개"가 나오고, 탐구 질문은 첫 활동의 것이다.
+  const earthSea = page.getByRole('region', { name: '3학년' }).getByRole('button', { name: /지구와 바다/ });
+  await expect(earthSea).toHaveCount(1);
+  await expect(earthSea).toContainText('활동 3개');
+  await expect(earthSea).toContainText('바닷물과 강물을 증발시키면');
   for (const [grade, name, q] of [
     // 전기의 이용은 활동이 셋(전자석, 전구에 불 켜기, 전지 직렬연결 비교)이다. 탐구 질문은 첫 활동의 것이다.
     ['6학년', /전기의 이용/, '전자석에 붙는 클립의 수는'],

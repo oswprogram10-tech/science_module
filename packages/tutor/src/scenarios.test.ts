@@ -48,7 +48,7 @@ describe('활동이 여럿인 단원의 시나리오(id 안정성)', () => {
   });
   it('활동이 하나인 단원은 활동마다 시나리오를 한 번만 만들고 모두 첫 활동 것이다', () => {
     for (const id of TUTOR_UNITS) {
-      if (id === 'g4-gases' || id === 'g5-mixture' || id === 'g4-land' || id === 'g3-earth-sea' || id === 'g5-weather' || id === 'g3-force' || id === 'g3-sound' || id === 'g5-light' || id === 'g6-electricity' || id === 'g6-plant' || id === 'g4-magnet' || id === 'g5-solution' || id === 'g5-heat' || id === 'g6-acid-base' || id === 'g6-motion' || id === 'g6-combustion' || CARD_SORT_BATCH_A.includes(id) || CARD_SORT_BATCH_C.includes(id)) continue;
+      if (id === 'g4-gases' || id === 'g5-mixture' || id === 'g4-land' || id === 'g3-earth-sea' || id === 'g5-weather' || id === 'g3-force' || id === 'g3-sound' || id === 'g5-light' || id === 'g3-lifecycle' || id === 'g6-electricity' || id === 'g6-plant' || id === 'g4-magnet' || id === 'g5-solution' || id === 'g5-heat' || id === 'g6-acid-base' || id === 'g6-motion' || id === 'g6-combustion' || CARD_SORT_BATCH_A.includes(id) || CARD_SORT_BATCH_C.includes(id)) continue;
       const only = units[id]!.manifest.experiments;
       expect(only, id).toHaveLength(1);
       expect(new Set(generateScenarios(id, units[id]!).map((s) => s.state.experimentId)), id).toEqual(new Set([only[0]!.id]));
@@ -148,18 +148,22 @@ describe('카드 분류 활동을 더한 단원 넷의 시나리오(3차 묶음,
   }
 });
 
-describe('지구와 바다 시나리오(활동 2 덧붙임)', () => {
+describe('지구와 바다 시나리오(활동 2 덧붙임, 활동 3은 아래에서 따로 본다)', () => {
   const sea = units['g3-earth-sea']!;
   const list = generateScenarios('g3-earth-sea', sea);
   it('첫 활동(바닷물과 강물 비교하기) 시나리오 s001~s020은 활동 2를 더하기 전과 한 글자도 같고, 밀물과 썰물 시나리오 10개가 뒤에 덧붙는다', () => {
-    expect(sea.manifest.experiments.map((e) => e.id)).toEqual(['sea-water', 'tide']);
+    expect(sea.manifest.experiments.map((e) => e.id)).toEqual(['sea-water', 'tide', 'land-sea-dots']);
     expect(list.map((s) => s.scenarioId)).toEqual(list.map((_, i) => `g3-earth-sea-s${String(i + 1).padStart(3, '0')}`));
-    expect(list).toHaveLength(30);
+    expect(list).toHaveLength(50);
     expect(list.slice(0, 20).every((s) => s.state.experimentId === 'sea-water')).toBe(true);
-    expect(list.slice(20).every((s) => s.state.experimentId === 'tide')).toBe(true);
+    expect(list.slice(20, 30).every((s) => s.state.experimentId === 'tide')).toBe(true);
+    expect(list.slice(30).every((s) => s.state.experimentId === 'land-sea-dots')).toBe(true);
     // 이 해시는 활동 2를 더하기 전 ml/tutor/scenarios/g3-earth-sea.jsonl 20줄(줄바꿈으로 이은 글자)의 SHA-256이다.
     const first = list.slice(0, 20).map((s) => JSON.stringify(s)).join('\n');
     expect(createHash('sha256').update(first).digest('hex')).toBe('25b4f820044a6b9b92d54677b66beb068ea463cc279d145fd3e76883b59d63e9');
+    // 활동 3(육지와 바다의 넓이 비교하기)을 더하기 전 앞 30줄의 SHA-256: 활동 1·2의 시나리오는 한 글자도 달라지지 않았다.
+    const first30 = list.slice(0, 30).map((s) => JSON.stringify(s)).join('\n');
+    expect(createHash('sha256').update(first30).digest('hex')).toBe('787c98f379df906ca0e06ebed4e025ea8147ee888b3d26d7741bc4a8f2def58a');
   });
   it('밀물과 썰물 과제마다 다섯 상황이 모두 있다', () => {
     const exp = sea.manifest.experiments[1]!;
@@ -412,6 +416,48 @@ describe('3차 묶음 E1: 전기의 이용 활동 2·3, 식물의 구조와 기�
     expect(results.some((r) => r.size === undefined && r.seen === '흐릿함')).toBe(true);
     expect(results.some((r) => typeof r.size === 'number')).toBe(true);
     expect(file.slice(22).join("\n")).not.toMatch(/"size":null|NaN/);
+  });
+});
+
+describe('변인 실험 활동을 더한 단원의 시나리오(생물의 한살이 활동 2, 지구와 바다 활동 3)', () => {
+  const hash = (lines: string[]) => createHash('sha256').update(lines.join('\n')).digest('hex');
+  const SITUATIONS = ['before-run', 'first-trial', 'confounded', 'iv-unchanged', 'repeat', 'fair-test', 'prediction-mismatch'];
+
+  it('g3-lifecycle: 첫 활동(germination) 시나리오 s001~s020은 활동 2를 더하기 전과 한 글자도 같고, butterfly-life 시나리오가 뒤에 덧붙는다', () => {
+    const u = units['g3-lifecycle']!;
+    const list = generateScenarios('g3-lifecycle', u);
+    expect(u.manifest.experiments.map((e) => e.id)).toEqual(['germination', 'butterfly-life']);
+    expect(list.map((s) => s.scenarioId)).toEqual(list.map((_, i) => `g3-lifecycle-s${String(i + 1).padStart(3, '0')}`));
+    expect(list).toHaveLength(38);
+    expect(list.slice(0, 20).every((s) => s.state.experimentId === 'germination')).toBe(true);
+    expect(list.slice(20).every((s) => s.state.experimentId === 'butterfly-life')).toBe(true);
+    const sha = 'a9675178ea14bd1144c3dde9715026da4f07e6606da0b3047c1c8dde78e18189';
+    expect(hash(list.slice(0, 20).map((s) => JSON.stringify(s)))).toBe(sha);
+    const file = readFileSync(scenarioFile(TUTOR_DIR, 'g3-lifecycle'), 'utf8').trimEnd().split('\n');
+    expect(hash(file.slice(0, 20))).toBe(sha);
+    expect(file).toHaveLength(38);
+    const exp = u.manifest.experiments[1]!;
+    const keys = new Set(list.slice(20).map((s) => situationOf(s.state, exp)));
+    for (const k of SITUATIONS) expect(keys.has(k), k).toBe(true);
+  });
+
+  it('g3-earth-sea: 활동이 셋이다. s001~s020(sea-water)과 s021~s030(tide)은 활동 3을 더하기 전과 한 글자도 같고, land-sea-dots 시나리오가 뒤에 덧붙는다', () => {
+    const u = units['g3-earth-sea']!;
+    const list = generateScenarios('g3-earth-sea', u);
+    expect(list.map((s) => s.scenarioId)).toEqual(list.map((_, i) => `g3-earth-sea-s${String(i + 1).padStart(3, '0')}`));
+    expect(list).toHaveLength(50);
+    expect(list.slice(30).every((s) => s.state.experimentId === 'land-sea-dots')).toBe(true);
+    const sha20 = '25b4f820044a6b9b92d54677b66beb068ea463cc279d145fd3e76883b59d63e9';
+    const sha30 = '787c98f379df906ca0e06ebed4e025ea8147ee888b3d26d7741bc4a8f2def58a';
+    expect(hash(list.slice(0, 20).map((s) => JSON.stringify(s)))).toBe(sha20);
+    expect(hash(list.slice(0, 30).map((s) => JSON.stringify(s)))).toBe(sha30);
+    const file = readFileSync(scenarioFile(TUTOR_DIR, 'g3-earth-sea'), 'utf8').trimEnd().split('\n');
+    expect(hash(file.slice(0, 20))).toBe(sha20);
+    expect(hash(file.slice(0, 30))).toBe(sha30);
+    expect(file).toHaveLength(50);
+    const exp = u.manifest.experiments[2]!;
+    const keys = new Set(list.slice(30).map((s) => situationOf(s.state, exp)));
+    for (const k of SITUATIONS) expect(keys.has(k), k).toBe(true);
   });
 });
 

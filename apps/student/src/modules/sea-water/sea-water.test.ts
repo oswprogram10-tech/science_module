@@ -31,9 +31,9 @@ const shownText = (html: string) => [...html.replace(/<[^>]+>/g, '\n').split('\n
 
 describe('레지스트리', () => {
   it('g3-earth-sea는 sea-water 모듈로 로드된다', () => {
-    expect([unit.manifest.title, unit.manifest.grade, unit.manifest.engine, unit.manifest.standards]).toEqual(['지구와 바다', 3, 'earth', ['4과06-02', '4과06-03']]);
+    expect([unit.manifest.title, unit.manifest.grade, unit.manifest.engine, unit.manifest.standards]).toEqual(['지구와 바다', 3, 'earth', ['4과06-01', '4과06-02', '4과06-03']]);
     // 활동 2(밀물과 썰물 관찰하기)는 관찰 모듈이다. unit.module은 첫 활동의 모듈이다.
-    expect(unit.activities.map((a) => [a.activity, a.experiment.id])).toEqual([['variable', 'sea-water'], ['observe', 'tide']]);
+    expect(unit.activities.map((a) => [a.activity, a.experiment.id])).toEqual([['variable', 'sea-water'], ['observe', 'tide'], ['variable', 'land-sea-dots']]);
     expect(unit.module).toBe(seaWaterModule);
     expect(MODULES['sea-water'].kind).toBe('sea-water');
     expect(experiment.id).toBe('sea-water');

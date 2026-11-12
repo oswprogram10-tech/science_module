@@ -47,6 +47,9 @@ describe('restPlayhead: 숫자 또는 (실험, 시행) => 숫자', () => {
     expect(Object.keys(nums)).not.toContain('g3-sound/sound-transmit');
     // 전구에 불 켜기·전지 직렬연결 비교·현미경으로 세포 관찰하기도 끝에 둔다.
     for (const id of ['g6-electricity/bulb-light', 'g6-electricity/battery-series', 'g6-plant/microscope-cells']) expect(Object.keys(nums)).not.toContain(id);
+    // 배추흰나비의 한살이 관찰 기록과 육지와 바다의 넓이 비교하기도 끝에 둔다.
+    expect(Object.keys(nums)).not.toContain('g3-lifecycle/butterfly-life');
+    expect(Object.keys(nums)).not.toContain('g3-earth-sea/land-sea-dots');
   });
 
   it('우리 몸은 시행의 운동 시간에 따라 운동이 끝난 순간(쉬는 1분 + 운동 시간)이다', () => {

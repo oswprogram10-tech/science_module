@@ -41,6 +41,8 @@ import { soundTransmitModule } from './sound-transmit';
 import { bulbLightModule } from './bulb-light';
 import { batterySeriesModule } from './battery-series';
 import { microscopeCellsModule } from './microscope-cells';
+import { butterflyLifeModule } from './butterfly-life';
+import { landSeaDotsModule } from './land-sea-dots';
 
 export const MODULES: Record<ModuleKind, AnyModule> = {
   dissolution: dissolutionModule,
@@ -84,4 +86,6 @@ export const MODULES: Record<ModuleKind, AnyModule> = {
   'bulb-light': bulbLightModule,
   'battery-series': batterySeriesModule,
   'microscope-cells': microscopeCellsModule,
+  'butterfly-life': butterflyLifeModule,
+  'land-sea-dots': landSeaDotsModule,
 };

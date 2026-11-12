@@ -734,9 +734,9 @@ for (const scheme of ['light', 'dark'] as const) {
     // 단원 목록의 "활동 2개" 표시
     await page.goto('/');
     // 활동이 둘인 단원은 힘과 우리 생활, 소리의 성질, 자석의 이용, 용해와 용액, 열과 우리 생활, 산과 염기, 물체의 운동, 물질의 연소, 땅의 변화, 혼합물의 분리, 지구와 바다, 날씨와 우리 생활, 동물의 생활, 식물의 생활, 생물과 환경, 지층과 화석 열여섯 곳이다.
-    // 카드 분류 활동을 더한 물체와 물질·물의 상태 변화가 둘이 되고, 소리의 성질·땅의 변화·물질의 연소는 셋이 되어 "활동 2개"는 17곳, "활동 3개"는 4곳(전기의 이용 포함), 힘과 우리 생활은 "활동 4개" 1곳이다.
+    // 카드 분류 활동을 더한 물체와 물질·물의 상태 변화가 둘이 되고, 소리의 성질·땅의 변화·물질의 연소는 셋이 되어 "활동 2개"는 17곳, "활동 3개"는 5곳(전기의 이용·지구와 바다 포함), 힘과 우리 생활은 "활동 4개" 1곳이다.
     await expect(page.getByText('활동 2개')).toHaveCount(17);
-    await expect(page.getByText('활동 3개')).toHaveCount(4);
+    await expect(page.getByText('활동 3개')).toHaveCount(5);
     await expect(page.getByText('활동 2개').first()).toBeVisible();
     await expectNoSeriousViolations(page);
     // 첫 활동 화면의 활동 탭
@@ -2083,6 +2083,64 @@ for (const scheme of ['light', 'dark'] as const) {
     await page.getByRole('button', { name: '▶ 실험 실행' }).click();
     await expect(runButton(page)).toHaveText('▶ 실험 실행');
     await expect(page.getByTestId('cell-bar')).toHaveCount(5);
+    await expectNoSeriousViolations(page);
+  });
+
+  test(`g3-lifecycle 활동 2(배추흰나비의 한살이 관찰 기록) ${label}: 처음, 실행 뒤(1일째), 9일째, 18일째 껍데기, 30일째 날개, 저녁`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g3-lifecycle', { experiment: 'butterfly-life' });
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '관찰한 날');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('life-dot')).toHaveCount(1);
+    await expectNoSeriousViolations(page);
+    for (const day of ['9일째', '18일째', '30일째']) {
+      await setValue(page, '관찰한 날', day);
+      await predict(page, '늘어난다');
+      await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+      await expect(runButton(page)).toHaveText('▶ 실험 실행');
+      await expectNoSeriousViolations(page);
+    }
+    await selectIV(page, '관찰한 때');
+    await setValue(page, '관찰한 때', '저녁');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('life-dot')).toHaveCount(4);
+    await expectNoSeriousViolations(page);
+  });
+
+  test(`g3-earth-sea 활동 3(육지와 바다의 넓이 비교하기) ${label}: 처음, 실행 뒤(10개), 500개, 둘째 차례, 파란 받침`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await gotoUnit(page, 'g3-earth-sea', { experiment: 'land-sea-dots' });
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '찍은 점의 수');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('map-dot')).toHaveCount(10);
+    await expectNoSeriousViolations(page);
+    await setValue(page, '찍은 점의 수', '500개');
+    await predict(page, '늘어난다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expect(page.getByTestId('map-dot')).toHaveCount(500);
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '점 찍기 차례');
+    await setValue(page, '점 찍기 차례', '둘째');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
+    await expectNoSeriousViolations(page);
+    await selectIV(page, '지구본 받침 색');
+    await setValue(page, '지구본 받침 색', '파란색');
+    await predict(page, '변하지 않는다');
+    await page.getByRole('button', { name: '▶ 실험 실행' }).click();
+    await expect(runButton(page)).toHaveText('▶ 실험 실행');
     await expectNoSeriousViolations(page);
   });
 }
