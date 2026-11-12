@@ -81,6 +81,8 @@ export function structuralFeedback(
     return `바꿀 조건으로 고른 ${iv}${josa(iv, '은/는')} 그대로이고, ${joinLabels(words)}${josa(words[words.length - 1]!, '이/가')} 바뀌었어요.`;
   }
   if (analysis.kind !== 'confounded') return null;
+  // 바꿀 조건을 고르지 않는 활동(requireSingleIV: false)에서 하나만 바꾼 시행은 "함께 바뀌었다"고 말하지 않는다.
+  if (!ivKey && words.length === 1) return null;
   const list = joinLabels(words);
   const last = words[words.length - 1]!;
   return `${list}${josa(last, '이/가')} 함께 바뀌어서, ${dependentLabel}${josa(dependentLabel, '이/가')} 무엇 때문에 달라졌는지 알 수 없어요.`;
@@ -88,7 +90,8 @@ export function structuralFeedback(
 
 /** 두 시행의 주 측정값을 비교한다. 차이가 sameThreshold 이하이면 'same'. */
 export function observedOutcome(prev: number, current: number, sameThreshold: number): Prediction {
-  const diff = current - prev;
+  // 값이 없는(NaN) 결과는 "보이지 않음"이므로 0으로 본다(예: 초점이 맞지 않아 칸이 보이지 않는 현미경 관찰).
+  const diff = (Number.isNaN(current) ? 0 : current) - (Number.isNaN(prev) ? 0 : prev);
   if (Math.abs(diff) <= sameThreshold + 1e-9) return 'same';
   return diff > 0 ? 'increase' : 'decrease';
 }

@@ -50,7 +50,7 @@ interface Entry { driver: SensorDriver; holder: { source: number }; key: number;
 function useSensorReadings(specs: SensorSpec[]): SensorReading[] {
   const entries = useRef(new Map<string, Entry>());
   return specs.map((spec) => {
-    const key = Math.round(spec.source * 10 ** (spec.decimals ?? DECIMALS[spec.kind]));
+    const key = Math.round(spec.source * (spec.display?.scale ?? 1) * 10 ** (spec.decimals ?? DECIMALS[spec.kind]));
     let e = entries.current.get(spec.id);
     if (!e) {
       const holder = { source: spec.source };
@@ -91,7 +91,7 @@ export function SensorBar({ specs }: { specs: SensorSpec[] }) {
                 ? real.value === null || Number.isNaN(real.value)
                   ? '기다리는 중'
                   : `${real.value.toFixed(DECIMALS[spec.kind])} °C`
-                : `${fixed(readings[i]!.value, spec.decimals ?? DECIMALS[spec.kind])} ${readings[i]!.unit}`}
+                : `${fixed(readings[i]!.value * (spec.display?.scale ?? 1), spec.decimals ?? DECIMALS[spec.kind])} ${spec.display?.unitLabel ?? readings[i]!.unit}`}
             </output>
             {isReal && real.stale && <span className="real-stale">(끊김: 마지막 값)</span>}
           </div>

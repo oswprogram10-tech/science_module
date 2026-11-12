@@ -459,7 +459,8 @@ function primitiveResult(result: unknown): TutorResult {
   const out: TutorResult = {};
   if (result && typeof result === 'object') {
     for (const [k, v] of Object.entries(result)) {
-      if (typeof v === 'number' || typeof v === 'string' || typeof v === 'boolean') out[k] = v;
+      // 값이 없는(NaN) 결과는 담지 않는다(JSON에서 null이 되어 "null mm"로 읽히지 않게). 예: 초점이 맞지 않아 칸이 보이지 않는 현미경 관찰.
+      if ((typeof v === 'number' && !Number.isNaN(v)) || typeof v === 'string' || typeof v === 'boolean') out[k] = v;
     }
   }
   return out;

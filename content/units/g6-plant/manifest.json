@@ -2,7 +2,7 @@
   "id": "g6-plant",
   "title": "식물의 구조와 기능",
   "grade": 6,
-  "standards": ["6과11-02"],
+  "standards": ["6과11-01", "6과11-02"],
   "engine": "life",
   "experiments": [{
     "id": "transpiration",
@@ -53,5 +53,201 @@
         { "when": "prediction-mismatch", "text": "예측과 결과가 달랐네요. 잎 확대 그림에서 기공의 모습을 보면 그 까닭을 찾을 수 있을까요?" }
       ]
     }
-  }]
+  },
+    {
+      "id": "microscope-cells",
+      "module": "microscope-cells",
+      "title": "현미경으로 세포 관찰하기",
+      "question": "양파 껍질을 현미경으로 보면 무엇이 보일까?",
+      "note": "실제 현미경으로 보기 전에 연습해 보세요.",
+      "predictionPrompt": "예측: 화면에서 본 칸 하나의 크기는?",
+      "variables": [
+        {
+          "key": "power",
+          "label": "배율",
+          "type": "choice",
+          "unit": "배",
+          "options": [
+            {
+              "value": 40,
+              "label": "40배"
+            },
+            {
+              "value": 100,
+              "label": "100배"
+            },
+            {
+              "value": 400,
+              "label": "400배"
+            }
+          ],
+          "default": 40
+        },
+        {
+          "key": "focus",
+          "label": "초점",
+          "type": "choice",
+          "options": [
+            {
+              "value": "off",
+              "label": "맞추지 않음"
+            },
+            {
+              "value": "on",
+              "label": "맞춤"
+            }
+          ],
+          "default": "off"
+        },
+        {
+          "key": "stain",
+          "label": "염색",
+          "type": "choice",
+          "options": [
+            {
+              "value": "none",
+              "label": "하지 않음"
+            },
+            {
+              "value": "iodine",
+              "label": "아이오딘 용액으로 함"
+            }
+          ],
+          "default": "none"
+        },
+        {
+          "key": "sample",
+          "label": "관찰 재료",
+          "type": "choice",
+          "options": [
+            {
+              "value": "onion",
+              "label": "양파 표피"
+            },
+            {
+              "value": "cheek",
+              "label": "입안 안쪽 표피"
+            }
+          ],
+          "default": "onion"
+        },
+        {
+          "key": "slideLabel",
+          "label": "받침 유리 이름표 색",
+          "type": "choice",
+          "options": [
+            {
+              "value": "yellow",
+              "label": "노란색"
+            },
+            {
+              "value": "green",
+              "label": "초록색"
+            }
+          ],
+          "default": "yellow"
+        }
+      ],
+      "dependent": [
+        {
+          "key": "size",
+          "label": "화면에서 본 칸 하나의 길이",
+          "unit": "mm"
+        },
+        {
+          "key": "seen",
+          "label": "보인 것",
+          "unit": ""
+        }
+      ],
+      "gateway": {
+        "mode": "open",
+        "requirePrediction": true,
+        "requireSingleIV": true
+      },
+      "safety": [],
+      "safetyNotices": [],
+      "limits": [
+        "세포막",
+        "세포질",
+        "엽록체",
+        "미토콘드리아",
+        "세포 소기관"
+      ],
+      "tutor": {
+        "forbiddenAnswers": [
+          "핵이 보",
+          "점은 핵",
+          "진한 점은 핵",
+          "세포벽이 있",
+          "세포벽이 없",
+          "식물 세포는",
+          "동물 세포는",
+          "배율을 높이면 크게",
+          "배율이 높을수록 크게",
+          "배율이 클수록 크게",
+          "염색하면 핵",
+          "염색하면 잘 보",
+          "이름표 색은 관계없",
+          "이름표 색깔은 관계없",
+          "색깔은 상관없"
+        ],
+        "probes": [
+          {
+            "when": "before-run",
+            "text": "{iv}을(를) 바꾸면 화면에서 본 칸 하나의 크기가 어떻게 될지 예측해 볼까요? 왜 그렇게 생각했나요?"
+          },
+          {
+            "when": "first-trial",
+            "text": "이번 결과를 기준으로 삼을 거예요. 다음 시행에서는 무엇만 바꿔 볼까요?"
+          },
+          {
+            "when": "confounded",
+            "text": "{changed}이(가) 함께 바뀌었어요. 화면에서 본 칸의 크기가 달라진 까닭이 어느 쪽 때문인지 어떻게 알아낼 수 있을까요?"
+          },
+          {
+            "when": "iv-unchanged",
+            "text": "{iv}은(는) 그대로인데 {changed}이(가) 바뀌었어요. 처음에 알아보려던 것을 확인하려면 다음에는 무엇을 바꿔야 할까요?"
+          },
+          {
+            "when": "repeat",
+            "text": "앞 시행과 조건이 같아요. 같은 결과가 다시 나왔나요? 결과가 같은지 확인하는 것은 왜 중요할까요?"
+          },
+          {
+            "when": "fair-test",
+            "text": "{iv}만 바꾸었을 때 칸 하나의 길이와 보인 것은 각각 어떻게 달라졌나요? 결과표에서 두 줄을 비교해 볼까요?"
+          },
+          {
+            "when": "fair-test",
+            "iv": "power",
+            "text": "배율만 바꾸었어요. 칸 하나의 길이와 시야에 보이는 칸의 수는 어떻게 달라졌나요?"
+          },
+          {
+            "when": "fair-test",
+            "iv": "focus",
+            "text": "초점만 바꾸었어요. 보이는 모습은 어떻게 달라졌나요?"
+          },
+          {
+            "when": "fair-test",
+            "iv": "stain",
+            "text": "염색 전과 후를 비교해 볼까요? 칸 안에서 새로 보인 것이 있나요?"
+          },
+          {
+            "when": "fair-test",
+            "iv": "sample",
+            "text": "관찰 재료만 바꾸었어요. 양파와 입안에서 본 칸의 모양과 크기는 어떻게 다른가요?"
+          },
+          {
+            "when": "fair-test",
+            "iv": "slideLabel",
+            "text": "이름표 색만 바꾸었을 때 결과가 달라졌나요? 이 결과로 무엇을 알 수 있을까요?"
+          },
+          {
+            "when": "prediction-mismatch",
+            "text": "양파와 입안 칸의 같은 점과 다른 점을 찾아볼까요? 결과표와 시야 그림을 함께 볼까요?"
+          }
+        ]
+      }
+    }
+  ]
 }

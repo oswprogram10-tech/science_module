@@ -148,6 +148,35 @@ describe('observedOutcome', () => {
   });
 });
 
+describe('observedOutcome: 값이 없는(NaN) 결과', () => {
+  it('보이지 않는 결과는 0으로 본다', () => {
+    expect(observedOutcome(Number.NaN, 10, 0.5)).toBe('increase');
+    expect(observedOutcome(10, Number.NaN, 0.5)).toBe('decrease');
+    expect(observedOutcome(Number.NaN, Number.NaN, 0.5)).toBe('same');
+  });
+});
+
+describe('바꿀 조건(조작변인)을 고르지 않아도 되는 활동(requireSingleIV: false)', () => {
+  it('canRun: 바꿀 조건 안내 없이 예측만 요구한다', () => {
+    const cfg = { requirePrediction: true, requireSingleIV: false };
+    expect(canRun({ ivKey: null, prediction: null }, cfg)).toEqual({ ok: false, reasons: ['예측을 먼저 골라 주세요.'] });
+    expect(canRun({ ivKey: null, prediction: 'same' }, cfg)).toEqual({ ok: true, reasons: [] });
+    // 한 번에 하나만 바꾸기를 요구하는 활동은 그대로다.
+    expect(canRun({ ivKey: null, prediction: 'same' }, { requirePrediction: true, requireSingleIV: true }).reasons).toEqual(['바꿀 조건(조작변인)을 하나 골라 주세요.']);
+  });
+  it('analyzeTrial: 바꿀 조건이 없으면 바뀐 것이 하나여도 confounded(여럿 바꿈과 같은 질문)이고 같으면 repeat', () => {
+    const prev = { values: v(), ivKey: null };
+    expect(analyzeTrial(prev, { values: v({ stir: 2 }), ivKey: null }, labels)).toEqual({ kind: 'confounded', changed: ['stir'] });
+    expect(analyzeTrial(prev, { values: v({ stir: 2, waterMl: 100 }), ivKey: null }, labels).kind).toBe('confounded');
+    expect(analyzeTrial(prev, { values: v(), ivKey: null }, labels).kind).toBe('repeat');
+  });
+  it('structuralFeedback: 바꿀 조건이 없고 하나만 바꾸면 안내가 없고, 둘 이상 바꾸면 함께 바뀌었다고 알려 준다', () => {
+    expect(structuralFeedback({ kind: 'confounded', changed: ['stir'] }, labels, null, '녹은 양')).toBeNull();
+    expect(structuralFeedback({ kind: 'confounded', changed: ['stir', 'waterMl'] }, labels, null, '녹은 양')).toContain('함께 바뀌어서');
+    expect(structuralFeedback({ kind: 'confounded', changed: ['stir'] }, labels, 'waterMl', '녹은 양')).toContain('함께 바뀌어서');
+  });
+});
+
 describe('josa: 끝이 괄호 설명인 낱말', () => {
   it('괄호 앞 낱말의 받침으로 조사를 고른다', () => {
     expect(josa('계절(공전 위치)', '을/를')).toBe('을');

@@ -176,6 +176,31 @@ describe('변인 실험 활동 추가(빛의 성질 활동 2, 소리의 성질 �
     expect(lineCheck(second, '|prediction-mismatch|', { text: '반사된 빛이 눈으로 들어오는지 살펴볼까요?' })?.ok).toBe(false);
     expect(lineCheck(u.experiments[0]!, '|prediction-mismatch|', { text: '반사된 빛이 눈으로 들어오는지 살펴볼까요?' })?.ok).toBe(true);
   });
+  it('g6-electricity: 활동 셋(electromagnet, bulb-light, battery-series)이 카탈로그에 있고 활동마다 기본 질문과 변인별 질문이 있다', () => {
+    const u = unit('g6-electricity');
+    expect(u.experiments.map((e) => [e.id, e.kind])).toEqual([['electromagnet', 'variable'], ['bulb-light', 'variable'], ['battery-series', 'variable']]);
+    expect(u.experiments.map((e) => e.ivs.map((v) => v.key))).toEqual([['turns', 'battery', 'core', 'direction'], ['plusEnd', 'minusEnd', 'switch', 'wireColor'], ['cells', 'wireColor']]);
+    expect(u.experiments[1]!.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['plusEnd', 'minusEnd', 'switch', 'wireColor']);
+    expect(u.experiments[2]!.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['cells', 'wireColor']);
+    for (const e of u.experiments) {
+      const keys = e.probes.map((p) => p.key);
+      expect(new Set(keys).size, e.id).toBe(keys.length);
+      for (const k of keys) expect(PROBE_KEY_PATTERN.test(k), k).toBe(true);
+    }
+    // 활동 2의 질문 고치기는 활동 2의 금지 구절에 걸리고, 활동 3에서는 같은 문장이 그대로 쓰인다.
+    expect(lineCheck(u.experiments[1]!, '|prediction-mismatch|', { text: '스위치를 닫아야 켜진다고 말해 볼까요?' })?.ok).toBe(false);
+    expect(lineCheck(u.experiments[2]!, '|prediction-mismatch|', { text: '스위치를 닫아야 켜진다고 말해 볼까요?' })?.ok).toBe(true);
+    expect(lineCheck(u.experiments[2]!, '|prediction-mismatch|', { text: '전지가 많을수록 밝다고 말해 볼까요?' })?.ok).toBe(false);
+  });
+  it('g6-plant: 활동 둘(transpiration, microscope-cells)이 카탈로그에 있고 활동 2의 질문 고치기는 활동 2의 금지 구절에 걸린다', () => {
+    const u = unit('g6-plant');
+    expect(u.experiments.map((e) => [e.id, e.kind])).toEqual([['transpiration', 'variable'], ['microscope-cells', 'variable']]);
+    const second = u.experiments[1]!;
+    expect(second.ivs.map((v) => v.key)).toEqual(['power', 'focus', 'stain', 'sample', 'slideLabel']);
+    expect(second.probes.filter((p) => p.iv).map((p) => p.iv)).toEqual(['power', 'focus', 'stain', 'sample', 'slideLabel']);
+    expect(lineCheck(second, '|prediction-mismatch|', { text: '진한 점은 핵이라고 말해 볼까요?' })?.ok).toBe(false);
+    expect(lineCheck(u.experiments[0]!, '|prediction-mismatch|', { text: '진한 점은 핵이라고 말해 볼까요?' })?.ok).toBe(true);
+  });
 });
 
 describe('초안 <-> 덧씌우기', () => {
