@@ -14,6 +14,8 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { HostAddress } from './HostAddress';
 import { serverUrl } from './serverUrl';
 import { beep, enableSound } from './sound';
+import { ModelPicker } from './ModelPicker';
+import { modelChoiceStore } from './modelChoice';
 import { TutorEditor } from './TutorEditor';
 import { TUTOR_CATALOG } from './tutorManifests';
 import { tutorEditsStore } from './tutorEditsStore';
@@ -59,6 +61,9 @@ function Screen({ client, soundOn, onSound }: { client: TeacherClient; soundOn: 
   const store = tutorEditsStore();
   const tutorEdits = useSyncExternalStore(store.subscribe, store.get);
   const [editing, setEditing] = useState(false);
+  const choiceStore = modelChoiceStore();
+  const modelChoice = useSyncExternalStore(choiceStore.subscribe, choiceStore.get);
+  const [picking, setPicking] = useState(false);
   const created = state.created;
   // 주소 해시: 수업을 만들면 코드와 토큰을 넣고, 처음 화면이면 지운다.
   useEffect(() => {
@@ -72,11 +77,14 @@ function Screen({ client, soundOn, onSound }: { client: TeacherClient; soundOn: 
   const alertCount = (state.snapshot?.groups ?? []).reduce((n, g) => n + unacked(g).length, 0);
   const editor = editing ? (
     <TutorEditor catalog={TUTOR_CATALOG} saved={tutorEdits} onSave={(e) => store.set(e)} onClose={() => setEditing(false)} alertCount={alertCount} />
+  ) : picking ? (
+    <ModelPicker choice={modelChoice} onChange={(c) => choiceStore.set(c)} onClose={() => setPicking(false)} alertCount={alertCount} />
   ) : null;
+  const overlay = editing || picking;
   if (!inClass) {
     return (
       <>
-        <StartScreen state={state} soundOn={soundOn} onSound={onSound} onCreate={(secret) => client.create(secret)} tutorEdits={tutorEdits} onEdit={() => setEditing(true)} inert={editing} />
+        <StartScreen state={state} soundOn={soundOn} onSound={onSound} onCreate={(secret) => client.create(secret)} tutorEdits={tutorEdits} onEdit={() => setEditing(true)} onPickModel={() => setPicking(true)} inert={overlay} />
         {editor}
       </>
     );
@@ -89,7 +97,8 @@ function Screen({ client, soundOn, onSound }: { client: TeacherClient; soundOn: 
         soundOn={soundOn}
         tutorEdits={tutorEdits}
         onEdit={() => setEditing(true)}
-        inert={editing}
+        onPickModel={() => setPicking(true)}
+        inert={overlay}
         onEnd={() => {
           client.end();
           writeHash(null);
@@ -118,11 +127,12 @@ const keyFromUrl = (search: string = window.location.search): string => {
 interface EditorHooks {
   tutorEdits: TutorEdits;
   onEdit: () => void;
-  /** 튜터 질문 편집 화면이 열려 있는 동안 아래 화면을 잠근다. */
+  onPickModel: () => void;
+  /** 튜터 질문 편집 화면이나 모델 고르기 화면이 열려 있는 동안 아래 화면을 잠근다. */
   inert: boolean;
 }
 
-function StartScreen({ state, soundOn, onSound, onCreate, onEdit, inert }: { state: TeacherState; soundOn: boolean; onSound: () => void; onCreate: (secret: string) => void } & EditorHooks) {
+function StartScreen({ state, soundOn, onSound, onCreate, onEdit, onPickModel, inert }: { state: TeacherState; soundOn: boolean; onSound: () => void; onCreate: (secret: string) => void } & EditorHooks) {
   const full = state.error === 'class_full';
   const badSecret = state.error === 'bad_secret';
   const [secret, setSecret] = useState(keyFromUrl);
@@ -132,9 +142,14 @@ function StartScreen({ state, soundOn, onSound, onCreate, onEdit, inert }: { sta
     <div className="app" inert={inert}>
       <header className="top">
         <h1>교사 대시보드</h1>
-        <button type="button" onClick={onEdit}>
-          튜터 질문 고치기
-        </button>
+        <div className="actions">
+          <button type="button" onClick={onEdit}>
+            튜터 질문 고치기
+          </button>
+          <button type="button" onClick={onPickModel}>
+            튜터 모델 고르기
+          </button>
+        </div>
       </header>
       <HostAddress />
       <main className="panel start">
@@ -204,7 +219,7 @@ export function sortEntries(entries: Entry[], byNumber: boolean): Entry[] {
   return [...entries].sort((a, b) => rank(a) - rank(b) || a.group - b.group);
 }
 
-function ClassScreen({ client, state, soundOn, onEnd, tutorEdits, onEdit, inert }: { client: TeacherClient; state: TeacherState; soundOn: boolean; onEnd: () => void } & EditorHooks) {
+function ClassScreen({ client, state, soundOn, onEnd, tutorEdits, onEdit, onPickModel, inert }: { client: TeacherClient; state: TeacherState; soundOn: boolean; onEnd: () => void } & EditorHooks) {
   const snap = state.snapshot;
   const code = snap?.code ?? state.created?.code ?? readCreds(window.location.hash)?.code ?? '';
   const [byNumber, setByNumber] = useState(false);
@@ -256,6 +271,9 @@ function ClassScreen({ client, state, soundOn, onEnd, tutorEdits, onEdit, inert 
           </button>
           <button type="button" onClick={onEdit}>
             튜터 질문 고치기
+          </button>
+          <button type="button" onClick={onPickModel}>
+            튜터 모델 고르기
           </button>
           <button type="button" className="danger" onClick={() => setConfirmEnd(true)}>
             수업 끝내기

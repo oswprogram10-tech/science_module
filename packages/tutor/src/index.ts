@@ -187,3 +187,4 @@ export * from './situationLabels';
 export * from './context';
 export * from './observeModel';
 export * from './situation';
+export * from './models';
