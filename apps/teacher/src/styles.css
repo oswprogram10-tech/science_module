@@ -89,3 +89,30 @@ button:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
 .te-add .actions { align-items:flex-end; }
 .te-backdrop input:focus-visible, .te-backdrop select:focus-visible, .te-backdrop textarea:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
 @media (max-width: 560px) { .te-pick select { min-width:0; width:100%; } .te-pick label { width:100%; } .te-tools .danger { margin-left:0; } }
+
+/* 튜터 모델 고르기 */
+.mp-models { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px; }
+.mp-model { background:var(--card); border:2px solid var(--line); border-radius:10px; padding:12px; display:flex; flex-direction:column; gap:6px; min-width:0; }
+.mp-model.mp-picked { border-color:var(--accent); }
+.mp-model h3 { margin:0; font-size:1.1rem; }
+.mp-meta { margin:0; font-size:.95rem; overflow-wrap:anywhere; }
+.mp-note { font-size:.85rem; color:color-mix(in srgb, var(--fg) 72%, var(--card)); }
+.mp-stats { display:grid; grid-template-columns:1fr auto; gap:2px 12px; margin:4px 0; font-size:.95rem; }
+.mp-stats dt { margin:0; }
+.mp-stats dd { margin:0; font-weight:700; text-align:right; font-variant-numeric:tabular-nums; }
+.mp-model button { align-self:flex-start; margin-top:auto; }
+.mp-section { margin:8px 0 0; font-size:1.2rem; }
+.mp-sample h4 { margin:0; font-size:1rem; }
+.mp-situation { margin:0; display:flex; flex-direction:column; gap:4px; font-size:.92rem; }
+.mp-situation div { display:grid; grid-template-columns:7.5em 1fr; gap:8px; }
+.mp-situation dt { font-weight:700; color:color-mix(in srgb, var(--fg) 72%, var(--card)); }
+.mp-situation dd { margin:0; white-space:pre-line; overflow-wrap:anywhere; min-width:0; }
+.mp-student { font-weight:700; }
+.mp-answers { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.mp-answer { border:1px solid var(--line); border-radius:8px; padding:8px 10px; min-width:0; }
+.mp-answer-label { margin:0 0 4px; font-size:.85rem; font-weight:700; color:var(--accent); }
+.mp-answer-text { margin:0; line-height:1.5; overflow-wrap:anywhere; }
+.mp-flags { margin:6px 0 0; display:flex; flex-wrap:wrap; gap:4px; }
+.mp-flag { border-color:var(--warn); color:var(--warn); white-space:normal; }
+.mp details summary { cursor:pointer; min-height:32px; }
+@media (max-width: 560px) { .mp-answers { grid-template-columns:1fr; } .mp-situation div { grid-template-columns:1fr; gap:0; } }
