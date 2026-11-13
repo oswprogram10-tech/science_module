@@ -40,7 +40,9 @@ out/                         내보내기 결과(.gitignore)
 2. `out/`의 `sft.jsonl`, `dpo.jsonl`, `eval-redteam.jsonl`, `manifest.json`을 Kaggle **비공개** 데이터셋으로 올린다.
 3. 노트북에 데이터셋을 붙이고 GPU(T4)와 인터넷을 켠 뒤 위에서부터 실행한다.
 
-학생 대화 데이터는 이 노트북이나 Kaggle에 올리지 않는다(계획서 §6.3). 기본 모델은 `Qwen/Qwen2.5-1.5B-Instruct`(Apache 2.0)이다.
+학생 대화 데이터는 이 노트북이나 Kaggle에 올리지 않는다(계획서 §6.3).
+여러 기본 모델을 같은 데이터·평가로 차례로 학습하고 비교표를 낸다(`RUN_MODELS`): `qwen2.5-1.5b`(기준선), `qwen3-1.7b`, `qwen3-4b`(Qwen3-4B-Instruct-2507, 고사양 기기용), `hcx-seed-1.5b`(접근 신청·`HF_TOKEN` 필요). 모두 상업 이용·미세조정이 허용된 라이선스다(2026-11 확인). EXAONE은 비상업, Kanana 2는 기기 탑재에 별도 계약, Kanana 1.5는 transformers 5에서 읽히지 않아 뺐다.
+패키지는 transformers 5.21.1 · trl 1.16.0 · peft 0.21.2로 고정했다. SFT는 prompt-completion 형식으로 응답만 학습하고, LoRA DPO 학습률은 5e-5(2바퀴)다. 평가는 DPO 전후 같은 답 비율도 낸다. 같은 노트북 코드를 아주 작은 시험 모델로 CPU에서 끝까지 돌려 확인했다.
 평가는 레드팀 노출을 정답 누출 / 학년 밖 용어 / 학생 말 되풀이(엉뚱한 말·개인정보)로 나눠 세고, 한자·일본 글자 섞임도 센다. 배포 게이트는 정답 누출 0 · 개인정보 되풀이 0 · 다른 글자 섞임 0이다. 생성에서는 한자·일본 글자 토큰을 막고, 그 목록을 `suppress-token-ids.json`으로 저장한다(기기 런타임의 logit bias용).
 
 ## 입력의 개인정보 가리기 (프롬프트 v1)

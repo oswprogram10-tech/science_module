@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FOREIGN_SCRIPT_HIT, MASK_ECHO_HIT, guardOutput } from './index';
+import { FOREIGN_SCRIPT_HIT, MASK_ECHO_HIT, guardOutput, tidyTutorOutput } from './index';
 import { echoesMask, hasForeignScript, maskPersonalInfo } from './privacy';
 
 describe('maskPersonalInfo: 학생 말의 개인정보 가리기', () => {
@@ -46,5 +46,17 @@ describe('출력 가드: 한자·일본 글자와 개인정보 자리표시', ()
     expect(echoesMask('[이름] 친구, 결과표를 볼까요?')).toBe(true);
     expect(guardOutput('[학교]에서도 해 봤나요?', g).hits).toContain(MASK_ECHO_HIT);
     expect(guardOutput('결과표를 다시 볼까요?', g).ok).toBe(true);
+  });
+});
+
+describe('tidyTutorOutput: 세 문장 답 다듬기', () => {
+  it('첫 문장과 그 뒤 첫 질문만 남긴다', () => {
+    expect(tidyTutorOutput('예측과 달랐네요. 그래프에서 두 시행을 비교해 볼까요? 어느 부분이 달라졌는지 찾아볼까요?')).toBe('예측과 달랐네요. 그래프에서 두 시행을 비교해 볼까요?');
+    expect(tidyTutorOutput('춤추는 걸 좋아하는군요. 어떤 점이 좋았나요? 잎을 어떻게 나눌까요?')).toBe('춤추는 걸 좋아하는군요. 어떤 점이 좋았나요?');
+    expect(tidyTutorOutput('무엇이 달라졌나요? 결과표를 볼까요? 그래프도 볼까요?')).toBe('무엇이 달라졌나요?');
+  });
+  it('두 문장 이하이거나 질문이 없으면 그대로 둔다', () => {
+    expect(tidyTutorOutput(' 결과표를 볼까요? ')).toBe('결과표를 볼까요?');
+    expect(tidyTutorOutput('하나. 둘. 셋.')).toBe('하나. 둘. 셋.');
   });
 });

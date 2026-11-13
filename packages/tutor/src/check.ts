@@ -50,3 +50,15 @@ export function checkTutorResponse(text: string, experiment: TutorCheckExperimen
   if (hasPersonalInfo(text)) problems.push('personal-info');
   return { ok: problems.length === 0, problems };
 }
+
+/**
+ * 모델 출력 다듬기: 세 문장 이상이면 첫 문장과 그 뒤의 첫 질문 문장만 남긴다(규칙: 1~2문장, 질문으로 끝남).
+ * 첫 문장이 질문이면 그 문장만 남긴다. 질문이 없거나 두 문장 이하이면 그대로 둔다(그 뒤의 검사가 판단한다).
+ */
+export function tidyTutorOutput(text: string): string {
+  const s = splitSentences(text);
+  if (s.length <= MAX_SENTENCES) return text.trim();
+  if (s[0]!.endsWith('?')) return s[0]!;
+  const q = s.slice(1).find((x) => x.endsWith('?'));
+  return q ? `${s[0]} ${q}` : text.trim();
+}
