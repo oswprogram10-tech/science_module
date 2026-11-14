@@ -367,6 +367,8 @@ describe('반대 방향 낱말 안전장치', () => {
   it('결론·keys에 없는 반대 낱말이 있으면 맞힌 것으로 보지 않는다', () => {
     expect(matchAnswer('에나멜선을 적게 감으면 더 세요', [turns])).toBeNull();
     expect(matchAnswer('많이 감을수록 더 세요', [turns])?.opposite).toBe(false);
+    const amount: AnswerKey = { iv: 'water', conclusion: '물의 양이 많을수록 더 많이 녹는다', keys: [['물'], ['양'], ['많이녹', '더많이']], confirm: '네, 결과표에서도 물이 많을 때 더 많이 녹았어요.' };
+    expect(matchAnswer('물 양을 줄이면 더 많이 녹아요', [amount])).toBeNull();
   });
   it('not에 걸린 반대 말은 그대로 opposite로 본다', () => {
     const withNot = { ...turns, not: ['적게'] };
