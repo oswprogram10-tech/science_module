@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FOREIGN_SCRIPT_HIT, LATIN_WORD_HIT, MASK_ECHO_HIT, finalizeModelOutput, guardModelOutput, guardOutput, tidyTutorOutput } from './index';
+import { FOREIGN_SCRIPT_HIT, LATIN_WORD_HIT, MASK_ECHO_HIT, countQuestions, finalizeModelOutput, guardModelOutput, guardOutput, tidyTutorOutput } from './index';
 import { echoesMask, hasForeignScript, maskPersonalInfo } from './privacy';
 
 describe('maskPersonalInfo: 학생 말의 개인정보 가리기', () => {
@@ -70,6 +70,21 @@ describe('finalizeModelOutput: 모델 출력 한 단계', () => {
   });
   it('정상 두 문장 답은 손대지 않는다', () => {
     expect(tidyTutorOutput('예측과 달랐네요.  그래프를 볼까요?')).toBe('예측과 달랐네요.  그래프를 볼까요?');
+  });
+});
+
+describe('tidyTutorOutput: 묻는 말 끝의 물음표', () => {
+  it('"…볼까요."와 부호 없는 "…볼까요"를 물음표로 고친다', () => {
+    expect(tidyTutorOutput('결과표를 읽었어요. 어떤 칸을 비교하면 좋을지 말해 볼까요.')).toBe('결과표를 읽었어요. 어떤 칸을 비교하면 좋을지 말해 볼까요?');
+    expect(tidyTutorOutput('두 시행을 나란히 볼까요')).toBe('두 시행을 나란히 볼까요?');
+    expect(finalizeModelOutput('두 시행의 모양 칸을 나란히 읽어 볼까요.', { limits: [], tutor: { forbiddenAnswers: [] } }).ok).toBe(true);
+  });
+  it('까닭을 말하는 "니까요."와 이미 물음표인 답은 그대로 둔다', () => {
+    expect(tidyTutorOutput('전선이 뜨거워지니까요. 어디에 대 볼까요?')).toBe('전선이 뜨거워지니까요. 어디에 대 볼까요?');
+    expect(tidyTutorOutput('그래프를 볼까요?')).toBe('그래프를 볼까요?');
+  });
+  it('묻는 말 두 개가 되면 하나로 줄인다', () => {
+    expect(countQuestions(tidyTutorOutput('그래프를 살펴볼까요. 어떤 점이 달라졌을까요?'))).toBe(1);
   });
 });
 

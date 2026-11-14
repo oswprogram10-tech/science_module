@@ -107,8 +107,14 @@ export function checkModelResponse(text: string, experiment: TutorCheckExperimen
  * 질문이 없으면 그대로 둔다(그 뒤의 검사가 판단한다).
  */
 export function tidyTutorOutput(text: string): string {
-  return oneQuestion(tidySentences(text));
+  return oneQuestion(tidySentences(fixQuestionMarks(text)));
 }
+
+/**
+ * 묻는 말 끝("…볼까요.", "…볼까요")에 마침표를 찍거나 부호를 빠뜨린 것을 물음표로 고친다(5차 학습의 1.7B 모델이 자주 그랬다).
+ * "…위험하니까요."처럼 까닭을 말하는 "니까요"는 묻는 말이 아니므로 그대로 둔다.
+ */
+export const fixQuestionMarks = (text: string): string => text.trim().replace(/(?<!니)까요(?:\.|(?=\s*$))/g, '까요?');
 
 function tidySentences(text: string): string {
   const s = splitSentences(text);
