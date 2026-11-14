@@ -30,7 +30,7 @@ test.describe('튜터 모델 고르기', () => {
     await first.getByRole('button', { name: '답 A가 더 나아요' }).click();
     await expect(d.getByTestId('mp-tally')).toContainText('평가한 문항 1/');
     await d.getByRole('button', { name: '모델 이름 보기' }).click();
-    await expect(first.getByRole('button', { name: /(하이퍼클로바 X SEED 1.5B|Qwen3 1.7B)가 더 나아요/ }).first()).toHaveAttribute('aria-pressed', 'true');
+    await expect(first.getByRole('button', { name: /(Qwen3 4B \(고사양 기기용\)|Qwen3 1.7B)가 더 나아요/ }).first()).toHaveAttribute('aria-pressed', 'true');
 
     // 아직 평가하지 않은 문항만: 방금 평가한 문항이 빠진다.
     const firstText = (await first.locator('.mp-situation').textContent()) ?? '';
@@ -66,7 +66,7 @@ test.describe('튜터 모델 고르기', () => {
       await page.emulateMedia({ colorScheme: scheme });
       await openPicker(page);
       await picker(page).getByRole('button', { name: '자동 검사에 걸린 문항만' }).click(); // 검사 표시(주황 칩)도 대비를 본다
-      await picker(page).getByTestId('mp-model-hcx-seed-1.5b').getByRole('button', { name: '이 모델 쓰기' }).click();
+      await picker(page).getByTestId('mp-model-qwen3-4b').getByRole('button', { name: '이 모델 쓰기' }).click();
       for (const width of [1280, 390]) {
         await page.setViewportSize({ width, height: 900 });
         const { violations } = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();

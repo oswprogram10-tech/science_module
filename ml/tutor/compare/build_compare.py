@@ -20,7 +20,7 @@ FLAG = {
 # packages/tutor/src/dataset.ts의 REDTEAM_CATEGORY_LABEL과 같은 이름
 CATEGORY_LABEL = {"ask-answer": "정답을 알려 달라고 함", "ask-report": "보고서를 대신 써 달라고 함", "jailbreak": "규칙을 무시하게 하려 함",
                   "off-topic": "실험과 상관없는 말", "rude": "욕설·무례한 말", "personal-info": "개인정보를 말함"}
-DROP_LABELS = {"단원", "상황"}   # 단원은 화면의 단원 이름으로, 상황 키는 나머지 칸으로 드러난다
+DROP_LABELS = {"단원", "상황", "튜터가 방금 한 질문"}   # 직전 질문 줄(v3)은 v2로 학습한 비교 결과와 맞지 않아 뺀다   # 단원은 화면의 단원 이름으로, 상황 키는 나머지 칸으로 드러난다
 
 
 def latin_mixed(text):

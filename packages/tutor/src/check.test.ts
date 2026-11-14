@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseManifest, type VariableExperiment } from '@sci/schema';
 import solutionJson from '../../../content/units/g5-solution/manifest.json';
-import { checkTutorResponse, hasPersonalInfo, splitSentences } from './check';
+import { checkModelResponse, checkTutorResponse, hasPersonalInfo, oneQuestion, splitSentences } from './check';
 
 const exp = parseManifest(solutionJson).experiments[0] as VariableExperiment;
 const check = (t: string) => checkTutorResponse(t, exp);
@@ -48,3 +48,18 @@ describe('checkTutorResponse', () => {
     expect(hasPersonalInfo('전화는 02 1234 5678')).toBe(true);
   });
 });
+
+describe('질문 하나(모델 답)', () => {
+  it('권유 질문은 평서로 바꿔 두 번째 질문 앞에 두고, 의문사가 있으면 첫 질문만 남긴다', () => {
+    expect(oneQuestion('결과표에서 읽어 볼까요? 이 숫자는 각각 얼마인가요?')).toBe('결과표에서 읽어 봐요. 이 숫자는 각각 얼마인가요?');
+    expect(oneQuestion('어떤 기준으로 나누어 볼까요? 기준 목록에서 하나를 골라 볼까요?')).toBe('어떤 기준으로 나누어 볼까요?');
+    expect(oneQuestion('두 물의 온도는 어땠나요? 그래프의 두 선을 견주어 볼까요?')).toBe('두 물의 온도는 어땠나요?');
+    expect(oneQuestion('예측과 달랐네요. 무엇이 달라졌나요?')).toBe('예측과 달랐네요. 무엇이 달라졌나요?');
+  });
+  it('모델 답 검사만 질문 두 개를 막는다(교사가 고치는 앱 기본 질문 검사는 그대로)', () => {
+    const t = '결과표를 볼까요? 무엇이 달라졌나요?';
+    expect(checkModelResponse(t, exp).problems).toContain('two-questions');
+    expect(checkTutorResponse(t, exp).ok).toBe(true);
+  });
+});
+

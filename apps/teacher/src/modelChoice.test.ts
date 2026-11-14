@@ -25,7 +25,7 @@ describe('모델 선택 저장', () => {
       model: null,
       votes: { a: 'qwen3-1.7b', c: 'same' },
     });
-    expect(parseChoice({ model: 'hcx-seed-1.5b' }).model).toBe('hcx-seed-1.5b');
+    expect(parseChoice({ model: 'qwen3-4b' }).model).toBe('qwen3-4b');
   });
 
   it('저장하고 다시 읽는다. 저장소가 막혀도 화면에는 적용된다', () => {
@@ -39,13 +39,13 @@ describe('모델 선택 저장', () => {
     const store = new ModelChoiceStore(EMPTY_CHOICE, () => false);
     let calls = 0;
     store.subscribe(() => calls++);
-    expect(store.set({ model: 'hcx-seed-1.5b', votes: {} })).toBe(false);
-    expect(store.get().model).toBe('hcx-seed-1.5b');
+    expect(store.set({ model: 'qwen3-4b', votes: {} })).toBe(false);
+    expect(store.get().model).toBe('qwen3-4b');
     expect(calls).toBe(1);
   });
 
   it('A·B 자리는 문항마다 정해져 있고 두 쪽 모두 나온다', () => {
-    const models = ['hcx-seed-1.5b', 'qwen3-1.7b'];
+    const models = ['qwen3-4b', 'qwen3-1.7b'];
     expect(answerOrder('x-1', models)).toEqual(answerOrder('x-1', models));
     const firsts = new Set(compare.samples.map((s) => answerOrder(s.id, models)[0]));
     expect(firsts).toEqual(new Set(models));

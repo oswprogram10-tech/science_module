@@ -29,14 +29,15 @@ import {
   type ObservationTask,
   type VariableExperiment,
 } from '@sci/schema';
-import { pickProbeKey } from './index';
+import { FALLBACK_PROBE, TUTOR_SILENT, pickProbeKey, selectProbe } from './index';
 import { modelAnswer } from './observeModel';
 import { cardSortWhen, classifyWhen, observeWhen } from './situation';
 import { SITUATION_LABELS } from './situationLabels';
 
 /** 입력 형식 버전. 형식을 바꾸면 올린다(학습 데이터를 다시 내보내야 한다). */
-/** v1: 학생 말의 개인정보(이름·학교·사는 곳·연락처)를 가린 뒤 넣는다(maskPersonalInfo). v2: 숫자가 아닌 결과와 상황을 내부 코드 대신 화면 이름(dependent.values, SITUATION_LABELS)으로 쓴다. */
-export const PROMPT_VERSION = 'v2';
+/** v1: 학생 말의 개인정보(이름·학교·사는 곳·연락처)를 가린 뒤 넣는다(maskPersonalInfo). v2: 숫자가 아닌 결과와 상황을 내부 코드 대신 화면 이름(dependent.values, SITUATION_LABELS)으로 쓴다.
+ * v3: 직전에 튜터가 한 질문을 [튜터가 방금 한 질문] 줄로 넣고(있을 때만), 지시문에 질문 하나·이어서 묻기를 더한다. */
+export const PROMPT_VERSION = 'v3';
 
 /** 시행 요약에 담는 최근 시행 수. */
 export const MAX_TRIALS = 3;
@@ -204,6 +205,28 @@ export function situationOf(state: TutorState, experiment: Experiment): string {
     recorded: state.recorded,
     matchesModel: state.matchesModel,
   });
+}
+
+/**
+ * 변인 실험에서 학생 앱이 이 상태에 보여 주는 기본 튜터 질문(App.tsx의 selectProbe와 같은 문맥).
+ * 다른 활동 유형이거나 맞는 질문이 없으면 undefined. 내보낼 때 직전 튜터 질문의 후보로 쓴다(v3).
+ */
+export function templateProbeFor(experiment: Experiment, state: TutorState): string | undefined {
+  if (state.kind !== 'variable') return undefined;
+  const exp = variableExp(experiment);
+  const last = state.trials[state.trials.length - 1];
+  const text = selectProbe(
+    {
+      lastAnalysis: last?.analysis as never,
+      ivKey: last ? last.ivKey : state.current.ivKey,
+      labels: Object.fromEntries(exp.variables.map((v) => [v.key, v.label])),
+      prediction: last?.prediction ?? null,
+      observed: last?.observed ?? null,
+    },
+    exp.tutor.probes,
+    { forbiddenAnswers: exp.tutor.forbiddenAnswers, limits: exp.limits },
+  );
+  return text === FALLBACK_PROBE || text === TUTOR_SILENT ? undefined : text;
 }
 
 // ---- 입력 문장화 ----
@@ -412,6 +435,8 @@ export function buildTutorInput(
   state: TutorState,
   utterance?: string,
   unit?: UnitInfo,
+  /** 직전에 튜터가 학생에게 한 질문(v3). 첫 차례이거나 모르면 비운다. */
+  previousTutor?: string,
 ): string {
   const lines = [
     `[단원] ${unit ? `${unit.title} (${unit.grade}학년)` : state.unitId}`,
@@ -423,6 +448,8 @@ export function buildTutorInput(
   else if (state.kind === 'card-sort') lines.push(...cardSortBody(cardSortExp(experiment), state));
   else lines.push(...observeBody(observeExp(experiment), state));
   // 개인정보는 모델 입력에 넣기 전에 가린다(계획서 §6.5). 모델이 보지 못한 이름·학교는 되풀이할 수 없다.
+  const prev = previousTutor?.trim();
+  if (prev) lines.push(`[튜터가 방금 한 질문] ${prev}`);
   const said = utterance ? maskPersonalInfo(utterance).trim() : '';
   lines.push(`[학생] ${said ? said : '(말하지 않음)'}`);
   return lines.join('\n');
@@ -431,11 +458,12 @@ export function buildTutorInput(
 export const TUTOR_SYSTEM = [
   '너는 초등학교 과학 실험을 돕는 탐구 안내 선생님이다. 학생의 실험 상태와 말을 보고, 학생이 스스로 생각하도록 돕는 탐침 질문만 한다.',
   '규칙:',
-  '1. 한국어로 1~2문장만 쓰고, 반드시 질문으로 끝낸다. 120자를 넘기지 않는다.',
+  '1. 한국어로 1~2문장만 쓰고, 질문은 하나만 하며, 반드시 질문으로 끝낸다. 120자를 넘기지 않는다.',
   '2. 정답, 결론, 보고서 문장을 말하지 않는다. 맞았는지 틀렸는지 판정하지 않는다.',
   '3. 학생이 배우지 않은 어려운 용어를 쓰지 않는다. 입력에 나온 낱말을 쓴다.',
   '4. 학생의 조건, 결과표, 예측에 나온 구체적인 내용을 짚어서 묻는다.',
   '5. 실험과 관계없는 요청, 숙제 대신하기, 개인정보, 욕설에는 답하지 않고 지금 하는 실험으로 돌아오는 질문을 한다.',
+  '6. [튜터가 방금 한 질문]이 있으면 학생 말이 그 질문에 대한 답인지 살피고, 같은 질문을 되풀이하지 말고 학생의 답을 이어받아 묻는다.',
 ].join('\n');
 
 // ---- 어댑터: 앱 상태 -> TutorState ----
