@@ -6,6 +6,7 @@ import {
   type TrialAnalysis,
 } from '@sci/gateway';
 import { echoesMask, hasForeignScript, hasLatinWord } from './privacy';
+import { checkTutorResponse, tidyTutorOutput, type TutorCheckExperiment } from './check';
 
 /** guardOutput 걸림 이름: 한자·일본 글자 섞임, 개인정보 자리표시 되풀이. */
 export const FOREIGN_SCRIPT_HIT = '한자·일본 글자';
@@ -108,6 +109,16 @@ export function guardOutput(text: string, config: GuardConfig): GuardResult {
 export function guardModelOutput(text: string, config: GuardConfig): GuardResult {
   const r = guardOutput(text, config);
   return hasLatinWord(text) ? { ok: false, hits: [...r.hits, LATIN_WORD_HIT] } : r;
+}
+
+/**
+ * 튜터 모델 출력을 학생에게 보내기 전의 한 단계: 다듬기(tidyTutorOutput) → 규칙 검사(checkTutorResponse, guardModelOutput 포함).
+ * ok가 false면 앱은 규칙 기반 탐침 질문으로 대체한다. 모델 출력은 반드시 이 함수를 거친다(guardOutput만 쓰면 영어 섞임이 빠진다).
+ */
+export function finalizeModelOutput(raw: string, experiment: TutorCheckExperiment): { text: string; ok: boolean; problems: string[] } {
+  const text = tidyTutorOutput(raw);
+  const { ok, problems } = checkTutorResponse(text, experiment);
+  return { text, ok, problems };
 }
 
 const JOSA_PATTERN = /(\S)(을\(를\)|이\(가\)|와\(과\)|은\(는\))/g;

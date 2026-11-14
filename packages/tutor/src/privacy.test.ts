@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FOREIGN_SCRIPT_HIT, LATIN_WORD_HIT, MASK_ECHO_HIT, guardModelOutput, guardOutput, tidyTutorOutput } from './index';
+import { FOREIGN_SCRIPT_HIT, LATIN_WORD_HIT, MASK_ECHO_HIT, finalizeModelOutput, guardModelOutput, guardOutput, tidyTutorOutput } from './index';
 import { echoesMask, hasForeignScript, maskPersonalInfo } from './privacy';
 
 describe('maskPersonalInfo: 학생 말의 개인정보 가리기', () => {
@@ -55,9 +55,21 @@ describe('영어 낱말 섞임', () => {
       expect(guardModelOutput(t, { forbiddenAnswers: [], limits: [] }).hits, t).toContain(LATIN_WORD_HIT);
       expect(guardOutput(t, { forbiddenAnswers: [], limits: [] }).hits, `${t}: 화면 문구 가드에는 넣지 않는다`).not.toContain(LATIN_WORD_HIT);
     }
-    for (const t of ['온도계 눈금이 22.0 °C였나요?', '10 mL와 5.0 g을 견주어 볼까요?', 'LED가 켜졌나요? 2 mW였나요?', 'N극과 S극 중 어느 쪽인가요?', 'AI 친구 말고 결과표를 볼까요?']) {
+    for (const t of ['온도계 눈금이 22.0 °C였나요?', '10 mL와 5.0 g을 견주어 볼까요?', '렌즈 10 × 접안 배율은 얼마인가요?', '20 ÷ 4는 얼마인가요?', 'LED가 켜졌나요? 2 mW였나요?', 'N극과 S극 중 어느 쪽인가요?', 'AI 친구 말고 결과표를 볼까요?']) {
       expect(guardModelOutput(t, { forbiddenAnswers: [], limits: [] }).ok, t).toBe(true);
     }
+  });
+});
+
+describe('finalizeModelOutput: 모델 출력 한 단계', () => {
+  const exp = { limits: ['광합성'], tutor: { forbiddenAnswers: ['물이 있어야 싹이 트'] } };
+  it('다듬은 뒤 검사한다', () => {
+    expect(finalizeModelOutput('세 가지가 달라졌어요 칸을 볼까요? 무엇이 보이나요?', exp)).toEqual({ text: '세 가지가 달라졌어요. 칸을 볼까요?', ok: true, problems: [] });
+    expect(finalizeModelOutput('모두 same로 나왔어요. 숫자를 볼까요?', exp).problems).toContain(`guard:${LATIN_WORD_HIT}`);
+    expect(finalizeModelOutput('물이 있어야 싹이 트죠. 다음은 볼까요?', exp).ok).toBe(false);
+  });
+  it('정상 두 문장 답은 손대지 않는다', () => {
+    expect(tidyTutorOutput('예측과 달랐네요.  그래프를 볼까요?')).toBe('예측과 달랐네요.  그래프를 볼까요?');
   });
 });
 

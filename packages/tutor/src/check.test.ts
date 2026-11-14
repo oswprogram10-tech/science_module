@@ -27,6 +27,9 @@ describe('checkTutorResponse', () => {
     expect(splitSentences('눈에 보이나요 기준으로 두 카드를 관찰했어요. 먹이를 먹나요 칸은 어떤가요?')).toHaveLength(2);
     expect(splitSentences('있으니까 바다였을까요? 필요 없는 칸은 무엇인가요?')).toHaveLength(2);
     expect(splitSentences('안쪽 컵 재료만 바꾸었어요 1 °C 안이 된 때를 볼까요?')).toHaveLength(2);
+    // 흔한 해요체 어미도 경계다. 명사 '요'(필요·주요)와 인용("좋아요 라고")은 아니다.
+    for (const t of ['두 값이 달라요 결과표를 볼까요?', '그래프를 봐요 무엇이 보이나요?', '다르게 나와요 두 칸을 볼까요?']) expect(splitSentences(t), t).toHaveLength(2);
+    for (const t of ['필요 없는 칸은 무엇인가요?', '주요 내용을 볼까요?', '친구가 좋아요 라고 했나요?', '움직이나요 칸은 어떤가요?']) expect(splitSentences(t), t).toHaveLength(1);
     expect(check('녹은 양이 5.7 g이었나요? 28.5초는 어떤가요?').problems).not.toContain('too-long');
   });
   it('no-question', () => {

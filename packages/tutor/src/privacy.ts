@@ -32,14 +32,18 @@ export function maskPersonalInfo(text: string): string {
 export const hasForeignScript = (text: string): boolean => /[぀-ヿ㐀-䶿一-鿿豈-﫿]/u.test(text);
 
 /** 단위·기호로 쓰는 로마자는 허용한다(°C의 C, g, mL, mW, LED 등. 두 글자 이하는 모두 허용). */
-const LATIN_OK = new Set(['LED', 'BTB', 'mW', 'mL', 'cm', 'mm', 'kg', 'km']);
+const LATIN_OK = new Set(['LED', 'BTB', 'mW', 'mL', 'cm', 'mm', 'kg', 'km', 'DNA', 'UFO']);
+
+/** 로마자 낱말. 악센트 글자(À-ÿ)는 넣되 곱셈·나눗셈 기호(× ÷)는 뺀다. */
+const LATIN_WORD = /[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]+/g;
+const ACCENTED = /[\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]/;
 
 /**
  * 튜터 출력에 영어 낱말이 섞였거나 글자가 깨졌는가(기본 모델의 언어 섞임: "달랐군nings", "모두 same로", "레mon즙").
  * 세 글자 이상 로마자 낱말(허용 목록 밖), 악센트 붙은 로마자, 깨진 글자(U+FFFD)를 찾는다.
  */
 export const hasLatinWord = (text: string): boolean =>
-  text.includes('\uFFFD') || (text.match(/[A-Za-z\u00C0-\u00FF]+/g) ?? []).some((w) => /[\u00C0-\u00FF]/.test(w) || (w.length >= 3 && !LATIN_OK.has(w)));
+  text.includes('\uFFFD') || (text.match(LATIN_WORD) ?? []).some((w) => ACCENTED.test(w) || (w.length >= 3 && !LATIN_OK.has(w)));
 
 /** 튜터 출력이 입력의 자리표시([이름] 등)를 되풀이하는가. */
 export const echoesMask = (text: string): boolean => Object.values(MASK).some((m) => text.includes(m));

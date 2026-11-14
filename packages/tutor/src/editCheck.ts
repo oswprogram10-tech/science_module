@@ -1,8 +1,12 @@
 import { checkTutorResponse, type TutorCheckExperiment } from './check';
 import { PLACEHOLDER_DISPLAY, PLACEHOLDER_SAMPLE } from './situationLabels';
+import { FOREIGN_SCRIPT_HIT, LATIN_WORD_HIT, MASK_ECHO_HIT } from './index';
 
 /** `checkTutorResponse`의 문제 하나를 교사에게 보여 줄 한국어 문장으로. */
 export function problemMessage(problem: string): string {
+  if (problem === `guard:${LATIN_WORD_HIT}`) return '영어 낱말이나 깨진 글자가 들어 있어요. 한국어로 고쳐 주세요(cm, mL 같은 단위는 괜찮아요).';
+  if (problem === `guard:${FOREIGN_SCRIPT_HIT}`) return '한자나 일본 글자가 들어 있어요. 한글로 고쳐 주세요.';
+  if (problem === `guard:${MASK_ECHO_HIT}`) return '[이름] 같은 개인정보 자리표시는 쓸 수 없어요.';
   if (problem.startsWith('guard:')) return `정답이나 학년에 맞지 않는 말이 들어 있어요: ‘${problem.slice('guard:'.length)}’`;
   switch (problem) {
     case 'too-long':

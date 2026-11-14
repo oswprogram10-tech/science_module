@@ -5,9 +5,11 @@
    - 좋은 답은 같은 시나리오에서 학생이 말하지 않았을 때(utterance "")의 견본 답이다. 엉뚱한 말을 되풀이하지 않고 실험으로 돌아온다.
    - 나쁜 답은 그 주제를 되풀이하며 맞장구친다(rejectedReason off-topic).
 2. 마침표 없이 이어 붙인 문장(too-long): 활동마다 DPO 쌍 1개.
-   - 좋은 답 "A했어요. B할까요?"를 "A했어요 B할까요? C할까요?"로 바꾼 것이 나쁜 답이다. 문장 경계 검사(check.ts RUN_ON)로 세 문장이라 too-long에 걸린다.
+   - 좋은 답 "A했어요. B할까요?"를 "A했어요 B할까요? C할까요?"로 바꾼 것이 나쁜 답이다. 3차 학습에서 하이퍼클로바 3B가 보인 실패 모양
+     (세 문장을 마침표 없이 붙여 두 문장처럼 보이게 함) 그대로다. 문장 경계 검사(check.ts RUN_ON)로 세 문장이라 too-long에 걸린다.
 
-    python3 ml/tutor/tools/augment_v2.py          # 덧붙인다(이미 덧붙였으면 아무것도 하지 않는다)
+    python3 ml/tutor/tools/augment_v2.py             # 덧붙인다(이미 덧붙였으면 아무것도 하지 않는다)
+    python3 ml/tutor/tools/augment_v2.py --replace   # 전에 덧붙인 줄(notes "보강 v2")을 지우고 다시 만든다
 """
 import glob, json, os, random, re, sys
 
@@ -16,18 +18,19 @@ TAG = "보강 v2"   # notes에 남겨 두 번 덧붙이지 않게 한다
 
 # 평가 레드팀 주제와 겹치지 않는 학생 말과, 나쁜 답이 되풀이할 낱말
 OFF_TOPIC = [
-    ("우리 집 햄스터가 해바라기씨를 엄청 먹어요. 햄스터 얘기해요.", "햄스터"),
-    ("떡볶이 먹고 싶다. 너는 떡볶이 좋아해?", "떡볶이"),
-    ("이번 주말에 할머니 댁에 가서 송편 만들 거예요.", "송편"),
-    ("나 줄넘기 백 개 넘게 했어. 줄넘기 얘기하자.", "줄넘기"),
-    ("새로 산 운동화 반짝반짝해요. 운동화 자랑할래요.", "운동화"),
-    ("피아노 학원 가기 싫어요. 학원 얘기 들어 줄래?", "피아노 학원"),
-    ("고양이 영상 보여 주세요. 고양이 진짜 귀여워요.", "고양이"),
-    ("딱지치기는 내가 반에서 제일 잘해. 딱지 얘기하자.", "딱지치기"),
-    ("태권도 노란 띠 땄어요. 태권도 얘기해요.", "태권도"),
-    ("자전거 타고 싶어요. 자전거 얘기하면 안 돼요?", "자전거"),
-    ("종이접기로 학 접었어요. 종이접기 같이 해요.", "종이접기"),
-    ("캠핑 가서 마시멜로 구워 먹었어요. 캠핑 얘기해요.", "캠핑"),
+    # 평가 레드팀은 "○○ 얘기해요/얘기하자", "너 ○○ 좋아해?" 틀이 많다. 여기서는 그 틀을 피하고 자기 일을 말하는 문장으로 쓴다.
+    ("햄스터가 해바라기씨를 볼에 잔뜩 넣었어요.", "햄스터"),
+    ("어제 먹은 떡볶이가 너무 매웠어요.", "떡볶이"),
+    ("주말에 할머니 댁에서 송편을 빚었어요.", "송편"),
+    ("줄넘기 이단 뛰기를 열 번이나 성공했어요!", "줄넘기"),
+    ("새 운동화를 신으니까 발이 엄청 가벼워요.", "운동화"),
+    ("피아노 학원 끝나고 바로 여기 왔어요.", "피아노 학원"),
+    ("고양이가 상자에 쏙 들어가는 걸 봤어요.", "고양이"),
+    ("딱지치기에서 오늘 다섯 장 땄어요.", "딱지치기"),
+    ("태권도 승급 심사에서 노란 띠를 받았어요.", "태권도"),
+    ("자전거 보조 바퀴를 드디어 뗐어요!", "자전거"),
+    ("종이접기로 학을 백 마리 접을 거예요.", "종이접기"),
+    ("캠핑 가서 마시멜로를 구워 먹었어요.", "캠핑"),
 ]
 ECHO_TEMPLATES = ["{t} 이야기 재미있네요. {q}", "{t} 얘기를 했군요. {q}", "{t} 생각이 났군요. {q}", "{t}도 좋지만 같이 해 봐요. {q}"]
 EXTRA_QUESTIONS = ["어떤 칸을 먼저 볼까요?", "무엇이 달라졌나요?", "다음에는 무엇을 바꿔 볼까요?", "결과표에서 무엇을 찾아볼까요?"]
@@ -66,8 +69,14 @@ def main():
         unit = os.path.basename(unit_dir)
         sft_path, pairs_path = os.path.join(unit_dir, "sft.jsonl"), os.path.join(unit_dir, "pairs.jsonl")
         sft, pairs = read(sft_path), read(pairs_path)
-        if any(TAG in (r.get("notes") or "") for r in sft + pairs):
-            print(unit, "이미 보강함"); continue
+        tagged = lambda r: TAG in (r.get("notes") or "")
+        if any(tagged(r) for r in sft + pairs):
+            if "--replace" not in sys.argv:
+                print(unit, "이미 보강함"); continue
+            sft, pairs = [r for r in sft if not tagged(r)], [r for r in pairs if not tagged(r)]
+            for path in [sft_path, pairs_path]:   # 기존 줄은 글자 그대로 둔다(다시 쓰지 않는다)
+                keep = [l for l in open(path, encoding="utf-8").read().splitlines(keepends=True) if not (l.strip() and tagged(json.loads(l)))]
+                open(path, "w", encoding="utf-8").write("".join(keep))
         sft_ids, pair_ids = next_id(sft, unit, "sft"), next_id(pairs, unit, "pairs")
         new_sft, new_pairs = [], []
         by_act = {}

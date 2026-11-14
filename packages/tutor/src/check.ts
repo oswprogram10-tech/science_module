@@ -22,19 +22,31 @@ const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/;
 export const hasPersonalInfo = (text: string): boolean => PHONE.test(text) || EMAIL.test(text);
 
 /**
- * 마침표 없이 이어 붙인 문장의 경계: 평서·감탄 종결 어미 뒤에 공백과 한글·숫자·여는 따옴표가 오는 곳("관찰은 아직 없어요 기록 두 칸에는…", "바꾸었어요 1 °C 안이 된 때…").
- * 질문 어미(까요·나요·가요)는 넣지 않는다. 카드 기준 이름("눈에 보이나요 기준")이나 칸 이름("움직이나요 칸")과 헷갈린다.
+ * 마침표 없이 이어 붙인 문장의 경계: 해요체 어미(…요)·죠·니다 뒤에 공백과 한글·숫자·여는 따옴표가 오는 곳
+ * ("관찰은 아직 없어요 기록 두 칸에는…", "두 값이 달라요 결과표를…", "바꾸었어요 1 °C 안이 된 때…").
+ * - 질문 어미(까요·나요·가요)는 넣지 않는다. 카드 기준 이름("눈에 보이나요 기준")이나 칸 이름("움직이나요 칸")과 헷갈린다.
+ * - '요'로 끝나는 명사(필요·중요·주요 등)와 인용("좋아요 라고")은 경계가 아니다.
  */
-const RUN_ON = /(어요|아요|해요|예요|에요|네요|군요|래요|대요|세요|데요|죠|니다)\s+(?=[가-힣0-9‘“'"(])/g;
+const RUN_ON = /([가-힣]요|죠|니다)\s+(?!라고|이라고|하고|하는|라는|란\s)(?=[가-힣0-9‘“'"(])/g;
+const NOUN_YO = /(필요|중요|주요|수요|소요|강요|요요|개요)$/;
+
+/** 이어 붙인 곳에 줄바꿈을 넣는다(splitSentences가 그 자리에서 나눈다). */
+function markRunOns(text: string): string {
+  return text.replace(RUN_ON, (m, end: string, offset: number) => {
+    const word = /[가-힣]+$/.exec(text.slice(0, offset + end.length))?.[0] ?? '';
+    return /(까|나|가)요$/.test(end) || NOUN_YO.test(word) ? m : `${end}\n`;
+  });
+}
+
+/** 마침표 없이 이어 붙인 곳이 있는가(평가 지표). */
+export const hasRunOn = (text: string): boolean => markRunOns(text.trim()) !== text.trim();
 
 /**
  * 문장으로 나눈다. 종결 부호(. ? !) 뒤에 공백이 오는 곳과, 마침표 없이 이어 붙인 곳(RUN_ON)에서 나눈다.
  * "5.7 g"의 점은 문장 끝이 아니다. 마침표를 빼서 문장 수 규칙을 피하는 답도 문장 수대로 센다.
  */
 export function splitSentences(text: string): string[] {
-  return text
-    .trim()
-    .replace(RUN_ON, '$1\n')
+  return markRunOns(text.trim())
     .split(/(?<=[.?!])\s+|\n/)
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
@@ -69,7 +81,7 @@ export function tidyTutorOutput(text: string): string {
   const s = splitSentences(text);
   // 마침표 없이 이어 붙인 문장은 끝에 마침표를 찍어 준다.
   const end = (x: string) => (/[.?!]$/.test(x) ? x : `${x}.`);
-  if (s.length === 2 && s[1]!.endsWith('?')) return `${end(s[0]!)} ${s[1]}`;
+  if (s.length === 2 && !/[.?!]$/.test(s[0]!) && s[1]!.endsWith('?')) return `${end(s[0]!)} ${s[1]}`;
   if (s.length <= MAX_SENTENCES) return text.trim();
   if (s[0]!.endsWith('?')) return s[0]!;
   const q = s.slice(1).find((x) => x.endsWith('?'));
