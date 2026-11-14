@@ -72,7 +72,8 @@ jobs:
   android-build:
     name: 안드로이드 앱 빌드 (debug APK)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # 튜터 모델용 llama.cpp를 소스에서 빌드하므로(arm64 + x86_64, CPU 변형 여러 개) 시간이 더 걸린다.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -88,15 +89,50 @@ jobs:
       - run: pnpm --filter student build
       - run: npx cap sync android
         working-directory: apps/student
+      # 네이티브(llama.cpp) 빌드 도구: 버전은 Gradle 변수(variables.gradle)가 정한 것을 그대로 설치한다(NDK, CMake 3.22+).
+      # 러너에 미리 깔린 버전은 바뀔 수 있어 정확한 버전을 sdkmanager로 설치한다(이미 있으면 바로 끝난다).
+      - name: NDK·CMake 설치(버전 고정, 재시도)
+        run: |
+          NDK=$(grep -oP "ndkVersion = '\K[^']+" apps/student/android/variables.gradle)
+          CMAKE=$(grep -oP "cmakeVersion = '\K[^']+" apps/student/android/variables.gradle)
+          echo "NDK $NDK, CMake $CMAKE"
+          for i in 1 2 3 4; do
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$NDK" "cmake;$CMAKE" && exit 0
+            echo "다시 시도 $i"; sleep $((i * 20))
+          done
+          exit 1
+      # llama.cpp 공식 소스(고정 태그+커밋)는 캐시한다. 캐시가 없으면 공식 저장소에서 받아 커밋을 확인한다(CMake도 같은 커밋인지 다시 확인한다).
+      - id: llama-pin
+        run: |
+          F=apps/student/android/app/src/main/cpp/CMakeLists.txt
+          echo "tag=$(grep -oP 'TUTOR_LLAMA_TAG\s+"\K[^"]+' $F)" >> "$GITHUB_OUTPUT"
+          echo "commit=$(grep -oP 'TUTOR_LLAMA_COMMIT\s+"\K[^"]+' $F)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        id: llama-cache
+        with:
+          path: ~/llama-cpp-src
+          key: llama-cpp-${{ steps.llama-pin.outputs.tag }}-${{ steps.llama-pin.outputs.commit }}
+      - name: llama.cpp 소스 받기
+        if: steps.llama-cache.outputs.cache-hit != 'true'
+        run: |
+          for i in 1 2 3 4; do
+            rm -rf ~/llama-cpp-src
+            git clone --depth 1 --branch "${{ steps.llama-pin.outputs.tag }}" https://github.com/ggml-org/llama.cpp.git ~/llama-cpp-src && break
+            echo "다시 시도 $i"; sleep $((i * 20))
+          done
+          test "$(git -C ~/llama-cpp-src rev-parse HEAD)" = "${{ steps.llama-pin.outputs.commit }}"
       # Gradle 배포판은 GitHub 릴리스에서 내려받는데, 가끔 504로 끊긴다. 내려받기만 몇 번 다시 시도한다(빌드·테스트는 다시 하지 않음).
       - name: Gradle 내려받기(재시도)
         working-directory: apps/student/android
         run: |
           for i in 1 2 3 4; do ./gradlew --version && exit 0; echo "다시 시도 $i"; sleep $((i * 20)); done
           exit 1
-      # 러너에 설치된 Android SDK(ANDROID_HOME)를 쓴다.
+      # 러너에 설치된 Android SDK(ANDROID_HOME)를 쓴다. llama.cpp 소스는 위에서 받아 둔 폴더를 쓴다(LLAMA_CPP_DIR).
       - run: ./gradlew assembleDebug
         working-directory: apps/student/android
+        env:
+          LLAMA_CPP_DIR: /home/runner/llama-cpp-src
       - uses: actions/upload-artifact@v4
         with:
           name: android-debug-apk

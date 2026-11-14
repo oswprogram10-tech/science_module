@@ -3,6 +3,21 @@ apply plugin: 'com.android.application'
 android {
     namespace = "kr.scibridge.student"
     compileSdk = rootProject.ext.compileSdkVersion
+    // 기기 안 튜터 모델(llama.cpp) 네이티브 빌드(사양 docs/specs/tutor-on-device-v1.md §4.3).
+    // NDK·CMake 버전은 CI(.github/workflows/ci.yml)와 같게 고정한다. 올릴 때는 둘을 함께 바꾼다.
+    ndkVersion = rootProject.ext.ndkVersion
+    externalNativeBuild {
+        cmake {
+            path = file('src/main/cpp/CMakeLists.txt')
+            version = rootProject.ext.cmakeVersion
+        }
+    }
+    // ggml이 CPU 변형 라이브러리(libggml-cpu-*.so)를 실행할 때 폴더에서 직접 불러오므로 압축을 풀어 둔다(extractNativeLibs).
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
     defaultConfig {
         applicationId "kr.scibridge.student"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -10,6 +25,21 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            // 실기기(arm64) + 에뮬레이터 확인용(x86_64)
+            abiFilters 'arm64-v8a', 'x86_64'
+        }
+        externalNativeBuild {
+            cmake {
+                // 디버그 빌드도 최적화한다(최적화 없는 추론은 몇십 배 느려 확인이 되지 않는다).
+                arguments '-DCMAKE_BUILD_TYPE=Release',
+                        '-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON',
+                        '-DANDROID_STL=c++_shared'
+                // 같은 태그의 llama.cpp 소스를 미리 받아 둔 폴더(CI 캐시·오프라인용). 없으면 CMake FetchContent가 받는다.
+                def llamaDir = project.findProperty('llamaCppDir') ?: System.getenv('LLAMA_CPP_DIR')
+                if (llamaDir) arguments "-DFETCHCONTENT_SOURCE_DIR_LLAMA_CPP=${llamaDir}"
+            }
+        }
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61

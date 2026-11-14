@@ -5,6 +5,8 @@
   Android는 "사설 IP 대역 전체"를 도메인 단위로 허용하는 방법을 지원하지 않는다(domain-config는 호스트 이름만 받고 CIDR을 못 쓴다).
   그래서 base-config로 평문을 허용한다. 보내는 내용은 수업 코드·모둠 번호·진행 요약뿐이고(docs/classroom.md 개인정보 원칙),
   이름·학번·튜터 대화·카메라·센서 원자료는 서버로 보내지 않는다.
+  튜터 모델 내려받기(TutorLlmPlugin.download)도 같은 LAN의 선생님 PC(http://192.168.x.x:포트/tutor-models/<id>.gguf)에서 평문으로 받는다.
+  모델 파일에는 학생 정보가 없다(docs/specs/tutor-on-device-v1.md §0).
   학교 서버를 인터넷에 열 때는 wss://(TLS)를 쓴다. 자세한 근거는 docs/app-packaging.md.
 -->
 <network-security-config>
