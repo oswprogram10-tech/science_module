@@ -134,11 +134,10 @@ function fixJosa(text: string): string {
 /** 템플릿의 {iv}, {changed}를 라벨로 바꾸고, 괄호형 조사를 앞 낱말 받침에 맞춘다. */
 export function renderProbe(
   template: string,
-  vars: { iv: string; changed: string[] },
+  vars: { iv: string; changed: string[]; /** 종속변인 이름. 있을 때만 {dv}를 바꾼다(튜터 대화 v1). */ dv?: string },
 ): string {
-  return fixJosa(
-    template.replaceAll('{iv}', vars.iv).replaceAll('{changed}', joinLabels(vars.changed)),
-  );
+  const filled = template.replaceAll('{iv}', vars.iv).replaceAll('{changed}', joinLabels(vars.changed));
+  return fixJosa(vars.dv !== undefined ? filled.replaceAll('{dv}', vars.dv) : filled);
 }
 
 /**
@@ -210,3 +209,4 @@ export * from './observeModel';
 export * from './situation';
 export * from './models';
 export * from './chatFormat';
+export * from './dialogue';

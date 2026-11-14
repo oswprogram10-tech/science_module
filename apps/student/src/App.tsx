@@ -8,7 +8,7 @@ import {
 } from '@sci/gateway';
 import { createRuntime, sampleAt, type Trial } from '@sci/runtime';
 import { TUTOR_SILENT, selectProbe } from '@sci/tutor';
-import { useTutorProbes } from './tutorProbes';
+import { useTutorAnswers, useTutorProbes } from './tutorProbes';
 import { useModelProbe } from './tutor/useModelProbe';
 import { TutorSayBox } from './tutor/TutorSayBox';
 import { MemoryRecorder, buildStatement, toExtensions } from '@sci/xapi';
@@ -38,6 +38,9 @@ import { classroomEnabled } from './classroom/config';
 import { ErrorBoundary } from './classroom/ErrorBoundary';
 import { LazyHost } from './classroom/lazy';
 import { resolveSafetyMessages, speak } from './components/safety/safetyMessages';
+
+/** 시험용 상태 표시(사양 tutor-dialogue-v1 §8): CI의 안드로이드 debug APK 빌드(VITE_TUTOR_DEBUG=1)에서만 켠다. */
+const TUTOR_DEBUG = import.meta.env.VITE_TUTOR_DEBUG === '1';
 
 const subscribeHash = (cb: () => void) => {
   window.addEventListener('hashchange', cb);
@@ -334,9 +337,11 @@ function Lab({
     () => ({ title, grade: UNITS.find((u): u is Extract<UnitEntry, { ok: true }> => u.ok && u.id === unitId)?.manifest.grade ?? 0 }),
     [title, unitId],
   );
+  const answers = useTutorAnswers(unitId, experiment.id, experiment.tutor.answers);
   const modelProbe = useModelProbe({
     unitId,
     experiment,
+    answers,
     module: mod,
     runtimeState: state,
     unit: unitInfo,
@@ -417,6 +422,11 @@ function Lab({
                   <>
                     <p>{modelProbe.text ?? <span className="tutor-loading">선생님이 생각하고 있어요…</span>}</p>
                     <TutorSayBox onSend={modelProbe.say} />
+                    {TUTOR_DEBUG && modelProbe.status && (
+                      <p className="tutor-debug" data-testid="tutor-debug">
+                        {modelProbe.status}
+                      </p>
+                    )}
                   </>
                 ) : (
                   <p>{probe}</p>

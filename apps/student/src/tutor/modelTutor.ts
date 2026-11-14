@@ -4,6 +4,7 @@ import {
   TUTOR_SYSTEM,
   buildTutorInput,
   finalizeModelOutput,
+  isRepeat,
   formatChat,
   type TutorModelInfo,
   type TutorState,
@@ -45,7 +46,10 @@ export interface AskInput {
   unit: UnitInfo;
   /** 직전에 학생에게 보여 준 튜터 문장. 첫 차례면 비운다. */
   previousTutor?: string;
-  /** 모델을 못 쓰거나 출력이 규칙에 걸릴 때 보일 기본 질문(selectProbe 결과). */
+  /**
+   * 모델을 못 쓰거나 출력이 규칙에 걸릴 때 보일 글. planTurn이 정한 것으로, 기본 질문(selectProbe 결과)에
+   * 학생 말에 대한 반응 접두어를 붙이고 직전과 같으면 대체 질문으로 바꾼 최종 글이다(사양 tutor-dialogue-v1 §3·§6).
+   */
   fallback: string;
   /** 그동안 새 요청이 들어와 이 요청이 낡았으면 false를 돌려 준다. 낡은 요청은 모델을 돌리지 않는다. */
   isCurrent?: () => boolean;
@@ -133,6 +137,8 @@ export function createModelTutor(opts: ModelTutorOptions): ModelTutor {
         tutor: { forbiddenAnswers: input.experiment.tutor.forbiddenAnswers },
       });
       if (!fin.ok) return fb(`rejected:${fin.problems.join(',')}`);
+      // 직전에 보인 글과 너무 비슷하면(되풀이) 모델 출력 대신 fallback을 보인다(사양 §6).
+      if (isRepeat(fin.text, input.previousTutor)) return fb('repeat');
       return { source: 'model', text: fin.text, firstTokenMs: out.firstTokenMs, tokensPerSec: out.tokensPerSec };
     } catch {
       return fb('error');

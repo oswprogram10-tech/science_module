@@ -208,6 +208,45 @@ test.describe('튜터 질문 고치기', () => {
     await expect(editor(page).getByTestId('te-summary')).toHaveText('고친 질문 1개 · 끈 질문 0개 · 더한 질문 0개');
   });
 
+  test('결론 알아보기: 결론을 더하고, 확인 문장의 판정 낱말은 막고, 저장해 내보낸다', async ({ page }) => {
+    await page.goto(HOST);
+    await openEditor(page);
+    const section = editor(page).getByRole('region', { name: '결론 알아보기' });
+    await section.getByRole('button', { name: '결론 더하기' }).click();
+    // 마지막 결론(기본 결론이 있으면 그 뒤에 더해진다)을 채운다.
+    await section.getByLabel(/^결론 \d+ 변인$/).last().selectOption({ label: '바닥' });
+    await section.getByLabel(/^결론 \d+ 결론$/).last().fill('바닥이 거칠면 수레가 느려진다.');
+    await section.getByLabel(/^결론 \d+ 낱말 묶음$/).last().fill('바닥, 거칠\n느려, 느리');
+    await section.getByLabel(/^결론 \d+ 제외 낱말$/).last().fill('빨라');
+    // 판정 낱말은 막는다: 이유가 보이고 저장할 수 없다.
+    const confirm = section.getByLabel(/^결론 \d+ 확인 문장$/).last();
+    await confirm.fill('네, 정답이에요.');
+    await expect(section).toContainText('‘정답’ 같은 판정 말을 쓸 수 없어요');
+    await expect(editor(page).getByRole('button', { name: '저장', exact: true })).toBeDisabled();
+    await expect(editor(page)).toContainText('검사를 통과하지 못한 줄이 있어서 저장할 수 없어요');
+    const OK = '네, 결과표에서도 거친 바닥의 시간이 길었어요.';
+    await confirm.fill(OK);
+    await expect(section).toContainText('✓ 검사 통과');
+    await expect(editor(page).getByTestId('te-summary')).toContainText('고친 결론 1개');
+    await editor(page).getByRole('button', { name: '저장', exact: true }).click();
+    await expect(editor(page)).toContainText('저장했어요');
+
+    // 내보낸 파일에 결론이 들어 있다.
+    const [download] = await Promise.all([page.waitForEvent('download'), editor(page).getByRole('button', { name: '파일로 내보내기' }).click()]);
+    const saved = JSON.parse(readFileSync((await download.path())!, 'utf8')) as { units: Record<string, Record<string, { answers?: { iv?: string; conclusion: string; keys: string[][]; not?: string[]; confirm: string }[] }>> };
+    expect(saved.units['g6-motion']!['ramp-cart']!.answers!.at(-1)).toEqual({ iv: 'floor', conclusion: '바닥이 거칠면 수레가 느려진다.', keys: [['바닥', '거칠'], ['느려', '느리']], not: ['빨라'], confirm: OK });
+
+    // 새로고침해도 남아 있고, 「결론 기본으로」를 저장하면 사라진다.
+    await page.reload();
+    await openEditor(page);
+    await expect(editor(page).getByTestId('te-summary')).toContainText('고친 결론 1개');
+    await expect(section.getByLabel(/^결론 \d+ 확인 문장$/).last()).toHaveValue(OK);
+    await section.getByRole('button', { name: '결론 기본으로' }).click();
+    await expect(editor(page).getByTestId('te-summary')).not.toContainText('고친 결론');
+    await editor(page).getByRole('button', { name: '저장', exact: true }).click();
+    await expect(editor(page)).toContainText('저장했어요');
+  });
+
   for (const scheme of ['light', 'dark'] as const) {
     test(`편집 화면 접근성(${scheme === 'light' ? '밝게' : '어둡게'})과 좁은 화면에서 가로 스크롤이 없다`, async ({ page }) => {
       await page.emulateMedia({ colorScheme: scheme });

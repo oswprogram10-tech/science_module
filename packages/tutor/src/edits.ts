@@ -1,3 +1,4 @@
+import type { AnswerKey } from '@sci/schema';
 import type { ProbeTemplate } from './index';
 
 /**
@@ -7,6 +8,8 @@ import type { ProbeTemplate } from './index';
 export interface ExperimentEdits {
   changed: Record<string, { text?: string; off?: true }>;
   added: { task?: string; when: string; iv?: string; text: string }[];
+  /** 결론 알아보기(answers)를 통째로 바꾼다. 없으면 매니페스트의 것. */
+  answers?: AnswerKey[];
 }
 
 /** 질문 하나를 구별하는 키: `${task ?? ''}|${when}|${iv ?? ''}`. */
@@ -36,4 +39,12 @@ export function applyTutorEdits(probes: ProbeTemplate[], exp?: ExperimentEdits, 
     out.push({ when: a.when, ...(a.iv !== undefined ? { iv: a.iv } : {}), text: a.text });
   }
   return out;
+}
+
+/**
+ * 결론 알아보기(answers)에 선생님의 덧씌우기를 적용한다(사양 tutor-dialogue-v1 §7). 덧씌우기에 answers가 있으면 그것으로 통째로 바꾼다.
+ * 없으면 받은 배열 그대로.
+ */
+export function applyTutorAnswers(answers: AnswerKey[] | undefined, exp?: { answers?: AnswerKey[] }): AnswerKey[] {
+  return exp?.answers ?? answers ?? [];
 }
