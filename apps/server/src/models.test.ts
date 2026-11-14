@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto';
-import { existsSync } from 'node:fs';
-import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { createWriteStream, existsSync } from 'node:fs';
+import { mkdtemp, readdir, readFile, rm, stat, utimes, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { Readable } from 'node:stream';
+import { basename, join } from 'node:path';
+import { Readable, Writable } from 'node:stream';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { buildServer } from './app';
-import { parseRange } from './models';
+import { ModelStore, parseRange, UploadError } from './models';
 
 type Srv = Awaited<ReturnType<typeof buildServer>>;
 let srv: Srv;
@@ -15,7 +15,7 @@ let dir: string;
 const IDS = ['qwen3-1.7b', 'qwen3-4b'];
 const body = (n: number, head = 'GGUF') => Buffer.concat([Buffer.from(head), Buffer.alloc(Math.max(0, n - head.length), 7)]);
 const sha = (b: Buffer) => createHash('sha256').update(b).digest('hex');
-const OCTET = { 'content-type': 'application/octet-stream' };
+const OCTET = { 'content-type': 'application/octet-stream', 'x-sci-bridge-upload': '1' };
 const post = (id: string, payload: Buffer | Readable, remoteAddress = '127.0.0.1', headers: Record<string, string> = OCTET) =>
   srv.app.inject({ method: 'POST', url: `/tutor-models/${id}`, payload, remoteAddress, headers });
 const list = async (remoteAddress = '192.168.0.9') => (await srv.app.inject({ method: 'GET', url: '/tutor-models', remoteAddress })).json();
@@ -97,10 +97,43 @@ describe('튜터 모델 파일 올리기(POST /tutor-models/:id)', () => {
     expect((await readdir(dir)).sort()).toEqual(['qwen3-1.7b.gguf', 'qwen3-1.7b.json']);
   });
 
-  it('content-type이 무엇이든 스트림으로 받는다', async () => {
+  it('content-type이 application/octet-stream이 아니면 415(text/plain 등 CORS 단순 요청)', async () => {
     await start();
-    expect((await post('qwen3-1.7b', body(64), '127.0.0.1', { 'content-type': 'application/x-gguf' })).statusCode).toBe(201);
-    expect((await post('qwen3-4b', body(64), '127.0.0.1', { 'content-type': 'text/plain' })).statusCode).toBe(201);
+    for (const ct of ['text/plain', 'application/x-gguf', 'application/octet-stream; charset=x', 'multipart/form-data']) {
+      const res = await post('qwen3-1.7b', body(64), '127.0.0.1', { ...OCTET, 'content-type': ct });
+      expect(res.statusCode, ct).toBe(415);
+    }
+    expect(existsSync(join(dir, 'qwen3-1.7b.gguf'))).toBe(false);
+  });
+
+  it('x-sci-bridge-upload 머리글이 없거나 1이 아니면 403', async () => {
+    await start();
+    expect((await post('qwen3-1.7b', body(64), '127.0.0.1', { 'content-type': 'application/octet-stream' })).statusCode).toBe(403);
+    expect((await post('qwen3-1.7b', body(64), '127.0.0.1', { ...OCTET, 'x-sci-bridge-upload': '0' })).statusCode).toBe(403);
+    expect(existsSync(join(dir, 'qwen3-1.7b.gguf'))).toBe(false);
+  });
+
+  it('Host가 이 PC 이름이 아니면 403(DNS rebinding)', async () => {
+    await start();
+    for (const host of ['evil.example.com', 'evil.example.com:8080', '192.168.0.2:8080', 'localhost.evil.com']) {
+      expect((await post('qwen3-1.7b', body(64), '127.0.0.1', { ...OCTET, host })).statusCode, host).toBe(403);
+    }
+    for (const host of ['localhost:8080', '127.0.0.1:3000', '[::1]:8080', '[::1]']) {
+      expect((await post('qwen3-1.7b', body(64), '127.0.0.1', { ...OCTET, host })).statusCode, host).toBe(201);
+    }
+  });
+
+  it('Origin이 있으면 이 PC의 같은 호스트·포트여야 한다', async () => {
+    await start();
+    const o = (origin: string, host = 'localhost:8080') => post('qwen3-1.7b', body(64), '127.0.0.1', { ...OCTET, host, origin });
+    expect((await o('https://evil.example.com')).statusCode).toBe(403);
+    expect((await o('http://localhost:9999')).statusCode).toBe(403); // 포트 다름
+    expect((await o('http://127.0.0.1:8080')).statusCode).toBe(403); // 호스트 다름
+    expect((await o('null')).statusCode).toBe(403);
+    expect((await o('https://localhost:8080')).statusCode).toBe(403);
+    expect((await o('http://localhost:8080')).statusCode).toBe(201);
+    expect((await o('http://[::1]:8080', '[::1]:8080')).statusCode).toBe(201);
+    expect((await o('http://127.0.0.1:8080', '127.0.0.1:8080')).statusCode).toBe(201);
   });
 
   it('여러 조각으로 나뉘어 와도 sha256은 전체 파일의 것이다', async () => {
@@ -117,6 +150,73 @@ describe('튜터 모델 파일 올리기(POST /tutor-models/:id)', () => {
     const b = body(200);
     await post('qwen3-1.7b', b);
     expect(await list()).toEqual([{ id: 'qwen3-1.7b', size: 200, sha256: sha(b) }]);
+  });
+});
+
+describe('업로드 오류 처리', () => {
+  it('쓰기 오류(디스크 가득)가 나도 서버가 죽지 않고 500 JSON으로 답하며 임시 파일을 지운다', async () => {
+    let n = 0;
+    const store = new ModelStore({
+      dir,
+      ids: IDS,
+      openWriteStream: () =>
+        new Writable({
+          write(_c, _e, cb) {
+            // 첫 조각은 받고 둘째에서 ENOSPC
+            if (++n >= 2) cb(Object.assign(new Error('ENOSPC: no space left on device'), { code: 'ENOSPC' }));
+            else cb();
+          },
+        }) as never,
+    });
+    const slow = (async function* () {
+      yield body(10);
+      await new Promise((r) => setTimeout(r, 20));
+      yield Buffer.alloc(10, 1);
+      await new Promise((r) => setTimeout(r, 20));
+      yield Buffer.alloc(10, 2);
+    })();
+    const uncaught: unknown[] = [];
+    const onUncaught = (e: unknown) => uncaught.push(e);
+    process.on('uncaughtException', onUncaught);
+    try {
+      await expect(store.put('qwen3-1.7b', Readable.from(slow))).rejects.toMatchObject({ code: 'failed' });
+      await new Promise((r) => setTimeout(r, 30));
+    } finally {
+      process.off('uncaughtException', onUncaught);
+    }
+    expect(uncaught).toEqual([]);
+    expect((await readdir(dir)).filter((x) => x.endsWith('.part'))).toEqual([]);
+    expect(existsSync(join(dir, 'qwen3-1.7b.gguf'))).toBe(false);
+  });
+
+  it('임시 파일을 열 수 없으면(없는 폴더) 서버가 죽지 않고 failed', async () => {
+    const store = new ModelStore({ dir, ids: IDS, openWriteStream: (p) => createWriteStream(join(dir, 'nope', basename(p))) });
+    const uncaught: unknown[] = [];
+    const onUncaught = (e: unknown) => uncaught.push(e);
+    process.on('uncaughtException', onUncaught);
+    try {
+      await expect(store.put('qwen3-1.7b', Readable.from([body(64)]))).rejects.toMatchObject({ code: 'failed' });
+      await new Promise((r) => setTimeout(r, 30));
+    } finally {
+      process.off('uncaughtException', onUncaught);
+    }
+    expect(uncaught).toEqual([]);
+  });
+
+  it('같은 id를 동시에 올리면 하나만 받고 나머지는 409', async () => {
+    await start();
+    const [a, b] = await Promise.all([post('qwen3-1.7b', body(5000)), post('qwen3-1.7b', body(5000))]);
+    expect([a.statusCode, b.statusCode].sort()).toEqual([201, 409]);
+    expect((await readdir(dir)).sort()).toEqual(['qwen3-1.7b.gguf', 'qwen3-1.7b.json']);
+  });
+
+  it('store.put을 직접 동시에 불러도 하나는 busy', async () => {
+    const store = new ModelStore({ dir, ids: IDS });
+    const results = await Promise.allSettled([store.put('qwen3-1.7b', Readable.from([body(100)])), store.put('qwen3-1.7b', Readable.from([body(100)]))]);
+    const rejected = results.filter((r) => r.status === 'rejected') as PromiseRejectedResult[];
+    expect(rejected).toHaveLength(1);
+    expect(rejected[0]!.reason).toBeInstanceOf(UploadError);
+    expect(rejected[0]!.reason.code).toBe('busy');
   });
 });
 
@@ -137,11 +237,36 @@ describe('튜터 모델 파일 보관(시작할 때 훑기)', () => {
     expect(JSON.parse(await readFile(join(dir, 'qwen3-1.7b.json'), 'utf8'))).toMatchObject({ size: 2048, sha256: sha(a) });
   });
 
-  it('크기가 맞는 .json이 있으면 다시 계산하지 않고 그 값을 쓴다', async () => {
+  it('크기와 수정 시각이 맞는 .json이 있으면 다시 계산하지 않고 그 값을 쓴다', async () => {
     await writeFile(join(dir, 'qwen3-1.7b.gguf'), body(100));
-    await writeFile(join(dir, 'qwen3-1.7b.json'), JSON.stringify({ id: 'qwen3-1.7b', size: 100, sha256: 'c'.repeat(64), addedAt: 5 }));
+    const { mtimeMs } = await stat(join(dir, 'qwen3-1.7b.gguf'));
+    await writeFile(join(dir, 'qwen3-1.7b.json'), JSON.stringify({ id: 'qwen3-1.7b', size: 100, sha256: 'c'.repeat(64), addedAt: 5, mtimeMs }));
     await start();
     expect(await list()).toEqual([{ id: 'qwen3-1.7b', size: 100, sha256: 'c'.repeat(64) }]);
+  });
+
+  it('크기는 같아도 수정 시각이 다르면(손으로 바꿔 넣은 파일) sha256을 다시 계산한다', async () => {
+    await start();
+    const a = body(300);
+    await post('qwen3-1.7b', a);
+    const before = JSON.parse(await readFile(join(dir, 'qwen3-1.7b.json'), 'utf8'));
+    expect(typeof before.mtimeMs).toBe('number');
+    expect(await list()).toEqual([{ id: 'qwen3-1.7b', size: 300, sha256: sha(a) }]);
+    const b = body(300, 'GGUF');
+    b[100] = 9; // 같은 크기, 다른 내용
+    await writeFile(join(dir, 'qwen3-1.7b.gguf'), b);
+    await utimes(join(dir, 'qwen3-1.7b.gguf'), new Date(Date.now() + 60_000), new Date(Date.now() + 60_000));
+    expect(await list()).toEqual([{ id: 'qwen3-1.7b', size: 300, sha256: sha(b) }]);
+    expect(JSON.parse(await readFile(join(dir, 'qwen3-1.7b.json'), 'utf8')).sha256).toBe(sha(b));
+  });
+
+  it('mtimeMs가 없는 옛 .json은 한 번 다시 계산해 채운다', async () => {
+    const a = body(100);
+    await writeFile(join(dir, 'qwen3-1.7b.gguf'), a);
+    await writeFile(join(dir, 'qwen3-1.7b.json'), JSON.stringify({ id: 'qwen3-1.7b', size: 100, sha256: 'c'.repeat(64), addedAt: 5 }));
+    await start();
+    expect(await list()).toEqual([{ id: 'qwen3-1.7b', size: 100, sha256: sha(a) }]);
+    expect(typeof JSON.parse(await readFile(join(dir, 'qwen3-1.7b.json'), 'utf8')).mtimeMs).toBe('number');
   });
 
   it('서버가 켜진 뒤 폴더에 직접 넣은 파일도 목록에 나온다', async () => {

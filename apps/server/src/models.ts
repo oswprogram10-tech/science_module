@@ -1,9 +1,9 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { once } from 'node:events';
-import { createReadStream, createWriteStream } from 'node:fs';
+import { createReadStream, createWriteStream, type WriteStream } from 'node:fs';
 import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { FastifyInstance, FastifyReply } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { isLoopback } from './hostInfo';
 
 /** 모델 파일 하나의 최대 크기: 4 GiB. */
@@ -16,6 +16,8 @@ export interface ModelStoreOptions {
   ids: readonly string[];
   /** 파일 크기 상한(바이트). 기본 4 GiB. 시험에서 작게 줄여 쓴다. */
   maxBytes?: number;
+  /** 임시 파일을 여는 함수. 시험에서 쓰기 오류를 일으키는 스트림으로 바꾼다. 기본은 fs.createWriteStream. */
+  openWriteStream?: (path: string) => WriteStream;
 }
 
 /** 교사 PC에 있는 모델 파일 정보. */
@@ -24,6 +26,8 @@ export interface StoredModel {
   size: number;
   sha256: string;
   addedAt: number;
+  /** 파일의 수정 시각(ms). 같은 크기의 파일을 손으로 바꿔 넣은 경우를 알아채는 데 쓴다. 옛 `.json`에는 없다. */
+  mtimeMs?: number;
 }
 
 const GGUF_MAGIC = Buffer.from('GGUF', 'ascii');
@@ -61,6 +65,7 @@ export class ModelStore {
   readonly dir: string;
   readonly maxBytes: number;
   private readonly ids: readonly string[];
+  private readonly openWriteStream: (path: string) => WriteStream;
   private readonly known = new Map<string, StoredModel>();
   private readonly uploading = new Set<string>();
   private chain: Promise<void> = Promise.resolve();
@@ -69,6 +74,7 @@ export class ModelStore {
     this.dir = opts.dir;
     this.ids = opts.ids;
     this.maxBytes = opts.maxBytes ?? MAX_MODEL_BYTES;
+    this.openWriteStream = opts.openWriteStream ?? ((path) => createWriteStream(path));
   }
 
   hasId(id: string): boolean {
@@ -95,23 +101,26 @@ export class ModelStore {
     for (const id of this.ids) {
       if (!ID_PATTERN.test(id)) continue;
       let size: number;
+      let mtimeMs: number;
       try {
         const st = await stat(this.file(id));
         if (!st.isFile()) throw new Error('not a file');
         size = st.size;
+        mtimeMs = st.mtimeMs;
       } catch {
         this.known.delete(id);
         continue;
       }
+      // 크기와 수정 시각이 모두 같아야 그대로 믿는다(같은 크기로 손으로 바꿔 넣은 파일은 다시 계산한다).
       const cur = this.known.get(id);
-      if (cur && cur.size === size) continue;
+      if (cur && cur.size === size && cur.mtimeMs === mtimeMs) continue;
       const fromJson = await this.readInfo(id);
-      if (fromJson && fromJson.size === size) {
+      if (fromJson && fromJson.size === size && fromJson.mtimeMs === mtimeMs) {
         this.known.set(id, fromJson);
         continue;
       }
       if (this.uploading.has(id)) continue;
-      const info: StoredModel = { id, size, sha256: await hashFile(this.file(id)), addedAt: Date.now() };
+      const info: StoredModel = { id, size, sha256: await hashFile(this.file(id)), addedAt: Date.now(), mtimeMs };
       await this.writeInfo(info);
       this.known.set(id, info);
     }
@@ -121,7 +130,9 @@ export class ModelStore {
     try {
       const j = JSON.parse(await readFile(join(this.dir, `${id}.json`), 'utf8')) as Partial<StoredModel>;
       if (j.id === id && Number.isSafeInteger(j.size) && typeof j.sha256 === 'string' && /^[0-9a-f]{64}$/.test(j.sha256)) {
-        return { id, size: j.size!, sha256: j.sha256, addedAt: typeof j.addedAt === 'number' ? j.addedAt : 0 };
+        const info: StoredModel = { id, size: j.size!, sha256: j.sha256, addedAt: typeof j.addedAt === 'number' ? j.addedAt : 0 };
+        if (typeof j.mtimeMs === 'number') info.mtimeMs = j.mtimeMs;
+        return info;
       }
     } catch {
       /* 없거나 깨짐: 다시 계산한다 */
@@ -154,19 +165,35 @@ export class ModelStore {
    * 끝나면 임시 파일을 `<id>.gguf`로 바꾸고(원자적) `<id>.json`을 쓴다.
    */
   async put(id: string, body: NodeJS.ReadableStream): Promise<StoredModel> {
+    // 확인과 등록 사이에 await가 끼면 같은 id의 동시 업로드가 둘 다 통과한다: 첫 await 전에 등록한다.
     if (this.uploading.has(id)) throw new UploadError('busy');
-    await mkdir(this.dir, { recursive: true });
     this.uploading.add(id);
     const tmp = join(this.dir, `.${id}.${randomBytes(6).toString('hex')}.part`);
     const hash = createHash('sha256');
     let size = 0;
     let head = Buffer.alloc(0);
-    const out = createWriteStream(tmp);
+    let out: WriteStream | undefined;
     try {
+      await mkdir(this.dir, { recursive: true });
+      const stream = this.openWriteStream(tmp);
+      out = stream;
+      // 쓰기 오류(디스크 가득, 권한)는 계속 듣는다. 듣는 이가 없으면 uncaughtException으로 서버가 죽는다.
+      let writeError: Error | undefined;
+      let wake: (() => void) | undefined;
+      stream.on('error', (err) => {
+        writeError ??= err;
+        wake?.();
+      });
+      const check = () => {
+        if (writeError) throw writeError;
+      };
       // for await 대신 직접 읽는다: 거절할 때 요청 스트림을 destroy하면 연결이 끊겨 거절 사유(JSON)를 돌려줄 수 없다.
       const it = body[Symbol.asyncIterator]();
       for (;;) {
-        const next = await it.next();
+        check();
+        const next = await Promise.race([it.next(), new Promise<never>((_, rej) => { wake = () => rej(writeError); })]);
+        wake = undefined;
+        check();
         if (next.done) break;
         const raw = next.value as Buffer | Uint8Array;
         const chunk = Buffer.isBuffer(raw) ? raw : Buffer.from(raw);
@@ -177,19 +204,26 @@ export class ModelStore {
         size += chunk.length;
         if (size > this.maxBytes) throw new UploadError('too_large');
         hash.update(chunk);
-        if (!out.write(chunk)) await once(out, 'drain');
+        if (!stream.write(chunk)) {
+          await Promise.race([once(stream, 'drain'), new Promise<never>((_, rej) => { wake = () => rej(writeError); })]);
+          wake = undefined;
+        }
+        check();
       }
-      out.end();
-      await once(out, 'finish');
+      check();
+      stream.end();
+      await Promise.race([once(stream, 'finish'), new Promise<never>((_, rej) => { wake = () => rej(writeError); })]);
+      wake = undefined;
+      check();
       if (size === 0) throw new UploadError('empty');
       if (head.length < 4 || !head.equals(GGUF_MAGIC)) throw new UploadError('not_gguf');
-      const info: StoredModel = { id, size, sha256: hash.digest('hex'), addedAt: Date.now() };
       await rename(tmp, this.file(id));
+      const info: StoredModel = { id, size, sha256: hash.digest('hex'), addedAt: Date.now(), mtimeMs: (await stat(this.file(id))).mtimeMs };
       await this.writeInfo(info);
       this.known.set(id, info);
       return info;
     } catch (e) {
-      out.destroy();
+      out?.destroy();
       await rm(tmp, { force: true });
       throw e instanceof UploadError ? e : new UploadError('failed', e);
     } finally {
@@ -211,6 +245,29 @@ export class UploadError extends Error {
 
 const UPLOAD_STATUS: Record<UploadErrorCode, number> = { not_gguf: 400, empty: 400, too_large: 413, busy: 409, failed: 500 };
 
+/** 업로드 요청에 꼭 있어야 하는 머리글. 교차 출처 요청에 붙이면 사전 확인(preflight)이 필요해지고, 서버는 이를 허락하지 않는다. */
+export const UPLOAD_HEADER = 'x-sci-bridge-upload';
+const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
+
+/** `Host` 값에서 포트를 뺀 호스트 이름(소문자). `[::1]:8080` → `[::1]`. */
+const hostnameOf = (host: string): string => {
+  const h = host.trim().toLowerCase();
+  if (h.startsWith('[')) {
+    const end = h.indexOf(']');
+    return end < 0 ? h : h.slice(0, end + 1);
+  }
+  const i = h.lastIndexOf(':');
+  return i >= 0 && h.indexOf(':') === i ? h.slice(0, i) : h;
+};
+
+/** `Origin`이 `http://<Host>`와 같은 이 PC 출처인지. */
+const originMatchesHost = (origin: string, host: string): boolean => {
+  const m = /^http:\/\/(.+)$/i.exec(origin.trim());
+  if (!m) return false;
+  const o = m[1]!.toLowerCase();
+  return LOCAL_HOSTNAMES.has(hostnameOf(o)) && o === host.trim().toLowerCase();
+};
+
 const notFound = (reply: FastifyReply) => reply.code(404).send({ error: 'not_found' });
 
 /**
@@ -227,8 +284,21 @@ export async function registerModelRoutes(app: FastifyInstance, store: ModelStor
     scope.removeAllContentTypeParsers();
     scope.addContentTypeParser('*', (_req, payload, done) => done(null, payload));
 
-    scope.post<{ Params: { id: string } }>('/tutor-models/:id', { bodyLimit: store.maxBytes + 1024 }, async (req, reply) => {
+    // 같은 PC의 웹 페이지가 몰래 올리지 못하게(CSRF·DNS rebinding) 막는다. 거절은 모두 본문을 읽기 전에 한다.
+    const guardUpload = (req: FastifyRequest, reply: FastifyReply): FastifyReply | null => {
       if (!isLoopback(req.ip)) return reply.code(403).send({ error: 'localhost_only' });
+      const host = req.headers.host ?? '';
+      if (!LOCAL_HOSTNAMES.has(hostnameOf(host))) return reply.code(403).send({ error: 'bad_host' });
+      const origin = req.headers.origin;
+      if (origin !== undefined && !originMatchesHost(origin, host)) return reply.code(403).send({ error: 'bad_origin' });
+      if (req.headers[UPLOAD_HEADER] !== '1') return reply.code(403).send({ error: 'missing_upload_header' });
+      if (req.headers['content-type'] !== 'application/octet-stream') return reply.code(415).send({ error: 'unsupported_media_type' });
+      return null;
+    };
+
+    scope.post<{ Params: { id: string } }>('/tutor-models/:id', { bodyLimit: store.maxBytes + 1024 }, async (req, reply) => {
+      const denied = guardUpload(req, reply);
+      if (denied) return denied;
       const { id } = req.params;
       if (!store.hasId(id)) return reply.code(404).send({ error: 'unknown_model' });
       const declared = Number(req.headers['content-length']);

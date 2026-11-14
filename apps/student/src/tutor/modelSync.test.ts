@@ -19,6 +19,7 @@ function setup(opts: { available?: boolean; files?: Array<{ exists: boolean; siz
     fileInfo: vi.fn(async () => files.length > 1 ? files.shift()! : files[0]!),
     download: vi.fn(opts.download ?? (async () => ({ ok: true, size: 1000 }))),
     remove: vi.fn(async () => {}),
+    cancelDownload: vi.fn(async () => {}),
     addListener: vi.fn(async (_ev: 'progress', fn: Progress) => {
       onProgress = fn;
       return { remove: removeListener };
@@ -27,6 +28,7 @@ function setup(opts: { available?: boolean; files?: Array<{ exists: boolean; siz
   const deps: ModelSyncDeps = {
     plugin: plugin as unknown as ModelSyncDeps['plugin'],
     available: () => opts.available ?? true,
+    sleep: async () => {},
     state: {
       get: () => state,
       set: (s) => {
@@ -191,5 +193,68 @@ describe('ModelSync', () => {
     release();
     await run;
     expect(t.state).toEqual(NO_MODEL);
+  });
+
+  it('reset: 받는 중이던 파일의 네이티브 내려받기를 취소한다', async () => {
+    let release!: () => void;
+    const t = setup({ download: () => new Promise((r) => (release = () => r({ ok: true, size: 1000 }))) });
+    const run = t.sync.apply(model, ctx);
+    await vi.waitFor(() => expect(t.plugin.download).toHaveBeenCalled());
+    t.sync.reset();
+    expect(t.plugin.cancelDownload).toHaveBeenCalledWith({ file: 'qwen3-1.7b.gguf' });
+    release();
+    await run;
+  });
+
+  it('apply(null): 모델이 없다고 알려 오면 받던 것을 취소한다', async () => {
+    let release!: () => void;
+    const t = setup({ download: () => new Promise((r) => (release = () => r({ ok: true, size: 1000 }))) });
+    const run = t.sync.apply(model, ctx);
+    await vi.waitFor(() => expect(t.plugin.download).toHaveBeenCalled());
+    await t.sync.apply(null, ctx);
+    expect(t.plugin.cancelDownload).toHaveBeenCalledWith({ file: 'qwen3-1.7b.gguf' });
+    expect(t.state).toEqual(NO_MODEL);
+    release();
+    await run;
+    expect(t.state).toEqual(NO_MODEL);
+  });
+
+  it('새 sha256이 오면 이전 내려받기를 취소하고, 플러그인이 아직 바쁘면 물러났다 다시 불러 ready가 된다', async () => {
+    const NEW = 'c'.repeat(64);
+    let calls = 0;
+    let rejectFirst!: (e: Error) => void;
+    const t = setup({
+      files: [{ exists: false, size: 0 }, { exists: false, size: 0 }, { exists: true, size: 1000, sha256: NEW }],
+      download: () => {
+        calls++;
+        if (calls === 1) return new Promise((_, rej) => (rejectFirst = rej));
+        if (calls <= 3) return Promise.reject(new Error('이미 내려받고 있어요')); // 첫 내려받기가 아직 끝나지 않았다
+        return Promise.resolve({ ok: true, size: 1000 });
+      },
+    });
+    const first = t.sync.apply(model, ctx);
+    await vi.waitFor(() => expect(t.plugin.download).toHaveBeenCalledTimes(1));
+    const second = t.sync.apply({ ...model, sha256: NEW }, ctx);
+    expect(t.plugin.cancelDownload).toHaveBeenCalledWith({ file: 'qwen3-1.7b.gguf' });
+    await second;
+    expect(t.plugin.download).toHaveBeenCalledTimes(4);
+    expect(t.state.status).toBe('ready');
+    rejectFirst(new Error('내려받기를 멈췄어요'));
+    await first;
+    expect(t.state.status).toBe('ready'); // 취소된 쪽의 오류가 상태를 망치지 않는다
+  });
+
+  it('바쁘다는 거절이 계속되면 몇 번 뒤 error로 끝낸다', async () => {
+    const t = setup({ download: async () => { throw new Error('이미 내려받고 있어요'); } });
+    await t.sync.apply(model, ctx);
+    expect(t.plugin.download).toHaveBeenCalledTimes(6);
+    expect(t.state.status).toBe('error');
+  });
+
+  it('다른 오류는 다시 부르지 않는다', async () => {
+    const t = setup({ download: async () => { throw new Error('서버 응답 500'); } });
+    await t.sync.apply(model, ctx);
+    expect(t.plugin.download).toHaveBeenCalledTimes(1);
+    expect(t.state.status).toBe('error');
   });
 });

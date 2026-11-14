@@ -17,12 +17,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -50,7 +51,48 @@ public class TutorLlmPlugin extends Plugin {
     private final ExecutorService dlExecutor = Executors.newSingleThreadExecutor(r -> new Thread(r, "tutor-dl"));
     private final ExecutorService ioExecutor = Executors.newSingleThreadExecutor(r -> new Thread(r, "tutor-io"));
     private final ExecutorService llmExecutor = Executors.newSingleThreadExecutor(r -> new Thread(r, "tutor-llm"));
-    private final Set<String> downloading = ConcurrentHashMap.newKeySet();
+    /** 내려받는 중인 파일 → 취소 표시와 연결. cancelDownload가 이 표시를 세우고 연결을 끊는다. */
+    private final Map<String, DownloadState> downloading = new ConcurrentHashMap<>();
+
+    private static final class DownloadState {
+        volatile boolean cancelled = false;
+        volatile HttpURLConnection conn = null;
+
+        void cancel() {
+            cancelled = true;
+            HttpURLConnection c = conn;
+            if (c != null) c.disconnect();
+        }
+    }
+
+    private static final Pattern IPV4 = Pattern.compile("^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$");
+
+    /** 교실 안(사설·루프백 IPv4, localhost) 주소인가. 공인 주소·도메인은 받지 않는다. */
+    static boolean isLanHost(String host) {
+        if (host == null) return false;
+        if (host.equalsIgnoreCase("localhost")) return true;
+        java.util.regex.Matcher m = IPV4.matcher(host);
+        if (!m.matches()) return false;
+        int[] o = new int[4];
+        for (int i = 0; i < 4; i++) {
+            o[i] = Integer.parseInt(m.group(i + 1));
+            if (o[i] > 255) return false;
+        }
+        return o[0] == 10 || o[0] == 127 || (o[0] == 172 && o[1] >= 16 && o[1] <= 31) || (o[0] == 192 && o[1] == 168);
+    }
+
+    /** http(s)이고 교실 안 주소일 때만 URL을 돌려준다. 아니면 null. */
+    static URL lanUrl(String url) {
+        if (url == null) return null;
+        try {
+            URL u = new URL(url);
+            String proto = u.getProtocol();
+            if (!("http".equals(proto) || "https".equals(proto))) return null;
+            return isLanHost(u.getHost()) ? u : null;
+        } catch (MalformedURLException e) {
+            return null;
+        }
+    }
 
     // llm 실행기에서만 바꾼다(읽기는 다른 스레드에서도 하므로 volatile).
     private volatile boolean nativeReady = false;
@@ -138,24 +180,39 @@ public class TutorLlmPlugin extends Plugin {
             call.reject("잘못된 sha256이에요");
             return;
         }
-        if (url == null || !(url.startsWith("http://") || url.startsWith("https://"))) {
-            call.reject("잘못된 주소예요");
+        final URL lan = lanUrl(url);
+        if (lan == null) {
+            call.reject("교실 안(사설 IP·localhost)의 http(s) 주소만 쓸 수 있어요");
             return;
         }
-        if (!downloading.add(file)) {
+        final DownloadState state = new DownloadState();
+        if (downloading.putIfAbsent(file, state) != null) {
             call.reject("이미 내려받고 있어요");
             return;
         }
         dlExecutor.execute(() -> {
             try {
-                call.resolve(doDownload(url, sha.toLowerCase(), file, dest));
+                call.resolve(doDownload(lan, sha.toLowerCase(), file, dest, state));
             } catch (Throwable t) {
                 // 끊긴 내려받기는 .part를 남겨 다시 부르면 이어 받는다.
                 call.reject(t.getMessage() != null ? t.getMessage() : "내려받기에 실패했어요");
             } finally {
-                downloading.remove(file);
+                downloading.remove(file, state);
             }
         });
+    }
+
+    /** 내려받는 중인 파일을 멈춘다(받아 둔 .part는 남겨 이어 받을 수 있다). 받는 중이 아니면 아무 일도 없다. */
+    @PluginMethod
+    public void cancelDownload(PluginCall call) {
+        final String file = call.getString("file");
+        if (modelFile(file, "") == null) {
+            call.reject("잘못된 파일 이름이에요");
+            return;
+        }
+        DownloadState st = downloading.get(file);
+        if (st != null) st.cancel();
+        call.resolve();
     }
 
     private JSObject result(boolean ok, long size) {
@@ -165,7 +222,7 @@ public class TutorLlmPlugin extends Plugin {
         return r;
     }
 
-    private JSObject doDownload(String url, String sha, String file, File dest) throws Exception {
+    private JSObject doDownload(URL url, String sha, String file, File dest, DownloadState state) throws Exception {
         File side = modelFile(file, ".sha256");
         File part = modelFile(file, ".part");
         // 이미 같은 파일이 있으면 받지 않는다.
@@ -178,13 +235,13 @@ public class TutorLlmPlugin extends Plugin {
             if (have.equals(sha)) return result(true, dest.length());
         }
         long offset = part.isFile() ? part.length() : 0;
-        HttpURLConnection conn = open(url, offset);
+        HttpURLConnection conn = open(url, offset, state);
         int code = conn.getResponseCode();
         if (code == 416 && offset > 0) { // 받아 둔 조각이 어긋났다: 처음부터
             conn.disconnect();
             part.delete();
             offset = 0;
-            conn = open(url, 0);
+            conn = open(url, 0, state);
             code = conn.getResponseCode();
         }
         try {
@@ -217,6 +274,7 @@ public class TutorLlmPlugin extends Plugin {
                 byte[] buf = new byte[64 * 1024];
                 int n;
                 while ((n = in.read(buf)) > 0) {
+                    if (state.cancelled) throw new IOException("내려받기를 멈췄어요");
                     out.write(buf, 0, n);
                     md.update(buf, 0, n);
                     received += n;
@@ -227,6 +285,7 @@ public class TutorLlmPlugin extends Plugin {
                     }
                 }
             }
+            if (state.cancelled) throw new IOException("내려받기를 멈췄어요");
             emitProgress(file, received, Math.max(total, received));
             if (total >= 0 && received != total) throw new IOException("내려받기가 중간에 끊겼어요");
             if (!hex(md.digest()).equals(sha)) {
@@ -241,11 +300,16 @@ public class TutorLlmPlugin extends Plugin {
         }
     }
 
-    private HttpURLConnection open(String url, long offset) throws IOException {
-        HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+    private HttpURLConnection open(URL url, long offset, DownloadState state) throws IOException {
+        HttpURLConnection c = (HttpURLConnection) url.openConnection();
+        state.conn = c;
+        if (state.cancelled) {
+            c.disconnect();
+            throw new IOException("내려받기를 멈췄어요");
+        }
         c.setConnectTimeout(15_000);
         c.setReadTimeout(30_000);
-        c.setInstanceFollowRedirects(true);
+        c.setInstanceFollowRedirects(false); // 다른(공인) 주소로 돌려 보내도 따라가지 않는다.
         c.setRequestProperty("Accept-Encoding", "identity"); // 압축하면 Range·길이가 어긋난다.
         if (offset > 0) c.setRequestProperty("Range", "bytes=" + offset + "-");
         return c;
@@ -298,7 +362,7 @@ public class TutorLlmPlugin extends Plugin {
             call.reject("잘못된 파일 이름이에요");
             return;
         }
-        if (downloading.contains(name)) {
+        if (downloading.containsKey(name)) {
             call.reject("내려받는 중이에요");
             return;
         }
@@ -363,6 +427,12 @@ public class TutorLlmPlugin extends Plugin {
         });
     }
 
+    /** 글자(코드 포인트) 수로 자른다. char로 자르면 이모지 같은 서로게이트 쌍이 반으로 갈라진다. */
+    static String truncateCodePoints(String s, int maxCodePoints) {
+        if (s.codePointCount(0, s.length()) <= maxCodePoints) return s;
+        return s.substring(0, s.offsetByCodePoints(0, maxCodePoints));
+    }
+
     @PluginMethod
     public void generate(PluginCall call) {
         final String prompt = call.getString("prompt");
@@ -371,15 +441,15 @@ public class TutorLlmPlugin extends Plugin {
             call.reject("잘못된 프롬프트예요");
             return;
         }
-        final String[] stops;
+        final byte[][] stops;
         final int[] suppress;
         try {
             JSArray stopArr = call.getArray("stop");
             int ns = stopArr == null ? 0 : Math.min(stopArr.length(), MAX_STOPS);
-            stops = new String[ns];
+            stops = new byte[ns][];
             for (int i = 0; i < ns; i++) {
                 String s = stopArr.getString(i);
-                stops[i] = s.length() > MAX_STOP_CHARS ? s.substring(0, MAX_STOP_CHARS) : s;
+                stops[i] = truncateCodePoints(s, MAX_STOP_CHARS).getBytes(StandardCharsets.UTF_8);
             }
             JSArray supArr = call.getArray("suppressTokenIds");
             int nu = supArr == null ? 0 : Math.min(supArr.length(), MAX_SUPPRESS);
@@ -393,7 +463,7 @@ public class TutorLlmPlugin extends Plugin {
             try {
                 if (loadedFile == null) throw new IllegalStateException("모델이 올라가 있지 않아요");
                 double[] stats = new double[3];
-                byte[] bytes = TutorLlmNative.nativeGenerate(prompt, maxTokens, stops, suppress, stats);
+                byte[] bytes = TutorLlmNative.nativeGenerate(prompt.getBytes(StandardCharsets.UTF_8), maxTokens, stops, suppress, stats);
                 JSObject r = new JSObject();
                 r.put("text", new String(bytes == null ? new byte[0] : bytes, StandardCharsets.UTF_8));
                 r.put("firstTokenMs", stats[0]);
@@ -404,6 +474,13 @@ public class TutorLlmPlugin extends Plugin {
                 call.reject(t.getMessage() != null ? t.getMessage() : "생성하지 못했어요");
             }
         });
+    }
+
+    /** 진행 중인 생성을 되도록 빨리 멈추게 한다(낡은 요청 정리). 올라간 모델은 그대로 둔다. 어느 스레드에서든 안전하다. */
+    @PluginMethod
+    public void abort(PluginCall call) {
+        if (nativeReady) TutorLlmNative.nativeAbort();
+        call.resolve();
     }
 
     @PluginMethod

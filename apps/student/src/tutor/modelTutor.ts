@@ -19,7 +19,7 @@ import type { TutorLlmPlugin } from './llmPlugin';
  * 이 파일은 네트워크를 쓰지 않는다. 모델 파일 내려받기는 modelSync(3b)가 한다.
  */
 
-export type ModelTutorLlm = Pick<TutorLlmPlugin, 'load' | 'generate' | 'unload'>;
+export type ModelTutorLlm = Pick<TutorLlmPlugin, 'load' | 'generate' | 'unload' | 'abort'>;
 
 export interface ModelTutorOptions {
   llm: ModelTutorLlm;
@@ -77,6 +77,8 @@ export function createModelTutor(opts: ModelTutorOptions): ModelTutor {
   let disposed = false;
   // 네이티브는 한 번에 하나만 생성하므로 요청을 줄 세운다.
   let chain: Promise<unknown> = Promise.resolve();
+  // 지금 generate를 부른 채 기다리는 요청. 새 요청이 와서 이 요청이 낡아지면 네이티브 생성을 멈춘다.
+  let generating: AskInput | null = null;
 
   const ensureLoaded = (): Promise<boolean> => {
     if (!loaded) {
@@ -109,6 +111,7 @@ export function createModelTutor(opts: ModelTutorOptions): ModelTutor {
     if (input.isCurrent && !input.isCurrent()) return fb('stale');
 
     let timer: ReturnType<typeof setTimeout> | undefined;
+    generating = input;
     try {
       const timeout = new Promise<'timeout'>((resolve) => {
         timer = setTimeout(() => resolve('timeout'), hardMs);
@@ -123,6 +126,7 @@ export function createModelTutor(opts: ModelTutorOptions): ModelTutor {
         void llm.unload().catch(() => undefined);
         return fb('timeout');
       }
+      if (input.isCurrent && !input.isCurrent()) return fb('stale');
       if (out.firstTokenMs > budgetMs) return fb('slow');
       const fin = finalizeModelOutput(out.text, {
         limits: input.experiment.limits,
@@ -133,12 +137,16 @@ export function createModelTutor(opts: ModelTutorOptions): ModelTutor {
     } catch {
       return fb('error');
     } finally {
+      if (generating === input) generating = null;
       if (timer !== undefined) clearTimeout(timer);
     }
   };
 
   return {
     ask(input) {
+      // 앞선 요청이 생성 중인데 이미 낡았으면(방금 이 요청이 그것을 대체했다) 네이티브 생성을 멈춰 줄 선 이 요청이 빨리 시작하게 한다.
+      // 아직 차례가 오지 않은 낡은 요청은 run()이 isCurrent로 걸러 generate를 부르지 않는다.
+      if (generating?.isCurrent && !generating.isCurrent()) void Promise.resolve(llm.abort()).catch(() => undefined);
       const p = chain.then(() => run(input));
       chain = p.catch(() => undefined);
       return p;

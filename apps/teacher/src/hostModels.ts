@@ -140,6 +140,8 @@ export class HostModelsStore {
     };
     xhr.open('POST', `/tutor-models/${encodeURIComponent(id)}`);
     xhr.setRequestHeader('content-type', 'application/octet-stream');
+    // 서버가 요구하는 머리글: 다른 웹 페이지가 몰래 올리지 못하게 한다(사전 확인이 필요해진다).
+    xhr.setRequestHeader('x-sci-bridge-upload', '1');
     xhr.upload.onprogress = (e) => {
       if (this.xhr !== xhr) return;
       this.upload = { kind: 'uploading', id, fileName, loaded: e.loaded, total: e.lengthComputable ? e.total : file.size };

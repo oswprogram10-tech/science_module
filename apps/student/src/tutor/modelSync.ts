@@ -12,11 +12,17 @@ import { NO_MODEL, tutorModelState, type TutorModelState } from './modelState';
  */
 
 export interface ModelSyncDeps {
-  plugin: Pick<TutorLlmPlugin, 'fileInfo' | 'download' | 'remove' | 'addListener'>;
+  plugin: Pick<TutorLlmPlugin, 'fileInfo' | 'download' | 'cancelDownload' | 'remove' | 'addListener'>;
   /** 네이티브 플러그인이 있는 앱인가. */
   available: () => boolean;
   state: { get: () => TutorModelState; set: (s: TutorModelState) => void };
+  /** 기다리는 함수(시험에서 바꾼다). 기본은 setTimeout. */
+  sleep?: (ms: number) => Promise<void>;
 }
+
+/** 이전 내려받기가 아직 끝나지 않아 플러그인이 "이미 내려받고 있어요"로 거절하면, 이 간격(ms)으로 기다렸다가 다시 부른다. */
+const BUSY_BACKOFF_MS = [200, 400, 800, 1600, 3200];
+const isBusyError = (e: unknown): boolean => String((e as { message?: unknown } | null)?.message ?? e).includes('이미 내려받고');
 
 /** 모델을 받을 곳을 알려 주는 정보. client.ts가 수업 연결에서 채운다. */
 export interface ModelSyncContext {
@@ -46,6 +52,8 @@ export class ModelSync {
   private key = '';
   private model: TutorModelRef | null = null;
   private ctx: ModelSyncContext = { baseUrl: null, tier: undefined };
+  /** 지금 네이티브에서 내려받는 중인 파일. 목표가 바뀌면 이 내려받기를 멈추게 한다. */
+  private active: string | null = null;
 
   constructor(private readonly deps: ModelSyncDeps) {}
 
@@ -66,9 +74,32 @@ export class ModelSync {
   /** 수업을 나갔다. 알림을 잊고 상태를 'none'으로 돌린다(이미 받은 파일은 지우지 않는다). */
   reset(): void {
     this.gen++;
+    this.cancelActive();
     this.key = '';
     this.model = null;
     this.deps.state.set(NO_MODEL);
+  }
+
+  /** 진행 중인 네이티브 내려받기를 멈추게 한다(받아 둔 조각은 남는다). 이미 끝났으면 플러그인이 무시한다. */
+  private cancelActive(): void {
+    const file = this.active;
+    if (!file) return;
+    this.active = null;
+    void Promise.resolve(this.deps.plugin.cancelDownload({ file })).catch(() => {});
+  }
+
+  /** 다른 내려받기가 끝나길 기다리며(취소 중) 몇 번 다시 부른다. 낡은 요청이면 멈춘다. */
+  private async downloadWithRetry(opts: Parameters<ModelSyncDeps['plugin']['download']>[0], stale: () => boolean) {
+    const sleep = this.deps.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+    for (let i = 0; ; i++) {
+      try {
+        return await this.deps.plugin.download(opts);
+      } catch (e) {
+        if (!isBusyError(e) || i >= BUSY_BACKOFF_MS.length || stale()) throw e;
+        await sleep(BUSY_BACKOFF_MS[i]!);
+        if (stale()) throw e;
+      }
+    }
   }
 
   private async run(): Promise<void> {
@@ -77,6 +108,7 @@ export class ModelSync {
     const info = model && isTutorModelId(model.id) ? tutorModel(model.id) : null;
     if (!model || !info || !this.deps.available() || !this.ctx.tier || !tierAllows(this.ctx.tier, info) || !this.ctx.baseUrl) {
       this.gen++;
+      this.cancelActive();
       this.key = '';
       state.set(NO_MODEL);
       return;
@@ -87,6 +119,7 @@ export class ModelSync {
     // 같은 모델을 다시 알려 오면(재연결 등) 받는 중이거나 준비됐을 때는 그대로 둔다. 오류였으면 다시 시도한다.
     if (same && (cur.status === 'downloading' || cur.status === 'ready')) return;
     this.key = `${model.id}:${model.sha256}`;
+    this.cancelActive(); // 다른 모델·새 sha256으로 바뀌었다: 이전 내려받기는 멈춘다.
     const g = ++this.gen;
     const stale = () => g !== this.gen;
     const setState = (s: TutorModelState) => {
@@ -111,7 +144,9 @@ export class ModelSync {
           setState({ status: 'downloading', modelId: info.id, file, progress: p });
         }
       });
-      const done = await plugin.download({ url: `${this.ctx.baseUrl}/tutor-models/${model.id}.gguf`, sha256: model.sha256, file });
+      this.active = file;
+      const done = await this.downloadWithRetry({ url: `${this.ctx.baseUrl}/tutor-models/${model.id}.gguf`, sha256: model.sha256, file }, stale);
+      if (!stale()) this.active = null;
       if (stale()) return;
       if (!done.ok) throw new Error('download failed');
       // 플러그인이 확인하지만 한 번 더 본다: 다르면 지운다.
@@ -123,7 +158,10 @@ export class ModelSync {
       }
       setState({ status: 'ready', modelId: info.id, file, progress: 1 });
     } catch {
-      if (!stale()) this.key = '';
+      if (!stale()) {
+        this.key = '';
+        this.active = null;
+      }
       setState({ status: 'error', modelId: info.id, file, progress: 0 });
     } finally {
       void handle?.remove().catch(() => {});

@@ -22,9 +22,9 @@ final class TutorLlmNative {
     static native void nativeUnload();
 
     /**
-     * 탐욕 생성. stats = {firstTokenMs, tokensPerSec, tokens}가 채워진다.
+     * 탐욕 생성. prompt와 stop은 표준 UTF-8 바이트(String.getBytes(UTF_8))다(JNI 문자열은 변형 UTF-8이라 이모지가 깨진다). stats = {firstTokenMs, tokensPerSec, tokens}가 채워진다.
      * 반환: 멈춤 문자열 앞까지의 UTF-8 바이트.
      */
     static native byte[] nativeGenerate(
-            String prompt, int maxTokens, String[] stop, int[] suppressTokenIds, double[] stats);
+            byte[] prompt, int maxTokens, byte[][] stop, int[] suppressTokenIds, double[] stats);
 }

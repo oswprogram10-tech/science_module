@@ -37,7 +37,8 @@ function fakeLlm(text: string | (() => Promise<never> | string), extra: { firstT
     tokens: 12,
   }));
   const unload = vi.fn<ModelTutorLlm['unload']>(async () => undefined);
-  return { llm: { load, generate, unload } satisfies ModelTutorLlm, load, generate, unload };
+  const abort = vi.fn<ModelTutorLlm['abort']>(async () => undefined);
+  return { llm: { load, generate, unload, abort } satisfies ModelTutorLlm, load, generate, unload, abort };
 }
 
 afterEach(() => {
@@ -138,6 +139,44 @@ describe('modelTutor: 모델 질문 만들기', () => {
     const t = createModelTutor({ llm: f.llm, model, file: 'a.gguf', nThreads: 2 });
     expect(await t.ask(base({ isCurrent: () => false }))).toMatchObject({ source: 'fallback', reason: 'stale' });
     expect(f.generate).not.toHaveBeenCalled();
+  });
+
+  it('생성 중인 요청이 새 요청에 밀려 낡아지면 abort를 부르고, 낡은 결과는 쓰지 않는다', async () => {
+    let current = 1;
+    let release!: () => void;
+    const f = fakeLlm(GOOD);
+    f.generate.mockImplementationOnce(() => new Promise((r) => (release = () => r({ text: GOOD, firstTokenMs: 400, tokensPerSec: 9, tokens: 12 }))));
+    const t = createModelTutor({ llm: f.llm, model, file: 'qwen3-1.7b.gguf' });
+    const first = t.ask(base({ isCurrent: () => current === 1 }));
+    await vi.waitFor(() => expect(f.generate).toHaveBeenCalledTimes(1));
+    current = 2; // 새 요청이 첫 요청을 대체했다
+    const second = t.ask(base({ isCurrent: () => current === 2 }));
+    expect(f.abort).toHaveBeenCalledTimes(1);
+    release();
+    expect(await first).toEqual({ source: 'fallback', text: FALLBACK, reason: 'stale' });
+    expect((await second).source).toBe('model');
+  });
+
+  it('줄 서 있던 낡은 요청은 generate를 부르지 않고, 끝난 생성에는 abort를 부르지 않는다', async () => {
+    let current = 1;
+    let release!: () => void;
+    const f = fakeLlm(GOOD);
+    f.generate.mockImplementationOnce(() => new Promise((r) => (release = () => r({ text: GOOD, firstTokenMs: 400, tokensPerSec: 9, tokens: 12 }))));
+    const t = createModelTutor({ llm: f.llm, model, file: 'qwen3-1.7b.gguf' });
+    const a = t.ask(base({ isCurrent: () => current === 1 }));
+    await vi.waitFor(() => expect(f.generate).toHaveBeenCalledTimes(1));
+    const b = t.ask(base({ isCurrent: () => current <= 2 })); // 줄에서 기다리는 중
+    current = 3; // 그 사이 더 새 요청이 와서 a·b 모두 낡았다
+    const c = t.ask(base({ isCurrent: () => current === 3 }));
+    expect(f.abort).toHaveBeenCalledTimes(1);
+    release();
+    expect((await a).source).toBe('fallback');
+    expect(await b).toEqual({ source: 'fallback', text: FALLBACK, reason: 'stale' });
+    expect((await c).source).toBe('model');
+    expect(f.generate).toHaveBeenCalledTimes(2); // a와 c만
+    // 끝난 뒤의 새 요청은 abort하지 않는다.
+    await t.ask(base());
+    expect(f.abort).toHaveBeenCalledTimes(1);
   });
 
   it('학습한 입력 형식 버전이 다른 모델은 쓰지 않는다', async () => {

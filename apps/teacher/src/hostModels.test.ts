@@ -114,6 +114,7 @@ describe('HostModelsStore', () => {
     expect(xhr.method).toBe('POST');
     expect(xhr.url).toBe('/tutor-models/qwen3-1.7b');
     expect(xhr.headers['content-type']).toBe('application/octet-stream');
+    expect(xhr.headers['x-sci-bridge-upload']).toBe('1');
     expect(xhr.sent).toBe(f);
     expect(store.getUpload()).toMatchObject({ kind: 'uploading', loaded: 0, total: 100 });
     xhr.upload.onprogress?.({ lengthComputable: true, loaded: 40, total: 100 });

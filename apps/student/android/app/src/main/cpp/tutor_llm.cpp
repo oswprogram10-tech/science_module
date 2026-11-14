@@ -64,6 +64,15 @@ std::string to_std(JNIEnv* env, jstring s) {
   return out;
 }
 
+// byte[](자바에서 getBytes(UTF_8)로 만든 표준 UTF-8)를 그대로 읽는다. GetStringUTFChars는 변형 UTF-8(이모지가 CESU-8)이라 쓰지 않는다.
+std::string bytes_to_std(JNIEnv* env, jbyteArray a) {
+  if (!a) return {};
+  const jsize n = env->GetArrayLength(a);
+  std::string out(static_cast<size_t>(n), '\0');
+  if (n > 0) env->GetByteArrayRegion(a, 0, n, reinterpret_cast<jbyte*>(out.data()));
+  return out;
+}
+
 // 끝에 잘려 남은 UTF-8 글자 조각(최대 토큰 수에서 끊긴 경우)을 떼어 낸다.
 void trim_incomplete_utf8(std::string& s) {
   size_t n = s.size();
@@ -131,18 +140,18 @@ JNIEXPORT void JNICALL Java_kr_scibridge_student_TutorLlmNative_nativeUnload(JNI
 
 // 탐욕 생성. stats = {firstTokenMs, tokensPerSec, tokens}. 반환: UTF-8 바이트(멈춤 문자열 앞까지).
 JNIEXPORT jbyteArray JNICALL Java_kr_scibridge_student_TutorLlmNative_nativeGenerate(
-    JNIEnv* env, jclass, jstring jprompt, jint maxTokens, jobjectArray jstop, jintArray jsuppress, jdoubleArray jstats) {
+    JNIEnv* env, jclass, jbyteArray jprompt, jint maxTokens, jobjectArray jstop, jintArray jsuppress, jdoubleArray jstats) {
   if (!g_ctx || !g_model) { throw_java(env, "model not loaded"); return nullptr; }
   g_abort.store(false);
   const auto t0 = Clock::now();
 
-  const std::string prompt = to_std(env, jprompt);
+  const std::string prompt = bytes_to_std(env, jprompt);
   std::vector<std::string> stops;
   if (jstop) {
     const jsize n = env->GetArrayLength(jstop);
     for (jsize i = 0; i < n; i++) {
-      jstring s = static_cast<jstring>(env->GetObjectArrayElement(jstop, i));
-      std::string v = to_std(env, s);
+      jbyteArray s = static_cast<jbyteArray>(env->GetObjectArrayElement(jstop, i));
+      std::string v = bytes_to_std(env, s);
       env->DeleteLocalRef(s);
       if (!v.empty()) stops.push_back(std::move(v));
     }
