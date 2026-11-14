@@ -5,10 +5,12 @@ import {
   type Prediction,
   type TrialAnalysis,
 } from '@sci/gateway';
-import { echoesMask, hasForeignScript } from './privacy';
+import { echoesMask, hasForeignScript, hasLatinWord } from './privacy';
+import { checkTutorResponse, tidyTutorOutput, type TutorCheckExperiment } from './check';
 
 /** guardOutput 걸림 이름: 한자·일본 글자 섞임, 개인정보 자리표시 되풀이. */
 export const FOREIGN_SCRIPT_HIT = '한자·일본 글자';
+export const LATIN_WORD_HIT = '영어 낱말·깨진 글자';
 export const MASK_ECHO_HIT = '개인정보 자리표시';
 
 export const FALLBACK_PROBE = '지금까지의 결과표를 다시 살펴볼까요? 무엇이 달라졌나요?';
@@ -98,6 +100,25 @@ export function guardOutput(text: string, config: GuardConfig): GuardResult {
   const extra = [...(hasForeignScript(text) ? [FOREIGN_SCRIPT_HIT] : []), ...(echoesMask(text) ? [MASK_ECHO_HIT] : [])];
   const hits = [...forbidden, ...limits, ...extra];
   return { ok: hits.length === 0, hits };
+}
+
+/**
+ * 튜터 모델 출력 가드: guardOutput에 영어 낱말·깨진 글자 검사(hasLatinWord)를 더한다.
+ * guardOutput은 학생 화면 문구 검사에도 쓰여(내부 키 등 로마자가 섞인다) 이 검사는 모델 출력과 학습 견본에만 쓴다.
+ */
+export function guardModelOutput(text: string, config: GuardConfig): GuardResult {
+  const r = guardOutput(text, config);
+  return hasLatinWord(text) ? { ok: false, hits: [...r.hits, LATIN_WORD_HIT] } : r;
+}
+
+/**
+ * 튜터 모델 출력을 학생에게 보내기 전의 한 단계: 다듬기(tidyTutorOutput) → 규칙 검사(checkTutorResponse, guardModelOutput 포함).
+ * ok가 false면 앱은 규칙 기반 탐침 질문으로 대체한다. 모델 출력은 반드시 이 함수를 거친다(guardOutput만 쓰면 영어 섞임이 빠진다).
+ */
+export function finalizeModelOutput(raw: string, experiment: TutorCheckExperiment): { text: string; ok: boolean; problems: string[] } {
+  const text = tidyTutorOutput(raw);
+  const { ok, problems } = checkTutorResponse(text, experiment);
+  return { text, ok, problems };
 }
 
 const JOSA_PATTERN = /(\S)(을\(를\)|이\(가\)|와\(과\)|은\(는\))/g;

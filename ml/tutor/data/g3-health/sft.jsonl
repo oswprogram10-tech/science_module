@@ -36,3 +36,5 @@
 {"id":"g3-health-sft-0036","unitId":"g3-health","scenarioId":"g3-health-s021","utterance":"자리를 바꿨는데 숫자가 그대로예요.","source":"example","reviewed":false,"author":"EXG","response":"예측과 달랐군요. 자리만 바꾼 두 시행의 결과표 숫자를 나란히 읽어 볼까요?"}
 {"id":"g3-health-sft-0037","unitId":"g3-health","scenarioId":"g3-health-s021","utterance":"","source":"example","reviewed":false,"author":"EXG","response":"예측과 달랐어요. 자리만 바꾼 두 시행의 결과를 결과표와 그래프로 나란히 살펴볼까요?"}
 {"id":"g3-health-sft-0038","unitId":"g3-health","scenarioId":"g3-health-s022","utterance":"자리만 또 바꿨어요.","source":"example","reviewed":false,"author":"EXG","response":"자리만 바꾼 시행이에요. 세 번 쌓인 결과 가운데 자리만 달라진 두 줄을 찾아 비교해 볼까요?"}
+{"id":"g3-health-sft-0039","unitId":"g3-health","scenarioId":"g3-health-s019","utterance":"캠핑 가서 마시멜로를 구워 먹었어요.","source":"example","reviewed":false,"author":"EXG","notes":"보강 v2: 엉뚱한 말","response":"예측과 결과가 달랐어요. 마스크만 바꾼 두 시행의 감염된 사람 수를 결과표에서 읽어 볼까요?"}
+{"id":"g3-health-sft-0040","unitId":"g3-health","scenarioId":"g3-health-s012","utterance":"자전거 보조 바퀴를 드디어 뗐어요!","source":"example","reviewed":false,"author":"EXG","notes":"보강 v2: 엉뚱한 말","response":"같은 조건의 시행이에요. 결과가 같게 나오는 것을 확인하면 어떤 점이 좋을까요?"}

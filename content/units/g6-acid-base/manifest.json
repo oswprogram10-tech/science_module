@@ -164,7 +164,7 @@
         }
       ],
       "dependent": [
-        { "key": "color", "label": "지시약 색", "unit": "" },
+        { "key": "color", "label": "지시약 색", "unit": "", "values": {"cabRed": "붉은색", "cabPink": "연한 붉은색", "cabPurple": "보라색", "cabBlue": "푸른색", "cabGreen": "초록색", "cabYellow": "노란색", "clear": "색 변화 없음", "magenta": "붉은색"} },
         { "key": "addedMl", "label": "넣은 양", "unit": "mL" },
         { "key": "slot", "label": "색 띠에서의 자리", "unit": "칸" }
       ],

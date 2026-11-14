@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FOREIGN_SCRIPT_HIT, MASK_ECHO_HIT, guardOutput, tidyTutorOutput } from './index';
+import { FOREIGN_SCRIPT_HIT, LATIN_WORD_HIT, MASK_ECHO_HIT, finalizeModelOutput, guardModelOutput, guardOutput, tidyTutorOutput } from './index';
 import { echoesMask, hasForeignScript, maskPersonalInfo } from './privacy';
 
 describe('maskPersonalInfo: 학생 말의 개인정보 가리기', () => {
@@ -49,7 +49,38 @@ describe('출력 가드: 한자·일본 글자와 개인정보 자리표시', ()
   });
 });
 
+describe('영어 낱말 섞임', () => {
+  it('세 글자 이상 영어 낱말, 악센트 글자, 깨진 글자를 막고 단위·기호는 둔다', () => {
+    for (const t of ['예측과 결과가 달랐군nings. 무엇이 다른가요?', '두 시행이 모두 same로 나왔어요. 숫자를 볼까요?', '아lâ이의 크기를 볼까요?', '물의 �yang 칸을 볼까요?']) {
+      expect(guardModelOutput(t, { forbiddenAnswers: [], limits: [] }).hits, t).toContain(LATIN_WORD_HIT);
+      expect(guardOutput(t, { forbiddenAnswers: [], limits: [] }).hits, `${t}: 화면 문구 가드에는 넣지 않는다`).not.toContain(LATIN_WORD_HIT);
+    }
+    for (const t of ['온도계 눈금이 22.0 °C였나요?', '10 mL와 5.0 g을 견주어 볼까요?', '렌즈 10 × 접안 배율은 얼마인가요?', '20 ÷ 4는 얼마인가요?', 'LED가 켜졌나요? 2 mW였나요?', 'N극과 S극 중 어느 쪽인가요?', 'AI 친구 말고 결과표를 볼까요?']) {
+      expect(guardModelOutput(t, { forbiddenAnswers: [], limits: [] }).ok, t).toBe(true);
+    }
+  });
+});
+
+describe('finalizeModelOutput: 모델 출력 한 단계', () => {
+  const exp = { limits: ['광합성'], tutor: { forbiddenAnswers: ['물이 있어야 싹이 트'] } };
+  it('다듬은 뒤 검사한다', () => {
+    expect(finalizeModelOutput('세 가지가 달라졌어요 칸을 볼까요? 무엇이 보이나요?', exp)).toEqual({ text: '세 가지가 달라졌어요. 칸을 볼까요?', ok: true, problems: [] });
+    expect(finalizeModelOutput('모두 same로 나왔어요. 숫자를 볼까요?', exp).problems).toContain(`guard:${LATIN_WORD_HIT}`);
+    expect(finalizeModelOutput('물이 있어야 싹이 트죠. 다음은 볼까요?', exp).ok).toBe(false);
+  });
+  it('정상 두 문장 답은 손대지 않는다', () => {
+    expect(tidyTutorOutput('예측과 달랐네요.  그래프를 볼까요?')).toBe('예측과 달랐네요.  그래프를 볼까요?');
+  });
+});
+
 describe('tidyTutorOutput: 세 문장 답 다듬기', () => {
+  it('마침표 없이 이어 붙인 문장을 문장으로 세고, 다듬을 때 마침표를 찍는다', () => {
+    expect(tidyTutorOutput('붕어 카드를 골랐고 아직 관찰은 없어요 기록 두 칸에는 무엇이 적혀 있나요? 어떤 기준으로 나누어 볼까요?')).toBe(
+      '붕어 카드를 골랐고 아직 관찰은 없어요. 기록 두 칸에는 무엇이 적혀 있나요?',
+    );
+    expect(tidyTutorOutput('누른 횟수만 달랐어요 결과표의 두 숫자는 각각 어떤가요?')).toBe('누른 횟수만 달랐어요. 결과표의 두 숫자는 각각 어떤가요?');
+  });
+
   it('첫 문장과 그 뒤 첫 질문만 남긴다', () => {
     expect(tidyTutorOutput('예측과 달랐네요. 그래프에서 두 시행을 비교해 볼까요? 어느 부분이 달라졌는지 찾아볼까요?')).toBe('예측과 달랐네요. 그래프에서 두 시행을 비교해 볼까요?');
     expect(tidyTutorOutput('춤추는 걸 좋아하는군요. 어떤 점이 좋았나요? 잎을 어떻게 나눌까요?')).toBe('춤추는 걸 좋아하는군요. 어떤 점이 좋았나요?');

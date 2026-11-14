@@ -32,10 +32,11 @@ import {
 import { pickProbeKey } from './index';
 import { modelAnswer } from './observeModel';
 import { cardSortWhen, classifyWhen, observeWhen } from './situation';
+import { SITUATION_LABELS } from './situationLabels';
 
 /** 입력 형식 버전. 형식을 바꾸면 올린다(학습 데이터를 다시 내보내야 한다). */
-/** v1: 학생 말의 개인정보(이름·학교·사는 곳·연락처)를 가린 뒤 넣는다(maskPersonalInfo). */
-export const PROMPT_VERSION = 'v1';
+/** v1: 학생 말의 개인정보(이름·학교·사는 곳·연락처)를 가린 뒤 넣는다(maskPersonalInfo). v2: 숫자가 아닌 결과와 상황을 내부 코드 대신 화면 이름(dependent.values, SITUATION_LABELS)으로 쓴다. */
+export const PROMPT_VERSION = 'v2';
 
 /** 시행 요약에 담는 최근 시행 수. */
 export const MAX_TRIALS = 3;
@@ -207,6 +208,9 @@ export function situationOf(state: TutorState, experiment: Experiment): string {
 
 // ---- 입력 문장화 ----
 
+/** 상황 키를 교사 화면과 같은 한국어 이름으로 쓴다(v2). 모델이 내부 코드(before-run 등)를 따라 쓰지 않게. */
+const situationText = (key: string): string => SITUATION_LABELS[key] ?? key;
+
 const JOIN = ' · ';
 
 function optionLabel(options: { value: TutorValue; label: string }[], value: TutorValue | undefined): string {
@@ -219,8 +223,9 @@ function formatNumber(n: number): string {
 }
 
 /** "5.7 g", "28.5초"처럼. 한글 단위는 붙여 쓴다. */
-function formatMeasure(value: number | string | boolean, unit: string | undefined): string {
-  const text = typeof value === 'number' ? formatNumber(value) : String(value);
+function formatMeasure(value: number | string | boolean, unit: string | undefined, values?: Record<string, string>): string {
+  // 숫자가 아닌 결과는 매니페스트의 화면 이름(values)으로 바꾼다. 내부 코드(attract 등)를 모델에 보이지 않는다.
+  const text = typeof value === 'number' ? formatNumber(value) : (values?.[String(value)] ?? String(value));
   if (!unit) return text;
   return /^[가-힣]/.test(unit) ? `${text}${unit}` : `${text} ${unit}`;
 }
@@ -249,7 +254,7 @@ function variableBody(exp: VariableExperiment, state: Extract<TutorState, { kind
   for (const t of state.trials) {
     const results = exp.dependent
       .filter((d) => t.result[d.key] !== undefined)
-      .map((d) => `${d.label} ${formatMeasure(t.result[d.key]!, d.unit)}`);
+      .map((d) => `${d.label} ${formatMeasure(t.result[d.key]!, d.unit, d.values)}`);
     let line = `${t.index}) ${variableValues(exp, t.values, t.analysis.changed)} → ${results.join(JOIN)}`;
     if (t.prediction) line += `${JOIN}예측 ${PREDICTION_LABEL[t.prediction]}`;
     if (t.observed) line += `${JOIN}결과 ${OBSERVED_LABEL[t.observed]}`;
@@ -411,7 +416,7 @@ export function buildTutorInput(
   const lines = [
     `[단원] ${unit ? `${unit.title} (${unit.grade}학년)` : state.unitId}`,
     `[탐구 질문] ${experiment.question}`,
-    `[상황] ${situationOf(state, experiment)}`,
+    `[상황] ${situationText(situationOf(state, experiment))}`,
   ];
   if (state.kind === 'variable') lines.push(...variableBody(variableExp(experiment), state));
   else if (state.kind === 'classify') lines.push(...classifyBody(classifyExp(experiment), state));

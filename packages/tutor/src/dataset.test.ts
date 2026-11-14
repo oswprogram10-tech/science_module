@@ -396,7 +396,7 @@ describe('buildExport', () => {
     expect(sft.messages.map((m: { role: string }) => m.role)).toEqual(['system', 'user', 'assistant']);
     expect(sft.messages[0].content).toBe(TUTOR_SYSTEM);
     expect(sft.messages[2].content).toBe(ds.sft[0]!.response);
-    expect(sft.meta).toEqual({ id: ds.sft[0]!.id, unitId: ds.sft[0]!.unitId, situation: 'before-run', promptVersion: 'v1' });
+    expect(sft.meta).toEqual({ id: ds.sft[0]!.id, unitId: ds.sft[0]!.unitId, situation: 'before-run', promptVersion: PROMPT_VERSION });
     expect(sft.messages[1].content).toBe(inputFor(ds, ds.scenarios.find((s) => s.scenarioId === ds.sft[0]!.scenarioId)!, ds.sft[0]!.utterance));
 
     const dpo = lines(out['dpo.jsonl'])[0];
@@ -420,5 +420,26 @@ describe('buildExport', () => {
   it('내보낸 모든 입력에 정답 무리 정보가 없다(분류: 용액의 level·hazard 필드)', () => {
     const out = buildExport(ds, { includeExamples: true, now: NOW });
     expect(out['sft.jsonl']).not.toMatch(/"level"|truthGroup|hazard/);
+  });
+
+  // 매니페스트 결과 이름(dependent.values)의 두 글자 코드
+  const SHORT_CODES = new Set(
+    Object.values(full.units)
+      .flatMap((u) => u.manifest.experiments.flatMap((e) => ('dependent' in e && e.dependent ? e.dependent : []).flatMap((d) => Object.keys(d.values ?? {}))))
+      .filter((k) => k.length === 2),
+  );
+  it('모든 단원의 입력에 내부 코드(attract, before-run 등)가 없다: 결과와 상황은 화면 이름으로 쓴다(v2)', () => {
+    const out = buildExport(full, { includeExamples: true, now: NOW });
+    const found = new Set<string>();
+    for (const file of ['sft.jsonl', 'dpo.jsonl', 'eval-redteam.jsonl'] as const) {
+      for (const line of lines(out[file])) {
+        const msgs = (line.messages ?? line.prompt) as { role: string; content: string }[];
+        const input = msgs.find((m) => m.role === 'user')!.content.replace(/^\[학생\].*$/m, ''); // 학생 말은 학생이 쓴 그대로
+        for (const w of input.match(/[A-Za-z]{3,}/g) ?? []) if (!['mW'].includes(w)) found.add(w);
+        // 두 글자 결과 코드(예: 날개 no)도 화면 이름으로 바뀌어야 한다.
+        for (const w of input.match(/(?<![A-Za-z])[A-Za-z]{2}(?![A-Za-z])/g) ?? []) if (SHORT_CODES.has(w)) found.add(w);
+      }
+    }
+    expect([...found]).toEqual([]);
   });
 });
