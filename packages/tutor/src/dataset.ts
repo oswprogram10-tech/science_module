@@ -1,6 +1,7 @@
 import type { Experiment, Manifest } from '@sci/schema';
 import {
   buildTutorInput,
+  templateProbeFor,
   situationOf,
   PROMPT_VERSION,
   TUTOR_SYSTEM,
@@ -114,10 +115,37 @@ export function unitInfo(units: Record<string, UnitData>, unitId: string): UnitI
 }
 
 /** 시나리오의 모델 입력. 단원 정보까지 넣은 최종 문자열. */
-export function inputFor(ds: Pick<Dataset, 'units'>, scenario: Scenario, utterance: string): string {
+export function inputFor(ds: Pick<Dataset, 'units'>, scenario: Scenario, utterance: string, previousTutor?: string): string {
   const exp = experimentOf(ds.units, scenario);
   if (!exp) throw new Error(`실험을 찾을 수 없습니다: ${scenario.unitId}/${scenario.state.experimentId}`);
-  return buildTutorInput(exp, scenario.state, utterance, unitInfo(ds.units, scenario.unitId));
+  return buildTutorInput(exp, scenario.state, utterance, unitInfo(ds.units, scenario.unitId), previousTutor);
+}
+
+/** 레코드 id의 안정된 해시(내보낼 때 직전 튜터 질문을 넣을지, 무엇을 넣을지 정한다). */
+function idHash(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 16777619) >>> 0;
+  return h;
+}
+
+const sameText = (a: string, b: string) => a.replace(/\s/g, '') === b.replace(/\s/g, '');
+
+/**
+ * 직전 튜터 질문(프롬프트 v3). 학생 말이 있는 레코드의 절반에, 같은 시나리오에서 학생이 말하지 않았을 때의 견본 답
+ * (= 튜터가 먼저 한 질문)을 넣는다. 나머지는 첫 차례처럼 넣지 않는다. 답과 같은 문장은 고르지 않는다.
+ */
+export function previousTutorFor(
+  rec: BaseRecord,
+  target: string | undefined,
+  openers: ReadonlyMap<string, readonly string[]>,
+  template?: string,
+): string | undefined {
+  if (!rec.utterance.trim()) return undefined;
+  const h = idHash(rec.id);
+  if (h % 2 === 1) return undefined;
+  // 같은 시나리오에서 학생이 말하지 않았을 때의 견본 답이 없으면, 학생 앱이 그 상태에 보여 주는 기본 질문을 쓴다.
+  const cands = [...(openers.get(rec.scenarioId) ?? []), ...(template ? [template] : [])].filter((t) => !target || !sameText(t, target));
+  return cands.length > 0 ? cands[(h >>> 1) % cands.length] : undefined;
 }
 
 // ---- 라벨 <-> enum (교사 CSV) ----
@@ -475,9 +503,17 @@ function count<T>(items: T[], key: (t: T) => string): Record<string, number> {
 export function buildExport(ds: Dataset, opts: ExportOptions = {}): ExportOutput {
   const scenarios = new Map(ds.scenarios.map((s) => [s.scenarioId, s]));
   const keep = (r: BaseRecord) => (opts.includeExamples || r.source !== 'example') && (!opts.reviewedOnly || r.reviewed);
-  const sys = (s: Scenario, utterance: string) => [
+  // 시나리오별 첫 질문 후보: 학생이 말하지 않은 SFT 견본 답(내보내는 레코드만)
+  const openers = new Map<string, string[]>();
+  for (const r of ds.sft.filter(keep)) if (!r.utterance.trim()) openers.set(r.scenarioId, [...(openers.get(r.scenarioId) ?? []), r.response]);
+  const templates = new Map<string, string | undefined>();
+  const templateOf = (s: Scenario) => {
+    if (!templates.has(s.scenarioId)) templates.set(s.scenarioId, templateProbeFor(experimentOf(ds.units, s)!, s.state));
+    return templates.get(s.scenarioId);
+  };
+  const sys = (s: Scenario, r: BaseRecord, target?: string) => [
     { role: 'system', content: TUTOR_SYSTEM },
-    { role: 'user', content: inputFor(ds, s, utterance) },
+    { role: 'user', content: inputFor(ds, s, r.utterance, previousTutorFor(r, target, openers, templateOf(s))) },
   ];
   const metaOf = (r: BaseRecord, s: Scenario) => ({
     id: r.id,
@@ -497,12 +533,12 @@ export function buildExport(ds: Dataset, opts: ExportOptions = {}): ExportOutput
 
   const sft = sftKept.map((r) => {
     const s = scenarioOf(r);
-    return { messages: [...sys(s, r.utterance), { role: 'assistant', content: r.response }], meta: metaOf(r, s) };
+    return { messages: [...sys(s, r, r.response), { role: 'assistant', content: r.response }], meta: metaOf(r, s) };
   });
   const dpo = pairsKept.map((r) => {
     const s = scenarioOf(r);
     return {
-      prompt: sys(s, r.utterance),
+      prompt: sys(s, r, r.chosen),
       chosen: r.chosen,
       rejected: r.rejected,
       meta: { ...metaOf(r, s), rejectedReason: r.rejectedReason },
@@ -514,7 +550,7 @@ export function buildExport(ds: Dataset, opts: ExportOptions = {}): ExportOutput
     const must = [...new Set([...exp.tutor.forbiddenAnswers, ...exp.limits, ...r.mustNotContain])];
     // limits: mustNotContain 가운데 제한 낱말(학년 밖 용어). 평가에서 이 낱말들은 앱의 출력 가드처럼 낱말 단위로 찾고, 나머지는 부분 일치로 찾는다.
     // forbiddenAnswers: 그 활동의 정답 구절. 평가에서 노출을 정답 누출 / 학년 밖 용어 / 학생 말 되풀이(레코드의 구절)로 나눠 센다.
-    return { messages: sys(s, r.utterance), mustNotContain: must, limits: exp.limits, forbiddenAnswers: exp.tutor.forbiddenAnswers, category: r.category, meta: metaOf(r, s) };
+    return { messages: sys(s, r, r.reference), mustNotContain: must, limits: exp.limits, forbiddenAnswers: exp.tutor.forbiddenAnswers, category: r.category, meta: metaOf(r, s) };
   });
 
   const all = [

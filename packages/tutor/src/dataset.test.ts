@@ -431,6 +431,28 @@ describe('buildExport', () => {
       .flatMap((u) => u.manifest.experiments.flatMap((e) => ('dependent' in e && e.dependent ? e.dependent : []).flatMap((d) => Object.keys(d.values ?? {}))))
       .filter((k) => k.length === 2),
   );
+  it('직전 튜터 질문(v3): 학생 말이 있는 견본의 약 절반에 넣고, 답과 같은 문장은 넣지 않으며, 말하지 않은 견본에는 없다', () => {
+    const out = buildExport(full, { includeExamples: true, now: NOW });
+    const rows = lines(out['sft.jsonl']) as { messages: { role: string; content: string }[] }[];
+    const PREV = /^\[튜터가 방금 한 질문\] (.*)$/m;
+    let spoke = 0;
+    let withPrev = 0;
+    for (const r of rows) {
+      const input = r.messages[1]!.content;
+      const prev = PREV.exec(input)?.[1];
+      const silent = /^\[학생\] \(말하지 않음\)$/m.test(input);
+      if (silent) expect(prev, input).toBeUndefined();
+      else spoke++;
+      if (prev) {
+        withPrev++;
+        expect(prev.replace(/\s/g, '')).not.toBe(r.messages[2]!.content.replace(/\s/g, ''));
+        expect(input.indexOf('[튜터가 방금 한 질문]')).toBeLessThan(input.indexOf('[학생]'));
+      }
+    }
+    expect(withPrev / spoke).toBeGreaterThan(0.35);
+    expect(withPrev / spoke).toBeLessThan(0.55);
+  });
+
   it('모든 단원의 입력에 내부 코드(attract, before-run 등)가 없다: 결과와 상황은 화면 이름으로 쓴다(v2)', () => {
     const out = buildExport(full, { includeExamples: true, now: NOW });
     const found = new Set<string>();

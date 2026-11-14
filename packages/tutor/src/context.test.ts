@@ -126,7 +126,9 @@ describe('buildTutorInput: 변인 실험', () => {
   });
 
   it('TUTOR_SYSTEM과 PROMPT_VERSION', () => {
-    expect(PROMPT_VERSION).toBe('v2');
+    expect(PROMPT_VERSION).toBe('v3');
+    expect(TUTOR_SYSTEM).toContain('질문은 하나만');
+    expect(TUTOR_SYSTEM).toContain('[튜터가 방금 한 질문]');
     expect(TUTOR_SYSTEM).toContain('1~2문장');
     expect(TUTOR_SYSTEM).toContain('질문으로 끝낸다');
   });
