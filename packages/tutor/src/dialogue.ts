@@ -49,7 +49,9 @@ export const CONTRAST_WORDS: readonly (readonly [word: string, stem: string])[] 
   ['줄어', '줄'], ['줄면', '줄'], ['줄이', '줄'], ['줄인', '줄'], ['줄여', '줄'], ['낮추', '낮'], ['낮춰', '낮'],
   ['짧', '짧'], ['차가', '차'], ['차갑', '차'], ['찬', '찬'], ['멀', '멀'], ['늦', '늦'], ['빼', '빼'], ['없애', '없'], ['않', '않'],
   ['열면', '열'], ['열어', '열'], ['열고', '열'], ['벗기', '벗'], ['벗겨', '벗'], ['상관없', '없'], ['관계없', '없'],
-  ['가벼', '가벼'], ['작게', '작'], ['낮게', '낮'], ['아니', '아니'],
+  ['가벼', '가벼'], ['작게', '작'], ['낮게', '낮'], ['아니', '아니'], ['그대로', '그대로'], ['똑같', '같'], ['비슷', '비슷'],
+  // "~어도": 필요 조건을 뒤집는 말("빛이 없어도 잘 보여요").
+  ['없어도', '없어도'], ['없이도', '없이도'], ['있어도', '있어도'],
 ];
 
 /**
@@ -57,16 +59,27 @@ export const CONTRAST_WORDS: readonly (readonly [word: string, stem: string])[] 
  * 정규화하면 띄어쓰기가 사라지므로 원래 말에서 본다.
  */
 const NEGATIONS: readonly (readonly [pattern: RegExp, stem: string])[] = [
-  [/(^|[\s,.])안(?=\s|[가-힣])/u, '안'],
+  // 안쪽·안에·안경 같은 낱말의 "안"은 부정이 아니다.
+  [/(^|[\s,.])안(?!쪽|에|의|으로|과|팎|경|내|전|녕|심)(?=\s|[가-힣])/u, '안'],
   [/(^|[\s,.])못(?=\s|[가-힣])/u, '못'],
   [/지\s*않/u, '않'],
   [/지\s*못/u, '못'],
 ];
 
-/** 학생 말의 반대 낱말·부정이 결론·keys에 같은 뿌리(적·작·낮·느·줄·안·못 …)로 없으면 이 결론과 어긋난 말로 본다. */
+/**
+ * 학생 말의 반대 낱말이 결론·keys에 같은 뿌리(적·작·낮·느·줄 …)로 없거나, 부정(안·못·~지 않)이 있는데
+ * 그 answer의 부정 낱말(keys 가운데 안·못·않이 든 것, 예: "안붙", "안터")이 학생 말에 그대로 없으면 이 결론과 어긋난 말로 본다.
+ * keys 어딘가에 "안"이 있다는 것만으로 모든 부정을 통과시키지 않는다("뚜껑 덮으면 안 따뜻해요"를 막는다).
+ */
+const NEG_MORPHEME = /안|못|않/u;
 const contradicts = (raw: string, norm: string, a: AnswerKey): boolean => {
   const own = normalizeKo([a.conclusion, ...a.keys.flat()].join(' '));
-  return CONTRAST_WORDS.some(([w, stem]) => norm.includes(w) && !own.includes(stem)) || NEGATIONS.some(([re, stem]) => re.test(raw) && !own.includes(stem));
+  if (CONTRAST_WORDS.some(([w, stem]) => norm.includes(w) && !own.includes(stem))) return true;
+  if (!NEGATIONS.some(([re]) => re.test(raw))) return false;
+  return !a.keys.flat().some((k) => {
+    const n = normalizeKo(k);
+    return NEG_MORPHEME.test(n) && norm.includes(n);
+  });
 };
 
 export function matchAnswer(utterance: string, answers: readonly AnswerKey[], preferIv?: string | null): AnswerMatch | null {

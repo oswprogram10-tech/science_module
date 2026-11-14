@@ -401,3 +401,20 @@ describe('리뷰 반영: 부정·반대 동작', () => {
   });
 });
 
+describe('리뷰 반영: 부정은 그 answer의 부정 낱말로만 통과', () => {
+  const lid: AnswerKey = { iv: 'lid', conclusion: '뚜껑을 덮으면 물이 덜 식는다', keys: [['뚜껑'], ['덮'], ['덜식', '천천히', '따뜻', '안식']], confirm: '네, 결과표에서도 뚜껑을 덮은 쪽이 덜 식었어요.' };
+  const light: AnswerKey = { conclusion: '빛이 있어야 물체를 볼 수 있다', keys: [['빛'], ['있어야', '없으면', '없어'], ['보', '안보']], confirm: '네, 결과표에서도 빛이 있을 때만 물체가 보였어요.' };
+  const bowl: AnswerKey = { conclusion: '찬물이 많을수록 안쪽 물이 더 식는다', keys: [['찬물'], ['많'], ['식', '떨어']], confirm: '네, 결과표에서도 찬물이 많은 쪽에서 안쪽 물이 더 식었어요.' };
+  it('keys에 "안식"이 있어도 "안 따뜻해요"는 통과하지 않는다', () => {
+    expect(matchAnswer('뚜껑 덮으면 안 따뜻해요', [lid])).toBeNull();
+    expect(matchAnswer('뚜껑 덮으면 안 식어요', [lid])?.opposite).toBe(false);
+  });
+  it('"~어도"로 필요 조건을 뒤집은 말은 맞히지 않는다', () => {
+    expect(matchAnswer('빛이 없어도 잘 보여요', [light])).toBeNull();
+    expect(matchAnswer('빛이 없으면 안 보여요', [light])?.opposite).toBe(false);
+  });
+  it('안쪽·안에의 "안"은 부정이 아니다', () => {
+    expect(matchAnswer('찬물이 많으면 안쪽 물이 더 식어요', [bowl])?.opposite).toBe(false);
+  });
+});
+
