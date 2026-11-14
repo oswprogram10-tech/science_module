@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { normalizeCode } from '@sci/classroom';
 import { useDeviceInfo } from '../platform/DeviceTierContext';
+import { useTutorModelState, type TutorModelState } from '../tutor/modelState';
 import { usePaused } from './bus';
 import { classroom, type ClassroomState } from './client';
 import { classroomUrl, configuredClassroomUrl } from './config';
@@ -11,6 +12,16 @@ const useClassroom = (): ClassroomState => useSyncExternalStore(classroom.subscr
 const statusText = (s: ClassroomState): string =>
   `수업 ${s.session!.code} · ${s.session!.group}모둠 · ${s.link === 'online' ? '연결됨' : '다시 연결 중'}`;
 
+/** 튜터 모델 받기 상태를 한 줄로(받는 일이 없으면 null). */
+const modelText = (m: TutorModelState): string | null =>
+  m.status === 'downloading'
+    ? `튜터 모델 받는 중 ${Math.round(m.progress * 100)}%`
+    : m.status === 'ready'
+      ? '튜터 모델 준비됨'
+      : m.status === 'error'
+        ? '튜터 모델을 받지 못했어요. 수업은 그대로 할 수 있어요'
+        : null;
+
 /**
  * 모든 화면에서 한 번 마운트된다: 새로고침 뒤 다시 참여, 멈춤 막, 단원 화면의 작은 상태 표시.
  * (이 파일은 서버 주소가 있을 때만 불러온다.)
@@ -19,6 +30,7 @@ export function ClassroomHost({ showPill }: { showPill: boolean }) {
   const state = useClassroom();
   const paused = usePaused();
   const { tier } = useDeviceInfo();
+  const model = modelText(useTutorModelState());
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -37,6 +49,7 @@ export function ClassroomHost({ showPill }: { showPill: boolean }) {
       {showPill && state.session && (
         <p className="classroom-pill" role="status" data-testid="classroom-status">
           {statusText(state)}
+          {model && <span data-testid="tutor-model-status"> · {model}</span>}
         </p>
       )}
       <div aria-live="assertive" aria-atomic="true">
@@ -63,6 +76,8 @@ const FOCUSABLE = 'input:not([disabled]), button:not([disabled]), [href], select
 /** 단원 목록 머리글: 수업 참여 버튼, 참여 중이면 상태와 나가기. */
 export function ClassroomControl() {
   const state = useClassroom();
+  const modelState = useTutorModelState();
+  const model = modelText(modelState);
   const [open, setOpen] = useState(false);
   return (
     <div className="classroom-control">
@@ -71,6 +86,12 @@ export function ClassroomControl() {
           <span role="status" data-testid="classroom-status">
             {statusText(state)}
           </span>
+          {model && (
+            <span role="status" className="classroom-model" data-testid="tutor-model-status">
+              {modelState.status === 'downloading' && <progress value={modelState.progress} max={1} aria-label="튜터 모델 받기 진행률" />}
+              {model}
+            </span>
+          )}
           <button type="button" onClick={() => classroom.leave()}>
             수업 나가기
           </button>

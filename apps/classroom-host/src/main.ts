@@ -1,7 +1,9 @@
 import { spawn } from 'node:child_process';
 import { networkInterfaces } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { buildServer, pickPrivateIPv4 } from '@sci/server';
+// 모델 id 목록만 필요하다. @sci/tutor 전체를 묶음에 넣지 않으려고 import 없는 이 파일만 가져온다.
+import { TUTOR_MODELS } from '../../../packages/tutor/src/models';
 import { dirAssets, markHostPage, seaAssets, type AssetLookup } from './assets';
 import { findFreePort } from './ports';
 
@@ -44,6 +46,17 @@ async function loadAssets(): Promise<AssetLookup> {
   return dirAssets(dir);
 }
 
+/**
+ * 튜터 모델 파일을 두는 폴더: 환경 변수 TUTOR_MODEL_DIR, 없으면 실행 파일(단일 실행 파일) 또는 묶음 JS 옆의 `tutor-models/`.
+ * 폴더가 없으면 서버가 만든다.
+ */
+async function tutorModelDir(): Promise<string> {
+  if (process.env.TUTOR_MODEL_DIR) return resolve(process.env.TUTOR_MODEL_DIR);
+  const sea = await import('node:sea').catch(() => null);
+  const base = sea?.isSea() ? dirname(process.execPath) : dirname(resolve(process.argv[1] ?? '.'));
+  return join(base, 'tutor-models');
+}
+
 async function main(): Promise<void> {
   const host = process.env.HOST ?? '0.0.0.0';
   const explicit = process.env.PORT ? Number(process.env.PORT) : null;
@@ -56,12 +69,14 @@ async function main(): Promise<void> {
 
   const createsPerHour = process.env.CREATES_PER_HOUR ? Number(process.env.CREATES_PER_HOUR) : undefined;
   const assets = await loadAssets();
+  const modelDir = await tutorModelDir();
   const { app } = await buildServer({
     // 교실 LAN에서 쓰므로 Origin은 모두 허용한다(학생 APK의 출처는 http://localhost). 수업 만들기는 이 PC(localhost)에서만 된다.
     allowedOrigins: [],
     logger: false,
     hostMode: true,
     hostInfo: () => ({ addresses: pickPrivateIPv4(networkInterfaces()), port }),
+    tutorModels: { dir: modelDir, ids: TUTOR_MODELS.map((m) => m.id) },
     ...(createsPerHour && Number.isFinite(createsPerHour) && createsPerHour > 0 ? { createsPerHour } : {}),
   });
 
@@ -94,6 +109,8 @@ async function main(): Promise<void> {
   } else {
     say('이 PC의 무선망 주소를 찾지 못했어요. 와이파이나 유선망에 연결되어 있는지 확인해 주세요.');
   }
+  say();
+  say(`튜터 모델 파일 폴더: ${modelDir}`);
   say();
   say('Windows 방화벽이 허용을 물으면 「개인 네트워크」를 허용해 주세요.');
   if (!process.env.NO_BROWSER) openBrowser(url);

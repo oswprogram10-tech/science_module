@@ -27,6 +27,16 @@ export const phaseSchema = z.enum(['designing', 'running', 'reviewing', 'idle'])
 export type Phase = z.infer<typeof phaseSchema>;
 export const tierSchema = z.enum(['A', 'B', 'C']);
 export type DeviceTier = z.infer<typeof tierSchema>;
+/** 학생 기기의 튜터 모델 준비 상태(이 한 낱말만 서버로 간다). */
+export const modelStatusSchema = z.enum(['none', 'downloading', 'ready', 'error']);
+export type ModelStatus = z.infer<typeof modelStatusSchema>;
+/** 교사 PC에 있는 튜터 모델 파일 정보. id는 TUTOR_MODELS의 것(영문 소문자·숫자·점·하이픈). */
+export const tutorModelRefSchema = z.strictObject({
+  id: z.string().regex(/^[a-z0-9][a-z0-9.-]{0,31}$/),
+  sha256: z.string().regex(/^[0-9a-f]{64}$/),
+  size: z.number().int().positive().max(4 * 1024 ** 3),
+});
+export type TutorModelRef = z.infer<typeof tutorModelRefSchema>;
 
 export const ERROR_CODES = ['bad_message', 'no_class', 'bad_token', 'group_taken', 'class_full', 'rate_limited', 'bad_secret', 'not_local'] as const;
 export const errorCodeSchema = z.enum(ERROR_CODES);
@@ -52,6 +62,8 @@ export const statusSchema = z.strictObject({
   lastKind: shortText.optional(),
   mismatch: z.boolean().optional(),
   safetyLocked: z.boolean(),
+  // 이 기기의 튜터 모델 준비 상태. 오래된 학생 앱은 보내지 않는다.
+  model: modelStatusSchema.optional(),
 });
 export const safetySchema = z.strictObject({
   t: z.literal('safety'),
@@ -69,6 +81,8 @@ export const ackSchema = z.strictObject({ t: z.literal('ack'), group: groupSchem
 export const endSchema = z.strictObject({ t: z.literal('end') });
 /** 교사가 학생 기기에 보낼 튜터 질문 덧씌우기. 서버는 마지막 것을 메모리에 두었다가 학생에게 보낸다. */
 export const tutorSchema = z.strictObject({ t: z.literal('tutor'), edits: tutorEditsSchema });
+/** 교사 PC에 있는 튜터 모델(없으면 null). 서버는 수업별로 마지막 것을 기억했다가 학생에게 보낸다. */
+export const tutorModelSchema = z.strictObject({ t: z.literal('tutorModel'), model: tutorModelRefSchema.nullable() });
 
 export const clientMessageSchema = z.discriminatedUnion('t', [
   joinSchema,
@@ -81,6 +95,7 @@ export const clientMessageSchema = z.discriminatedUnion('t', [
   ackSchema,
   endSchema,
   tutorSchema,
+  tutorModelSchema,
 ]);
 export type ClientMessage = z.infer<typeof clientMessageSchema>;
 export type JoinMessage = z.infer<typeof joinSchema>;
@@ -101,6 +116,7 @@ export const groupViewSchema = z.strictObject({
   mismatch: z.boolean(),
   safety: z.array(z.strictObject({ type: safetyTypeSchema, at: z.number(), acked: z.boolean() })),
   safetyLocked: z.boolean(),
+  model: modelStatusSchema.optional(),
 });
 export type GroupView = z.infer<typeof groupViewSchema>;
 
@@ -119,6 +135,7 @@ export const serverMessageSchema = z.discriminatedUnion('t', [
   z.strictObject({ t: z.literal('error'), code: errorCodeSchema }),
   z.strictObject({ t: z.literal('created'), code: codeSchema, token: tokenSchema }),
   z.strictObject({ t: z.literal('tutor'), edits: tutorEditsSchema }),
+  tutorModelSchema,
   snapshotSchema,
 ]);
 export type ServerMessage = z.infer<typeof serverMessageSchema>;

@@ -8,6 +8,8 @@ import { Capacitor, registerPlugin, type PluginListenerHandle } from '@capacitor
 export interface TutorLlmPlugin {
   /** 교사 PC 수업 서버에서 모델 파일을 앱 전용 저장소로 받는다. 이어 받기(Range)를 지원하고, 다 받은 뒤 sha256을 확인한다. */
   download(opts: { url: string; sha256: string; file: string }): Promise<{ ok: boolean; size: number }>;
+  /** 내려받는 중인 파일을 멈춘다(받아 둔 조각은 남겨 이어 받는다). 받는 중이 아니면 아무 일도 없다. */
+  cancelDownload(opts: { file: string }): Promise<void>;
   fileInfo(opts: { file: string }): Promise<{ exists: boolean; size: number; sha256?: string }>;
   remove(opts: { file: string }): Promise<void>;
   load(opts: { file: string; nCtx: number; nThreads: number }): Promise<{ ok: boolean; loadMs: number }>;
@@ -18,6 +20,8 @@ export interface TutorLlmPlugin {
     tokensPerSec: number;
     tokens: number;
   }>;
+  /** 진행 중인 생성을 되도록 빨리 멈춘다(모델은 그대로). 낡은 요청을 치울 때 쓴다. */
+  abort(): Promise<void>;
   unload(): Promise<void>;
   addListener(event: 'progress', fn: (e: { file: string; received: number; total: number }) => void): Promise<PluginListenerHandle>;
 }

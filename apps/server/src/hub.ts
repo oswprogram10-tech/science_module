@@ -17,6 +17,7 @@ import {
   type ErrorCode,
   type ServerMessage,
   type TutorEdits,
+  type TutorModelRef,
 } from '@sci/classroom';
 
 export const MAX_CLASSES = 50;
@@ -60,6 +61,8 @@ interface ClassRec {
   noTeacherSince: number | null;
   /** 교사가 마지막으로 보낸 튜터 질문 덧씌우기. 메모리에만 두고 파일로 쓰지 않는다. 수업이 끝나면 버린다. */
   tutorEdits: TutorEdits | null;
+  /** 교사가 마지막으로 알린 교사 PC의 튜터 모델(없으면 null). 메모리에만 둔다. */
+  tutorModel: TutorModelRef | null;
 }
 
 interface ConnMeta {
@@ -327,6 +330,7 @@ export class Hub {
           snapshotTimer: null,
           noTeacherSince: null,
           tutorEdits: null,
+          tutorModel: null,
         };
         this.classes.set(code, rec);
         m.role = 'teacher';
@@ -394,6 +398,7 @@ export class Hub {
         this.log('group_joined', msg.code, msg.group);
         this.send(conn, { t: 'joined', code: msg.code, group: msg.group });
         if (rec.tutorEdits) this.send(conn, { t: 'tutor', edits: rec.tutorEdits });
+        if (rec.tutorModel) this.send(conn, { t: 'tutorModel', model: rec.tutorModel });
         if (rec.state.paused) this.send(conn, { t: 'pause', on: true });
         return;
       }
@@ -423,6 +428,16 @@ export class Hub {
         rec.state = reduce(rec.state, { type: 'touch', now: this.now() });
         for (const s of rec.students.values()) this.send(s, { t: 'tutor', edits: msg.edits });
         this.log('tutor_edits', rec.state.code);
+        return;
+      }
+      case 'tutorModel': {
+        // 이 수업의 교사 연결만 보낼 수 있다. 학생에게는 바뀔 때마다 같은 모양으로 전달한다.
+        const rec = m.role === 'teacher' && m.code ? this.classes.get(m.code) : undefined;
+        if (!rec) return this.error(conn, 'bad_message');
+        rec.tutorModel = msg.model;
+        rec.state = reduce(rec.state, { type: 'touch', now: this.now() });
+        for (const s of rec.students.values()) this.send(s, { t: 'tutorModel', model: msg.model });
+        this.log('tutor_model', rec.state.code);
         return;
       }
       case 'pause':

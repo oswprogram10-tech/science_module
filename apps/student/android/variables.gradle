@@ -13,4 +13,7 @@ ext {
     androidxJunitVersion = '1.3.0'
     androidxEspressoCoreVersion = '3.7.0'
     cordovaAndroidVersion = '14.0.1'
+    // 네이티브 빌드(llama.cpp). CI도 같은 버전을 설치한다.
+    ndkVersion = '27.3.13750724'
+    cmakeVersion = '3.22.1'
 }

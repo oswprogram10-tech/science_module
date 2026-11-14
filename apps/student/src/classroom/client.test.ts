@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { bus, reportSafety, reportSafetyClear, reportStatus } from './bus';
 import { StudentClassroom } from './client';
 import { FLUSH_GAP_MS } from './queue';
+import { modelSync } from '../tutor/modelSync';
+import { NO_MODEL, tutorModelState } from '../tutor/modelState';
 
 class FakeWS {
   static OPEN = 1;
@@ -223,6 +225,91 @@ describe('학생 수업 연결', () => {
       const ws = connect(c);
       ws.recv({ t: 'tutor', edits: { v: 2, units: {} } });
       expect(bus.getTutorEdits()).toBeNull();
+      c.leave();
+    });
+  });
+
+  describe('튜터 모델(tutorModel)', () => {
+    const ref = { id: 'qwen3-1.7b', sha256: 'a'.repeat(64), size: 1000 };
+    const statuses = (ws: FakeWS) => ws.sent.map((s) => s.msg).filter((m) => m.t === 'status');
+    afterEach(() => {
+      vi.restoreAllMocks();
+      tutorModelState.set(NO_MODEL);
+    });
+
+    it('수업 서버 주소(http)와 기기 등급을 modelSync에 넘긴다', () => {
+      const apply = vi.spyOn(modelSync, 'apply').mockResolvedValue();
+      const c = new StudentClassroom();
+      const ws = connect(c);
+      ws.recv({ t: 'tutorModel', model: ref });
+      expect(apply).toHaveBeenCalledWith(ref, { baseUrl: 'http://x', tier: 'B' });
+      ws.recv({ t: 'tutorModel', model: null });
+      expect(apply).toHaveBeenLastCalledWith(null, { baseUrl: 'http://x', tier: 'B' });
+      c.leave();
+    });
+
+    it('규격에 맞지 않는 tutorModel은 무시한다', () => {
+      const apply = vi.spyOn(modelSync, 'apply').mockResolvedValue();
+      const c = new StudentClassroom();
+      const ws = connect(c);
+      ws.recv({ t: 'tutorModel', model: { ...ref, sha256: 'zz' } });
+      expect(apply).not.toHaveBeenCalled();
+      c.leave();
+    });
+
+    it('status에는 모델 상태가 none이 아닐 때만 실리고, none으로 돌아가면 한 번 알린 뒤 다시 싣지 않는다(하위 호환)', () => {
+      const c = new StudentClassroom();
+      const ws = connect(c);
+      expect(statuses(ws)[0]).not.toHaveProperty('model');
+      tutorModelState.set({ status: 'downloading', modelId: 'qwen3-1.7b', file: 'qwen3-1.7b.gguf', progress: 0.1 });
+      vi.advanceTimersByTime(1500);
+      expect(statuses(ws).pop()).toMatchObject({ model: 'downloading' });
+      // 진행률만 바뀌면 status를 다시 보내지 않는다.
+      const n = statuses(ws).length;
+      tutorModelState.set({ status: 'downloading', modelId: 'qwen3-1.7b', file: 'qwen3-1.7b.gguf', progress: 0.6 });
+      vi.advanceTimersByTime(1500);
+      expect(statuses(ws)).toHaveLength(n);
+      tutorModelState.set({ status: 'ready', modelId: 'qwen3-1.7b', file: 'qwen3-1.7b.gguf', progress: 1 });
+      vi.advanceTimersByTime(1500);
+      expect(statuses(ws).pop()).toMatchObject({ model: 'ready' });
+      tutorModelState.set(NO_MODEL);
+      vi.advanceTimersByTime(1500);
+      expect(statuses(ws).pop()).toMatchObject({ model: 'none' });
+      reportStatus({ phase: 'running', trials: 1, safetyLocked: false });
+      vi.advanceTimersByTime(1500);
+      expect(statuses(ws).pop()).not.toHaveProperty('model');
+      c.leave();
+    });
+
+    it('재연결해 다시 참여하면 현재 모델 상태를 status로 다시 보낸다', () => {
+      const c = new StudentClassroom();
+      const ws = connect(c);
+      tutorModelState.set({ status: 'ready', modelId: 'qwen3-1.7b', file: 'qwen3-1.7b.gguf', progress: 1 });
+      vi.advanceTimersByTime(1500);
+      ws.onclose?.();
+      vi.advanceTimersByTime(1000);
+      const ws2 = last();
+      ws2.onopen?.();
+      ws2.recv(joined);
+      expect(statuses(ws2).pop()).toMatchObject({ model: 'ready' });
+      c.leave();
+    });
+
+    it('수업을 나가면 모델 상태가 none으로 돌아간다', () => {
+      const c = new StudentClassroom();
+      connect(c);
+      tutorModelState.set({ status: 'ready', modelId: 'qwen3-1.7b', file: 'qwen3-1.7b.gguf', progress: 1 });
+      c.leave();
+      expect(tutorModelState.get()).toEqual(NO_MODEL);
+    });
+
+    it('학생 말·튜터 대화는 어떤 메시지에도 실리지 않는다(model 낱말만 간다)', () => {
+      const c = new StudentClassroom();
+      const ws = connect(c);
+      tutorModelState.set({ status: 'error', modelId: 'qwen3-1.7b', file: 'qwen3-1.7b.gguf', progress: 0 });
+      vi.advanceTimersByTime(1500);
+      const keys = new Set(ws.sent.flatMap((s) => Object.keys(s.msg)));
+      expect([...keys].sort()).toEqual(['appVersion', 'code', 'deviceTier', 'group', 'model', 'phase', 'safetyLocked', 't', 'trials']);
       c.leave();
     });
   });

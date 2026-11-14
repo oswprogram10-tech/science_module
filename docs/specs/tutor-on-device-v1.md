@@ -10,6 +10,10 @@
 
 - 학생 말, 실험 기록, 튜터 입력·출력은 **학생 기기 밖으로 나가지 않는다.** 수업 서버로 보내는 것은 기존 진행 요약(R3)과 모델 준비 상태(아래 `tutorModel`)뿐이다.
 - 모델 파일은 학생 정보가 없다. 교사 PC에서 학생 기기로만 간다.
+- 학생 앱(Capacitor)은 `loggingBehavior: 'none'`으로 둔다. 디버그 빌드에서도 플러그인 호출 인자(`generate`의 prompt에 든 학생 말)가 logcat에 남지 않는다.
+- 안드로이드 매니페스트는 `android:allowBackup="false"`다. 앱 데이터와 내려받은 모델 파일이 클라우드 백업·기기 이전으로 나가지 않는다.
+- 교사 PC의 `POST /tutor-models/:id`는 같은 PC의 다른 웹 페이지가 몰래 올리지 못하게(CSRF·DNS rebinding) `Content-Type: application/octet-stream`(아니면 415), `x-sci-bridge-upload: 1` 머리글(없으면 403, 교차 출처 요청은 사전 확인이 필요해진다), `Host`가 localhost·127.0.0.1·[::1](아니면 403), `Origin`이 있으면 같은 호스트·포트의 `http://` 출처(아니면 403)를 모두 요구한다.
+- 플러그인 `download`는 http(s)이고 호스트가 사설·루프백 IPv4(10/8, 172.16/12, 192.168/16, 127/8)나 localhost일 때만 받는다.
 
 ## 1. 모델 목록과 파일
 

@@ -6,13 +6,15 @@ import {
   agoText,
   describeSituation,
   type GroupView,
+  type ModelStatus,
   type SafetyType,
 } from '@sci/classroom';
 import { countTutorEdits, type TutorEdits } from '@sci/classroom';
 import { TeacherClient, type TeacherState } from './client';
 import { ConfirmDialog } from './ConfirmDialog';
 import { HostAddress } from './HostAddress';
-import { serverUrl } from './serverUrl';
+import { desiredTutorModel, hostModelsStore } from './hostModels';
+import { isHostServed, serverUrl } from './serverUrl';
 import { beep, enableSound } from './sound';
 import { ModelPicker } from './ModelPicker';
 import { modelChoiceStore } from './modelChoice';
@@ -46,9 +48,26 @@ export function App() {
     const store = tutorEditsStore();
     c.setTutorEdits(store.get());
     const off = store.subscribe(() => c.setTutorEdits(store.get()));
+    // 수업 서버(교사 PC)가 내보낸 화면이면: 고른 모델의 파일이 이 PC에 있는지 보고 수업에 알린다(없으면 null).
+    // 다른 곳(개발 서버, 학교 서버)에서 연 화면은 이 PC의 모델 목록을 알 수 없으므로 아무것도 보내지 않는다.
+    const offs: Array<() => void> = [off];
+    if (isHostServed()) {
+      const hosted = hostModelsStore();
+      const choices = modelChoiceStore();
+      const syncModel = () => {
+        const want = desiredTutorModel(choices.get().model, hosted.getModels());
+        if (want !== undefined) c.setTutorModel(want);
+      };
+      syncModel();
+      offs.push(hosted.subscribe(syncModel), choices.subscribe(syncModel));
+      void hosted.refresh();
+      // 폴더에 직접 넣은 파일도 알아차리도록 가끔 다시 읽는다.
+      const t = setInterval(() => void hosted.refresh(), 30_000);
+      offs.push(() => clearInterval(t));
+    }
     setClient(c);
     return () => {
-      off();
+      offs.forEach((f) => f());
       c.dispose();
     };
   }, []);
@@ -310,6 +329,13 @@ function ClassScreen({ client, state, soundOn, onEnd, tutorEdits, onEdit, onPick
   );
 }
 
+/** 학생 기기의 튜터 모델 준비 상태(모둠 카드의 작은 표시). 'none'은 보이지 않는다. */
+const MODEL_CHIP_TEXT: Record<Exclude<ModelStatus, 'none'>, string> = {
+  downloading: '튜터 모델 받는 중',
+  ready: '튜터 모델 준비됨',
+  error: '튜터 모델 오류',
+};
+
 function GroupCard({ entry, now, onAck }: { entry: Entry; now: number; onAck: (t: SafetyType) => void }) {
   const { group, view: g } = entry;
   const alerts = unacked(g);
@@ -339,6 +365,13 @@ function GroupCard({ entry, now, onAck }: { entry: Entry; now: number; onAck: (t
           {sentence && <p className="situation">{sentence}</p>}
           {g.safetyLocked && <p className="locked-tag">🔒 안전 경고로 실험이 잠겨 있어요</p>}
           {g.deviceTier && <p className="tier">기기 {g.deviceTier}</p>}
+          {g.online && g.model && g.model !== 'none' && (
+            <p className="model-line">
+              <span className={`chip model-${g.model}`} data-testid={`model-chip-${group}`}>
+                {MODEL_CHIP_TEXT[g.model]}
+              </span>
+            </p>
+          )}
         </>
       )}
       {alerts.map((a) => (

@@ -1,4 +1,4 @@
-import { parseServerMessage, type ErrorCode, type SafetyType, type Snapshot, type TutorEdits } from '@sci/classroom';
+import { parseServerMessage, type ErrorCode, type SafetyType, type Snapshot, type TutorEdits, type TutorModelRef } from '@sci/classroom';
 
 export type ConnState = 'connecting' | 'open' | 'closed';
 
@@ -31,6 +31,8 @@ export class TeacherClient {
   private disposed = false;
   /** 교사가 저장한 튜터 질문 덧씌우기(setTutorEdits로 받은 마지막 것). 한 번도 받지 않았으면 null. */
   private tutor: TutorEdits | null = null;
+  /** 교사 PC에 있는 튜터 모델(setTutorModel로 받은 마지막 것). 없다는 뜻은 null, 한 번도 받지 않았으면 undefined(보내지 않는다). */
+  private tutorModel: TutorModelRef | null | undefined = undefined;
   /** 이번 연결에서 수업(created/snapshot)에 들어와 서버가 tutor를 받을 수 있는가. */
   private tutorReady = false;
   private tutorTimer: ReturnType<typeof setTimeout> | null = null;
@@ -161,6 +163,17 @@ export class TeacherClient {
   }
   private sendTutor() {
     if (this.tutor) this.send({ t: 'tutor', edits: this.tutor });
+    if (this.tutorModel !== undefined) this.send({ t: 'tutorModel', model: this.tutorModel });
+  }
+  /**
+   * 이 PC에 있는 튜터 모델을 알려 둔다(없으면 null). 수업에 들어가 있으면 바뀔 때 바로 서버에 보내고,
+   * 수업을 만들거나 다시 연결(watch)될 때도 보낸다. 서버는 학생 기기에 전달한다. 같은 값을 다시 주면 보내지 않는다.
+   */
+  setTutorModel(model: TutorModelRef | null) {
+    const prev = this.tutorModel;
+    const same = prev !== undefined && (prev === null || model === null ? prev === model : prev.id === model.id && prev.sha256 === model.sha256 && prev.size === model.size);
+    this.tutorModel = model;
+    if (!same && this.tutorReady) this.send({ t: 'tutorModel', model });
   }
   pause(on: boolean) {
     this.send({ t: 'pause', on });

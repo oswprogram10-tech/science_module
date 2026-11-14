@@ -1,6 +1,8 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { TUTOR_MODELS, tutorModel, type TutorModelId } from '@sci/tutor';
 import { FOCUSABLE } from './ConfirmDialog';
+import { formatBytes, hostModelsStore, type HostModelsStore } from './hostModels';
+import { isHostServed } from './serverUrl';
 import {
   ALL_SAMPLES,
   answerOrder,
@@ -25,12 +27,19 @@ interface Props {
   alertCount: number;
   /** 시험에서 자료를 바로 넣는다. 없으면 비교 자료를 따로 불러온다(교사 화면 첫 로딩을 가볍게). */
   data?: CompareData;
+  /** 수업 서버(교사 PC)가 내보낸 화면인가. 아니면 모델 파일 넣기를 보이지 않는다. 기본은 화면의 표시를 읽는다. */
+  hosted?: boolean;
+  /** 이 PC의 모델 파일 목록과 올리기 상태. 시험에서 바꿔 끼운다. */
+  store?: HostModelsStore;
 }
 
 const pct = (v: number) => `${(v * 100).toFixed(1)}%`;
 
-export function ModelPicker({ choice, onChange, onClose, alertCount, data: given }: Props) {
+const pct0 = (loaded: number, total: number) => (total > 0 ? Math.min(100, Math.floor((loaded / total) * 100)) : 0);
+
+export function ModelPicker({ choice, onChange, onClose, alertCount, data: given, hosted = isHostServed(), store = hostModelsStore() }: Props) {
   const titleId = useId();
+  const filesId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const [data, setData] = useState<CompareData | null>(given ?? null);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -100,6 +109,13 @@ export function ModelPicker({ choice, onChange, onClose, alertCount, data: given
     setKeep(new Set());
   };
   const chosen = choice.model ? tutorModel(choice.model) : null;
+  const hostModels = useSyncExternalStore(store.subscribe, store.getModels);
+  const upload = useSyncExternalStore(store.subscribe, store.getUpload);
+  const onPc = !!chosen && !!hostModels?.some((m) => m.id === chosen.id);
+  // 열 때마다 이 PC의 모델 목록을 다시 읽는다(폴더에 직접 넣은 파일도 보이게).
+  useEffect(() => {
+    if (hosted) void store.refresh();
+  }, [hosted, store]);
 
   return (
     <div className="te-backdrop">
@@ -174,16 +190,99 @@ export function ModelPicker({ choice, onChange, onClose, alertCount, data: given
               </>
             ) : (
               '아직 모델을 고르지 않았어요.'
-            )}{' '}
-            모델 내려받기와 학생 기기 실행은 준비 중이에요. 준비되면 교사 PC가 한 번 내려받아 교실 와이파이로 학생 기기에 나눠 줘요.
+            )}
           </p>
+          {hosted && chosen && (
+            <p data-testid="mp-host-state">
+              {onPc
+                ? '이 PC에 모델 파일이 있어요. 수업에 들어온 학생 기기가 교실 와이파이로 이 PC에서 받아 가요.'
+                : '이 PC에 모델 파일이 없어요. 아래에서 모델 파일을 넣어 주세요.'}
+            </p>
+          )}
           {saveFailed && <p className="error-text">이 브라우저에 저장하지 못했어요. 지금 화면에서만 적용돼요.</p>}
         </div>
-        <div className="actions">
-          <button type="button" disabled>
-            모델 내려받기(준비 중)
-          </button>
-        </div>
+        {hosted ? (
+          <section className="mp-files" aria-labelledby={filesId} data-testid="mp-files">
+            <h3 id={filesId}>이 PC의 모델 파일</h3>
+            <p className="hint">
+              Kaggle 학습 결과에서 받은 4비트 모델 파일(.gguf)이에요. 수업 서버가 이 PC에 보관하고, 학생 기기는 교실 와이파이로 받아 가요. 학생 기기에서 인터넷으로 받지는 않아요.
+            </p>
+            <ul aria-label="이 PC에 있는 모델 파일">
+              {TUTOR_MODELS.map((m) => {
+                const f = hostModels?.find((x) => x.id === m.id);
+                return (
+                  <li key={m.id} data-testid={`mp-file-${m.id}`}>
+                    <b>{m.name}</b>:{' '}
+                    {hostModels === null ? (
+                      '확인하는 중…'
+                    ) : f ? (
+                      <>
+                        있어요 · {formatBytes(f.size)}
+                        <br />
+                        <span className="mp-sha">
+                          sha256 <code>{f.sha256}</code>
+                        </span>
+                      </>
+                    ) : (
+                      '없어요'
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="mp-upload">
+              <label>
+                <span>
+                  모델 파일 넣기{chosen ? `(${chosen.name})` : ''}
+                </span>
+                <input
+                  type="file"
+                  accept=".gguf,application/octet-stream"
+                  disabled={!chosen || upload?.kind === 'uploading'}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file && chosen) store.startUpload(chosen.id, file);
+                    e.target.value = ''; // 같은 파일을 다시 골라도 반응하게
+                  }}
+                />
+              </label>
+              {!chosen && <p className="hint">먼저 위에서 쓸 모델을 골라 주세요.</p>}
+              {chosen && <p className="hint">이미 있는 모델 파일은 새 파일로 바뀌어요. 파일을 이 PC의 tutor-models 폴더에 <code>{chosen.id}.gguf</code>로 직접 복사해 넣어도 돼요.</p>}
+            </div>
+            <div role="status" data-testid="mp-upload-state" className="mp-upload">
+              {upload?.kind === 'uploading' && (
+                <div className="mp-progress">
+                  <span>
+                    {tutorModel(upload.id).name} 넣는 중… {pct0(upload.loaded, upload.total)}%
+                  </span>
+                  <progress value={upload.loaded} max={upload.total} aria-label={`${upload.fileName} 보내는 중`} />
+                  <button type="button" onClick={() => store.cancelUpload()}>
+                    취소
+                  </button>
+                </div>
+              )}
+              {upload?.kind === 'done' && (
+                <>
+                  <p>
+                    <b>{tutorModel(upload.id).name}</b> 파일을 넣었어요 · {formatBytes(upload.size)}
+                  </p>
+                  <p className="mp-sha">
+                    sha256 <code>{upload.sha256}</code>
+                  </p>
+                </>
+              )}
+            </div>
+            {upload?.kind === 'error' && (
+              <p role="alert" className="error-text">
+                {upload.message}
+              </p>
+            )}
+          </section>
+        ) : (
+          <p className="hint" data-testid="mp-not-hosted">
+            모델 파일은 수업 서버가 켜진 PC에서 연 교사 화면에서만 넣을 수 있어요.
+          </p>
+        )}
 
         <h3 className="mp-section">답 견주어 보기</h3>
         {loadFailed && <p className="error-text">비교 자료를 불러오지 못했어요. 화면을 닫았다가 다시 열어 주세요.</p>}

@@ -9,6 +9,8 @@ import {
 import { createRuntime, sampleAt, type Trial } from '@sci/runtime';
 import { TUTOR_SILENT, selectProbe } from '@sci/tutor';
 import { useTutorProbes } from './tutorProbes';
+import { useModelProbe } from './tutor/useModelProbe';
+import { TutorSayBox } from './tutor/TutorSayBox';
 import { MemoryRecorder, buildStatement, toExtensions } from '@sci/xapi';
 import type { VariableExperiment } from '@sci/schema';
 import { MockSafetyDetector, type SafetyEvent, type SafetyEventType } from '@sci/vision';
@@ -327,6 +329,21 @@ function Lab({
     probes,
     { forbiddenAnswers: experiment.tutor.forbiddenAnswers, limits: experiment.limits },
   );
+  // 기기 안 튜터 모델(안드로이드, 모델이 준비된 때만): 모델이 만든 질문을 보이고 학생 말을 받는다. 아니면 위의 기본 질문 그대로다.
+  const unitInfo = useMemo(
+    () => ({ title, grade: UNITS.find((u): u is Extract<UnitEntry, { ok: true }> => u.ok && u.id === unitId)?.manifest.grade ?? 0 }),
+    [title, unitId],
+  );
+  const modelProbe = useModelProbe({
+    unitId,
+    experiment,
+    module: mod,
+    runtimeState: state,
+    unit: unitInfo,
+    fallback: probe,
+    silent: probe === TUTOR_SILENT,
+    turnKey: shown.length,
+  });
 
   // 수업 연결(있을 때만 쓰인다): 진행 요약을 알린다. 튜터 문장·센서 값은 보내지 않는다.
   useClassroomStatus({
@@ -396,7 +413,14 @@ function Lab({
             {probe !== TUTOR_SILENT && (
               <div className="box tutor" aria-live="polite">
                 <h2>생각해 볼까요?</h2>
-                <p>{probe}</p>
+                {modelProbe.available ? (
+                  <>
+                    <p>{modelProbe.text ?? <span className="tutor-loading">선생님이 생각하고 있어요…</span>}</p>
+                    <TutorSayBox onSend={modelProbe.say} />
+                  </>
+                ) : (
+                  <p>{probe}</p>
+                )}
               </div>
             )}
           </div>

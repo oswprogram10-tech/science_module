@@ -169,6 +169,7 @@ export function toGroupView(g: GroupRecord): GroupView {
     mismatch: s?.mismatch ?? false,
     safety: g.safety.map(({ type, at, acked }) => ({ type, at, acked })),
     safetyLocked: s?.safetyLocked ?? false,
+    ...(s?.model ? { model: s.model } : {}),
   };
 }
 
