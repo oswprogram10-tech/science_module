@@ -67,6 +67,12 @@ describe('클라이언트 메시지', () => {
   it('정해지지 않은 필드(예: 튜터 대화 원문)는 거절한다', () => {
     expect(parseClientMessage(j({ t: 'status', phase: 'idle', trials: 0, safetyLocked: false, tutorText: '정답은…' }))).toBeNull();
   });
+  it('status의 model은 네 값만 받는다', () => {
+    const base = { t: 'status', phase: 'idle', trials: 0, safetyLocked: false };
+    for (const model of ['none', 'downloading', 'ready', 'error']) expect(parseClientMessage(j({ ...base, model }))).toMatchObject({ model });
+    expect(parseClientMessage(j(base))).not.toHaveProperty('model');
+    expect(parseClientMessage(j({ ...base, model: 'loading' }))).toBeNull();
+  });
   it('8 KB를 넘으면 null', () => {
     const big = j({ t: 'status', phase: 'idle', trials: 0, safetyLocked: false, lastKind: 'x'.repeat(MAX_MESSAGE_BYTES) });
     expect(parseClientMessage(big)).toBeNull();
@@ -141,5 +147,25 @@ describe('서버 메시지', () => {
   });
   it('모르는 오류 코드는 null', () => {
     expect(parseServerMessage(j({ t: 'error', code: 'boom' }))).toBeNull();
+  });
+});
+
+describe('tutorModel 메시지', () => {
+  const model = { id: 'qwen3-1.7b', sha256: 'a'.repeat(64), size: 1_200_000_000 };
+  it('교사 → 서버, 서버 → 학생 모두 같은 모양이고 null도 된다', () => {
+    expect(parseClientMessage(j({ t: 'tutorModel', model }))).toEqual({ t: 'tutorModel', model });
+    expect(parseClientMessage(j({ t: 'tutorModel', model: null }))).toEqual({ t: 'tutorModel', model: null });
+    expect(parseServerMessage(j({ t: 'tutorModel', model }))).toEqual({ t: 'tutorModel', model });
+    expect(parseServerMessage(j({ t: 'tutorModel', model: null }))).toEqual({ t: 'tutorModel', model: null });
+  });
+  it('model이 없거나 모양이 틀리면 거절한다', () => {
+    expect(parseClientMessage(j({ t: 'tutorModel' }))).toBeNull();
+    expect(parseClientMessage(j({ t: 'tutorModel', model: { ...model, sha256: 'zz' } }))).toBeNull();
+    expect(parseClientMessage(j({ t: 'tutorModel', model: { ...model, sha256: 'A'.repeat(64) } }))).toBeNull();
+    expect(parseClientMessage(j({ t: 'tutorModel', model: { ...model, id: '../x' } }))).toBeNull();
+    expect(parseClientMessage(j({ t: 'tutorModel', model: { ...model, size: 0 } }))).toBeNull();
+    expect(parseClientMessage(j({ t: 'tutorModel', model: { ...model, size: 5 * 1024 ** 3 } }))).toBeNull();
+    expect(parseClientMessage(j({ t: 'tutorModel', model: { ...model, url: 'http://x' } }))).toBeNull();
+    expect(parseServerMessage(j({ t: 'tutorModel', model: { ...model, size: 1.5 } }))).toBeNull();
   });
 });

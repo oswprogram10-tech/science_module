@@ -158,3 +158,73 @@ describe('교사 클라이언트: 튜터 질문 덧씌우기', () => {
     expect(ws2.sent[1]).toEqual({ t: 'tutor', edits: other });
   });
 });
+
+describe('교사 클라이언트: 튜터 모델', () => {
+  const model = { id: 'qwen3-1.7b', sha256: 'a'.repeat(64), size: 1000 };
+  const model2 = { id: 'qwen3-4b', sha256: 'b'.repeat(64), size: 2000 };
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('수업을 만들면(created) 알려 둔 모델을 서버에 보낸다', () => {
+    const { c, ws } = open();
+    c.setTutorModel(model);
+    c.create();
+    ws.recv({ t: 'created', code: 'ABC234', token: TOKEN });
+    expect(ws.sent).toEqual([{ t: 'create' }, { t: 'tutorModel', model }]);
+    ws.recv({ t: 'snapshot', code: 'ABC234', paused: false, groups: [] });
+    expect(ws.sent).toHaveLength(2); // 한 번만
+  });
+
+  it('다시 연결(watch)되면 첫 snapshot을 받은 뒤에 보낸다', () => {
+    const { c, ws } = open({ code: 'ABC234', token: TOKEN });
+    c.setTutorModel(model);
+    expect(ws.sent).toEqual([{ t: 'watch', code: 'ABC234', token: TOKEN }]);
+    ws.recv({ t: 'snapshot', code: 'ABC234', paused: false, groups: [] });
+    expect(ws.sent[1]).toEqual({ t: 'tutorModel', model });
+  });
+
+  it('수업에 들어간 뒤 바뀌면 바로 보내고, 같은 값은 다시 보내지 않는다', () => {
+    const { c, ws } = open();
+    c.setTutorModel(model);
+    expect(ws.sent).toEqual([]); // 수업에 들어가기 전
+    c.create();
+    ws.recv({ t: 'created', code: 'ABC234', token: TOKEN });
+    ws.sent.length = 0;
+    c.setTutorModel({ ...model });
+    expect(ws.sent).toEqual([]);
+    c.setTutorModel(model2);
+    expect(ws.sent).toEqual([{ t: 'tutorModel', model: model2 }]);
+    c.setTutorModel(null);
+    c.setTutorModel(null);
+    expect(ws.sent).toEqual([{ t: 'tutorModel', model: model2 }, { t: 'tutorModel', model: null }]);
+  });
+
+  it('이 PC에 모델이 없으면 null을 보낸다', () => {
+    const { c, ws } = open();
+    c.setTutorModel(null);
+    c.create();
+    ws.recv({ t: 'created', code: 'ABC234', token: TOKEN });
+    expect(ws.sent).toEqual([{ t: 'create' }, { t: 'tutorModel', model: null }]);
+  });
+
+  it('알려 준 적이 없으면 아무것도 보내지 않는다(수업 서버가 아닌 곳에서 연 화면)', () => {
+    const { c, ws } = open();
+    c.create();
+    ws.recv({ t: 'created', code: 'ABC234', token: TOKEN });
+    expect(ws.sent).toEqual([{ t: 'create' }]);
+  });
+
+  it('연결이 끊겼다 다시 이어지면 최신 모델을 다시 보낸다', () => {
+    const { c, ws } = open();
+    c.setTutorModel(model);
+    c.create();
+    ws.recv({ t: 'created', code: 'ABC234', token: TOKEN });
+    ws.onclose?.();
+    c.setTutorModel(model2); // 끊긴 동안 바뀜
+    vi.advanceTimersByTime(10_000);
+    const ws2 = FakeWS.all[1]!;
+    ws2.onopen?.();
+    ws2.recv({ t: 'snapshot', code: 'ABC234', paused: false, groups: [] });
+    expect(ws2.sent).toEqual([{ t: 'watch', code: 'ABC234', token: TOKEN }, { t: 'tutorModel', model: model2 }]);
+  });
+});

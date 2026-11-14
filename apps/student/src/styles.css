@@ -227,6 +227,8 @@ button.unit-card:hover { border-color:var(--accent); }
 
 /* 수업 참여(선택 기능): 서버 주소가 있을 때만 쓰인다 */
 .classroom-control { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-left:auto; }
+.classroom-model { display:inline-flex; align-items:center; gap:6px; font-size:.9rem; }
+.classroom-model progress { width:96px; height:10px; accent-color:var(--accent); }
 .classroom-notice { margin:0; font-weight:700; color:var(--warn); }
 .classroom-error { min-height:1.4em; margin:6px 0 0; color:var(--warn); font-weight:700; }
 .code-field { display:flex; flex-direction:column; gap:4px; margin:8px 0; font-weight:700; }

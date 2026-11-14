@@ -737,3 +737,46 @@ describe('튜터 질문 덧씌우기(tutor)', () => {
     expect(await teacher.until((m) => m.t === 'error' && m.code === 'rate_limited')).toEqual({ t: 'error', code: 'rate_limited' });
   });
 });
+
+describe('튜터 모델 알림(tutorModel)', () => {
+  const model = { id: 'qwen3-1.7b', sha256: 'b'.repeat(64), size: 1234 };
+
+  it('교사가 보내면 학생에게 전달되고, 나중에 join한 학생도 joined 바로 뒤에 받는다', async () => {
+    const { teacher, code } = await makeClass();
+    const s1 = await student(code, 1);
+    await s1.until((m) => m.t === 'joined');
+    teacher.send({ t: 'tutorModel', model });
+    expect(await s1.until((m) => m.t === 'tutorModel')).toEqual({ t: 'tutorModel', model });
+    const s2 = await student(code, 2);
+    await s2.until((m) => m.t === 'tutorModel');
+    expect(s2.msgs.map((m) => m.t).slice(0, 2)).toEqual(['joined', 'tutorModel']);
+    // null로 바꾸면 기존 학생에게 null이 가고, 그 뒤 join한 학생은 받지 않는다(null은 기억만 하고 보내지 않는다).
+    teacher.send({ t: 'tutorModel', model: null });
+    await s1.until((m) => m.t === 'tutorModel' && m.model === null);
+    const s3 = await student(code, 3);
+    await s3.until((m) => m.t === 'joined');
+    await new Promise((r) => setTimeout(r, 100));
+    expect(s3.msgs.some((m) => m.t === 'tutorModel')).toBe(false);
+  });
+
+  it('학생이 보내면 bad_message이고 전달되지 않는다', async () => {
+    const { code } = await makeClass();
+    const a = await student(code, 1);
+    const b = await student(code, 2);
+    await a.until((m) => m.t === 'joined');
+    await b.until((m) => m.t === 'joined');
+    a.send({ t: 'tutorModel', model });
+    expect(await a.until((m) => m.t === 'error')).toEqual({ t: 'error', code: 'bad_message' });
+    await new Promise((r) => setTimeout(r, 100));
+    expect(b.msgs.some((m) => m.t === 'tutorModel')).toBe(false);
+  });
+
+  it('학생 status의 model이 교사 snapshot 모둠 카드에 실린다', async () => {
+    const { teacher, code } = await makeClass();
+    const s = await student(code, 4);
+    await s.until((m) => m.t === 'joined');
+    s.send({ t: 'status', phase: 'idle', trials: 0, safetyLocked: false, model: 'downloading' });
+    const snap = await teacher.snapshot((x) => x.groups[0]?.model === 'downloading');
+    expect(snap.groups[0]!.model).toBe('downloading');
+  });
+});

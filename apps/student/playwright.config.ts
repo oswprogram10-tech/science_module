@@ -1,3 +1,5 @@
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
 
 const CI = !!process.env.CI;
@@ -51,9 +53,10 @@ export default defineConfig({
     {
       // 교사 PC 수업 서버(apps/classroom-host)의 묶음 JS를 node로 실행한다. 교사 화면은 위에서 만든 apps/teacher/dist를 내보낸다
       // (webServer는 위에서부터 차례로 켜지므로 그때는 dist가 있다). 브라우저는 열지 않는다.
-      command: 'pnpm --filter @sci/classroom-host bundle && node ../classroom-host/dist/host.cjs',
+      // 튜터 모델 파일 폴더는 임시 폴더로 하고, 켤 때마다 비운다(E2E가 올린 가짜 모델 파일이 남지 않게).
+      command: `node -e "require('fs').rmSync(process.env.TUTOR_MODEL_DIR,{recursive:true,force:true})" && pnpm --filter @sci/classroom-host bundle && node ../classroom-host/dist/host.cjs`,
       url: 'http://localhost:8790/health',
-      env: { PORT: '8790', NO_BROWSER: '1', CREATES_PER_HOUR: '1000' },
+      env: { PORT: '8790', NO_BROWSER: '1', CREATES_PER_HOUR: '1000', TUTOR_MODEL_DIR: join(tmpdir(), 'sci-bridge-e2e-tutor-models') },
       reuseExistingServer: false,
       timeout: 60_000,
     },

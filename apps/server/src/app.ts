@@ -3,6 +3,7 @@ import websocket from '@fastify/websocket';
 import { MAX_TUTOR_MESSAGE_BYTES } from '@sci/classroom';
 import { Hub, type Conn, type HubOptions } from './hub';
 import { isLoopback, type HostInfo } from './hostInfo';
+import { ModelStore, registerModelRoutes, type ModelStoreOptions } from './models';
 
 export interface ServerOptions extends HubOptions {
   /** 허용할 Origin 목록. 비어 있으면 모두 허용한다(개발용). */
@@ -20,6 +21,11 @@ export interface ServerOptions extends HubOptions {
   hostMode?: boolean;
   /** 주면 `GET /host-info`를 연다(localhost에서 온 요청에만 응답). 학생 앱에 입력할 주소 목록과 포트를 돌려준다. */
   hostInfo?: () => HostInfo;
+  /**
+   * 튜터 모델 파일 보관·내려주기(`/tutor-models`). `hostMode`일 때만 연다(학교 서버 모드에는 없다).
+   * 올리기(POST)는 localhost에서만, 목록과 내려받기는 교실 LAN 누구나.
+   */
+  tutorModels?: ModelStoreOptions;
 }
 
 /** Origin 비교용: 소문자로 바꾸고 끝의 슬래시를 뗀다. */
@@ -51,6 +57,8 @@ export async function buildServer(opts: ServerOptions = {}): Promise<{ app: Fast
       return reply.header('cache-control', 'no-store').send(hostInfo());
     });
   }
+
+  if (opts.hostMode && opts.tutorModels) await registerModelRoutes(app, new ModelStore(opts.tutorModels));
 
   app.get('/ws', { websocket: true }, (socket, req) => {
     const origin = req.headers.origin;

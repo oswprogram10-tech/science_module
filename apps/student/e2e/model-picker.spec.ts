@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import { test, expect } from './helpers';
@@ -18,7 +19,9 @@ test.describe('튜터 모델 고르기', () => {
     await openPicker(page);
     const d = picker(page);
     await expect(d).toContainText('아직 모델을 고르지 않았어요');
-    await expect(d.getByRole('button', { name: '모델 내려받기(준비 중)' })).toBeDisabled();
+    // 수업 서버가 내보낸 화면이므로 모델 파일 넣기 칸이 있다(준비 중 표시는 없다).
+    await expect(d.getByTestId('mp-files')).toBeVisible();
+    await expect(d).not.toContainText('준비 중');
 
     await d.getByTestId('mp-model-qwen3-1.7b').getByRole('button', { name: '이 모델 쓰기' }).click();
     await expect(d).toContainText('이 반에서 쓸 모델: Qwen3 1.7B');
@@ -77,4 +80,80 @@ test.describe('튜터 모델 고르기', () => {
       }
     });
   }
+
+  test('모델 파일 넣기: 올리면 sha256이 보이고 목록에 나오며, 수업의 학생에게 알림이 가고 모둠 카드에 받기 상태가 보인다', async ({ page, request, errors }) => {
+    await openPicker(page);
+    const d = picker(page);
+    const files = d.getByTestId('mp-files');
+    // 모델을 고르기 전에는 넣을 수 없다.
+    await expect(files.getByLabel(/^모델 파일 넣기/)).toBeDisabled();
+    await d.getByTestId('mp-model-qwen3-4b').getByRole('button', { name: '이 모델 쓰기' }).click();
+
+    // 모델이 아닌 파일은 거절한다.
+    await files.getByLabel(/^모델 파일 넣기/).setInputFiles({ name: 'bad.gguf', mimeType: 'application/octet-stream', buffer: Buffer.from('not a model file') });
+    await expect(d.getByRole('alert').filter({ hasText: '모델 파일(GGUF)이 아니에요' })).toBeVisible();
+    // 서버가 400으로 거절한 요청을 브라우저가 콘솔 오류로 남긴다. 의도한 것이므로 이 한 건만 뺀다.
+    const rejected = errors.findIndex((e) => e.includes('status of 400'));
+    expect(rejected).toBeGreaterThanOrEqual(0);
+    errors.splice(rejected, 1);
+
+    // 가짜 GGUF(머리 4바이트 + 채움)를 올린다.
+    const fake = Buffer.concat([Buffer.from('GGUF'), Buffer.alloc(300_000, 9)]);
+    const sha = createHash('sha256').update(fake).digest('hex');
+    await files.getByLabel(/^모델 파일 넣기/).setInputFiles({ name: 'qwen3-4b-q4_k_m.gguf', mimeType: 'application/octet-stream', buffer: fake });
+    await expect(d.getByTestId('mp-upload-state')).toContainText(sha);
+    await expect(d.getByTestId('mp-upload-state')).toContainText('Qwen3 4B');
+    await expect(d.getByTestId('mp-file-qwen3-4b')).toContainText(sha);
+    await expect(d.getByTestId('mp-file-qwen3-4b')).toContainText('있어요');
+    await expect(d.getByTestId('mp-host-state')).toContainText('이 PC에 모델 파일이 있어요');
+
+    // 서버: 목록과 Range 내려받기(교실 LAN 누구나)
+    const list = (await (await request.get('http://localhost:8790/tutor-models')).json()) as Array<{ id: string; size: number; sha256: string }>;
+    expect(list.find((m) => m.id === 'qwen3-4b')).toEqual({ id: 'qwen3-4b', size: fake.length, sha256: sha });
+    const part = await request.get('http://localhost:8790/tutor-models/qwen3-4b.gguf', { headers: { range: 'bytes=0-3' } });
+    expect(part.status()).toBe(206);
+    expect(part.headers()['content-range']).toBe(`bytes 0-3/${fake.length}`);
+    expect((await part.body()).toString()).toBe('GGUF');
+
+    // 수업을 만들면 서버가 학생에게 tutorModel을 보내고, 학생이 알린 받기 상태가 모둠 카드에 보인다.
+    await d.getByRole('button', { name: '닫기' }).click();
+    await page.getByRole('button', { name: '수업 만들기' }).click();
+    const code = (await page.getByTestId('class-code').textContent())!.trim();
+    const got = await page.evaluate(
+      ({ code }) =>
+        new Promise<unknown>((resolve, reject) => {
+          const ws = new WebSocket('ws://localhost:8790/ws');
+          (window as unknown as { __student: WebSocket }).__student = ws;
+          const timer = setTimeout(() => reject(new Error('tutorModel을 받지 못했어요')), 5000);
+          ws.onopen = () => ws.send(JSON.stringify({ t: 'join', code, group: 4, deviceTier: 'A', appVersion: '0.0.0' }));
+          ws.onmessage = (e) => {
+            const m = JSON.parse(String(e.data)) as { t: string };
+            if (m.t === 'tutorModel') {
+              clearTimeout(timer);
+              ws.send(JSON.stringify({ t: 'status', phase: 'idle', trials: 0, safetyLocked: false, model: 'downloading' }));
+              resolve(m);
+            }
+          };
+        }),
+      { code },
+    );
+    expect(got).toEqual({ t: 'tutorModel', model: { id: 'qwen3-4b', sha256: sha, size: fake.length } });
+    await expect(page.getByTestId('model-chip-4')).toHaveText('튜터 모델 받는 중');
+    const sendStatus = (model: string) =>
+      page.evaluate((model) => (window as unknown as { __student: WebSocket }).__student.send(JSON.stringify({ t: 'status', phase: 'idle', trials: 0, safetyLocked: false, model })), model);
+    await sendStatus('ready');
+    await expect(page.getByTestId('model-chip-4')).toHaveText('튜터 모델 준비됨');
+    await sendStatus('error');
+    await expect(page.getByTestId('model-chip-4')).toHaveText('튜터 모델 오류');
+    await sendStatus('none');
+    await expect(page.getByTestId('model-chip-4')).toHaveCount(0);
+  });
+
+  test('수업 서버가 내보낸 화면이 아니면(미리보기 교사 화면) 모델 파일 넣기가 없다', async ({ page }) => {
+    await page.goto('http://localhost:4175/');
+    await page.getByRole('button', { name: '튜터 모델 고르기' }).click();
+    const d = picker(page);
+    await expect(d.getByTestId('mp-not-hosted')).toContainText('수업 서버가 켜진 PC');
+    await expect(d.getByTestId('mp-files')).toHaveCount(0);
+  });
 });

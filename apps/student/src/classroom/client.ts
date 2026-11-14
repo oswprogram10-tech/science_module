@@ -2,6 +2,8 @@ import { bus, type BusEvent } from './bus';
 import { FLUSH_GAP_MS, LIMITS, MAX_QUEUE, clampText, compactQueue } from './queue';
 import { APP_VERSION } from './config';
 import { normalizeCode, parseServerMessage, type DeviceTier } from '@sci/classroom';
+import { httpBaseFromWs, modelSync } from '../tutor/modelSync';
+import { tutorModelState } from '../tutor/modelState';
 
 export interface Session {
   code: string;
@@ -66,8 +68,18 @@ export class StudentClassroom {
   private queue: BusEvent[] = [];
   private flushTimer: ReturnType<typeof setTimeout> | null = null;
 
+  /** 서버에 모델 준비 상태('none' 밖의 값)를 한 번이라도 알렸는가. 그러면 'none'으로 돌아갈 때도 알린다. */
+  private modelReported = false;
+
   constructor() {
     bus.onEvent((e) => this.onBus(e));
+    // 모델 받기 상태가 바뀌면 status로 알린다(진행률은 보내지 않는다. 낱말이 바뀔 때만 보낸다).
+    tutorModelState.subscribe(() => this.scheduleStatus());
+  }
+
+  /** 모델 받기에 알려 줄 정보: 이 수업 서버의 http 주소와 기기 등급. */
+  private modelCtx() {
+    return { baseUrl: httpBaseFromWs(this.url), tier: this.tier };
   }
 
   subscribe = (l: () => void) => {
@@ -86,6 +98,7 @@ export class StudentClassroom {
     // 등급은 항상 갱신해 둔다(이미 참여 중이어도 다음 재연결 join에 실린다).
     this.url = url;
     this.tier = tier;
+    void modelSync.update(this.modelCtx());
     if (this.state.session) return;
     const s = readStored();
     if (s) {
@@ -119,6 +132,9 @@ export class StudentClassroom {
 
   /** 연결과 타이머를 모두 멈춘다. 멈춤 화면도 걷는다. */
   private stop() {
+    // 모델 알림도 수업이 이어지는 동안만 둔다(받은 파일은 지우지 않는다). 타이머를 걷기 전에 해야 status 예약이 남지 않는다.
+    modelSync.reset();
+    this.modelReported = false;
     if (this.retryTimer) clearTimeout(this.retryTimer);
     if (this.statusTimer) clearTimeout(this.statusTimer);
     if (this.flushTimer) clearTimeout(this.flushTimer);
@@ -171,6 +187,9 @@ export class StudentClassroom {
         this.scheduleFlush();
       } else if (m.t === 'tutor') {
         if (this.state.link === 'online') bus.setTutorEdits(m.edits);
+      } else if (m.t === 'tutorModel') {
+        // 교사 PC의 모델 파일 알림: 기기가 받을 수 있으면 받기 시작한다(modelSync).
+        if (this.state.link === 'online') void modelSync.apply(m.model, this.modelCtx());
       } else if (m.t === 'pause') {
         if (this.state.link === 'online') bus.setPaused(m.on);
       } else if (m.t === 'ended') {
@@ -281,6 +300,7 @@ export class StudentClassroom {
   private sendStatus(force: boolean) {
     if (this.state.link !== 'online') return;
     const { unitId, activity, experimentId, phase, trials, lastKind, mismatch, safetyLocked } = bus.getStatus();
+    const model = tutorModelState.get().status;
     const msg = {
       t: 'status',
       ...(unitId ? { unitId: clampText(unitId, LIMITS.shortText) } : {}),
@@ -291,7 +311,10 @@ export class StudentClassroom {
       ...(lastKind ? { lastKind: clampText(lastKind, LIMITS.shortText) } : {}),
       ...(mismatch !== undefined ? { mismatch } : {}),
       safetyLocked,
+      // 모델 준비 상태. 받는 일이 없으면(none) 싣지 않아, 모델 알림을 모르는 옛 서버에도 그대로 통한다.
+      ...(model !== 'none' || this.modelReported ? { model } : {}),
     };
+    this.modelReported = model !== 'none';
     const json = JSON.stringify(msg);
     if (!force && json === this.lastStatusJson) return;
     this.lastStatusJson = json;
