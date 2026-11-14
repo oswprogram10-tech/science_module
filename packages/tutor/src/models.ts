@@ -3,7 +3,8 @@
  * 모델 파일(4비트 GGUF)은 앱에 넣지 않고 처음 한 번 내려받는다. 내려받기와 기기 실행은 다음 단계에서 붙인다.
  */
 
-export type TutorModelId = 'hcx-seed-1.5b' | 'qwen3-1.7b';
+export type TutorModelId = 'qwen3-1.7b' | 'qwen3-4b';
+export type DeviceTier = 'A' | 'B' | 'C';
 
 export interface TutorModelInfo {
   id: TutorModelId;
@@ -17,21 +18,17 @@ export interface TutorModelInfo {
   licenseNote: string;
   /** 4비트(Q4_K_M) 모델 파일 크기 추정, GB */
   sizeGb: number;
-  /** 내려받을 수 있는가. 모델 파일을 둘 곳과 기기 실행이 준비되면 true로 바꾼다. */
+  /** 이 등급 이상의 기기에서만 받아 쓴다(계획서 ⑦: A가 가장 높음). */
+  minTier: DeviceTier;
+  /** 학습할 때 쓴 대화 형식(chatFormat.ts). */
+  chatFormat: 'qwen3-nothink' | 'chatml';
+  /** 학습한 입력 형식(PROMPT_VERSION). 다르면 쓰지 않는다. */
+  promptVersion: string;
+  /** 내려받기·기기 실행이 준비되었는가(3단계, 사양 docs/specs/tutor-on-device-v1.md). */
   downloadReady: boolean;
 }
 
 export const TUTOR_MODELS: readonly TutorModelInfo[] = [
-  {
-    id: 'hcx-seed-1.5b',
-    name: '하이퍼클로바 X SEED 1.5B',
-    maker: '네이버',
-    base: 'naver-hyperclovax/HyperCLOVAX-SEED-Text-Instruct-1.5B',
-    license: 'HyperCLOVA X SEED 모델 라이선스',
-    licenseNote: '모델 이름과 라이선스를 표시해야 하고, 네이버와 경쟁하는 서비스에는 따로 허가가 필요해요. 정식 출시 전에 법무 확인을 거쳐요.',
-    sizeGb: 1.13,
-    downloadReady: false,
-  },
   {
     id: 'qwen3-1.7b',
     name: 'Qwen3 1.7B',
@@ -40,9 +37,29 @@ export const TUTOR_MODELS: readonly TutorModelInfo[] = [
     license: 'Apache 2.0',
     licenseNote: '라이선스 고지만 지키면 상업 이용과 배포에 제한이 없어요.',
     sizeGb: 1.11,
+    minTier: 'B',
+    chatFormat: 'qwen3-nothink',
+    promptVersion: 'v3',
+    downloadReady: false,
+  },
+  {
+    id: 'qwen3-4b',
+    name: 'Qwen3 4B (고사양 기기용)',
+    maker: '알리바바 Qwen',
+    base: 'Qwen/Qwen3-4B-Instruct-2507',
+    license: 'Apache 2.0',
+    licenseNote: '라이선스 고지만 지키면 상업 이용과 배포에 제한이 없어요. 고사양(A등급) 기기에서만 받아요.',
+    sizeGb: 2.5,
+    minTier: 'A',
+    chatFormat: 'chatml',
+    promptVersion: 'v3',
     downloadReady: false,
   },
 ];
+
+const TIER_RANK: Record<DeviceTier, number> = { A: 3, B: 2, C: 1 };
+/** 이 기기 등급에서 이 모델을 쓸 수 있는가. */
+export const tierAllows = (tier: DeviceTier, model: TutorModelInfo): boolean => TIER_RANK[tier] >= TIER_RANK[model.minTier];
 
 export const isTutorModelId = (v: unknown): v is TutorModelId => TUTOR_MODELS.some((m) => m.id === v);
 export const tutorModel = (id: TutorModelId): TutorModelInfo => TUTOR_MODELS.find((m) => m.id === id)!;
