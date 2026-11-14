@@ -13,7 +13,12 @@ const withDefaults = (): CatalogUnit[] => {
   copy.experiments.find((e) => e.id === 'ramp-cart')!.tutor.answers = [DEFAULT];
   return buildCatalog([{ ...copy, id: 'g6-motion', title: '물체의 운동', grade: 6 }]);
 };
-const EMPTY = buildCatalog([JSON.parse(readFileSync(join(__dirname, '../../../content/units/g6-motion/manifest.json'), 'utf8'))]);
+// 기본 결론이 없는 카탈로그(매니페스트의 tutor.answers를 지운 것).
+const EMPTY = (() => {
+  const m = JSON.parse(readFileSync(join(__dirname, '../../../content/units/g6-motion/manifest.json'), 'utf8')) as { experiments: { tutor: { answers?: unknown } }[] };
+  for (const e of m.experiments) delete e.tutor.answers;
+  return buildCatalog([m as never]);
+})();
 const exp = (c: CatalogUnit[]) => c[0]!.experiments.find((e) => e.id === 'ramp-cart')!;
 
 const NEW: DraftAnswer = { iv: 'floor', conclusion: '바닥이 거칠면 느려진다.', keysText: '바닥, 거칠\n느려, 느리', notText: '빨라', confirm: '네, 결과표에서도 거친 바닥의 시간이 길었어요.' };
@@ -22,7 +27,7 @@ const draftOf = (answers: DraftAnswer[]): Draft => ({ 'g6-motion': { 'ramp-cart'
 describe('카탈로그: 기본 결론', () => {
   it('매니페스트에 tutor.answers가 없으면 빈 배열이다(아직 콘텐츠가 없어도 동작한다)', () => {
     const e = exp(EMPTY);
-    if (!('answers' in (motion.experiments.find((x) => x.id === 'ramp-cart')!.tutor))) expect(e.answers).toEqual([]);
+    expect(e.answers).toEqual([]);
     expect(Array.isArray(e.answers)).toBe(true);
   });
   it('있으면 읽는다, 모양이 틀린 항목은 건너뛴다', () => {

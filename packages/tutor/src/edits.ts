@@ -1,5 +1,6 @@
 import type { AnswerKey } from '@sci/schema';
 import type { ProbeTemplate } from './index';
+import { hasJudgment } from './check';
 
 /**
  * 한 활동의 튜터 질문 덧씌우기. 모양은 `@sci/classroom`의 `ExperimentEdits`(zod)와 같다
@@ -46,5 +47,6 @@ export function applyTutorEdits(probes: ProbeTemplate[], exp?: ExperimentEdits, 
  * 없으면 받은 배열 그대로.
  */
 export function applyTutorAnswers(answers: AnswerKey[] | undefined, exp?: { answers?: AnswerKey[] }): AnswerKey[] {
-  return exp?.answers ?? answers ?? [];
+  // 교사 화면이 막지만, 받은 덧씌우기에 판정 낱말이 든 확인 문장이 있으면 학생 기기에서도 그 결론은 쓰지 않는다.
+  return (exp?.answers ?? answers ?? []).filter((a) => !hasJudgment(a.confirm));
 }

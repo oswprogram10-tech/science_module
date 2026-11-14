@@ -82,7 +82,7 @@ describe('matchAnswer', () => {
     expect(ok('높이가 높아도 속력은 똑같아요')?.opposite).toBe(true);
   });
   it('다른 결론이 순수하게 맞으면 반대 방향보다 앞선다', () => {
-    expect(matchAnswer('추를 실어도 같고 높으면 빨라도 느려요', [HEIGHT, LOAD])).toEqual({ answer: LOAD, opposite: false });
+    expect(matchAnswer('높으면 빨라도 추는 똑같아요', [HEIGHT, LOAD])).toEqual({ answer: LOAD, opposite: false });
   });
   it('다른 변인 이야기는 맞히지 않는다', () => {
     expect(ok('바닥이 거칠면 느려요')).toBeNull();
@@ -347,3 +347,34 @@ describe('매니페스트 answers', () => {
     }
   });
 });
+
+describe('검토 보강', () => {
+  it('"뭘"·"무슨"으로 묻는 말도 질문이다', () => {
+    expect(classifyUtterance('바닥은 뭘로 해요', []).kind).toBe('question');
+    expect(classifyUtterance('무슨 칸을 봐요', []).kind).toBe('question');
+  });
+  it('받은 덧씌우기의 확인 문장에 판정 낱말이 있으면 그 결론은 쓰지 않는다', () => {
+    const ok = { conclusion: '가', keys: [['가']], confirm: '네, 결과표에서도 그랬어요.' };
+    const bad = { conclusion: '나', keys: [['나']], confirm: '네, 정답이에요.' };
+    expect(applyTutorAnswers([ok], { answers: [bad, ok] })).toEqual([ok]);
+  });
+});
+
+describe('반대 방향 낱말 안전장치', () => {
+  const turns: AnswerKey = { iv: 'turns', conclusion: '에나멜선을 많이 감을수록 전자석이 세다', keys: [['감', '횟수'], ['많', '더'], ['세', '클립']], confirm: '네, 결과표에서도 많이 감았을 때 클립이 더 많았어요.' };
+  const flow: AnswerKey = { conclusion: '전기가 흐를 때만 자석이 된다', keys: [['전지', '전기'], ['연결하면', '흐르면'], ['자석', '세']], confirm: '네, 결과표에서도 전지를 연결했을 때만 클립이 붙었어요.' };
+  const battery: AnswerKey = { iv: 'battery', conclusion: '전지를 직렬로 연결하면 전자석이 더 세다', keys: [['전지'], ['연결하면'], ['세']], confirm: '네, 결과표에서도 직렬로 연결했을 때 클립이 더 많았어요.' };
+  it('결론·keys에 없는 반대 낱말이 있으면 맞힌 것으로 보지 않는다', () => {
+    expect(matchAnswer('에나멜선을 적게 감으면 더 세요', [turns])).toBeNull();
+    expect(matchAnswer('많이 감을수록 더 세요', [turns])?.opposite).toBe(false);
+  });
+  it('not에 걸린 반대 말은 그대로 opposite로 본다', () => {
+    const withNot = { ...turns, not: ['적게'] };
+    expect(matchAnswer('적게 감으면 더 세요', [withNot])).toEqual({ answer: withNot, opposite: true });
+  });
+  it('지금 알아보는 변인의 결론을 먼저 본다', () => {
+    expect(matchAnswer('전지를 많이 연결하면 세져요', [flow, battery], 'battery')?.answer).toBe(battery);
+    expect(matchAnswer('전지를 많이 연결하면 세져요', [flow, battery])?.answer).toBe(flow);
+  });
+});
+

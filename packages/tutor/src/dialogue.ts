@@ -17,7 +17,7 @@ export const normalizeKo = (s: string): string => s.normalize('NFC').toLowerCase
 
 /** 정규화한 말에 이 낱말이 있으면 모르겠다는 말이다. */
 export const DONT_KNOW_WORDS = ['모르', '몰라', '글쎄', '헷갈', '어려워', '생각이안', '생각안나', '잘모르'];
-const QUESTION_WORDS = ['왜', '어떻게', '무엇', '뭐', '어디', '언제', '몇', '어느'];
+const QUESTION_WORDS = ['왜', '어떻게', '무엇', '뭐', '뭘', '무슨', '어디', '언제', '몇', '어느'];
 
 export interface AnswerMatch {
   answer: AnswerKey;
@@ -37,16 +37,37 @@ const keysMatch = (norm: string, a: AnswerKey): boolean => a.keys.every((group) 
  * 학생 말이 어느 결론과 맞는지(사양 §2). keys가 모두 맞고 not이 없는 첫 answer를 쓰고,
  * 없으면 keys는 맞지만 not에 걸린 첫 answer를 반대 방향(opposite)으로 돌려준다. 어느 것도 아니면 null.
  */
-export function matchAnswer(utterance: string, answers: readonly AnswerKey[]): AnswerMatch | null {
+/**
+ * 반대 방향 낱말. 학생 말에 이 낱말이 있는데 결론·keys 어디에도 없으면 그 결론으로 맞힌 것으로 보지 않는다.
+ * 낱말 목록이 빠뜨린 반대 표현("적게 감으면 더 세요")을 맞았다고 확인해 주는 일을 막는 안전장치다(틀린 생각을 굳히는 것이 가장 나쁘다).
+ * 이런 말은 맞힘·반대 판정 없이 모델(또는 기본 질문) 흐름으로 간다.
+ */
+export const CONTRAST_WORDS: readonly (readonly [word: string, stem: string])[] = [
+  ['적게', '적'], ['적을', '적'], ['적으', '적'], ['적은', '적'], ['적어', '적'], ['덜', '덜'],
+  ['작은', '작'], ['작을', '작'], ['작으', '작'], ['작아', '작'], ['낮은', '낮'], ['낮을', '낮'], ['낮으', '낮'], ['낮아', '낮'],
+  ['느려', '느'], ['느리', '느'], ['느린', '느'], ['느릴', '느'], ['약해', '약'], ['약하', '약'], ['약한', '약'], ['약할', '약'],
+  ['줄어', '줄'], ['줄면', '줄'], ['짧', '짧'], ['차가', '차'], ['차갑', '차'], ['않', '않'],
+];
+
+/** 학생 말의 반대 낱말이 결론·keys에 같은 뿌리(적·작·낮·느·줄 …)로 없으면 이 결론과 어긋난 말로 본다. */
+const contradicts = (norm: string, a: AnswerKey): boolean => {
+  const own = normalizeKo([a.conclusion, ...a.keys.flat()].join(' '));
+  return CONTRAST_WORDS.some(([w, stem]) => norm.includes(w) && !own.includes(stem));
+};
+
+export function matchAnswer(utterance: string, answers: readonly AnswerKey[], preferIv?: string | null): AnswerMatch | null {
   const norm = normalizeKo(utterance);
   if (!norm) return null;
+  // 지금 알아보는 변인의 결론을 먼저 본다(같은 말이 여러 결론에 걸릴 때 엉뚱한 확인을 줄인다).
+  const ordered = preferIv ? [...answers.filter((a) => a.iv === preferIv), ...answers.filter((a) => a.iv !== preferIv)] : answers;
   let opposite: AnswerMatch | null = null;
-  for (const a of answers) {
+  for (const a of ordered) {
     if (!keysMatch(norm, a)) continue;
     if (a.not && hasAny(norm, a.not)) {
       opposite ??= { answer: a, opposite: true };
       continue;
     }
+    if (contradicts(norm, a)) continue;
     return { answer: a, opposite: false };
   }
   return opposite;
@@ -73,10 +94,10 @@ export type Utterance =
   | { kind: 'other' };
 
 /** 학생 말 나누기(사양 §1). 앞에서 걸리면 뒤는 보지 않는다: 모르겠어요 → 결론 → 질문 → 그 밖. */
-export function classifyUtterance(utterance: string, answers: readonly AnswerKey[]): Utterance {
+export function classifyUtterance(utterance: string, answers: readonly AnswerKey[], preferIv?: string | null): Utterance {
   const norm = normalizeKo(utterance);
   if (hasAny(norm, DONT_KNOW_WORDS)) return { kind: 'dont-know' };
-  const m = matchAnswer(utterance, answers);
+  const m = matchAnswer(utterance, answers, preferIv);
   if (m) return { kind: 'answer', ...m };
   const t = utterance.trim();
   if (/[?？]$/.test(t) || (hasAny(norm, QUESTION_WORDS) && /[요까]$/.test(norm))) return { kind: 'question' };
@@ -199,7 +220,7 @@ export function planTurn(input: PlanInput): TurnPlan {
   const model = (prefix: string): TurnPlan => ({ kind: 'model', prefix, fallbackText: withAlternate(prefix, input.fallback, input.previousTutor) });
   if (utterance === undefined || utterance.trim() === '') return model('');
 
-  const u = classifyUtterance(utterance, input.answers);
+  const u = classifyUtterance(utterance, input.answers, currentIv);
   switch (u.kind) {
     case 'dont-know': {
       const tpls = fair.length === 0 ? DESIGN_HINTS : RESULT_HINTS;
