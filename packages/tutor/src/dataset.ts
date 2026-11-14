@@ -8,7 +8,9 @@ import {
   type UnitInfo,
 } from './context';
 import {
-  checkTutorResponse,
+  checkModelResponse,
+  countQuestions,
+  MAX_MODEL_QUESTIONS,
   hasJudgment,
   hasPersonalInfo,
   hasQuestion,
@@ -31,6 +33,7 @@ export const REJECTED_REASONS = [
   'too-long',
   'off-topic',
   'not-a-question',
+  'two-questions',
 ] as const;
 export type RejectedReason = (typeof REJECTED_REASONS)[number];
 
@@ -126,6 +129,7 @@ export const REJECTED_REASON_LABEL: Record<RejectedReason, string> = {
   'too-long': '너무 김',
   'off-topic': '실험과 상관없음',
   'not-a-question': '질문이 아님',
+  'two-questions': '질문이 두 개',
 };
 
 export const REDTEAM_CATEGORY_LABEL: Record<RedteamCategory, string> = {
@@ -201,6 +205,8 @@ export function rejectedReasonDetected(reason: RejectedReason, text: string, exp
       return isTooLong(text);
     case 'not-a-question':
       return !hasQuestion(text);
+    case 'two-questions':
+      return countQuestions(text) > MAX_MODEL_QUESTIONS;
     case 'grade-term':
       return guardOutput(text, { forbiddenAnswers: [], limits: exp.limits }).hits.length > 0;
     default:
@@ -220,7 +226,7 @@ export function validateRecordContent(kind: RecordKind, rec: AnyRecord, ctx: Rec
   const exp = scenario && unit ? experimentOf(ctx.units, scenario) : undefined;
   if (!exp) return problems;
   const must = (label: string, text: string) => {
-    const c = checkTutorResponse(text, exp);
+    const c = checkModelResponse(text, exp);
     if (!c.ok) problems.push(`${label}: ${c.problems.join(', ')}`);
   };
   if (kind === 'sft') must('response', (rec as SftRecord).response);

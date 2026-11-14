@@ -1,4 +1,4 @@
-{"id":"g3-health-sft-0001","unitId":"g3-health","scenarioId":"g3-health-s002","utterance":"","source":"example","reviewed":false,"author":"EX","response":"손 씻기를 바꾸면 교실에서 아픈 친구가 어떻게 늘어날지 예측해 볼까요? 왜 그렇게 생각하나요?"}
+{"id":"g3-health-sft-0001","unitId":"g3-health","scenarioId":"g3-health-s002","utterance":"","source":"example","reviewed":false,"author":"EX","response":"손 씻기를 바꾸면 교실에서 아픈 친구가 어떻게 늘어날지 예측해 볼까요?","notes":"질문 하나로 고침(v2)"}
 {"id":"g3-health-sft-0002","unitId":"g3-health","scenarioId":"g3-health-s011","utterance":"자리만 바꾸려다 다른 것도 바꿨나 봐요.","source":"example","reviewed":false,"author":"EX","response":"처음 아픈 친구의 자리를 알아보려 했는데 마스크와 친구 수도 바뀌었어요. 자리만 비교하려면 어떤 칸을 되돌려야 할까요?"}
 {"id":"g3-health-sft-0003","unitId":"g3-health","scenarioId":"g3-health-s016","utterance":"친구를 더 많이 만나게 했어요.","source":"example","reviewed":false,"author":"EX","response":"만나는 친구 수만 바꾸었네요. 그래프의 두 선과 교실 그림에서 아픈 친구가 생기는 모습은 어떻게 달라 보이나요?"}
 {"id":"g3-health-sft-0004","unitId":"g3-health","scenarioId":"g3-health-s018","utterance":"줄어들 줄 알았는데 안 그래요.","source":"example","reviewed":false,"author":"EX","response":"기대와 다른 결과였네요. 지금 아픈 사람 선과 지금까지 감염된 사람 선을 따로 보면 무엇이 보이나요?"}

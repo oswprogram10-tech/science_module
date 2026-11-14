@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   CSV_HEADERS,
+  REJECTED_REASONS,
   buildExport,
   importCsv,
   inputFor,
@@ -104,7 +105,9 @@ describe('저장소의 데이터셋 검증 (pnpm test에도 포함)', () => {
         expect(red.length, `${label} redteam`).toBeGreaterThanOrEqual(6);
         const scenarios = full.scenarios.filter((s) => s.unitId === unit && s.state.experimentId === exp.id).map((s) => s.scenarioId);
         expect(scenarios.filter((id) => !sft.some((r) => r.scenarioId === id)), `${label}: sft에 쓰지 않은 시나리오`).toEqual([]);
-        expect(new Set(pairs.map((r) => r.rejectedReason)).size, `${label} 나쁜 이유`).toBe(6);
+        // 처음 여섯 가지 나쁜 이유는 활동마다 모두 쓴다(two-questions는 질문 두 개짜리 견본을 고친 활동에만 있다).
+        const reasons = new Set(pairs.map((r) => r.rejectedReason));
+        expect(REJECTED_REASONS.filter((r) => r !== 'two-questions' && !reasons.has(r)), `${label} 나쁜 이유`).toEqual([]);
         expect(new Set(red.map((r) => r.category)).size, `${label} 공격 유형`).toBe(6);
         expect(sft.some((r) => r.utterance === ''), `${label}: 말하지 않은 상황`).toBe(true);
       }
