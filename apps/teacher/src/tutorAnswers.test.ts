@@ -151,3 +151,12 @@ describe('불러오기: 넣지 못한 줄은 이유와 함께', () => {
     expect(edits.units['g6-motion']!['ramp-cart']!.answers).toEqual([]);
   });
 });
+
+describe('검토 보강: 견줄 수 없는 낱말', () => {
+  it('문장부호나 기호만으로 된 낱말은 막는다', () => {
+    expect(checkAnswer({ ...NEW, keysText: '바닥, ?\n느려' })).toContain('문장부호나 기호만으로 된 낱말은 쓸 수 없어요');
+    expect(checkAnswer({ ...NEW, notText: '-' })).toContain('문장부호나 기호만으로 된 낱말은 쓸 수 없어요');
+    expect(checkAnswer(NEW)).toEqual([]);
+  });
+});
+

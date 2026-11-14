@@ -380,3 +380,24 @@ describe('반대 방향 낱말 안전장치', () => {
   });
 });
 
+describe('리뷰 반영: 부정·반대 동작', () => {
+  const lid: AnswerKey = { iv: 'lid', conclusion: '뚜껑을 덮으면 물이 덜 식는다', keys: [['뚜껑'], ['덮'], ['덜식', '천천히', '따뜻']], confirm: '네, 결과표에서도 뚜껑을 덮은 쪽이 덜 식었어요.' };
+  it('안·못·~지 않·열면·벗기면·상관없은 결론에 같은 뿌리가 없으면 맞힌 것으로 보지 않는다', () => {
+    for (const u of ['뚜껑을 안 덮으면 덜 식어요', '뚜껑을 안덮으면 덜 식어요', '뚜껑 덮으면 안 따뜻해요', '뚜껑을 덮어도 따뜻하지 않아요', '뚜껑을 덮으면 오래 못 가요 따뜻', '뚜껑을 열면 덮은 것보다 천천히 식어요', '뚜껑 벗기면 덮은 것처럼 따뜻해요', '뚜껑 덮든 상관없이 따뜻해요']) {
+      expect(matchAnswer(u, [lid]), u).toBeNull();
+    }
+    expect(matchAnswer('뚜껑을 덮으면 천천히 식어요', [lid])?.opposite).toBe(false);
+  });
+  it('결론에 부정이 들어 있으면 부정한 말도 맞힌다', () => {
+    const water: AnswerKey = { iv: 'water', conclusion: '물이 없으면 싹이 안 튼다', keys: [['물'], ['없으면', '안주'], ['안터', '안트', '안나']], confirm: '네, 결과표에서도 물을 주지 않은 쪽은 싹이 트지 않았어요.' };
+    expect(matchAnswer('물이 없으면 싹이 안 터요', [water])?.opposite).toBe(false);
+  });
+  it('같은 말을 두 번 해도 예측 반응이 글자 그대로 되풀이되지 않는다', () => {
+    const first = plan({ state: state('heightCm'), utterance: '높을수록 빨라요' }) as Extract<TurnPlan, { kind: 'predict' }>;
+    const second = plan({ state: state('heightCm'), utterance: '높을수록 빨라요', previousTutor: first.text }) as Extract<TurnPlan, { kind: 'predict' }>;
+    expect(second.kind).toBe('predict');
+    expect(second.text).not.toBe(first.text);
+    expect(second.text.startsWith('그렇게 생각했군요.')).toBe(true);
+  });
+});
+

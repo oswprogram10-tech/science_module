@@ -1,5 +1,5 @@
 import { MAX_ANSWERS, answerKeyEditSchema, tutorEditsSchema, type AnswerKeyEdit, type TutorEdits } from '@sci/classroom';
-import { JUDGMENT_WORDS, SITUATIONS_BY_KIND, checkEditedText, fromDisplayText, toDisplayText, type EditCheckResult } from '@sci/tutor';
+import { JUDGMENT_WORDS, normalizeKo, SITUATIONS_BY_KIND, checkEditedText, fromDisplayText, toDisplayText, type EditCheckResult } from '@sci/tutor';
 import { keyOf, type CatalogAnswer, type CatalogExperiment, type CatalogUnit } from './tutorCatalog';
 
 /** 편집 중인 질문 한 줄: text는 교사 화면 글(자리표시가 〔…〕). 저장하기 전까지는 검사를 통과하지 못한 글도 들어 있을 수 있다. */
@@ -80,6 +80,8 @@ export function checkAnswer(d: DraftAnswer): string[] {
   const not = splitWords(d.notText);
   if (not.length > MAX_NOT) out.push(`제외 낱말은 ${MAX_NOT}개까지예요`);
   if ([...keys.flat(), ...not].some((w) => w.length > MAX_WORD)) out.push(`낱말은 ${MAX_WORD}자 안으로 써 주세요`);
+  // 띄어쓰기·문장부호를 빼면 남는 글자가 없는 낱말은 학생 말과 견줄 수 없다(그 묶음은 늘 맞지 않는다).
+  if ([...keys.flat(), ...not].some((w) => normalizeKo(w) === '')) out.push('문장부호나 기호만으로 된 낱말은 쓸 수 없어요');
   const confirm = d.confirm.trim();
   if (!confirm) out.push('확인 문장을 입력해 주세요');
   else {

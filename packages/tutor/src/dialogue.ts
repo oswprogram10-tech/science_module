@@ -48,12 +48,25 @@ export const CONTRAST_WORDS: readonly (readonly [word: string, stem: string])[] 
   ['느려', '느'], ['느리', '느'], ['느린', '느'], ['느릴', '느'], ['약해', '약'], ['약하', '약'], ['약한', '약'], ['약할', '약'],
   ['줄어', '줄'], ['줄면', '줄'], ['줄이', '줄'], ['줄인', '줄'], ['줄여', '줄'], ['낮추', '낮'], ['낮춰', '낮'],
   ['짧', '짧'], ['차가', '차'], ['차갑', '차'], ['찬', '찬'], ['멀', '멀'], ['늦', '늦'], ['빼', '빼'], ['없애', '없'], ['않', '않'],
+  ['열면', '열'], ['열어', '열'], ['열고', '열'], ['벗기', '벗'], ['벗겨', '벗'], ['상관없', '없'], ['관계없', '없'],
+  ['가벼', '가벼'], ['작게', '작'], ['낮게', '낮'], ['아니', '아니'],
 ];
 
-/** 학생 말의 반대 낱말이 결론·keys에 같은 뿌리(적·작·낮·느·줄 …)로 없으면 이 결론과 어긋난 말로 본다. */
-const contradicts = (norm: string, a: AnswerKey): boolean => {
+/**
+ * 부정(띄어 쓴 "안"·"못", 붙여 쓴 "안덮으면", "~지 않/못"). 결론·keys에 같은 뿌리(안·못·않)가 없으면 어긋난 말로 본다.
+ * 정규화하면 띄어쓰기가 사라지므로 원래 말에서 본다.
+ */
+const NEGATIONS: readonly (readonly [pattern: RegExp, stem: string])[] = [
+  [/(^|[\s,.])안(?=\s|[가-힣])/u, '안'],
+  [/(^|[\s,.])못(?=\s|[가-힣])/u, '못'],
+  [/지\s*않/u, '않'],
+  [/지\s*못/u, '못'],
+];
+
+/** 학생 말의 반대 낱말·부정이 결론·keys에 같은 뿌리(적·작·낮·느·줄·안·못 …)로 없으면 이 결론과 어긋난 말로 본다. */
+const contradicts = (raw: string, norm: string, a: AnswerKey): boolean => {
   const own = normalizeKo([a.conclusion, ...a.keys.flat()].join(' '));
-  return CONTRAST_WORDS.some(([w, stem]) => norm.includes(w) && !own.includes(stem));
+  return CONTRAST_WORDS.some(([w, stem]) => norm.includes(w) && !own.includes(stem)) || NEGATIONS.some(([re, stem]) => re.test(raw) && !own.includes(stem));
 };
 
 export function matchAnswer(utterance: string, answers: readonly AnswerKey[], preferIv?: string | null): AnswerMatch | null {
@@ -68,7 +81,7 @@ export function matchAnswer(utterance: string, answers: readonly AnswerKey[], pr
       opposite ??= { answer: a, opposite: true };
       continue;
     }
-    if (contradicts(norm, a)) continue;
+    if (contradicts(utterance, norm, a)) continue;
     return { answer: a, opposite: false };
   }
   return opposite;
@@ -150,6 +163,14 @@ export function withAlternate(prefix: string, question: string, previous: string
   const text = `${prefix}${question}`;
   if (previous === undefined || text !== previous) return text;
   return `${prefix}${ALTERNATE_QUESTIONS.find((q) => `${prefix}${q}` !== previous) ?? ALTERNATE_QUESTIONS[0]}`;
+}
+
+/** 앱이 만든 반응 글(예측·다시 보기·확인)이 직전에 보인 글과 같으면 첫 문장은 두고 질문만 대체 질문으로 바꾼다. */
+function avoidRepeat(text: string, previous: string | undefined): string {
+  if (previous === undefined || text !== previous) return text;
+  const s = splitSentences(text);
+  const prefix = s.length > 1 ? `${s.slice(0, -1).join(' ')} ` : '';
+  return withAlternate(prefix, s[s.length - 1] ?? text, previous);
 }
 
 // ---- 앱이 만드는 글 ----
@@ -237,10 +258,10 @@ export function planTurn(input: PlanInput): TurnPlan {
         const base = u.answer.iv ?? currentIv;
         const next = exp.variables.find((v) => v.key !== base && !tested.has(v.key));
         const follow = next ? renderProbe(NEXT_IV, { iv: next.label, changed: [], dv }) : LIFE;
-        return { kind: 'confirm', text: `${u.answer.confirm} ${follow}`, answer: u.answer };
+        return { kind: 'confirm', text: avoidRepeat(`${u.answer.confirm} ${follow}`, input.previousTutor), answer: u.answer };
       }
-      if (ok && u.opposite) return { kind: 'recheck', text: fill(RECHECK, ivKey) };
-      return { kind: 'predict', text: ivKey ? fill(PREDICT, ivKey) : PREDICT_NO_IV };
+      if (ok && u.opposite) return { kind: 'recheck', text: avoidRepeat(fill(RECHECK, ivKey), input.previousTutor) };
+      return { kind: 'predict', text: avoidRepeat(ivKey ? fill(PREDICT, ivKey) : PREDICT_NO_IV, input.previousTutor) };
     }
     case 'question':
       return model(PREFIX_QUESTION);
