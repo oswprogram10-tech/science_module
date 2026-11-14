@@ -51,6 +51,8 @@ out/                         내보내기 결과(.gitignore)
 학습 노트북의 마지막 칸이 `EXPORT_MODELS`(기본은 `RUN_MODELS`)의 모델마다 SFT·DPO 어댑터를 합쳐 `<모델>/<모델>.gguf`(Q4_K_M)를 만든다. 이 파일을 교사 PC 교사 화면의 「튜터 모델 고르기 → 모델 파일 넣기」로 넣으면 학생 기기가 교실 와이파이로 받는다(사양 `docs/specs/tutor-on-device-v1.md`).
 - llama.cpp는 앱(`apps/student/android/app/src/main/cpp/CMakeLists.txt`)과 같은 태그·커밋(b12359)으로 고정한다. 올릴 때는 두 곳을 함께 바꾼다.
 - 변환기(`convert_hf_to_gguf.py`)는 transformers 4.x를 고정하므로 따로 만든 가상환경에서 돌리고, 토크나이저는 원본 파일을 그대로 쓴다(transformers 5가 다시 저장한 설정은 변환기가 읽지 못한다).
+  - Kaggle 파이썬(3.13)에는 `ensurepip`이 없어 `--without-pip`으로 가상환경을 만들고 시스템 pip(`python -m pip`)으로 그 안에 설치한다(5차 실행에서 이 단계가 실패해 고쳤다).
+- 학습은 끝났는데 변환만 실패했으면 다시 학습하지 않는다: 실패한 실행의 출력을 입력으로 추가하고 설정 칸에서 `TRAIN = False`로 바꿔 실행하면 입력의 `<모델>/sft-adapter`·`dpo-adapter`로 GGUF만 만든다.
 - 작은 시험 모델로 노트북 내보내기 칸을 끝까지 돌려, 같은 버전 llama.cpp가 GGUF를 읽고 앱 대화 형식 프롬프트를 학습 토크나이저와 같은 토큰 수(376)로 나누는 것을 확인했다.
 
 ## 사진 튜터 가능성 시험 (Kaggle)
