@@ -1,0 +1,2761 @@
+[
+  {
+    "unitId": "g3-earth-sea",
+    "experimentId": "sea-water",
+    "answerIndex": 0,
+    "positives": [
+      "바닷물을 말리면 소금이 남아요",
+      "바다물은 증발시키면 하얀 가루가 생겨요",
+      "바닷물에는 소금이 들어 있어서 하얀 가루가 나와요"
+    ],
+    "negatives": [
+      "바닷물을 말리면 소금이 안 남아요",
+      "접시 모양이 다르면 가루가 달라요",
+      "강물이 소금이 더 많이 남아요"
+    ]
+  },
+  {
+    "unitId": "g3-earth-sea",
+    "experimentId": "sea-water",
+    "answerIndex": 1,
+    "positives": [
+      "물을 많이 넣을수록 남는 가루도 많아져요",
+      "물의 양이 늘면 가루가 더 늘어요",
+      "물이 더 많으면 소금도 더 많이 남아요"
+    ],
+    "negatives": [
+      "물이 많을수록 가루가 적게 남아요",
+      "접시 모양이 다르면 가루도 달라요"
+    ]
+  },
+  {
+    "unitId": "g3-earth-sea",
+    "experimentId": "sea-water",
+    "answerIndex": 2,
+    "positives": [
+      "접시 모양은 상관없어요",
+      "네모난 접시든 둥근 접시든 결과가 같아요",
+      "접시 모양은 결과에 영향이 없어요"
+    ],
+    "negatives": [
+      "접시 모양에 따라 결과가 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-earth-sea",
+    "experimentId": "land-sea-dots",
+    "answerIndex": 0,
+    "positives": [
+      "바다가 더 넓어요",
+      "지구는 바다가 육지보다 넓어요",
+      "바다가 육지보다 많이 차지해요"
+    ],
+    "negatives": [
+      "육지가 더 넓어요",
+      "바다보다 육지가 더 많아요"
+    ]
+  },
+  {
+    "unitId": "g3-earth-sea",
+    "experimentId": "land-sea-dots",
+    "answerIndex": 1,
+    "positives": [
+      "점을 많이 찍을수록 더 정확해요",
+      "점이 많으면 믿을 수 있어요",
+      "점 개수가 늘수록 결과가 실제랑 가까워져요"
+    ],
+    "negatives": [
+      "점을 적게 찍을수록 정확해요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-earth-sea",
+    "experimentId": "land-sea-dots",
+    "answerIndex": 2,
+    "positives": [
+      "받침 색은 상관없어요",
+      "받침 색깔이 달라도 결과가 같아요",
+      "색은 관계없어요"
+    ],
+    "negatives": [
+      "받침 색에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-force",
+    "experimentId": "lever-balance",
+    "answerIndex": 0,
+    "positives": [
+      "추가 많을수록 오른쪽이 더 내려가요",
+      "무거운 쪽으로 기울어요",
+      "추를 더 올리면 오른쪽이 아래로 처져요"
+    ],
+    "negatives": [
+      "가벼운 쪽으로 기울어요",
+      "추가 적은 쪽이 내려가요"
+    ]
+  },
+  {
+    "unitId": "g3-force",
+    "experimentId": "lever-balance",
+    "answerIndex": 1,
+    "positives": [
+      "받침점에서 멀수록 더 많이 내려가요",
+      "거리가 멀면 더 기울어요",
+      "멀리 놓을수록 더 아래로 내려가요"
+    ],
+    "negatives": [
+      "가까울수록 더 많이 내려가요",
+      "가벼운 쪽이 내려가요"
+    ]
+  },
+  {
+    "unitId": "g3-force",
+    "experimentId": "lever-balance",
+    "answerIndex": 2,
+    "positives": [
+      "모양은 관계없어요",
+      "추 모양이 달라도 똑같아요",
+      "추의 모양은 상관없어요"
+    ],
+    "negatives": [
+      "모양에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-force",
+    "experimentId": "lever-lift",
+    "answerIndex": 0,
+    "positives": [
+      "힘은 덜 드는 대신 더 많이 당겨야 해요",
+      "힘은 적게 들지만 당기는 거리는 더 길어져요",
+      "힘이 덜 드는 그만큼 더 길게 당겨야 돼요"
+    ],
+    "negatives": [
+      "힘이 적게 들고 거리도 짧아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-force",
+    "experimentId": "lever-lift",
+    "answerIndex": 1,
+    "positives": [
+      "손이 받침점에서 멀수록 힘이 덜 들어요",
+      "힘을 주는 쪽이 길면 힘이 적게 들어요",
+      "길게 잡으면 저울 눈금이 작아져요"
+    ],
+    "negatives": [
+      "받침점에서 멀수록 힘이 더 많이 들어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-force",
+    "experimentId": "lever-lift",
+    "answerIndex": 2,
+    "positives": [
+      "지레를 쓰면 힘이 덜 들어요",
+      "빗면으로 올리면 힘이 적게 들어요",
+      "도구를 쓰면 더 쉽게 들어올려요"
+    ],
+    "negatives": [
+      "도구를 쓰면 힘이 더 많이 들어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-force",
+    "experimentId": "lever-lift",
+    "answerIndex": 3,
+    "positives": [
+      "색깔은 상관없어요",
+      "상자 색이 달라도 똑같아요",
+      "색은 관계없어요"
+    ],
+    "negatives": [
+      "색깔에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-force",
+    "experimentId": "push-pull",
+    "answerIndex": 0,
+    "positives": [
+      "세게 밀수록 멀리 가요",
+      "힘이 클수록 더 멀리 나가요",
+      "세게 하면 거리가 더 늘어나요"
+    ],
+    "negatives": [
+      "세게 밀수록 멀리 안 가요",
+      "약하게 밀면 가까이 가요"
+    ]
+  },
+  {
+    "unitId": "g3-force",
+    "experimentId": "push-pull",
+    "answerIndex": 1,
+    "positives": [
+      "밀면 멀어지고 당기면 가까워져요",
+      "밀면 손에서 멀어지고 당기면 손 쪽으로 와요",
+      "미는 건 멀어지고 당기는 건 가까워져요"
+    ],
+    "negatives": [
+      "밀면 가까워지고 당기면 멀어져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-force",
+    "experimentId": "push-pull",
+    "answerIndex": 2,
+    "positives": [
+      "찰흙은 모양이 변해요",
+      "찰흙은 눌려서 납작해져요",
+      "찰흙은 힘을 주면 모양이 바뀌어요"
+    ],
+    "negatives": [
+      "찰흙은 모양이 변하지 않아요",
+      "수레는 멀리 가요"
+    ]
+  },
+  {
+    "unitId": "g3-force",
+    "experimentId": "push-pull",
+    "answerIndex": 3,
+    "positives": [
+      "색깔은 상관없어요",
+      "색이 달라도 똑같이 움직여요",
+      "색은 관계없어요"
+    ],
+    "negatives": [
+      "색에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-force",
+    "experimentId": "spring-scale",
+    "answerIndex": 0,
+    "positives": [
+      "추가 하나씩 늘 때마다 같은 길이씩 늘어나요",
+      "추를 한 개 더 걸 때마다 일정하게 늘어나요",
+      "추가 한 개씩 늘어나면 똑같이 늘어나요"
+    ],
+    "negatives": [
+      "추가 늘어도 길이는 그대로예요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-force",
+    "experimentId": "spring-scale",
+    "answerIndex": 1,
+    "positives": [
+      "추를 많이 걸수록 길게 늘어나요",
+      "무거울수록 더 늘어나요",
+      "추가 늘면 용수철도 늘어나요"
+    ],
+    "negatives": [
+      "추가 많을수록 용수철이 짧아져요",
+      "용수철 색깔이 다르면 달라요"
+    ]
+  },
+  {
+    "unitId": "g3-force",
+    "experimentId": "spring-scale",
+    "answerIndex": 2,
+    "positives": [
+      "필통이 제일 무거워요",
+      "필통이 가장 많이 늘어나요",
+      "필통이 풀보다 무겁고 가위보다도 무거워요"
+    ],
+    "negatives": [
+      "필통이 제일 가벼워요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-force",
+    "experimentId": "spring-scale",
+    "answerIndex": 3,
+    "positives": [
+      "가위가 풀보다 무거워요",
+      "풀이 가위보다 가벼워요",
+      "가위는 풀보다 더 많이 늘어나요"
+    ],
+    "negatives": [
+      "풀이 가위보다 무거워요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-force",
+    "experimentId": "spring-scale",
+    "answerIndex": 4,
+    "positives": [
+      "색깔은 상관없어요",
+      "용수철 색이 달라도 똑같아요",
+      "색은 관계없어요"
+    ],
+    "negatives": [
+      "색에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-health",
+    "experimentId": "infection-spread",
+    "answerIndex": 0,
+    "positives": [
+      "손을 자주 씻으면 덜 퍼져요",
+      "손씻기를 하면 감염이 줄어요",
+      "손을 씻으면 아픈 사람이 적어요"
+    ],
+    "negatives": [
+      "손을 씻으면 더 많이 퍼져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-health",
+    "experimentId": "infection-spread",
+    "answerIndex": 1,
+    "positives": [
+      "마스크를 쓰면 덜 퍼져요",
+      "마스크를 쓰면 감염이 줄어요",
+      "마스크를 쓰면 아픈 사람이 적어요"
+    ],
+    "negatives": [
+      "마스크를 쓰면 더 많이 퍼져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-health",
+    "experimentId": "infection-spread",
+    "answerIndex": 2,
+    "positives": [
+      "친구를 많이 만날수록 감염이 많이 퍼져요",
+      "만나는 사람이 많으면 빨리 퍼져요",
+      "8명 만날 때가 4명보다 더 많이 아팠어요"
+    ],
+    "negatives": [
+      "친구를 적게 만나면 더 많이 퍼져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-health",
+    "experimentId": "infection-spread",
+    "answerIndex": 3,
+    "positives": [
+      "자리는 상관없어요",
+      "앞줄이든 뒷줄이든 똑같아요",
+      "자리는 관계없어요"
+    ],
+    "negatives": [
+      "자리에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-health",
+    "experimentId": "infection-spread",
+    "answerIndex": 4,
+    "positives": [
+      "함께 지키면 효과가 더 커요",
+      "같이 하면 훨씬 덜 퍼져요",
+      "둘 다 하면 효과가 더 좋아요"
+    ],
+    "negatives": [
+      "함께 지켜도 효과가 같아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-lifecycle",
+    "experimentId": "germination",
+    "answerIndex": 0,
+    "positives": [
+      "물이 있어야 싹이 터요",
+      "씨앗은 물이 필요해요",
+      "물을 줘야 싹이 트고 안 주면 안 터요"
+    ],
+    "negatives": [
+      "물이 없어도 싹이 터요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-lifecycle",
+    "experimentId": "germination",
+    "answerIndex": 1,
+    "positives": [
+      "온도가 낮으면 싹이 안 터요",
+      "따뜻해야 싹이 잘 터요",
+      "알맞은 온도가 필요해요"
+    ],
+    "negatives": [
+      "추울수록 싹이 잘 터요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-lifecycle",
+    "experimentId": "germination",
+    "answerIndex": 2,
+    "positives": [
+      "빛이 없어도 싹이 터요",
+      "빛은 필요하지 않아요",
+      "어두운 곳에서도 싹이 터요"
+    ],
+    "negatives": [
+      "빛이 있어야 싹이 터요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-lifecycle",
+    "experimentId": "butterfly-life",
+    "answerIndex": 0,
+    "positives": [
+      "알에서 애벌레가 되고 번데기를 거쳐 어른벌레가 돼요",
+      "알 애벌레 번데기 나비 순서예요",
+      "알→애벌레→번데기→어른벌레"
+    ],
+    "negatives": [
+      "애벌레가 바로 나비가 돼요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-lifecycle",
+    "experimentId": "butterfly-life",
+    "answerIndex": 1,
+    "positives": [
+      "애벌레는 먹이를 먹지만 번데기는 안 먹어요",
+      "번데기 때는 먹지 않고 애벌레만 먹어요",
+      "애벌레는 먹고 번데기는 먹지 않아요"
+    ],
+    "negatives": [
+      "번데기도 먹이를 먹어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-lifecycle",
+    "experimentId": "butterfly-life",
+    "answerIndex": 2,
+    "positives": [
+      "아침이든 저녁이든 관계없어요",
+      "아침과 저녁은 상관없어요",
+      "저녁에 봐도 똑같아요"
+    ],
+    "negatives": [
+      "아침에는 더 커요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-sound",
+    "experimentId": "string-sound",
+    "answerIndex": 0,
+    "positives": [
+      "세게 튕기면 소리가 커져요",
+      "힘을 세게 주면 소리가 더 커요",
+      "세게 튕길수록 큰 소리가 나요"
+    ],
+    "negatives": [
+      "세게 튕기면 소리가 작아요",
+      "줄 색이 다르면 소리가 달라요"
+    ]
+  },
+  {
+    "unitId": "g3-sound",
+    "experimentId": "string-sound",
+    "answerIndex": 1,
+    "positives": [
+      "줄이 짧을수록 높은 소리가 나요",
+      "짧은 줄이 더 빨리 떨려요",
+      "줄의 길이가 짧으면 소리가 높아요"
+    ],
+    "negatives": [
+      "줄이 짧을수록 낮은 소리가 나요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-sound",
+    "experimentId": "string-sound",
+    "answerIndex": 2,
+    "positives": [
+      "세게 튕겨도 높낮이는 같아요",
+      "세기는 소리의 높이와 관계없어요",
+      "세게 쳐도 떨린 횟수는 똑같아요"
+    ],
+    "negatives": [
+      "세게 튕기면 소리가 높아져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-sound",
+    "experimentId": "string-sound",
+    "answerIndex": 3,
+    "positives": [
+      "색은 관계없어요",
+      "고무줄 색이 달라도 똑같아요",
+      "색깔은 상관없어요"
+    ],
+    "negatives": [
+      "색에 따라 소리가 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-sound",
+    "experimentId": "sound-vibration",
+    "answerIndex": 0,
+    "positives": [
+      "세게 칠수록 더 많이 떨리고 소리도 커요",
+      "떨림이 클수록 소리가 커요",
+      "세게 치면 좁쌀이 더 높이 튀고 소리도 더 커요"
+    ],
+    "negatives": [
+      "세게 치면 소리가 작아져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-sound",
+    "experimentId": "sound-vibration",
+    "answerIndex": 1,
+    "positives": [
+      "소리가 나면 물체가 떨려요",
+      "소리 나는 물체는 진동해요",
+      "소리가 날 때 좁쌀이 튀어요"
+    ],
+    "negatives": [
+      "소리가 나는 물체는 떨리지 않아요",
+      "좁쌀 색이 다르면 달라요"
+    ]
+  },
+  {
+    "unitId": "g3-sound",
+    "experimentId": "sound-vibration",
+    "answerIndex": 2,
+    "positives": [
+      "좁쌀 색은 관계없어요",
+      "노란 좁쌀이든 흰 좁쌀이든 똑같아요",
+      "색은 상관없어요"
+    ],
+    "negatives": [
+      "색에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-sound",
+    "experimentId": "sound-transmit",
+    "answerIndex": 0,
+    "positives": [
+      "소리는 물에서도 전달돼요",
+      "나무 책상을 통해서도 소리가 들려요",
+      "소리는 공기뿐 아니라 물이나 실로도 전해져요"
+    ],
+    "negatives": [
+      "물에서는 소리가 전달되지 않아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-sound",
+    "experimentId": "sound-transmit",
+    "answerIndex": 1,
+    "positives": [
+      "솜이 소리를 가장 잘 막아요",
+      "솜으로 감싸면 소음이 제일 많이 줄어요",
+      "솜이 제일 잘 막아서 작게 들려요"
+    ],
+    "negatives": [
+      "솜은 소리를 못 막아요",
+      "종이 상자가 가장 잘 막아요"
+    ]
+  },
+  {
+    "unitId": "g3-sound",
+    "experimentId": "sound-transmit",
+    "answerIndex": 2,
+    "positives": [
+      "푹신한 재료가 소리를 잘 막아요",
+      "부드러운 재료일수록 소음이 줄어요",
+      "푹신하면 소리가 작게 들려요"
+    ],
+    "negatives": [
+      "딱딱한 재료가 소리를 더 잘 막아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g3-sound",
+    "experimentId": "sound-transmit",
+    "answerIndex": 3,
+    "positives": [
+      "시계 색깔은 관계없어요",
+      "빨간 시계든 파란 시계든 똑같아요",
+      "색은 상관없어요"
+    ],
+    "negatives": [
+      "색에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-climate",
+    "experimentId": "greenhouse-bottle",
+    "answerIndex": 0,
+    "positives": [
+      "비닐을 씌우면 온도가 더 올라가요",
+      "덮개가 있는 병이 더 뜨거워요",
+      "덮으면 온도가 더 높아요"
+    ],
+    "negatives": [
+      "덮개를 씌우면 온도가 더 낮아져요",
+      "덮개를 씌우면 온도가 안 올라요"
+    ]
+  },
+  {
+    "unitId": "g4-climate",
+    "experimentId": "greenhouse-bottle",
+    "answerIndex": 1,
+    "positives": [
+      "이산화 탄소가 많으면 온도가 더 올라가요",
+      "이산화 탄소를 넣으면 병이 더 뜨거워져요",
+      "이산화 탄소가 많을수록 온도가 높아요"
+    ],
+    "negatives": [
+      "이산화 탄소를 넣으면 온도가 낮아져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-climate",
+    "experimentId": "greenhouse-bottle",
+    "answerIndex": 2,
+    "positives": [
+      "열이 빠져나가지 못해서 그래요",
+      "열이 갇혀서 온도가 올라가요",
+      "열을 가둬요"
+    ],
+    "negatives": [
+      "열이 잘 빠져나가서 시원해요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-climate",
+    "experimentId": "greenhouse-bottle",
+    "answerIndex": 3,
+    "positives": [
+      "뚜껑 색은 관계없어요",
+      "흰색이든 파란색이든 뚜껑은 상관없어요",
+      "뚜껑은 영향이 없어요"
+    ],
+    "negatives": [
+      "뚜껑 색에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-ecosystem",
+    "experimentId": "food-web",
+    "answerIndex": 0,
+    "positives": [
+      "여우가 없으면 토끼가 많아져요",
+      "여우가 없을 때 토끼가 더 늘어나요",
+      "여우가 안 잡아먹으면 토끼가 늘어요"
+    ],
+    "negatives": [
+      "여우가 없으면 토끼가 줄어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-ecosystem",
+    "experimentId": "food-web",
+    "answerIndex": 1,
+    "positives": [
+      "토끼가 풀을 다 먹어요",
+      "토끼가 많으면 풀이 다 없어져요",
+      "토끼가 풀을 모두 먹어서 풀이 줄어요"
+    ],
+    "negatives": [
+      "토끼가 많으면 풀이 늘어나요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-ecosystem",
+    "experimentId": "food-web",
+    "answerIndex": 2,
+    "positives": [
+      "비가 많이 오면 풀이 잘 자라요",
+      "비가 자주 오면 풀이 많아져요",
+      "비가 많이 올수록 풀이 무성해요"
+    ],
+    "negatives": [
+      "비가 많이 오면 풀이 안 자라요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-ecosystem",
+    "experimentId": "food-web",
+    "answerIndex": 3,
+    "positives": [
+      "털 색은 관계없어요",
+      "흰 토끼든 갈색 토끼든 똑같아요",
+      "털 색깔은 상관없어요"
+    ],
+    "negatives": [
+      "털 색에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-gases",
+    "experimentId": "syringe-volume",
+    "answerIndex": 0,
+    "positives": [
+      "세게 누를수록 부피가 작아져요",
+      "피스톤을 누르면 기체가 줄어들어요",
+      "누르는 힘이 클수록 부피가 작아요"
+    ],
+    "negatives": [
+      "세게 누르면 부피가 커져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-gases",
+    "experimentId": "syringe-volume",
+    "answerIndex": 1,
+    "positives": [
+      "물 온도가 높을수록 부피가 커져요",
+      "뜨거운 물에 넣으면 기체가 늘어나요",
+      "따뜻하면 공기가 팽창해요"
+    ],
+    "negatives": [
+      "온도가 높을수록 부피가 작아져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-gases",
+    "experimentId": "syringe-volume",
+    "answerIndex": 2,
+    "positives": [
+      "온도가 낮을수록 부피가 작아져요",
+      "얼음물에 넣으면 기체가 줄어들어요",
+      "차가우면 공기가 수축해요"
+    ],
+    "negatives": [
+      "온도가 낮을수록 부피가 커져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-gases",
+    "experimentId": "syringe-volume",
+    "answerIndex": 3,
+    "positives": [
+      "기체 종류는 상관없어요",
+      "기체가 달라도 부피 변화는 비슷해요",
+      "산소든 이산화 탄소든 똑같이 변해요"
+    ],
+    "negatives": [
+      "기체 종류에 따라 부피가 달라요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-gases",
+    "experimentId": "gas-weight",
+    "answerIndex": 0,
+    "positives": [
+      "공기를 많이 넣을수록 더 무거워져요",
+      "많이 누를수록 무게가 늘어요",
+      "공기를 더 넣으면 저울 무게가 커져요"
+    ],
+    "negatives": [
+      "공기를 넣을수록 가벼워져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-gases",
+    "experimentId": "gas-weight",
+    "answerIndex": 1,
+    "positives": [
+      "공기도 무게가 있어요",
+      "기체에도 무게가 있어요",
+      "공기는 무게가 있는 거예요"
+    ],
+    "negatives": [
+      "공기는 무게가 없어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-gases",
+    "experimentId": "gas-weight",
+    "answerIndex": 2,
+    "positives": [
+      "마개를 열면 가벼워져요",
+      "공기를 빼면 무게가 줄어요",
+      "공기가 빠지면 더 가벼워요"
+    ],
+    "negatives": [
+      "마개를 열어도 무게가 그대로예요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-gases",
+    "experimentId": "gas-weight",
+    "answerIndex": 3,
+    "positives": [
+      "띠지 색깔은 관계없어요",
+      "빨간 띠지든 파란 띠지든 똑같아요",
+      "색은 상관없어요"
+    ],
+    "negatives": [
+      "색에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-land",
+    "experimentId": "magma-cooling",
+    "answerIndex": 0,
+    "positives": [
+      "화강암은 천천히 식어서 알갱이가 커요",
+      "화강암은 땅속 깊은 곳에서 굳어서 알갱이가 굵어요",
+      "화강암은 알갱이가 큰 암석이에요"
+    ],
+    "negatives": [
+      "화강암은 알갱이가 작아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-land",
+    "experimentId": "magma-cooling",
+    "answerIndex": 1,
+    "positives": [
+      "현무암은 빨리 식어서 알갱이가 작아요",
+      "현무암은 땅 위에서 빨리 굳어요",
+      "현무암은 알갱이가 아주 작아요"
+    ],
+    "negatives": [
+      "현무암은 알갱이가 커요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-land",
+    "experimentId": "magma-cooling",
+    "answerIndex": 2,
+    "positives": [
+      "천천히 식을수록 알갱이가 커요",
+      "따뜻한 물 위에서 알갱이가 더 굵어요",
+      "오래 굳을수록 큰 알갱이가 생겨요"
+    ],
+    "negatives": [
+      "천천히 식을수록 알갱이가 작아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-land",
+    "experimentId": "magma-cooling",
+    "answerIndex": 3,
+    "positives": [
+      "빨리 식을수록 알갱이가 작아요",
+      "얼음물 위에서 식히면 알갱이가 잘아요",
+      "빨리 굳으면 작은 알갱이가 돼요"
+    ],
+    "negatives": [
+      "빨리 식을수록 알갱이가 커요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-land",
+    "experimentId": "magma-cooling",
+    "answerIndex": 4,
+    "positives": [
+      "색깔은 관계없어요",
+      "흰색이든 검은색이든 똑같아요",
+      "색은 상관없어요"
+    ],
+    "negatives": [
+      "색에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-land",
+    "experimentId": "stream-table",
+    "answerIndex": 0,
+    "positives": [
+      "가파를수록 흙이 많이 깎여요",
+      "경사가 급하면 더 많이 깎여요",
+      "기울기가 클수록 더 많이 깎아요"
+    ],
+    "negatives": [
+      "가파를수록 흙이 덜 깎여요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-land",
+    "experimentId": "stream-table",
+    "answerIndex": 1,
+    "positives": [
+      "가파를수록 흙이 더 많이 쌓여요",
+      "경사가 급할수록 쌓이는 흙이 많아요",
+      "기울기가 클수록 많이 쌓여요"
+    ],
+    "negatives": [
+      "가파를수록 흙이 덜 쌓여요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-land",
+    "experimentId": "stream-table",
+    "answerIndex": 2,
+    "positives": [
+      "물이 많을수록 흙이 더 많이 깎여요",
+      "물을 많이 흘리면 침식이 더 많아져요",
+      "물의 양이 많으면 더 많이 깎여요"
+    ],
+    "negatives": [
+      "물이 많을수록 흙이 덜 깎여요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-land",
+    "experimentId": "stream-table",
+    "answerIndex": 3,
+    "positives": [
+      "물이 많을수록 흙이 더 많이 쌓여요",
+      "물을 많이 흘리면 퇴적이 더 많아져요",
+      "물의 양이 많으면 더 많이 쌓여요"
+    ],
+    "negatives": [
+      "물이 많을수록 흙이 덜 쌓여요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-land",
+    "experimentId": "stream-table",
+    "answerIndex": 4,
+    "positives": [
+      "높은 곳의 흙이 깎여서 낮은 곳에 쌓여요",
+      "위쪽 흙이 깎이고 아래쪽에 쌓여요",
+      "윗부분이 깎여서 아랫부분에 쌓이는 거예요"
+    ],
+    "negatives": [
+      "낮은 곳의 흙이 깎여서 높은 곳에 쌓여요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-land",
+    "experimentId": "stream-table",
+    "answerIndex": 5,
+    "positives": [
+      "그릇은 관계없어요",
+      "컵이든 페트병이든 똑같아요",
+      "그릇은 상관없어요"
+    ],
+    "negatives": [
+      "그릇에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-magnet",
+    "experimentId": "magnet-distance",
+    "answerIndex": 0,
+    "positives": [
+      "가까울수록 클립이 많이 붙어요",
+      "거리가 가까우면 클립이 더 많이 끌려와요",
+      "자석을 가까이 하면 클립이 많이 붙어요"
+    ],
+    "negatives": [
+      "가까울수록 클립이 적게 붙어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-magnet",
+    "experimentId": "magnet-distance",
+    "answerIndex": 1,
+    "positives": [
+      "멀수록 클립이 적게 붙어요",
+      "거리가 멀어지면 클립이 덜 끌려와요",
+      "멀리 두면 클립이 별로 안 붙어요"
+    ],
+    "negatives": [
+      "멀수록 클립이 많이 붙어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-magnet",
+    "experimentId": "magnet-distance",
+    "answerIndex": 2,
+    "positives": [
+      "자석을 겹치면 클립이 더 많이 붙어요",
+      "자석 두 개가 더 세요",
+      "자석 2개를 겹치면 더 많이 끌어당겨요"
+    ],
+    "negatives": [
+      "자석을 겹치면 클립이 적게 붙어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-magnet",
+    "experimentId": "magnet-distance",
+    "answerIndex": 3,
+    "positives": [
+      "종이는 자석의 힘을 막지 못해요",
+      "플라스틱은 자석 힘이 통과해요",
+      "종이를 사이에 두어도 클립이 붙어요"
+    ],
+    "negatives": [
+      "종이는 자석의 힘을 막아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-magnet",
+    "experimentId": "magnet-distance",
+    "answerIndex": 4,
+    "positives": [
+      "철판은 자석의 힘을 막아요",
+      "얇은 철판이 있으면 클립이 안 붙어요",
+      "철판이 자석 힘을 막아서 클립이 안 끌려와요"
+    ],
+    "negatives": [
+      "철판은 자석의 힘을 막지 못해요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-magnet",
+    "experimentId": "magnet-poles",
+    "answerIndex": 0,
+    "positives": [
+      "같은 극끼리는 서로 밀어내요",
+      "N극과 N극을 마주 대면 밀려요",
+      "같은 극이면 밀어요"
+    ],
+    "negatives": [
+      "같은 극끼리는 끌어당겨요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-magnet",
+    "experimentId": "magnet-poles",
+    "answerIndex": 1,
+    "positives": [
+      "다른 극끼리는 서로 끌어당겨요",
+      "N극과 S극은 서로 붙어요",
+      "다른 극이면 끌려요"
+    ],
+    "negatives": [
+      "다른 극끼리는 서로 밀어내요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-magnet",
+    "experimentId": "magnet-poles",
+    "answerIndex": 2,
+    "positives": [
+      "가까울수록 힘이 더 세요",
+      "거리가 가까우면 더 세게 끌어요",
+      "가까워질수록 더 강해요"
+    ],
+    "negatives": [
+      "가까울수록 힘이 약해요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-magnet",
+    "experimentId": "magnet-poles",
+    "answerIndex": 3,
+    "positives": [
+      "멀수록 힘이 약해져요",
+      "거리가 멀면 덜 끌어요",
+      "멀어질수록 힘이 약해요"
+    ],
+    "negatives": [
+      "멀수록 힘이 세져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-magnet",
+    "experimentId": "magnet-poles",
+    "answerIndex": 4,
+    "positives": [
+      "색칠은 관계없어요",
+      "자석 색이 달라도 똑같아요",
+      "색은 상관없어요"
+    ],
+    "negatives": [
+      "색칠에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-microbe",
+    "experimentId": "mold-growth",
+    "answerIndex": 0,
+    "positives": [
+      "축축할수록 곰팡이가 잘 자라요",
+      "물을 뿌린 빵에 곰팡이가 더 많이 폈어요",
+      "물기가 있어야 곰팡이가 자라요"
+    ],
+    "negatives": [
+      "마른 빵에서 곰팡이가 더 잘 자라요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-microbe",
+    "experimentId": "mold-growth",
+    "answerIndex": 1,
+    "positives": [
+      "따뜻할수록 곰팡이가 잘 자라요",
+      "온도가 높을수록 곰팡이가 더 많이 생겨요",
+      "30도에서 곰팡이가 빨리 자라요"
+    ],
+    "negatives": [
+      "따뜻할수록 곰팡이가 안 자라요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-microbe",
+    "experimentId": "mold-growth",
+    "answerIndex": 2,
+    "positives": [
+      "냉장고에서는 곰팡이가 안 자라요",
+      "차가우면 곰팡이가 덜 생겨요",
+      "온도가 낮으면 곰팡이가 느리게 자라요"
+    ],
+    "negatives": [
+      "냉장고에서 곰팡이가 가장 잘 자라요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-microbe",
+    "experimentId": "mold-growth",
+    "answerIndex": 3,
+    "positives": [
+      "빛은 곰팡이와 관계없어요",
+      "어두워도 곰팡이가 자라요",
+      "밝은 곳이든 어두운 곳이든 상관없어요"
+    ],
+    "negatives": [
+      "빛이 있어야 곰팡이가 자라요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-water-state",
+    "experimentId": "freeze-melt",
+    "answerIndex": 0,
+    "positives": [
+      "물이 얼면 부피가 늘어나요",
+      "얼음이 되면 부피가 커져요",
+      "얼리면 부피가 더 많아져요"
+    ],
+    "negatives": [
+      "물이 얼면 부피가 줄어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-water-state",
+    "experimentId": "freeze-melt",
+    "answerIndex": 1,
+    "positives": [
+      "얼음이 녹으면 부피가 줄어요",
+      "녹으면 부피가 작아져요",
+      "얼음을 녹이면 부피가 감소해요"
+    ],
+    "negatives": [
+      "얼음이 녹으면 부피가 늘어나요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-water-state",
+    "experimentId": "freeze-melt",
+    "answerIndex": 2,
+    "positives": [
+      "무게는 변하지 않아요",
+      "무게는 똑같아요",
+      "얼어도 무게는 그대로예요"
+    ],
+    "negatives": [
+      "얼면 무게가 늘어나요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g4-water-state",
+    "experimentId": "freeze-melt",
+    "answerIndex": 3,
+    "positives": [
+      "물이 많을수록 부피 변화가 더 커요",
+      "처음 물의 양이 많으면 부피가 더 많이 늘어요",
+      "물을 더 많이 넣으면 부피가 더 많이 변해요"
+    ],
+    "negatives": [
+      "물이 많을수록 부피 변화가 작아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-body",
+    "experimentId": "exercise-body",
+    "answerIndex": 0,
+    "positives": [
+      "운동하면 맥박이 빨라져요",
+      "달리기를 하면 맥박이 더 많이 뛰어요",
+      "뛰면 심장이 빨리 뛰어요"
+    ],
+    "negatives": [
+      "운동하면 맥박이 느려져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-body",
+    "experimentId": "exercise-body",
+    "answerIndex": 1,
+    "positives": [
+      "운동하면 숨이 가빠져요",
+      "달리기를 하면 호흡이 빨라져요",
+      "뛰면 숨을 더 많이 쉬어요"
+    ],
+    "negatives": [
+      "운동하면 호흡이 느려져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-body",
+    "experimentId": "exercise-body",
+    "answerIndex": 2,
+    "positives": [
+      "손목은 관계없어요",
+      "왼손이든 오른손이든 똑같아요",
+      "어느 손목에서 재도 상관없어요"
+    ],
+    "negatives": [
+      "손목에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-energy",
+    "experimentId": "solar-panel",
+    "answerIndex": 0,
+    "positives": [
+      "30도일 때 전기가 가장 많아요",
+      "기울기가 30도가 제일 좋아요",
+      "30도에서 가장 많이 만들어요"
+    ],
+    "negatives": [
+      "0도일 때 전기가 가장 많아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-energy",
+    "experimentId": "solar-panel",
+    "answerIndex": 1,
+    "positives": [
+      "빛이 똑바로 닿을수록 전기가 많이 나와요",
+      "햇빛을 수직으로 받으면 더 잘 만들어요",
+      "정면으로 빛을 받을수록 전기가 많아요"
+    ],
+    "negatives": [
+      "빛이 비스듬히 닿을수록 전기가 많아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-energy",
+    "experimentId": "solar-panel",
+    "answerIndex": 2,
+    "positives": [
+      "흐린 날에는 전기가 적게 나와요",
+      "구름이 끼면 줄어요",
+      "흐리면 덜 만들어져요"
+    ],
+    "negatives": [
+      "흐린 날에는 전기가 더 많아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-energy",
+    "experimentId": "solar-panel",
+    "answerIndex": 3,
+    "positives": [
+      "맑은 날에 더 많이 만들어요",
+      "맑은 날이 전기가 많아요",
+      "맑으면 더 잘 돌아가요"
+    ],
+    "negatives": [
+      "맑은 날에는 전기가 적어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-energy",
+    "experimentId": "solar-panel",
+    "answerIndex": 4,
+    "positives": [
+      "그늘이 지면 전기가 줄어요",
+      "패널을 가리면 덜 만들어요",
+      "그늘이 생기면 전기가 적게 나와요"
+    ],
+    "negatives": [
+      "그늘이 지면 전기가 늘어나요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-energy",
+    "experimentId": "solar-panel",
+    "answerIndex": 5,
+    "positives": [
+      "테두리 색은 관계없어요",
+      "검은색이든 은색이든 테두리는 상관없어요",
+      "테두리는 영향이 없어요"
+    ],
+    "negatives": [
+      "테두리 색에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-heat",
+    "experimentId": "insulated-cup",
+    "answerIndex": 0,
+    "positives": [
+      "두껍게 감쌀수록 덜 식어요",
+      "2겹이 1겹보다 천천히 식어요",
+      "겹을 늘리면 더 오래 따뜻해요"
+    ],
+    "negatives": [
+      "두껍게 감쌀수록 더 빨리 식어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-heat",
+    "experimentId": "insulated-cup",
+    "answerIndex": 1,
+    "positives": [
+      "물이 많을수록 덜 식어요",
+      "물의 양이 많으면 더 천천히 식어요",
+      "물을 많이 넣으면 오래 따뜻해요"
+    ],
+    "negatives": [
+      "물이 많을수록 더 많이 식어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-heat",
+    "experimentId": "insulated-cup",
+    "answerIndex": 2,
+    "positives": [
+      "뚜껑을 덮으면 덜 식어요",
+      "뚜껑이 있으면 천천히 식어요",
+      "덮어 두면 오래 따뜻해요"
+    ],
+    "negatives": [
+      "뚜껑을 덮으면 더 빨리 식어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-heat",
+    "experimentId": "insulated-cup",
+    "answerIndex": 3,
+    "positives": [
+      "솜으로 감싸면 덜 식어요",
+      "에어캡으로 싸면 천천히 식어요",
+      "솜이나 뽁뽁이가 따뜻함을 오래 유지해요"
+    ],
+    "negatives": [
+      "솜으로 감싸면 더 식어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-heat",
+    "experimentId": "heat-contact",
+    "answerIndex": 0,
+    "positives": [
+      "열이 뜨거운 물에서 찬물로 이동해요",
+      "따뜻한 쪽에서 차가운 쪽으로 열이 전달돼요",
+      "열이 뜨거운 곳에서 찬물 쪽으로 옮겨가요"
+    ],
+    "negatives": [
+      "열이 찬물에서 뜨거운 물로 이동해요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-heat",
+    "experimentId": "heat-contact",
+    "answerIndex": 1,
+    "positives": [
+      "두 물의 온도가 같아져요",
+      "나중에는 온도가 똑같아져요",
+      "결국 비슷한 온도가 돼요"
+    ],
+    "negatives": [
+      "온도가 점점 멀어져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-heat",
+    "experimentId": "heat-contact",
+    "answerIndex": 2,
+    "positives": [
+      "찬물이 많을수록 더 낮아져요",
+      "찬물을 많이 넣으면 안쪽 물이 더 많이 식어요",
+      "찬물이 많으면 온도가 더 떨어져요"
+    ],
+    "negatives": [
+      "찬물이 많을수록 덜 식어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-heat",
+    "experimentId": "heat-contact",
+    "answerIndex": 3,
+    "positives": [
+      "이름표 색은 관계없어요",
+      "이름표가 노랑이든 초록이든 똑같아요",
+      "이름표 색은 상관없어요"
+    ],
+    "negatives": [
+      "이름표 색에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-heat",
+    "experimentId": "thermometer",
+    "answerIndex": 0,
+    "positives": [
+      "철봉과 나무 판은 온도가 같은데 철봉이 더 차갑게 느껴져요",
+      "철봉과 나무는 같은 온도지만 느낌이 달라요",
+      "철이랑 나무 판의 온도는 같은데 철봉이 더 차가워요"
+    ],
+    "negatives": [
+      "철봉이 나무보다 온도가 더 낮아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-heat",
+    "experimentId": "thermometer",
+    "answerIndex": 1,
+    "positives": [
+      "손 느낌은 정확하지 않아요",
+      "손으로 느끼면 믿을 수 없어요",
+      "손으로 느끼는 온도는 사람마다 달라요"
+    ],
+    "negatives": [
+      "손 느낌이 온도계보다 정확해요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-heat",
+    "experimentId": "thermometer",
+    "answerIndex": 2,
+    "positives": [
+      "눈높이를 맞춰서 읽어야 해요",
+      "액체 끝과 같은 높이에서 읽어야 해요",
+      "정면에서 수평으로 읽어야 정확해요"
+    ],
+    "negatives": [
+      "위에서 읽어도 상관없어요",
+      "눈금은 어디서 읽어도 같아요"
+    ]
+  },
+  {
+    "unitId": "g5-heat",
+    "experimentId": "heat-transfer",
+    "answerIndex": 0,
+    "positives": [
+      "구리가 철보다 더 빨리 전해져요",
+      "구리판이 철판보다 빨라요",
+      "구리판이 더 빠르고 철판은 느려요"
+    ],
+    "negatives": [
+      "철판이 구리판보다 빨라요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-heat",
+    "experimentId": "heat-transfer",
+    "answerIndex": 1,
+    "positives": [
+      "따뜻한 물은 위로 올라가요",
+      "데운 물이 위로 떠올라요",
+      "뜨거워진 물이 위로 올라가고 차가운 물은 내려와요"
+    ],
+    "negatives": [
+      "따뜻한 물은 아래로 내려가요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-heat",
+    "experimentId": "heat-transfer",
+    "answerIndex": 2,
+    "positives": [
+      "데운 곳에서 가까운 곳부터 차례로 색이 변해요",
+      "전도는 가까운 곳부터 차례로 열이 전해지는 거예요",
+      "멀어질수록 늦게 변해요"
+    ],
+    "negatives": [
+      "먼 곳부터 차례로 변해요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-heat",
+    "experimentId": "heat-transfer",
+    "answerIndex": 3,
+    "positives": [
+      "붙임딱지 색은 관계없어요",
+      "분홍색이든 파란색이든 똑같아요",
+      "색깔은 상관없어요"
+    ],
+    "negatives": [
+      "색에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-light",
+    "experimentId": "convex-lens",
+    "answerIndex": 0,
+    "positives": [
+      "알맞은 거리에서 가장 뜨거워요",
+      "빛이 가장 작게 모일 때 온도가 제일 높아요",
+      "초점에서 온도가 높아요"
+    ],
+    "negatives": [
+      "렌즈에서 멀수록 더 뜨거워요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-light",
+    "experimentId": "convex-lens",
+    "answerIndex": 1,
+    "positives": [
+      "빛 원이 작을수록 더 뜨거워요",
+      "빛이 좁게 모일수록 온도가 높아요",
+      "지름이 작으면 온도가 높아요"
+    ],
+    "negatives": [
+      "빛 원이 클수록 더 뜨거워요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-light",
+    "experimentId": "convex-lens",
+    "answerIndex": 2,
+    "positives": [
+      "더 볼록할수록 가까운 곳에 모여요",
+      "많이 볼록한 렌즈는 렌즈 가까이에 빛이 모여요",
+      "볼록한 정도가 클수록 초점이 가까워요"
+    ],
+    "negatives": [
+      "볼록할수록 멀리 모여요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-light",
+    "experimentId": "convex-lens",
+    "answerIndex": 3,
+    "positives": [
+      "큰 렌즈가 더 뜨거워요",
+      "렌즈가 클수록 온도가 높아요",
+      "렌즈의 크기가 클수록 온도가 높아져요"
+    ],
+    "negatives": [
+      "작은 렌즈가 더 뜨거워요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-light",
+    "experimentId": "light-needed",
+    "answerIndex": 0,
+    "positives": [
+      "물체에 닿은 빛이 반사돼서 눈으로 들어와요",
+      "빛이 부딪혀서 눈에 보여요",
+      "빛이 반사되어 눈에 들어와서 보는 거예요"
+    ],
+    "negatives": [
+      "빛이 없어도 눈으로 보여요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-light",
+    "experimentId": "light-needed",
+    "answerIndex": 1,
+    "positives": [
+      "빛이 있어야 물체가 보여요",
+      "손전등을 켜야 인형이 보여요",
+      "빛이 없으면 안 보여요"
+    ],
+    "negatives": [
+      "빛이 없어도 물체가 보여요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-light",
+    "experimentId": "light-needed",
+    "answerIndex": 2,
+    "positives": [
+      "전구는 스스로 빛을 내요",
+      "켜진 전구는 손전등을 꺼도 보여요",
+      "전구는 자기가 빛을 내서 보여요"
+    ],
+    "negatives": [
+      "전구는 불을 꺼도 보이지 않아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-light",
+    "experimentId": "light-needed",
+    "answerIndex": 3,
+    "positives": [
+      "상자 색깔은 관계없어요",
+      "검은 상자든 흰 상자든 똑같아요",
+      "색은 상관없어요"
+    ],
+    "negatives": [
+      "상자 색에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-mixture",
+    "experimentId": "salt-sand",
+    "answerIndex": 0,
+    "positives": [
+      "소금은 물에 녹고 모래는 안 녹아요",
+      "소금은 녹는데 모래는 녹지 않고 가라앉아요",
+      "모래는 물에 녹지 않고 소금은 녹아요"
+    ],
+    "negatives": [
+      "소금은 안 녹고 모래는 녹아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-mixture",
+    "experimentId": "salt-sand",
+    "answerIndex": 1,
+    "positives": [
+      "물이 적으면 소금이 다 안 녹아요",
+      "물이 부족하면 소금이 남아요",
+      "물을 조금 넣으면 소금이 다 녹지 않아요"
+    ],
+    "negatives": [
+      "물이 많으면 소금이 다 안 녹아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-mixture",
+    "experimentId": "salt-sand",
+    "answerIndex": 2,
+    "positives": [
+      "물을 많이 넣으면 소금을 더 많이 얻어요",
+      "물이 많을수록 얻는 소금이 늘어요",
+      "물을 많이 넣어야 소금을 많이 얻어요"
+    ],
+    "negatives": [
+      "물을 많이 넣으면 소금을 적게 얻어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-mixture",
+    "experimentId": "salt-sand",
+    "answerIndex": 3,
+    "positives": [
+      "거름종이로 거르면 모래가 안 섞여요",
+      "거름종이를 쓰면 깨끗하게 나눠져요",
+      "걸러야 모래가 안 들어가요"
+    ],
+    "negatives": [
+      "거름종이는 안 써도 상관없어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-mixture",
+    "experimentId": "salt-sand",
+    "answerIndex": 4,
+    "positives": [
+      "젓는 도구는 관계없어요",
+      "유리 막대든 나무 젓가락이든 똑같아요",
+      "젓는 도구는 상관없어요"
+    ],
+    "negatives": [
+      "도구에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-solution",
+    "experimentId": "dissolve-amount",
+    "answerIndex": 0,
+    "positives": [
+      "물이 따뜻할수록 많이 녹아요",
+      "온도가 높을수록 더 많이 녹아요",
+      "뜨거운 물에서 더 잘 녹아요"
+    ],
+    "negatives": [
+      "온도가 높을수록 적게 녹아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-solution",
+    "experimentId": "dissolve-amount",
+    "answerIndex": 1,
+    "positives": [
+      "물의 양이 많을수록 더 많이 녹아요",
+      "물을 많이 넣으면 더 녹아요",
+      "물이 더 많으면 설탕이 잘 녹아요"
+    ],
+    "negatives": [
+      "물이 많을수록 적게 녹아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-solution",
+    "experimentId": "dissolve-amount",
+    "answerIndex": 2,
+    "positives": [
+      "저어도 녹는 양은 같아요",
+      "젓는다고 녹는 양이 달라지지는 않아요",
+      "저어도 녹는 양은 똑같고 빨리 녹기만 해요"
+    ],
+    "negatives": [
+      "젓기를 하면 더 많이 녹아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-solution",
+    "experimentId": "dissolve-amount",
+    "answerIndex": 3,
+    "positives": [
+      "용질마다 녹는 양이 달라요",
+      "소금이랑 설탕은 녹는 양이 달라요",
+      "물질 종류에 따라 녹는 양이 달라요"
+    ],
+    "negatives": [
+      "용질이 달라도 녹는 양이 똑같아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-solution",
+    "experimentId": "concentration",
+    "answerIndex": 0,
+    "positives": [
+      "설탕을 많이 넣을수록 진해져요",
+      "설탕이 많으면 더 진해요",
+      "설탕을 더 넣으면 용액이 진해져요"
+    ],
+    "negatives": [
+      "설탕을 많이 넣을수록 연해져요",
+      "설탕은 물에 녹지 않아요"
+    ]
+  },
+  {
+    "unitId": "g5-solution",
+    "experimentId": "concentration",
+    "answerIndex": 1,
+    "positives": [
+      "물이 적을수록 진해요",
+      "물을 덜 넣으면 용액이 진해져요",
+      "물이 조금이면 진해요"
+    ],
+    "negatives": [
+      "물이 적을수록 연해요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-solution",
+    "experimentId": "concentration",
+    "answerIndex": 2,
+    "positives": [
+      "물이 많을수록 연해져요",
+      "물을 많이 넣으면 묽어져요",
+      "물을 더 넣을수록 옅어요"
+    ],
+    "negatives": [
+      "물이 많을수록 진해져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-solution",
+    "experimentId": "concentration",
+    "answerIndex": 3,
+    "positives": [
+      "진할수록 방울토마토가 높이 떠요",
+      "진한 용액에서 토마토가 더 높이 떠올라요",
+      "더 진하면 방울토마토가 위로 떠요"
+    ],
+    "negatives": [
+      "진할수록 방울토마토가 가라앉아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-solution",
+    "experimentId": "concentration",
+    "answerIndex": 4,
+    "positives": [
+      "흰 설탕은 색으로 비교하기 어려워요",
+      "하얀 설탕은 색으로 구별할 수 없어요",
+      "흰 설탕은 색깔로는 알 수 없어요"
+    ],
+    "negatives": [
+      "흰 설탕은 색으로 비교하기 쉬워요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-solution",
+    "experimentId": "concentration",
+    "answerIndex": 5,
+    "positives": [
+      "비커 모양은 관계없어요",
+      "낮은 비커든 높은 비커든 똑같아요",
+      "비커 모양은 상관없어요"
+    ],
+    "negatives": [
+      "비커 모양에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-weather",
+    "experimentId": "land-sea-breeze",
+    "answerIndex": 0,
+    "positives": [
+      "모래가 물보다 빨리 데워져요",
+      "모래는 물보다 빨리 식어요",
+      "육지가 바다보다 빨리 뜨거워져요"
+    ],
+    "negatives": [
+      "모래는 천천히 데워져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-weather",
+    "experimentId": "land-sea-breeze",
+    "answerIndex": 1,
+    "positives": [
+      "물은 천천히 데워져요",
+      "바다는 모래보다 천천히 식어요",
+      "물이 늦게 뜨거워져요"
+    ],
+    "negatives": [
+      "물은 빨리 데워져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-weather",
+    "experimentId": "land-sea-breeze",
+    "answerIndex": 2,
+    "positives": [
+      "낮에는 바다에서 육지로 바람이 불어요",
+      "낮에는 바다에서 육지쪽으로 불어요",
+      "낮에는 바다에서 땅으로 바람이 불어와요"
+    ],
+    "negatives": [
+      "낮에는 육지에서 바다로 바람이 불어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-weather",
+    "experimentId": "land-sea-breeze",
+    "answerIndex": 3,
+    "positives": [
+      "밤에는 육지에서 바다로 바람이 불어요",
+      "밤에는 땅에서 바다쪽으로 불어요",
+      "밤에는 육지쪽에서 바다로 바람이 불어와요"
+    ],
+    "negatives": [
+      "밤에는 바다에서 육지로 바람이 불어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-weather",
+    "experimentId": "land-sea-breeze",
+    "answerIndex": 4,
+    "positives": [
+      "따뜻한 공기는 위로 올라가요",
+      "데워진 공기가 위로 떠올라요",
+      "뜨거운 공기가 위로 올라가요"
+    ],
+    "negatives": [
+      "따뜻한 공기는 아래로 내려가요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-weather",
+    "experimentId": "land-sea-breeze",
+    "answerIndex": 5,
+    "positives": [
+      "그릇은 관계없어요",
+      "플라스틱이든 유리든 그릇은 똑같아요",
+      "그릇은 상관없어요"
+    ],
+    "negatives": [
+      "그릇에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-weather",
+    "experimentId": "humidity",
+    "answerIndex": 0,
+    "positives": [
+      "온도 차가 클수록 습도가 낮아요",
+      "건구와 습구의 차이가 크면 건조해요",
+      "차이가 커질수록 습도가 낮아져요"
+    ],
+    "negatives": [
+      "온도 차가 클수록 습도가 높아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-weather",
+    "experimentId": "humidity",
+    "answerIndex": 1,
+    "positives": [
+      "온도 차가 0이면 습도가 100%예요",
+      "차이가 없으면 습도가 100이에요",
+      "건구와 습구 온도가 같으면 습도 100% 돼요"
+    ],
+    "negatives": [
+      "온도 차가 0이면 습도가 0이에요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-weather",
+    "experimentId": "humidity",
+    "answerIndex": 2,
+    "positives": [
+      "습도가 낮으면 빨래가 잘 말라요",
+      "건조하면 빨래가 빨리 말라요",
+      "습도가 낮을수록 옷이 금방 말라요"
+    ],
+    "negatives": [
+      "습도가 낮으면 빨래가 안 말라요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-weather",
+    "experimentId": "humidity",
+    "answerIndex": 3,
+    "positives": [
+      "습도가 높으면 빨래가 잘 안 말라요",
+      "습한 날은 옷이 안 말라요",
+      "습도가 높으면 빨래가 오래 걸려요"
+    ],
+    "negatives": [
+      "습도가 높으면 빨래가 잘 말라요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g5-weather",
+    "experimentId": "humidity",
+    "answerIndex": 4,
+    "positives": [
+      "벽 색은 관계없어요",
+      "흰 벽이든 회색 벽이든 똑같아요",
+      "벽 색깔은 상관없어요"
+    ],
+    "negatives": [
+      "벽 색에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-acid-base",
+    "experimentId": "acid-base-mix",
+    "answerIndex": 0,
+    "positives": [
+      "중성이 돼요",
+      "섞으면 중성으로 변해요",
+      "산성이 줄다가 중성이 되고 그다음 염기성이 돼요"
+    ],
+    "negatives": [
+      "중성이 되지 않아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-acid-base",
+    "experimentId": "acid-base-mix",
+    "answerIndex": 1,
+    "positives": [
+      "산성에 염기성을 넣을수록 산성이 약해져요",
+      "염기성 용액을 넣으면 산성이 점점 줄어요",
+      "염기성을 넣을수록 산성이 사라져요"
+    ],
+    "negatives": [
+      "염기성을 넣을수록 산성이 강해져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-acid-base",
+    "experimentId": "acid-base-mix",
+    "answerIndex": 2,
+    "positives": [
+      "중화가 일어나요",
+      "산과 염기가 섞이면 중화돼요",
+      "산성과 염기성이 만나서 중화예요"
+    ],
+    "negatives": [
+      "중화가 안 일어나요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-acid-base",
+    "experimentId": "acid-base-mix",
+    "answerIndex": 3,
+    "positives": [
+      "비커 크기는 관계없어요",
+      "비커가 50 mL든 100 mL든 똑같아요",
+      "비커 크기는 상관없어요"
+    ],
+    "negatives": [
+      "비커 크기에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-combustion",
+    "experimentId": "candle-jar",
+    "answerIndex": 0,
+    "positives": [
+      "집기병이 클수록 오래 타요",
+      "공기가 많으면 초가 더 오래 타요",
+      "큰 병일수록 불이 늦게 꺼져요"
+    ],
+    "negatives": [
+      "집기병이 클수록 빨리 꺼져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-combustion",
+    "experimentId": "candle-jar",
+    "answerIndex": 1,
+    "positives": [
+      "산소가 있어야 초가 타요",
+      "초가 타려면 산소가 필요해요",
+      "산소가 있으면 불이 타요"
+    ],
+    "negatives": [
+      "산소가 없어도 초가 타요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-combustion",
+    "experimentId": "candle-jar",
+    "answerIndex": 2,
+    "positives": [
+      "산소가 부족해서 꺼져요",
+      "산소를 다 써서 불이 꺼져요",
+      "산소가 없어져서 불이 꺼져요"
+    ],
+    "negatives": [
+      "산소가 많아서 꺼져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-combustion",
+    "experimentId": "candle-jar",
+    "answerIndex": 3,
+    "positives": [
+      "초가 많을수록 빨리 꺼져요",
+      "초가 두 개면 더 빨리 꺼져요",
+      "초의 개수가 많으면 불이 금방 꺼져요"
+    ],
+    "negatives": [
+      "초가 많을수록 오래 타요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-combustion",
+    "experimentId": "candle-jar",
+    "answerIndex": 4,
+    "positives": [
+      "초의 색깔은 관계없어요",
+      "흰 초든 빨간 초든 똑같아요",
+      "색은 상관없어요"
+    ],
+    "negatives": [
+      "색에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-combustion",
+    "experimentId": "combustion-products",
+    "answerIndex": 0,
+    "positives": [
+      "이산화 탄소가 생겨요",
+      "석회수가 뿌옇게 돼서 이산화 탄소가 생긴 걸 알아요",
+      "초가 타면 이산화 탄소가 나와요"
+    ],
+    "negatives": [
+      "이산화 탄소는 안 생겨요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-combustion",
+    "experimentId": "combustion-products",
+    "answerIndex": 1,
+    "positives": [
+      "초가 타면 물이 생겨요",
+      "염화 코발트 종이가 붉어져서 물이 생긴 걸 알 수 있어요",
+      "물이 만들어져요"
+    ],
+    "negatives": [
+      "물은 안 생겨요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-combustion",
+    "experimentId": "combustion-products",
+    "answerIndex": 2,
+    "positives": [
+      "집기병 색은 관계없어요",
+      "집기병이 투명이든 연한 파랑이든 똑같아요",
+      "집기병 색은 상관없어요"
+    ],
+    "negatives": [
+      "집기병 색에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-electricity",
+    "experimentId": "electromagnet",
+    "answerIndex": 0,
+    "positives": [
+      "많이 감을수록 세져요",
+      "코일을 더 많이 감으면 클립이 많이 붙어요",
+      "감은 횟수가 많을수록 전자석이 세요"
+    ],
+    "negatives": [
+      "많이 감을수록 약해져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-electricity",
+    "experimentId": "electromagnet",
+    "answerIndex": 1,
+    "positives": [
+      "전지를 직렬로 연결하면 더 세요",
+      "전지 두 개를 직렬로 하면 클립이 많이 붙어요",
+      "직렬 연결이 더 강해요"
+    ],
+    "negatives": [
+      "전지를 직렬로 연결하면 더 약해요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-electricity",
+    "experimentId": "electromagnet",
+    "answerIndex": 2,
+    "positives": [
+      "병렬로 연결하면 1개와 같아요",
+      "병렬은 전지 한 개와 똑같아요",
+      "병렬 연결은 차이가 없어요"
+    ],
+    "negatives": [
+      "병렬로 연결하면 훨씬 더 세요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-electricity",
+    "experimentId": "electromagnet",
+    "answerIndex": 3,
+    "positives": [
+      "전지 방향을 바꾸면 극이 바뀌어요",
+      "반대로 연결하면 N극과 S극이 바뀌어요",
+      "전지를 거꾸로 끼우면 못 머리 쪽 극이 달라져요"
+    ],
+    "negatives": [
+      "방향을 바꿔도 극이 안 바뀌어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-electricity",
+    "experimentId": "electromagnet",
+    "answerIndex": 4,
+    "positives": [
+      "철못이 있어야 클립이 붙어요",
+      "철못이 필요해요",
+      "철못이 없으면 안 붙어요"
+    ],
+    "negatives": [
+      "철못이 없어도 클립이 붙어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-electricity",
+    "experimentId": "electromagnet",
+    "answerIndex": 5,
+    "positives": [
+      "전기가 흐를 때만 자석이 돼요",
+      "전지를 연결해야 클립이 붙어요",
+      "전기가 흐르면 자석이 되고 끊으면 안 돼요"
+    ],
+    "negatives": [
+      "전기가 안 흘러도 자석이 돼요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-electricity",
+    "experimentId": "bulb-light",
+    "answerIndex": 0,
+    "positives": [
+      "전구 꼭지와 옆면에 전선을 연결하면 켜져요",
+      "꼭지랑 옆 쇠붙이에 닿게 해야 불이 켜요",
+      "꼭지와 옆면에 이어야 해요"
+    ],
+    "negatives": [
+      "꼭지에만 이어도 켜져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-electricity",
+    "experimentId": "bulb-light",
+    "answerIndex": 1,
+    "positives": [
+      "서로 다른 부분에 이어야 켜져요",
+      "전선을 다른 곳에 각각 연결해요",
+      "전선 두 개를 서로 다른 곳에 대야 해요"
+    ],
+    "negatives": [
+      "같은 곳에 이어도 켜져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-electricity",
+    "experimentId": "bulb-light",
+    "answerIndex": 2,
+    "positives": [
+      "스위치를 닫으면 켜져요",
+      "스위치를 닫아야 불이 들어와요",
+      "스위치가 닫혀 있어야 전구가 켜져요"
+    ],
+    "negatives": [
+      "스위치를 열어야 켜져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-electricity",
+    "experimentId": "bulb-light",
+    "answerIndex": 3,
+    "positives": [
+      "회로가 완성되어야 불이 켜져요",
+      "전기가 한 바퀴 이어져야 켜져요",
+      "끊긴 곳이 없어야 전구가 켜요"
+    ],
+    "negatives": [
+      "회로가 끊겨도 불이 켜져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-electricity",
+    "experimentId": "bulb-light",
+    "answerIndex": 4,
+    "positives": [
+      "전선 색깔은 관계없어요",
+      "빨간 전선이든 검은 전선이든 똑같아요",
+      "색은 상관없어요"
+    ],
+    "negatives": [
+      "전선 색에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-electricity",
+    "experimentId": "battery-series",
+    "answerIndex": 0,
+    "positives": [
+      "직렬로 연결하면 더 밝아요",
+      "전지가 두 개면 전구가 더 밝아요",
+      "전지를 많이 연결할수록 더 밝아요"
+    ],
+    "negatives": [
+      "직렬로 연결하면 더 어두워요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-electricity",
+    "experimentId": "battery-series",
+    "answerIndex": 1,
+    "positives": [
+      "반대로 넣으면 안 켜져요",
+      "전지를 거꾸로 끼우면 불이 꺼져요",
+      "하나를 반대로 연결하면 켜지지 않아요"
+    ],
+    "negatives": [
+      "반대로 넣으면 더 밝아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-electricity",
+    "experimentId": "battery-series",
+    "answerIndex": 2,
+    "positives": [
+      "전선 색깔은 관계없어요",
+      "빨간 전선이든 검은 전선이든 똑같아요",
+      "색은 상관없어요"
+    ],
+    "negatives": [
+      "전선 색에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-motion",
+    "experimentId": "ramp-cart",
+    "answerIndex": 0,
+    "positives": [
+      "높은 곳에서 출발할수록 빨라요",
+      "출발 높이가 높을수록 속력이 커요",
+      "높이 올릴수록 더 빨리 가요"
+    ],
+    "negatives": [
+      "높은 곳에서 출발할수록 느려요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-motion",
+    "experimentId": "ramp-cart",
+    "answerIndex": 1,
+    "positives": [
+      "수건 바닥에서는 느려요",
+      "수건을 깔면 천천히 가요",
+      "수건 위에서는 시간이 오래 걸려요"
+    ],
+    "negatives": [
+      "수건 바닥에서는 더 빨라요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-motion",
+    "experimentId": "ramp-cart",
+    "answerIndex": 2,
+    "positives": [
+      "추를 실어도 속력은 같아요",
+      "무게는 빠르기와 상관없어요",
+      "수레에 추를 실어도 똑같이 가요"
+    ],
+    "negatives": [
+      "추를 실으면 더 빨라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-motion",
+    "experimentId": "position-time",
+    "answerIndex": 0,
+    "positives": [
+      "위치가 변하지 않으면 운동하지 않아요",
+      "위치가 안 바뀌면 운동이 아니에요",
+      "위치가 그대로이면 운동한 게 아니에요"
+    ],
+    "negatives": [
+      "위치가 안 변해도 운동이에요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-motion",
+    "experimentId": "position-time",
+    "answerIndex": 1,
+    "positives": [
+      "달팽이도 운동해요",
+      "달팽이는 느리지만 위치가 변해서 운동해요",
+      "달팽이도 움직여요"
+    ],
+    "negatives": [
+      "달팽이는 운동하지 않아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-motion",
+    "experimentId": "position-time",
+    "answerIndex": 2,
+    "positives": [
+      "나무는 운동하지 않아요",
+      "나무는 위치가 그대로예요",
+      "나무는 제자리에 있어서 운동이 아니에요"
+    ],
+    "negatives": [
+      "나무도 운동해요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-motion",
+    "experimentId": "position-time",
+    "answerIndex": 3,
+    "positives": [
+      "위치가 변하면 운동한 거예요",
+      "시간에 따라 위치가 바뀌면 운동해요",
+      "위치가 달라지면 운동이에요"
+    ],
+    "negatives": [
+      "위치가 변해도 운동이 아니에요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-motion",
+    "experimentId": "position-time",
+    "answerIndex": 4,
+    "positives": [
+      "날씨는 관계없어요",
+      "맑든 흐리든 날씨는 똑같아요",
+      "날씨는 상관없어요"
+    ],
+    "negatives": [
+      "날씨에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-plant",
+    "experimentId": "transpiration",
+    "answerIndex": 0,
+    "positives": [
+      "잎이 많을수록 물이 많이 줄어요",
+      "잎이 8장이면 물이 더 많이 줄어들어요",
+      "잎이 많으면 물이 더 빨리 없어져요"
+    ],
+    "negatives": [
+      "잎이 많을수록 물이 덜 줄어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-plant",
+    "experimentId": "transpiration",
+    "answerIndex": 1,
+    "positives": [
+      "잎에서 물이 빠져나가요",
+      "잎으로 물이 수증기로 나가요",
+      "물이 잎에서 증발해요"
+    ],
+    "negatives": [
+      "잎에서는 물이 안 빠져나가요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-plant",
+    "experimentId": "transpiration",
+    "answerIndex": 2,
+    "positives": [
+      "밝을수록 물이 많이 줄어요",
+      "빛이 있으면 물이 더 빨리 줄어요",
+      "밝은 곳에서는 물이 더 많이 없어져요"
+    ],
+    "negatives": [
+      "밝을수록 물이 덜 줄어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-plant",
+    "experimentId": "transpiration",
+    "answerIndex": 3,
+    "positives": [
+      "바람이 불면 물이 더 많이 줄어요",
+      "선풍기를 틀면 물이 빨리 줄어요",
+      "바람이 있으면 물이 더 빨리 없어져요"
+    ],
+    "negatives": [
+      "바람이 불면 물이 덜 줄어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-plant",
+    "experimentId": "transpiration",
+    "answerIndex": 4,
+    "positives": [
+      "처음 물의 양은 상관없어요",
+      "처음에 물이 많든 적든 줄어든 양은 비슷해요",
+      "물의 양과 관계없이 똑같이 줄어요"
+    ],
+    "negatives": [
+      "처음 물이 많을수록 더 많이 줄어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-plant",
+    "experimentId": "microscope-cells",
+    "answerIndex": 0,
+    "positives": [
+      "배율이 높을수록 크게 보여요",
+      "배율을 높이면 더 커 보여요",
+      "배율이 클수록 더 크게 보여요"
+    ],
+    "negatives": [
+      "배율이 높을수록 작게 보여요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-plant",
+    "experimentId": "microscope-cells",
+    "answerIndex": 1,
+    "positives": [
+      "염색하면 핵이 잘 보여요",
+      "아이오딘 용액을 하면 더 또렷하게 보여요",
+      "염색하면 점이 선명하게 보여요"
+    ],
+    "negatives": [
+      "염색하면 핵이 안 보여요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-plant",
+    "experimentId": "microscope-cells",
+    "answerIndex": 2,
+    "positives": [
+      "진한 점은 핵이에요",
+      "점처럼 보이는 게 핵이에요",
+      "동그란 점이 핵이에요"
+    ],
+    "negatives": [
+      "점은 핵이 아니에요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-plant",
+    "experimentId": "microscope-cells",
+    "answerIndex": 3,
+    "positives": [
+      "입안 세포에는 세포벽이 없어요",
+      "동물 세포는 세포벽이 안 보여요",
+      "볼 안쪽 세포에는 세포벽이 없어요"
+    ],
+    "negatives": [
+      "입안 세포에도 세포벽이 있어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-plant",
+    "experimentId": "microscope-cells",
+    "answerIndex": 4,
+    "positives": [
+      "양파 세포에는 세포벽이 있어요",
+      "식물 세포는 세포벽이 보여요",
+      "세포벽이 있는 건 식물 세포예요"
+    ],
+    "negatives": [
+      "양파 세포에는 세포벽이 없어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-plant",
+    "experimentId": "microscope-cells",
+    "answerIndex": 5,
+    "positives": [
+      "이름표 색은 관계없어요",
+      "노란색이든 초록색이든 똑같아요",
+      "이름표 색깔은 상관없어요"
+    ],
+    "negatives": [
+      "이름표 색에 따라 달라져요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-seasons",
+    "experimentId": "sun-angle",
+    "answerIndex": 0,
+    "positives": [
+      "자전축이 기울어져 있어서 그래요",
+      "지구의 자전축이 기울어져서 계절이 생겨요",
+      "기울어진 자전축 때문이에요"
+    ],
+    "negatives": [
+      "자전축이 기울지 않아서 계절이 생겨요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-seasons",
+    "experimentId": "sun-angle",
+    "answerIndex": 1,
+    "positives": [
+      "여름에는 남중 고도가 높아요",
+      "여름에 태양이 높이 떠요",
+      "여름에는 해가 높이 올라가요"
+    ],
+    "negatives": [
+      "여름에는 남중 고도가 낮아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-seasons",
+    "experimentId": "sun-angle",
+    "answerIndex": 2,
+    "positives": [
+      "남중 고도가 높을수록 그림자가 짧아요",
+      "해가 높이 뜨면 그림자가 짧아져요",
+      "태양이 높을수록 그림자는 작아요"
+    ],
+    "negatives": [
+      "남중 고도가 높을수록 그림자가 길어요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-seasons",
+    "experimentId": "sun-angle",
+    "answerIndex": 3,
+    "positives": [
+      "남중 고도가 높을수록 낮이 길어요",
+      "해가 높이 뜨면 낮이 길어져요",
+      "고도가 높으면 낮의 길이가 길어요"
+    ],
+    "negatives": [
+      "남중 고도가 높을수록 낮이 짧아요",
+      "모르겠어요"
+    ]
+  },
+  {
+    "unitId": "g6-seasons",
+    "experimentId": "sun-angle",
+    "answerIndex": 4,
+    "positives": [
+      "막대 길이는 남중 고도와 관계없어요",
+      "막대가 길어도 고도는 똑같아요",
+      "막대 길이는 상관없어요"
+    ],
+    "negatives": [
+      "막대 길이에 따라 고도가 달라져요",
+      "모르겠어요"
+    ]
+  }
+]
