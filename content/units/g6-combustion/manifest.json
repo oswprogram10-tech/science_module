@@ -134,7 +134,7 @@
         }
       ],
       "dependent": [
-        { "key": "result", "label": "검사 결과", "unit": "" },
+        { "key": "result", "label": "검사 결과", "unit": "", "values": {"paperBlue": "푸른색 그대로", "paperRed": "붉은색으로 변함", "limeClear": "맑음", "limeSlight": "조금 뿌예짐", "limeCloudy": "뿌예짐"} },
         { "key": "cloud", "label": "석회수 뿌연 정도", "unit": "눈금" },
         { "key": "shorterMm", "label": "초가 짧아진 길이", "unit": "mm" },
         { "key": "stage", "label": "변화 단계", "unit": "단계" }

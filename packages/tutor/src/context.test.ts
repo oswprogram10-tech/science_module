@@ -69,7 +69,7 @@ describe('buildTutorInput: 변인 실험', () => {
       [
         '[단원] 용해와 용액 (5학년)',
         '[탐구 질문] 어떤 조건에서 용질이 더 많이 녹을까?',
-        '[상황] fair-test',
+        '[상황] 한 조건만 바꿨을 때',
         '[바꿀 조건] 물의 온도',
         '[시행]',
         '1) 용질의 종류 백반 · 물의 양 50 mL · 물의 온도 20 °C · 젓기 천천히 → 녹은 양 5.7 g · 걸린 시간 28.5초 · 예측 늘어난다',
@@ -98,7 +98,7 @@ describe('buildTutorInput: 변인 실험', () => {
     expect(buildTutorInput(dissolveExp, s, '', unitOf(solution))).toMatchInlineSnapshot(`
       "[단원] 용해와 용액 (5학년)
       [탐구 질문] 어떤 조건에서 용질이 더 많이 녹을까?
-      [상황] before-run
+      [상황] 실행 전(예측할 때)
       [바꿀 조건] 젓기
       [시행]
       (아직 실행하지 않음)
@@ -116,7 +116,7 @@ describe('buildTutorInput: 변인 실험', () => {
     expect(buildTutorInput(gasExp, s, '눈금이 내려갔어요.', unitOf(gases))).toMatchInlineSnapshot(`
       "[단원] 여러 가지 기체 (4학년)
       [탐구 질문] 주사기 속 기체의 부피는 어떤 조건에 따라 달라질까?
-      [상황] fair-test
+      [상황] 한 조건만 바꿨을 때
       [바꿀 조건] 주사기를 담근 물의 온도
       [시행]
       1) 피스톤을 누르는 힘 살짝 누름 · 주사기를 담근 물의 온도 뜨거운 물 60 °C · 기체의 종류 공기 · 처음 기체의 부피 30 mL → 기체의 부피 27.3 mL · 부피 변화 -2.7 mL · 예측 줄어든다
@@ -126,7 +126,7 @@ describe('buildTutorInput: 변인 실험', () => {
   });
 
   it('TUTOR_SYSTEM과 PROMPT_VERSION', () => {
-    expect(PROMPT_VERSION).toBe('v1');
+    expect(PROMPT_VERSION).toBe('v2');
     expect(TUTOR_SYSTEM).toContain('1~2문장');
     expect(TUTOR_SYSTEM).toContain('질문으로 끝낸다');
   });
@@ -357,7 +357,7 @@ describe('bulb-light: 바꿀 조건을 고르지 않고 실행한 시행', () =>
     expect(input).toContain('[바꿀 조건] (고르지 않음)');
     expect(input).toContain('전구의 밝기 6.0눈금 · 전구 켜짐');
     expect(input).toContain('전구의 밝기 0.0눈금 · 전구 켜지지 않음');
-    expect(input).toContain('[상황] confounded');
+    expect(input).toContain('[상황] 조건을 두 개 넘게 함께 바꿨을 때');
   });
 });
 

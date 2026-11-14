@@ -133,7 +133,7 @@
       ],
       "dependent": [
         { "key": "weight", "label": "전자저울 무게", "unit": "g" },
-        { "key": "firm", "label": "손으로 눌렀을 때", "unit": "" }
+        { "key": "firm", "label": "손으로 눌렀을 때", "unit": "", "values": {"soft": "말랑함", "slight": "조금 단단함", "firm": "단단함", "hard": "아주 단단함"} }
       ],
       "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
       "safety": [],

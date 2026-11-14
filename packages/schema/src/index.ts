@@ -25,6 +25,8 @@ export const dependentSchema = z.object({
   key: z.string().min(1),
   label: z.string().min(1),
   unit: z.string().optional(),
+  /** 숫자가 아닌 결과(예: attract)의 화면 이름. 학생 앱 결과표와 같은 말로, 튜터 입력도 이 이름을 쓴다. */
+  values: z.record(z.string().min(1), z.string().min(1)).optional(),
 });
 
 export const gatewaySchema = z.object({

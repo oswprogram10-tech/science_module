@@ -229,7 +229,8 @@
         {
           "key": "visible",
           "label": "구멍으로 본 물체",
-          "unit": ""
+          "unit": "",
+          "values": {"hidden": "보이지 않음", "visible": "보임"}
         }
       ],
       "gateway": {

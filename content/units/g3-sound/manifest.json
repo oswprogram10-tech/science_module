@@ -221,7 +221,7 @@
       ],
       "dependent": [
         { "key": "level", "label": "소음계 눈금", "unit": "눈금" },
-        { "key": "heard", "label": "귀에 들리나요", "unit": "" }
+        { "key": "heard", "label": "귀에 들리나요", "unit": "", "values": {"loud": "잘 들림", "soft": "작게 들림", "faint": "거의 들리지 않음"} }
       ],
       "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
       "safety": [],

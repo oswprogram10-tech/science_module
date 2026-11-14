@@ -162,17 +162,20 @@
         {
           "key": "eat",
           "label": "먹이를 먹나요",
-          "unit": ""
+          "unit": "",
+          "values": {"eat": "먹음", "noeat": "먹지 않음"}
         },
         {
           "key": "move",
           "label": "움직이나요",
-          "unit": ""
+          "unit": "",
+          "values": {"crawl": "기어 다님", "still": "거의 움직이지 않음", "fly": "날아다님"}
         },
         {
           "key": "wings",
           "label": "날개",
-          "unit": ""
+          "unit": "",
+          "values": {"yes": "있음", "no": "없음"}
         }
       ],
       "gateway": {

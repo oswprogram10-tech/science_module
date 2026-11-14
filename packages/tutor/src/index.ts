@@ -5,10 +5,11 @@ import {
   type Prediction,
   type TrialAnalysis,
 } from '@sci/gateway';
-import { echoesMask, hasForeignScript } from './privacy';
+import { echoesMask, hasForeignScript, hasLatinWord } from './privacy';
 
 /** guardOutput 걸림 이름: 한자·일본 글자 섞임, 개인정보 자리표시 되풀이. */
 export const FOREIGN_SCRIPT_HIT = '한자·일본 글자';
+export const LATIN_WORD_HIT = '영어 낱말·깨진 글자';
 export const MASK_ECHO_HIT = '개인정보 자리표시';
 
 export const FALLBACK_PROBE = '지금까지의 결과표를 다시 살펴볼까요? 무엇이 달라졌나요?';
@@ -98,6 +99,15 @@ export function guardOutput(text: string, config: GuardConfig): GuardResult {
   const extra = [...(hasForeignScript(text) ? [FOREIGN_SCRIPT_HIT] : []), ...(echoesMask(text) ? [MASK_ECHO_HIT] : [])];
   const hits = [...forbidden, ...limits, ...extra];
   return { ok: hits.length === 0, hits };
+}
+
+/**
+ * 튜터 모델 출력 가드: guardOutput에 영어 낱말·깨진 글자 검사(hasLatinWord)를 더한다.
+ * guardOutput은 학생 화면 문구 검사에도 쓰여(내부 키 등 로마자가 섞인다) 이 검사는 모델 출력과 학습 견본에만 쓴다.
+ */
+export function guardModelOutput(text: string, config: GuardConfig): GuardResult {
+  const r = guardOutput(text, config);
+  return hasLatinWord(text) ? { ok: false, hits: [...r.hits, LATIN_WORD_HIT] } : r;
 }
 
 const JOSA_PATTERN = /(\S)(을\(를\)|이\(가\)|와\(과\)|은\(는\))/g;

@@ -140,7 +140,7 @@
         }
       ],
       "dependent": [
-        { "key": "motion", "label": "오른쪽 자석의 움직임", "unit": "" },
+        { "key": "motion", "label": "오른쪽 자석의 움직임", "unit": "", "values": {"attract": "다가와 붙음", "repel": "밀려남", "none": "움직이지 않음"} },
         { "key": "moveCm", "label": "움직인 거리", "unit": "cm" }
       ],
       "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },

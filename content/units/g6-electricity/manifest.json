@@ -58,7 +58,7 @@
       ],
       "dependent": [
         { "key": "clipsMax", "label": "붙은 클립의 수", "unit": "개" },
-        { "key": "headPole", "label": "못 머리 쪽의 극", "unit": "" }
+        { "key": "headPole", "label": "못 머리 쪽의 극", "unit": "", "values": {"N": "N극", "S": "S극"} }
       ],
       "gateway": { "mode": "open", "requirePrediction": true, "requireSingleIV": true },
       "safety": ["electric", "hot"],
