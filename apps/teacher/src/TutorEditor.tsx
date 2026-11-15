@@ -1,10 +1,11 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { countTutorEdits, type TutorEdits } from '@sci/classroom';
+import { MAX_ANSWERS, countAnswerEdits, countTutorEdits, type TutorEdits } from '@sci/classroom';
 import { PLACEHOLDER_DISPLAY, SITUATIONS_BY_KIND, fromDisplayText, situationLabel, toDisplayText } from '@sci/tutor';
 import { ConfirmDialog, FOCUSABLE } from './ConfirmDialog';
 import { addCandidates, type CatalogExperiment, type CatalogProbe, type CatalogUnit } from './tutorCatalog';
 import {
   MAX_ADDED,
+  checkAnswer,
   checkLine,
   draftFromEdits,
   draftToEdits,
@@ -16,8 +17,10 @@ import {
   isTextChanged,
   lineCheck,
   sameEdits,
+  toDraftAnswer,
   validateEdits,
   type Draft,
+  type DraftAnswer,
   type DraftExp,
 } from './tutorDraft';
 
@@ -68,6 +71,7 @@ export function TutorEditor({ catalog, saved, onSave, onClose, alertCount }: Pro
 
   const current = useMemo(() => draftToEdits(draft, catalog), [draft, catalog]);
   const counts = countTutorEdits(current);
+  const answerCount = countAnswerEdits(current);
   const dirty = !sameEdits(current, saved);
   const invalid = hasInvalid(draft, catalog);
   const schema = useMemo(() => validateEdits(current), [current]);
@@ -84,7 +88,7 @@ export function TutorEditor({ catalog, saved, onSave, onClose, alertCount }: Pro
     setNotice(null);
     setDraft((prev) => {
       const next = fn(prev[unitId]?.[exp.id] ?? emptyDraftExp());
-      const empty = Object.keys(next.changed).length === 0 && next.added.length === 0;
+      const empty = Object.keys(next.changed).length === 0 && next.added.length === 0 && next.answers === undefined;
       const unitDraft = { ...(prev[unitId] ?? {}) };
       if (empty) delete unitDraft[exp.id];
       else unitDraft[exp.id] = next;
@@ -189,7 +193,7 @@ export function TutorEditor({ catalog, saved, onSave, onClose, alertCount }: Pro
           학생 화면의 튜터가 하는 질문을 고치거나 끌 수 있어요. 고친 내용은 이 PC에만 저장되고, 수업 중에는 참여한 학생 기기에 보내져요.
         </p>
         <p className="te-summary" data-testid="te-summary">
-          고친 질문 {counts.changed}개 · 끈 질문 {counts.off}개 · 더한 질문 {counts.added}개
+          고친 질문 {counts.changed}개 · 끈 질문 {counts.off}개 · 더한 질문 {counts.added}개{answerCount > 0 ? ` · 고친 결론 ${answerCount}개` : ''}
         </p>
         <div className="actions te-tools">
           <button type="button" className="run" disabled={!canSave} onClick={save}>
@@ -349,6 +353,8 @@ export function TutorEditor({ catalog, saved, onSave, onClose, alertCount }: Pro
                 </div>
               )}
             </section>
+
+            {exp.kind === 'variable' && <AnswersSection exp={exp} answers={d.answers} update={update} />}
           </>
         )}
       </div>
@@ -428,5 +434,82 @@ function ProbeLine({
       </div>
       <CheckResult messages={result ? result.messages : null} />
     </li>
+  );
+}
+
+/**
+ * 변인 실험의 결론 알아보기(사양 tutor-dialogue-v1 §7): 학생이 결론을 말했는지 앱이 알아보는 낱말 목록.
+ * 고친 목록은 기본을 통째로 바꾼다. 확인 문장에는 판정 낱말을 쓸 수 없다.
+ */
+function AnswersSection({ exp, answers, update }: { exp: CatalogExperiment; answers: DraftAnswer[] | undefined; update: (fn: (cur: DraftExp) => DraftExp) => void }) {
+  const list = answers ?? exp.answers.map(toDraftAnswer);
+  const edited = answers !== undefined;
+  const set = (next: DraftAnswer[]) => update((cur) => ({ ...cur, answers: next }));
+  const patch = (i: number, p: Partial<DraftAnswer>) => set(list.map((a, j) => (j === i ? { ...a, ...p } : a)));
+  return (
+    <section className="te-add te-answers" aria-label="결론 알아보기">
+      <h3>결론 알아보기</h3>
+      <p className="hint">
+        학생이 말한 결론을 앱이 알아보는 낱말이에요. 한 줄이 한 묶음이고, 묶음마다 낱말이 하나 이상 들어 있어야 맞게 봐요. 낱말은 쉼표로 나눠 써요. 결과표로 확인되면 확인 문장을 보여 줘요.
+      </p>
+      {list.length === 0 && <p className="hint">{edited ? '결론이 없어요. 튜터는 학생 말의 결론을 알아보지 않아요.' : '아직 기본 결론이 없어요. 「결론 더하기」로 더할 수 있어요.'}</p>}
+      <ul className="te-list">
+        {list.map((a, i) => {
+          const n = i + 1;
+          const problems = checkAnswer(a);
+          return (
+            <li key={i} className="te-line">
+              <h3>결론 {n}</h3>
+              <label className="te-field">
+                <span>알아볼 변인</span>
+                <select aria-label={`결론 ${n} 변인`} value={a.iv ?? ''} onChange={(e) => patch(i, { iv: e.target.value || undefined })}>
+                  <option value="">아무 변인이나</option>
+                  {exp.ivs.map((v) => (
+                    <option key={v.key} value={v.key}>
+                      {v.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="te-field">
+                <span>결론</span>
+                <input type="text" aria-label={`결론 ${n} 결론`} maxLength={80} value={a.conclusion} onChange={(e) => patch(i, { conclusion: e.target.value })} />
+              </label>
+              <label className="te-field">
+                <span>낱말 묶음(한 줄에 한 묶음, 낱말은 쉼표로)</span>
+                <textarea aria-label={`결론 ${n} 낱말 묶음`} rows={3} value={a.keysText} onChange={(e) => patch(i, { keysText: e.target.value })} />
+              </label>
+              <label className="te-field">
+                <span>제외 낱말(쉼표로)</span>
+                <input type="text" aria-label={`결론 ${n} 제외 낱말`} value={a.notText} onChange={(e) => patch(i, { notText: e.target.value })} />
+              </label>
+              <label className="te-field">
+                <span>확인 문장(결과표를 근거로, 판정 말은 쓰지 않아요)</span>
+                <textarea aria-label={`결론 ${n} 확인 문장`} rows={2} maxLength={80} value={a.confirm} onChange={(e) => patch(i, { confirm: e.target.value })} />
+              </label>
+              <div className="actions">
+                <button type="button" aria-label={`결론 ${n} 지우기`} onClick={() => set(list.filter((_, j) => j !== i))}>
+                  지우기
+                </button>
+              </div>
+              <CheckResult messages={edited ? problems : null} />
+            </li>
+          );
+        })}
+      </ul>
+      <div className="actions">
+        <button
+          type="button"
+          disabled={list.length >= MAX_ANSWERS}
+          onClick={() => set([...list, { ...(exp.ivs[0] ? { iv: exp.ivs[0].key } : {}), conclusion: '', keysText: '', notText: '', confirm: '' }])}
+        >
+          결론 더하기
+        </button>
+        <button type="button" disabled={!edited} onClick={() => update((cur) => { const { answers: _drop, ...rest } = cur; return rest; })}>
+          결론 기본으로
+        </button>
+      </div>
+      {list.length >= MAX_ANSWERS && <p className="hint">결론은 활동마다 {MAX_ANSWERS}개까지예요.</p>}
+    </section>
   );
 }

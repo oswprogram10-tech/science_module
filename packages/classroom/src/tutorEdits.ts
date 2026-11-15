@@ -16,9 +16,21 @@ const probeText = z.string().min(1).max(200);
 
 const byteLength = (s: string) => new TextEncoder().encode(s).length;
 
+/** `@sci/schema`의 answerKeySchema와 같은 모양(이 패키지는 콘텐츠 스키마에 기대지 않는다). 결론 알아보기 한 줄. */
+export const answerKeyEditSchema = z.strictObject({
+  iv: shortText.optional(),
+  conclusion: z.string().min(1).max(80),
+  keys: z.array(z.array(z.string().min(1).max(20)).min(1).max(12)).min(1).max(6),
+  not: z.array(z.string().min(1).max(20)).max(12).optional(),
+  confirm: z.string().min(1).max(80),
+});
+export const MAX_ANSWERS = 8;
+
 export const experimentEditsSchema = z.strictObject({
   changed: z.record(probeKey, z.strictObject({ text: probeText.optional(), off: z.literal(true).optional() })),
   added: z.array(z.strictObject({ task: shortText.optional(), when: shortText, iv: shortText.optional(), text: probeText })).max(20),
+  /** 변인 실험의 결론 알아보기(answers)를 통째로 바꾼다(튜터 대화 v1). 없으면 기본. */
+  answers: z.array(answerKeyEditSchema).max(MAX_ANSWERS).optional(),
 });
 
 export const tutorEditsSchema = z
@@ -30,6 +42,7 @@ export const tutorEditsSchema = z
 
 export type TutorEdits = z.infer<typeof tutorEditsSchema>;
 export type ExperimentEdits = z.infer<typeof experimentEditsSchema>;
+export type AnswerKeyEdit = z.infer<typeof answerKeyEditSchema>;
 
 export const EMPTY_TUTOR_EDITS: TutorEdits = { v: 1, units: {} };
 
@@ -51,4 +64,11 @@ export function countTutorEdits(edits: TutorEdits | null | undefined): { changed
     }
   }
   return { changed, off, added };
+}
+
+/** 결론 알아보기(answers)를 고친 활동의 수(countTutorEdits와 따로 센다). */
+export function countAnswerEdits(edits: TutorEdits | null | undefined): number {
+  let n = 0;
+  for (const unit of Object.values(edits?.units ?? {})) for (const exp of Object.values(unit)) if (exp.answers !== undefined) n++;
+  return n;
 }

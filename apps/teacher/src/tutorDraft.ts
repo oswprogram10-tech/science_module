@@ -1,6 +1,6 @@
-import { tutorEditsSchema, type TutorEdits } from '@sci/classroom';
-import { SITUATIONS_BY_KIND, checkEditedText, fromDisplayText, toDisplayText, type EditCheckResult } from '@sci/tutor';
-import { keyOf, type CatalogExperiment, type CatalogUnit } from './tutorCatalog';
+import { MAX_ANSWERS, answerKeyEditSchema, tutorEditsSchema, type AnswerKeyEdit, type TutorEdits } from '@sci/classroom';
+import { JUDGMENT_WORDS, normalizeKo, SITUATIONS_BY_KIND, checkEditedText, fromDisplayText, toDisplayText, type EditCheckResult } from '@sci/tutor';
+import { keyOf, type CatalogAnswer, type CatalogExperiment, type CatalogUnit } from './tutorCatalog';
 
 /** 편집 중인 질문 한 줄: text는 교사 화면 글(자리표시가 〔…〕). 저장하기 전까지는 검사를 통과하지 못한 글도 들어 있을 수 있다. */
 export interface DraftEntry {
@@ -13,9 +13,19 @@ export interface DraftAdded {
   iv?: string;
   text: string;
 }
+/** 편집 중인 결론 알아보기 한 줄. 낱말은 교사가 쓴 글 그대로 둔다(묶음은 줄로, 낱말은 쉼표로). */
+export interface DraftAnswer {
+  iv?: string;
+  conclusion: string;
+  keysText: string;
+  notText: string;
+  confirm: string;
+}
 export interface DraftExp {
   changed: Record<string, DraftEntry>;
   added: DraftAdded[];
+  /** 결론 알아보기를 통째로 바꾸는 편집. 없으면 기본(매니페스트) 그대로다. */
+  answers?: DraftAnswer[];
 }
 /** unitId -> experimentId -> 편집 중인 내용 */
 export type Draft = Record<string, Record<string, DraftExp>>;
@@ -23,6 +33,73 @@ export type Draft = Record<string, Record<string, DraftExp>>;
 export const MAX_ADDED = 20;
 
 export const emptyDraftExp = (): DraftExp => ({ changed: {}, added: [] });
+
+// ---- 결론 알아보기(answers) ----
+
+const MAX_CONCLUSION = 80;
+const MAX_CONFIRM = 80;
+const MAX_WORD = 20;
+const MAX_GROUPS = 6;
+const MAX_GROUP_WORDS = 12;
+const MAX_NOT = 12;
+
+/** 쉼표로 나눈 낱말 목록(앞뒤 공백 제거, 빈 칸 제외). */
+export const splitWords = (s: string): string[] =>
+  s
+    .split(/[,，、]/)
+    .map((w) => w.trim())
+    .filter(Boolean);
+/** 한 줄이 한 묶음. */
+export const parseKeys = (text: string): string[][] => text.split(/\r?\n/).map(splitWords).filter((g) => g.length > 0);
+export const keysToText = (keys: string[][]): string => keys.map((g) => g.join(', ')).join('\n');
+
+export const toDraftAnswer = (a: CatalogAnswer | AnswerKeyEdit): DraftAnswer => ({
+  ...(a.iv !== undefined ? { iv: a.iv } : {}),
+  conclusion: a.conclusion,
+  keysText: keysToText(a.keys),
+  notText: (a.not ?? []).join(', '),
+  confirm: a.confirm,
+});
+
+/** 저장 형태로. 검사를 통과한 줄만 넘긴다(checkAnswer). 제외 낱말이 없으면 not은 뺀다. */
+export function answerFromDraft(d: DraftAnswer): AnswerKeyEdit {
+  const not = splitWords(d.notText);
+  return { ...(d.iv !== undefined ? { iv: d.iv } : {}), conclusion: d.conclusion.trim(), keys: parseKeys(d.keysText), ...(not.length > 0 ? { not } : {}), confirm: d.confirm.trim() };
+}
+
+/** 결론 한 줄의 문제(교사에게 보일 한국어). 통과하면 빈 배열. 확인 문장에는 판정 낱말(정답·틀렸 등)을 쓸 수 없다. */
+export function checkAnswer(d: DraftAnswer): string[] {
+  const out: string[] = [];
+  const conclusion = d.conclusion.trim();
+  if (!conclusion) out.push('결론을 입력해 주세요');
+  else if (conclusion.length > MAX_CONCLUSION) out.push(`결론은 ${MAX_CONCLUSION}자 안으로 써 주세요`);
+  const keys = parseKeys(d.keysText);
+  if (keys.length === 0) out.push('낱말 묶음을 한 줄 이상 써 주세요');
+  if (keys.length > MAX_GROUPS) out.push(`낱말 묶음은 ${MAX_GROUPS}줄까지예요`);
+  if (keys.some((g) => g.length > MAX_GROUP_WORDS)) out.push(`한 줄에 낱말은 ${MAX_GROUP_WORDS}개까지예요`);
+  const not = splitWords(d.notText);
+  if (not.length > MAX_NOT) out.push(`제외 낱말은 ${MAX_NOT}개까지예요`);
+  if ([...keys.flat(), ...not].some((w) => w.length > MAX_WORD)) out.push(`낱말은 ${MAX_WORD}자 안으로 써 주세요`);
+  // 띄어쓰기·문장부호를 빼면 남는 글자가 없는 낱말은 학생 말과 견줄 수 없다(그 묶음은 늘 맞지 않는다).
+  if ([...keys.flat(), ...not].some((w) => normalizeKo(w) === '')) out.push('문장부호나 기호만으로 된 낱말은 쓸 수 없어요');
+  const confirm = d.confirm.trim();
+  if (!confirm) out.push('확인 문장을 입력해 주세요');
+  else {
+    if (confirm.length > MAX_CONFIRM) out.push(`확인 문장은 ${MAX_CONFIRM}자 안으로 써 주세요`);
+    const w = JUDGMENT_WORDS.find((x) => confirm.includes(x));
+    if (w) out.push(`확인 문장에는 ‘${w}’ 같은 판정 말을 쓸 수 없어요. 결과표에서 본 것을 말해 주세요.`);
+  }
+  return out;
+}
+
+const defaultAnswerEdits = (exp: CatalogExperiment): AnswerKeyEdit[] => exp.answers.map((a) => answerFromDraft(toDraftAnswer(a)));
+
+/** 결론 알아보기 편집을 저장 형태로. 기본과 같거나 검사를 통과하지 못했으면 undefined(통째로 바꾸므로 일부만 저장하지 않는다). */
+function answersToEdits(exp: CatalogExperiment, answers: DraftAnswer[] | undefined): AnswerKeyEdit[] | undefined {
+  if (!answers || answers.length > MAX_ANSWERS || answers.some((a) => checkAnswer(a).length > 0)) return undefined;
+  const list = answers.map(answerFromDraft);
+  return JSON.stringify(list) === JSON.stringify(defaultAnswerEdits(exp)) ? undefined : list;
+}
 
 export function checkLine(exp: CatalogExperiment, display: string): EditCheckResult {
   return checkEditedText(display, { limits: exp.limits, tutor: { forbiddenAnswers: exp.forbiddenAnswers }, placeholders: exp.placeholders });
@@ -37,6 +114,7 @@ export function draftFromEdits(edits: TutorEdits): Draft {
       out[u]![e] = {
         changed: Object.fromEntries(Object.entries(exp.changed).map(([k, v]) => [k, { ...(v.text !== undefined ? { text: toDisplayText(v.text) } : {}), ...(v.off ? { off: true } : {}) }])),
         added: exp.added.map((a) => ({ ...(a.task !== undefined ? { task: a.task } : {}), when: a.when, ...(a.iv !== undefined ? { iv: a.iv } : {}), text: toDisplayText(a.text) })),
+        ...(exp.answers !== undefined ? { answers: exp.answers.map(toDraftAnswer) } : {}),
       };
     }
   }
@@ -66,6 +144,7 @@ export function hasInvalid(draft: Draft, catalog: CatalogUnit[]): boolean {
       if (!exp) continue;
       for (const [key, entry] of Object.entries(d.changed)) if (lineCheck(exp, key, entry)?.ok === false) return true;
       for (const a of d.added) if (!checkLine(exp, a.text).ok) return true;
+      if (d.answers && (d.answers.length > MAX_ANSWERS || d.answers.some((a) => checkAnswer(a).length > 0))) return true;
     }
   }
   return false;
@@ -89,8 +168,9 @@ export function draftToEdits(draft: Draft, catalog: CatalogUnit[]): TutorEdits {
         changed[key] = { ...(textOk ? { text: fromDisplayText(entry.text!) } : {}), ...(entry.off ? { off: true as const } : {}) };
       }
       const added = d.added.filter((a) => checkLine(exp, a.text).ok).map((a) => ({ ...(a.task !== undefined ? { task: a.task } : {}), when: a.when, ...(a.iv !== undefined ? { iv: a.iv } : {}), text: fromDisplayText(a.text) }));
-      if (Object.keys(changed).length === 0 && added.length === 0) continue;
-      (units[u] ??= {})[e] = { changed, added };
+      const answers = answersToEdits(exp, d.answers);
+      if (Object.keys(changed).length === 0 && added.length === 0 && answers === undefined) continue;
+      (units[u] ??= {})[e] = { changed, added, ...(answers !== undefined ? { answers } : {}) };
     }
   }
   return { v: 1, units };
@@ -145,7 +225,8 @@ export function importEdits(raw: string, catalog: CatalogUnit[]): ImportResult {
   const rejects = new Map<string, number>();
   let accepted = 0;
   const reject = (reason: string, n = 1) => rejects.set(reason, (rejects.get(reason) ?? 0) + n);
-  const lineCount = (v: unknown): number => (isObj(v) ? (isObj(v.changed) ? Object.keys(v.changed).length : 0) + (Array.isArray(v.added) ? v.added.length : 0) : 1) || 1;
+  const lineCount = (v: unknown): number =>
+    (isObj(v) ? (isObj(v.changed) ? Object.keys(v.changed).length : 0) + (Array.isArray(v.added) ? v.added.length : 0) + (Array.isArray(v.answers) ? v.answers.length : 0) : 1) || 1;
 
   for (const [u, exps] of Object.entries(data.units)) {
     if (!isObj(exps)) {
@@ -223,7 +304,36 @@ export function importEdits(raw: string, catalog: CatalogUnit[]): ImportResult {
         out.added.push({ ...(task !== undefined ? { task } : {}), when: a.when as string, ...(iv !== undefined ? { iv } : {}), text: display });
         accepted++;
       }
-      if (Object.keys(out.changed).length > 0 || out.added.length > 0) (draft[u] ??= {})[e] = out;
+      if (body.answers !== undefined) {
+        const list = Array.isArray(body.answers) ? body.answers : null;
+        if (list === null || exp.kind !== 'variable') {
+          reject(list === null ? '형식이 맞지 않는 줄' : '이 활동에서 더할 수 없는 상황이에요', list?.length ?? 1);
+        } else {
+          const kept: DraftAnswer[] = [];
+          for (const a of list) {
+            if (kept.length >= MAX_ANSWERS) {
+              reject(`결론은 활동마다 ${MAX_ANSWERS}개까지예요`);
+              continue;
+            }
+            const parsed = answerKeyEditSchema.safeParse(a);
+            if (!parsed.success || (parsed.data.iv !== undefined && !exp.ivs.some((v) => v.key === parsed.data.iv))) {
+              reject('형식이 맞지 않는 줄');
+              continue;
+            }
+            const draftAnswer = toDraftAnswer(parsed.data);
+            const problems = checkAnswer(draftAnswer);
+            if (problems.length > 0) {
+              reject(`검사를 통과하지 못했어요: ${problems[0]}`);
+              continue;
+            }
+            kept.push(draftAnswer);
+            accepted++;
+          }
+          // 모두 걸러졌으면(기본을 통째로 비우려는 [] 포함 아님) 덧씌우지 않는다. 빈 배열은 "결론 없음"으로 그대로 받는다.
+          if (kept.length > 0 || list.length === 0) out.answers = kept;
+        }
+      }
+      if (Object.keys(out.changed).length > 0 || out.added.length > 0 || out.answers !== undefined) (draft[u] ??= {})[e] = out;
     }
   }
   return { draft, accepted, rejected: [...rejects].map(([reason, count]) => ({ reason, count })) };

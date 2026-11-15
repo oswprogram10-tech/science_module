@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fromVariableRuntime, tutorModel, type RuntimeStateLike, type UnitInfo, type VariableModuleLike } from '@sci/tutor';
-import type { VariableExperiment } from '@sci/schema';
+import type { AnswerKey, VariableExperiment } from '@sci/schema';
 import { TutorLlm, isTutorLlmAvailable } from './llmPlugin';
 import { createModelTutor, type ModelTutor } from './modelTutor';
+import { createDialogue } from './dialogueTurn';
 import { useTutorModelState } from './modelState';
 
 interface Args {
   unitId: string;
   experiment: VariableExperiment;
+  /** 교사 덧씌우기를 적용한 결론 목록(applyTutorAnswers). 학생이 결론을 말했는지 앱이 알아보는 데 쓴다. */
+  answers: readonly AnswerKey[];
   module: VariableModuleLike;
   runtimeState: RuntimeStateLike;
   unit: UnitInfo;
@@ -25,6 +28,8 @@ export interface ModelProbe {
   /** 보여 줄 문장. 만드는 중이거나 아직 없으면 null. */
   text: string | null;
   loading: boolean;
+  /** 시험용 상태 표시(예: "모델 질문 · 0.9초", "힌트 2단계"). 학생 말은 담지 않는다. 아직 없으면 null. */
+  status: string | null;
   /** 학생이 한 말을 다음 질문 만들기에 쓴다. 기기 안 메모리에서만 쓰고 저장하지 않는다. */
   say(utterance: string): void;
 }
@@ -43,8 +48,10 @@ export function useModelProbe(args: Args): ModelProbe {
   latest.current = args;
   const runner = useRef<ModelTutor | null>(null);
   const reqId = useRef(0);
-  const lastShown = useRef<string | undefined>(undefined);
+  // 힌트 단계와 직전에 보인 글은 이 안(기기 메모리)에만 둔다. 새 상황(turnKey가 바뀜)이면 힌트 단계가 처음으로 돌아간다.
+  const dialogue = useRef(createDialogue(() => runner.current));
   const [text, setText] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const modelId = model?.id ?? null;
@@ -60,27 +67,36 @@ export function useModelProbe(args: Args): ModelProbe {
   }, [modelId, file]);
 
   const request = useCallback((utterance?: string) => {
-    const r = runner.current;
-    if (!r) return;
+    if (!runner.current) return;
     const id = ++reqId.current;
     const a = latest.current;
+    const shown = a.runtimeState.playing ? a.runtimeState.trials.slice(0, -1) : a.runtimeState.trials;
     setText(null);
+    setStatus(null);
     setLoading(true);
-    void r
-      .ask({
-        experiment: a.experiment,
-        state: fromVariableRuntime(a.experiment, a.runtimeState, a.module, a.unitId),
-        ...(utterance ? { utterance } : {}),
-        unit: a.unit,
-        ...(lastShown.current ? { previousTutor: lastShown.current } : {}),
-        fallback: a.fallback,
-        isCurrent: () => id === reqId.current,
-      })
+    void dialogue.current
+      .turn(
+        {
+          experiment: a.experiment,
+          answers: a.answers,
+          state: fromVariableRuntime(a.experiment, a.runtimeState, a.module, a.unitId),
+          // 최근 3개 밖의 시행도 결과로 확인하는 근거가 된다.
+          trials: shown.map((t) => ({ ivKey: t.ivKey, analysis: t.analysis })),
+          unit: a.unit,
+          fallback: a.fallback,
+          turnKey: a.turnKey,
+        },
+        utterance,
+        () => id === reqId.current,
+      )
       .then((res) => {
         if (id !== reqId.current) return;
-        lastShown.current = res.text;
-        setText(res.text);
+        setText(res?.text ?? null);
+        setStatus(res?.status ?? null);
         setLoading(false);
+      })
+      .catch(() => {
+        if (id === reqId.current) setLoading(false);
       });
   }, []);
 
@@ -99,5 +115,5 @@ export function useModelProbe(args: Args): ModelProbe {
     [request],
   );
 
-  return { available, text, loading, say };
+  return { available, text, loading, status, say };
 }

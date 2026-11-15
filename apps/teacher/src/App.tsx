@@ -9,7 +9,7 @@ import {
   type ModelStatus,
   type SafetyType,
 } from '@sci/classroom';
-import { countTutorEdits, type TutorEdits } from '@sci/classroom';
+import { countAnswerEdits, countTutorEdits, type TutorEdits } from '@sci/classroom';
 import { TeacherClient, type TeacherState } from './client';
 import { ConfirmDialog } from './ConfirmDialog';
 import { HostAddress } from './HostAddress';
@@ -263,6 +263,8 @@ function ClassScreen({ client, state, soundOn, onEnd, tutorEdits, onEdit, onPick
 
   const tutorCount = countTutorEdits(tutorEdits);
   const tutorTotal = tutorCount.changed + tutorCount.off + tutorCount.added;
+  const answerTotal = countAnswerEdits(tutorEdits);
+  const tutorNote = [tutorTotal > 0 ? `고친 질문 ${tutorTotal}개` : '', answerTotal > 0 ? `고친 결론 ${answerTotal}개` : ''].filter(Boolean).join(' · ');
 
   return (
     <div className="app" inert={inert}>
@@ -301,9 +303,9 @@ function ClassScreen({ client, state, soundOn, onEnd, tutorEdits, onEdit, onPick
       </header>
       <HostAddress />
       {paused && <p className="paused-note">지금 모든 학생 화면이 멈춰 있어요.</p>}
-      {tutorTotal > 0 && state.conn === 'open' && (
+      {tutorNote !== '' && state.conn === 'open' && (
         <p className="tutor-note" data-testid="tutor-note">
-          튜터 질문: 고친 질문 {tutorTotal}개를 학생 기기에 보냈어요
+          튜터 질문: {tutorNote}를 학생 기기에 보냈어요
         </p>
       )}
 

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { applyTutorEdits, type ProbeTemplate } from '@sci/tutor';
+import type { AnswerKey } from '@sci/schema';
+import { applyTutorAnswers, applyTutorEdits, type ProbeTemplate } from '@sci/tutor';
 import { useTutorEdits } from './classroom/bus';
 
 /**
@@ -11,4 +12,14 @@ export function useTutorProbes(unitId: string, experimentId: string, probes: Pro
   const edits = useTutorEdits();
   const exp = edits?.units[unitId]?.[experimentId];
   return useMemo(() => applyTutorEdits(probes, exp, taskId), [probes, exp, taskId]);
+}
+
+/**
+ * 변인 실험의 결론 알아보기(answers)에 선생님의 덧씌우기를 적용한다(사양 tutor-dialogue-v1 §7).
+ * 덧씌우기에 answers가 있으면 통째로 바꾸고, 없으면 매니페스트의 것 그대로다.
+ */
+export function useTutorAnswers(unitId: string, experimentId: string, answers: AnswerKey[] | undefined): AnswerKey[] {
+  const edits = useTutorEdits();
+  const exp = edits?.units[unitId]?.[experimentId];
+  return useMemo(() => applyTutorAnswers(answers, exp), [answers, exp]);
 }

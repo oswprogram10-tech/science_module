@@ -4,6 +4,33 @@ import { MAX_TUTOR_EDITS_BYTES, countTutorEdits, tutorEditsSchema, type TutorEdi
 const ok = (changed: Record<string, unknown> = {}, added: unknown[] = []) => ({ v: 1, units: { 'g6-motion': { 'ramp-cart': { changed, added } } } });
 const parses = (v: unknown) => tutorEditsSchema.safeParse(v).success;
 
+describe('answers(결론 알아보기) 덧씌우기', () => {
+  const key = { iv: 'heightCm', conclusion: '높을수록 빨라진다.', keys: [['높'], ['빨']], not: ['느려'], confirm: '네, 결과표에서도 시간이 짧았어요.' };
+  const withAnswers = (answers: unknown) => ({ v: 1, units: { 'g6-motion': { 'ramp-cart': { changed: {}, added: [], answers } } } });
+  it('정상: 비어 있어도(전부 없앰), 8개까지', () => {
+    expect(parses(withAnswers([key]))).toBe(true);
+    expect(parses(withAnswers([]))).toBe(true);
+    expect(parses(withAnswers(Array.from({ length: 8 }, () => key)))).toBe(true);
+    expect(parses(withAnswers(Array.from({ length: 9 }, () => key)))).toBe(false);
+  });
+  it('필드 한계와 모르는 필드', () => {
+    expect(parses(withAnswers([{ ...key, not: undefined, iv: undefined }]))).toBe(true);
+    expect(parses(withAnswers([{ ...key, conclusion: 'x'.repeat(81) }]))).toBe(false);
+    expect(parses(withAnswers([{ ...key, confirm: '' }]))).toBe(false);
+    expect(parses(withAnswers([{ ...key, keys: [] }]))).toBe(false);
+    expect(parses(withAnswers([{ ...key, keys: [[]] }]))).toBe(false);
+    expect(parses(withAnswers([{ ...key, keys: [['x'.repeat(21)]] }]))).toBe(false);
+    expect(parses(withAnswers([{ ...key, keys: Array.from({ length: 7 }, () => ['a']) }]))).toBe(false);
+    expect(parses(withAnswers([{ ...key, not: Array.from({ length: 13 }, () => 'a') }]))).toBe(false);
+    expect(parses(withAnswers([{ ...key, extra: 1 }]))).toBe(false);
+  });
+  it('48 KB 한도는 answers까지 센다', () => {
+    const big = Array.from({ length: 8 }, () => ({ ...key, keys: Array.from({ length: 6 }, () => Array.from({ length: 12 }, () => '가'.repeat(20))) }));
+    const units = Object.fromEntries(Array.from({ length: 30 }, (_, i) => [`u${i}`, { e: { changed: {}, added: [], answers: big } }]));
+    expect(parses({ v: 1, units })).toBe(false);
+  });
+});
+
 describe('tutorEditsSchema', () => {
   it('정상: 고치기·끄기·더하기', () => {
     expect(parses(ok({ '|before-run|': { text: '무엇이 달라질까요?' }, '|repeat|': { off: true } }, [{ when: 'fair-test', iv: 'heightCm', text: '높이만 바꿨어요?' }]))).toBe(true);

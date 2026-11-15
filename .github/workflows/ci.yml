@@ -86,7 +86,10 @@ jobs:
           distribution: temurin
           java-version: 21
       - run: pnpm install --frozen-lockfile
+      # 시험용 APK에만 튜터 상태 표시(계획 종류·이유)를 켠다(사양 tutor-dialogue-v1 §8). 다른 빌드에는 넣지 않는다.
       - run: pnpm --filter student build
+        env:
+          VITE_TUTOR_DEBUG: '1'
       - run: npx cap sync android
         working-directory: apps/student
       # 네이티브(llama.cpp) 빌드 도구: 버전은 Gradle 변수(variables.gradle)가 정한 것을 그대로 설치한다(NDK, CMake 3.22+).

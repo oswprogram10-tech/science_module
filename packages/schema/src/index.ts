@@ -52,9 +52,28 @@ export const probeSchema = z.object({
   text: z.string().min(1),
 });
 
+/**
+ * 학생이 결론을 말했는지 앱이 알아보는 표현 목록(사양 docs/specs/tutor-dialogue-v1.md §2).
+ * 판단은 모델이 아니라 앱이 한다. 교사가 교사 화면에서 고칠 수 있다.
+ */
+export const answerKeySchema = z.object({
+  /** 이 결론을 알아보는 조작변인 key. 이 변인만 바꾼 공정한 시행이 있어야 결과로 확인된 것으로 본다. 없으면 어떤 공정한 시행이든. */
+  iv: z.string().min(1).optional(),
+  /** 결론 한 줄(교사 화면에 보인다). */
+  conclusion: z.string().min(1).max(80),
+  /** 낱말 묶음: 묶음마다 낱말 하나 이상이 학생 말에 들어 있어야 맞힌 것으로 본다(띄어쓰기·문장부호 무시). */
+  keys: z.array(z.array(z.string().min(1).max(20)).min(1).max(12)).min(1).max(6),
+  /** 이 낱말이 하나라도 있으면 맞힌 것으로 보지 않는다(반대 방향 등). */
+  not: z.array(z.string().min(1).max(20)).max(12).optional(),
+  /** 결과로 확인되었을 때 앱이 보이는 확인 문장. 학생 결과를 근거로 한 한 문장, 마침표로 끝난다. */
+  confirm: z.string().min(1).max(80),
+});
+export type AnswerKey = z.infer<typeof answerKeySchema>;
+
 export const tutorConfigSchema = z.object({
   forbiddenAnswers: z.array(z.string().min(1)),
   probes: z.array(probeSchema).min(1),
+  answers: z.array(answerKeySchema).max(8).optional(),
 });
 
 /** 변인 실험(조작변인을 바꿔 수치를 비교하는 활동)의 모듈 종류. */

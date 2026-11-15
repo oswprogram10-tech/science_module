@@ -418,3 +418,4 @@ button.unit-card:hover { border-color:var(--accent); }
 /* 앱(APK)의 참여 대화 상자: 선생님 PC 주소 입력칸은 수업 코드칸과 달리 대문자·자간을 쓰지 않는다. */
 .host-field input { font-size:1.1rem; letter-spacing:normal; text-transform:none; }
 .host-field-wrap small { display:block; font-weight:400; margin-bottom:6px; }
+.box p.tutor-debug { margin:6px 0 0; font-size:.75rem; min-height:0; }

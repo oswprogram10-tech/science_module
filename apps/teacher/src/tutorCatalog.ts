@@ -15,6 +15,16 @@ export interface CatalogProbe {
   key: string;
 }
 
+/** 변인 실험의 결론 알아보기 한 줄(매니페스트 tutor.answers의 한 항목, 사양 tutor-dialogue-v1 §2). */
+export interface CatalogAnswer {
+  iv?: string;
+  conclusion: string;
+  /** 낱말 묶음. 묶음마다 낱말 하나 이상이 학생 말에 들어 있어야 한다. */
+  keys: string[][];
+  not?: string[];
+  confirm: string;
+}
+
 export interface CatalogExperiment {
   id: string;
   title: string;
@@ -28,6 +38,8 @@ export interface CatalogExperiment {
   tasks: { id: string; title: string }[];
   /** 변인 실험의 변인(fair-test를 조작변인마다 더할 수 있다). */
   ivs: { key: string; label: string }[];
+  /** 변인 실험의 기본 결론 알아보기(매니페스트 tutor.answers). 아직 없으면 빈 배열. */
+  answers: CatalogAnswer[];
 }
 
 export interface CatalogUnit {
@@ -42,6 +54,20 @@ const str = (v: unknown): string | undefined => (typeof v === 'string' && v.leng
 const strs = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []);
 
 export const keyOf = (task: string | undefined, when: string, iv: string | undefined): string => `${task ?? ''}|${when}|${iv ?? ''}`;
+
+function readAnswers(list: unknown): CatalogAnswer[] {
+  if (!Array.isArray(list)) return [];
+  return list.flatMap((a): CatalogAnswer[] => {
+    if (!isObj(a)) return [];
+    const conclusion = str(a.conclusion);
+    const confirm = str(a.confirm);
+    const keys = Array.isArray(a.keys) ? a.keys.map(strs).filter((g) => g.length > 0) : [];
+    if (!conclusion || !confirm || keys.length === 0) return [];
+    const not = strs(a.not);
+    const iv = str(a.iv);
+    return [{ ...(iv ? { iv } : {}), conclusion, keys, ...(not.length > 0 ? { not } : {}), confirm }];
+  });
+}
 
 function readProbes(list: unknown, task: { id: string; title: string } | undefined, ivLabels: Map<string, string>): CatalogProbe[] {
   if (!Array.isArray(list)) return [];
@@ -100,6 +126,7 @@ export function buildCatalog(manifests: unknown[]): CatalogUnit[] {
         probes,
         tasks: tasks.map((t) => ({ id: t.id, title: t.title })),
         ivs: kind === 'variable' ? ivs : [],
+        answers: kind === 'variable' ? readAnswers(tutor.answers) : [],
       });
     }
     if (experiments.length > 0) units.push({ id, title, grade: typeof m.grade === 'number' ? m.grade : 0, experiments });

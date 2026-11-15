@@ -101,6 +101,26 @@ describe('modelTutor: 모델 질문 만들기', () => {
     }
   });
 
+  it('직전에 보인 글과 너무 비슷하면 되풀이로 보고 기본 글을 쓴다', async () => {
+    const same = new Set<string>();
+    for (const [out, prev] of [
+      [GOOD, GOOD],
+      [GOOD, '이번에는 어떤 조건을 바꿔 보았나요'], // 띄어쓰기·부호만 다름
+      ['이번에는 어떤 조건을 바꿔 보았는지 말해 주세요. 어떤 조건을 바꿔 보았나요?', '다른 앞말을 길게 붙였어요 그렇군요. 어떤 조건을 바꿔 보았나요?'], // 마지막 질문이 같음
+    ] as const) {
+      const f = fakeLlm(out);
+      const t = createModelTutor({ llm: f.llm, model, file: 'a.gguf', nThreads: 2 });
+      const r = await t.ask(base({ previousTutor: prev }));
+      expect(r, out).toMatchObject({ source: 'fallback', reason: 'repeat', text: FALLBACK });
+      same.add(out);
+    }
+    expect(same.size).toBe(2);
+    // 직전과 다르면 모델 출력을 쓴다.
+    const f = fakeLlm(GOOD);
+    const t = createModelTutor({ llm: f.llm, model, file: 'a.gguf', nThreads: 2 });
+    expect(await t.ask(base({ previousTutor: '결과표를 다시 살펴볼까요?' }))).toMatchObject({ source: 'model', text: GOOD });
+  });
+
   it('첫 토큰이 예산(3초)보다 늦으면 그 결과를 쓰지 않는다', async () => {
     const f = fakeLlm(GOOD, { firstTokenMs: 3500 });
     const t = createModelTutor({ llm: f.llm, model, file: 'a.gguf', nThreads: 2 });
